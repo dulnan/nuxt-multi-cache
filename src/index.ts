@@ -59,6 +59,11 @@ const cacheModule: Module = function () {
     getCacheKey: provided.getCacheKey || getCacheKey,
   }
 
+  // Add the cache helper plugin.
+  this.addPlugin({
+    src: PLUGIN_PATH,
+  })
+
   function logger(message: string, type: string = 'info') {
     if (!config.debug) {
       return
@@ -96,11 +101,6 @@ const cacheModule: Module = function () {
   this.addServerMiddleware({
     path: '/__route_cache',
     handler: serverMiddleware(cache, config.secret, config.purgeAuthCheck),
-  })
-
-  // Add the cache helper plugin.
-  this.addPlugin({
-    src: PLUGIN_PATH,
   })
 
   // Inject the cache helper object into the SSR context.

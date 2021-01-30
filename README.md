@@ -1,9 +1,12 @@
-# Nuxt SSR Page Cache
+# Nuxt Route Cache
+
+Caches pages based on the route and purge a cached page.
 
 # Concepts
 - In-memory page cache using routes as the key.
+- Possibility to exclude requests from hitting the cache
 - Optional cache tags per route.
-- Purge everything, one or more routes or tags.
+- Endpoints to purge everything, one or more routes or tags.
 
 # Warning
 Caching is hard. You should be aware of the risks and potentially huge security
