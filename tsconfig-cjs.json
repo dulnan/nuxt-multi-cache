@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig-esm.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "declaration": false,
+    "declarationDir": null,
+    "declarationMap": false,
+    "outDir": "./lib/cjs"
+  }
+}
