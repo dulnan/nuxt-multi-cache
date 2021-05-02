@@ -1,3 +1,9 @@
+import { CacheConfig } from "."
+import path from 'path'
+import Disk from "./helpers/disk"
+import SQLite, {Statement} from 'better-sqlite3'
+import { PREPARE } from './DB'
+
 /**
  * In-memory cache.
  *
@@ -6,174 +12,183 @@
  * tags.
  */
 export default class Cache {
+  disk: Disk
   /**
    * The map where the cached routes are stored.
    */
-  cache: Map<string, any>
+  db: SQLite.Database
 
   /**
-   * Map of routes belonging to a tag.
+   * Map of existing routes.
    */
-  tagRoutes: Map<string, string[]>
+  routeMap: Map<string, number>
 
   /**
-   * Map of tags belonging to a route.
+   * Map of existing spaces.
    */
-  routeTags: Map<string, string[]>
+  spaceMap: Map<string, number>
 
-  constructor() {
-    this.cache = new Map()
-    this.tagRoutes = new Map()
-    this.routeTags = new Map()
+  /**
+   * Map of existing tags.
+   */
+  tagMap: Map<string, number>
+
+  /**
+   * DB statements.
+   */
+  dbSpaceGet: Statement
+  dbSpaceCreate: Statement
+  dbTagGet: Statement
+  dbTagCreate: Statement
+  dbRouteGet: Statement
+  dbRouteCreate: Statement
+  dbCacheInsert: Statement
+
+  constructor(config: CacheConfig) {
+    this.disk = new Disk(config.filesystem?.folder as string)
+    this.disk.initFolders()
+
+    this.db = new SQLite(path.resolve(this.disk.getDatabaseFolder(), 'data.db'))
+    this.routeMap = new Map()
+    this.spaceMap = new Map()
+    this.tagMap = new Map()
+
+    this.initDatabase()
+    this.dbSpaceGet = this.db.prepare('SELECT sid FROM spaces WHERE space = ?')
+    this.dbSpaceCreate = this.db.prepare('INSERT or IGNORE INTO spaces (space) VALUES (?)')
+    this.dbTagGet = this.db.prepare('SELECT tid FROM tags WHERE tag = ?')
+    this.dbTagCreate = this.db.prepare('INSERT or IGNORE INTO tags (tag) VALUES (?)')
+    this.dbRouteGet = this.db.prepare('SELECT rid FROM routes WHERE route = ?')
+    this.dbRouteCreate = this.db.prepare('INSERT or IGNORE INTO routes (route, path) VALUES (?, ?)')
+    this.dbCacheInsert = this.db.prepare('INSERT or IGNORE INTO cache (sid, tid, rid) VALUES (?, ?, ?)')
   }
 
-  getStats() {
-    return new Promise((resolve, reject) => {
-      try {
-        resolve({
-          cachedRoutes: Array.from(this.cache.keys()),
-          tagRoutes: Object.fromEntries(this.tagRoutes.entries()),
-          routeTags: Object.fromEntries(this.routeTags.entries()),
-        })
-      } catch (e) {
-        reject(e)
-      }
-    })
-  }
-
-  /**
-   * Get a route from the cache.
-   */
-  get(key: string): Promise<string | void> {
-    return new Promise((resolve, reject) => {
-      try {
-        const cached = this.cache.get(key)
-        if (cached) {
-          return resolve(cached)
-        }
-
-        resolve()
-      } catch (error) {
-        reject(error)
-      }
-    })
+  initDatabase() {
+    this.db.exec(PREPARE)
   }
 
   /**
    * Add a route to the cache.
    */
-  set(route: string, tags: string[], data: string): Promise<boolean | Error> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.cache.set(route, data)
-
-        if (!this.routeTags.has(route)) {
-          this.routeTags.set(route, [])
-        }
-
-        tags.forEach((tag) => {
-          if (!this.tagRoutes.has(tag)) {
-            this.tagRoutes.set(tag, [])
-          }
-
-          this.tagRoutes.get(tag)?.push(route)
-          this.routeTags.get(route)?.push(tag)
-        })
-        resolve(true)
-      } catch (error) {
-        reject(error)
-      }
+  set(route: string, tags: string[] = [], data: string): Promise<boolean> {
+    return this.disk.write(route, data).then(filePath => {
+      return this.insert(route, filePath, tags)
+    }).then(() => {
+      return true
+    }).catch((e) => {
+      console.log(e)
+      return false
     })
   }
 
   /**
-   * Purge a single route.
+   * Insert tags in to the database.
    */
-  purgeRoutes(routes: string[] = []): Promise<boolean | Error> {
-    return new Promise((resolve, reject) => {
-      try {
-        routes.forEach((route) => {
-          // Immediately delete entry in cache.
-          this.cache.delete(route)
+  insert(route: string, filePath: string, tags: string[] = []) {
+    const rid = this.getRouteId(route, filePath)
 
-          // Get the tags of this route.
-          const tags = this.routeTags.get(route) || []
-
-          // Filter out the route from the tagRoutes map.
-          tags.forEach((tag) => {
-            if (this.tagRoutes.has(tag)) {
-              const routes = this.tagRoutes.get(tag) || []
-              this.tagRoutes.set(
-                tag,
-                routes.filter((v) => v !== route)
-              )
-            }
-          })
-
-          // Remove the route entry.
-          this.routeTags.delete(route)
-        })
-        resolve(true)
-      } catch (e) {
-        reject(e)
+    for (const tag of tags) {
+      const i = tag.indexOf(':')
+      const space = i !== -1 ? tag.substring(0, i) : tag
+      if (space) {
+        const sid = this.getSpaceId(space)
+        const tid = this.getTagId(tag)
+        if (tid && sid) {
+          try {
+            this.dbCacheInsert.run(sid, tid, rid)
+          } catch (e) {
+            console.log(e)
+          }
+        }
+      } else {
+        console.log('Invalid cache tag: ' + tag)
       }
-    })
+    }
+  }
+
+  /**
+   * Get route ID.
+   */
+  getRouteId(route: string, filePath: string): number {
+    if (this.routeMap.has(route)) {
+      return this.routeMap.get(route) as number
+    }
+    let rid = this.dbRouteGet.get(route)
+
+    if (!rid) {
+      const result = this.dbRouteCreate.run(route, filePath)
+      if (result.changes > 0) {
+        rid = result.lastInsertRowid
+      }
+    }
+
+    this.routeMap.set(route, rid)
+
+    return rid
+  }
+
+  /**
+   * Get space ID.
+   */
+  getTagId(tag: string): number {
+    if (this.tagMap.has(tag)) {
+      return this.tagMap.get(tag) as number
+    }
+    let tid = this.dbTagGet.get(tag)
+
+    if (!tid) {
+      const result = this.dbTagCreate.run(tag)
+      tid = result.lastInsertRowid
+    }
+
+    this.tagMap.set(tag, tid)
+
+    return tid
+  }
+
+  /**
+   * Get space ID.
+   */
+  getSpaceId(space: string): number {
+    if (this.spaceMap.has(space)) {
+      return this.spaceMap.get(space) as number
+    }
+    let sid = this.dbSpaceGet.get(space)
+
+    if (!sid) {
+      const result = this.dbSpaceCreate.run(space)
+      sid = result.lastInsertRowid
+    }
+
+    this.spaceMap.set(space, sid)
+
+    return sid
   }
 
   /**
    * Purge by tags.
    */
   purgeTags(tags: string[] = []): Promise<boolean | Error> {
-    return new Promise((resolve, reject) => {
-      try {
-        const routesToPurge: string[] = []
-
-        tags.forEach((tag) => {
-          const routes = this.tagRoutes.get(tag) || []
-          routesToPurge.push(...routes)
-
-          this.tagRoutes.set(tag, [])
-        })
-
-        routesToPurge.forEach((route) => {
-          this.routeTags.set(route, [])
-          this.cache.delete(route)
-        })
-
-        resolve(true)
-      } catch (e) {
-        reject(e)
-      }
-    })
+    return Promise.resolve(true)
   }
 
   /**
-   * Purge a single tag.
+   * Get routes that should be purged.
    */
-  purgeTag(tag: string): Promise<boolean | Error> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.purgeTags([tag])
-        resolve(true)
-      } catch (e) {
-        reject(e)
-      }
-    })
+  getRoutesToPurge(tags: string[] = []): string[] {
+    return []
+  }
+
+  getCachedRoutes(offset = 0) {
+    const routes = this.db.exec('')
   }
 
   /**
-   * Purge everything.
+   * Purge everything from disk and the database.
    */
-  purgeAll(): Promise<boolean | Error> {
-    return new Promise((resolve, reject) => {
-      try {
-        this.cache.clear()
-        this.tagRoutes.clear()
-        this.routeTags.clear()
-        resolve(true)
-      } catch (e) {
-        reject(e)
-      }
+  purgeAll(): Promise<any> {
+    return this.disk.purgeAll().then(() => {
+      return this.db.exec('DELETE FROM files')
     })
   }
 }

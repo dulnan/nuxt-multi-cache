@@ -21,10 +21,18 @@
     "lib/"
   ],
   "dependencies": {
-    "express": "^4.17.1"
+    "better-sqlite3": "^7.1.5",
+    "cache-manager": "^3.4.3",
+    "express": "^4.17.1",
+    "make-dir": "^3.1.0",
+    "mkdirp": "^0.5.5",
+    "ufo": "^0.7.2"
   },
   "devDependencies": {
     "@nuxt/types": "^2.14.12",
+    "@types/better-sqlite3": "^5.4.1",
+    "@types/cache-manager": "^3.4.0",
+    "@types/mkdirp": "^1.0.1",
     "@types/node": "^14.14.22",
     "eslint": "^7.17.0",
     "eslint-config-prettier": "^7.1.0",
