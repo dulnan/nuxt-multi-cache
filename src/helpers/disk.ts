@@ -16,21 +16,16 @@ export default class Disk {
 
   write(route: string, markup: string): Promise<string> {
     let dest = withoutTrailingSlash(normalizeURL(route))
-    console.log('dest: ' + dest)
     if (dest === '/') {
       dest = 'index.html'
     } else {
       dest += '.html'
     }
-    console.log('dest: ' + dest)
 
     const destDir = path.join(this.folderPages, path.dirname(dest))
-    console.log('destDir: ' + destDir)
     return makeDir(destDir).then(() => {
       const filePath = path.join(this.folderPages, dest)
-      console.log('filePath: ' + filePath)
       return fs.promises.writeFile(filePath, markup).then(() => {
-        console.log('written!!!!')
         return dest
       })
     })
@@ -46,7 +41,35 @@ export default class Disk {
     ].map(v => makeDir(v)))
   }
 
+  /**
+   * Purge all files in the page cache directory.
+   */
   purgeAll() {
     return fs.promises.rmdir(this.folderPages, { recursive: true })
+  }
+
+  /**
+   * Check if the file under the given path exists.
+   */
+  fileExists(fullPath: string): Promise<boolean> {
+    return fs.promises.access(fullPath).then(() => true).catch(() => false)
+  }
+
+  /**
+   * Remove the file.
+   */
+  remove(filePath = ''): Promise<boolean> {
+    if (!filePath) {
+      return Promise.resolve(false)
+    }
+    const dest = path.join(this.folderPages, filePath)
+    return this.fileExists(dest)
+      .then((exists) => {
+        if (exists) {
+          return fs.promises.unlink(dest)
+        }
+      })
+      .then(() => true)
+      .catch(() => false)
   }
 }

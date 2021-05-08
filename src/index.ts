@@ -5,6 +5,9 @@ import Cache from './Cache'
 import serverMiddleware, { PurgeAuthCheckMethod } from './serverMiddleware'
 import NuxtSSRCacheHelper from './ssrContextHelper'
 import { StoreConfig } from 'cache-manager'
+import { Options as LRUOptions } from 'lru-cache'
+import ComponentCache, {ComponentCacheEntry} from './ComponentCache'
+import DataCache from './DataCache'
 
 const PLUGIN_PATH = path.resolve(__dirname, 'plugin.js')
 
@@ -92,6 +95,13 @@ export interface CacheConfig {
    * then serve these from your webserver, if configured properly.
    */
   getCacheKey?: GetCacheKeyMethod
+
+  componentCache?: ComponentCacheConfig
+}
+
+export interface ComponentCacheConfig {
+  enabled: boolean
+  lruOptions?: LRUOptions<string, ComponentCacheEntry>
 }
 
 /**
@@ -147,6 +157,7 @@ const cacheModule: Module = function () {
     purgeAuthCheck: provided.purgeAuthCheck,
     enabledForRequest: provided.enabledForRequest || enabledForRequest,
     getCacheKey: provided.getCacheKey || getCacheKey,
+    componentCache: provided.componentCache || { enabled: true }
   }
 
   if (config.filesystem?.folder) {
@@ -186,17 +197,29 @@ const cacheModule: Module = function () {
     return
   }
 
+  // Create component cache instance.
+  const componentCache = new ComponentCache(config.componentCache as ComponentCacheConfig)
+
   // Create cache instance.
-  const cache = new Cache(config)
+  const cache = new Cache(config, componentCache)
+
+  // Create DataCache instance.
+  const dataCache = new DataCache()
+
+  if (this.options.render.bundleRenderer) {
+    console.log('ADD COMPONENT CACHE')
+    this.options.render.bundleRenderer.cache = componentCache
+  }
 
   // Add the server middleware to manage the cache.
   this.addServerMiddleware({
     path: '/__route_cache',
-    handler: serverMiddleware(cache, config.purgeAuthCheck),
+    handler: serverMiddleware(cache, dataCache, componentCache, config.purgeAuthCheck),
   })
 
   // Inject the cache helper object into the SSR context.
   this.nuxt.hook('vue-renderer:ssr:prepareContext', (ssrContext: any) => {
+    ssrContext.$dataCache = dataCache
     ssrContext.$cacheHelper = new NuxtSSRCacheHelper()
   })
 
@@ -224,9 +247,11 @@ const cacheModule: Module = function () {
       return renderRoute(route, context).then((result: any) => {
         // Check if the route is set as cacheable.
         if (context.$cacheHelper && context.$cacheHelper.cacheable) {
+          // console.log(context.$cacheHelper.componentTags)
           const tags = context.$cacheHelper.tags || []
+          const globalTags = context.$cacheHelper.globalTags || []
           cache
-            .set(cacheKey as string, tags, result.html)
+            .set(cacheKey as string, tags, globalTags, result.html)
             .then(() => {
               logger('Cached route: ' + route)
               logger('         key: ' + cacheKey)

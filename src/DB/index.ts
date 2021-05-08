@@ -6,8 +6,19 @@ CREATE TABLE IF NOT EXISTS spaces (
   UNIQUE(space)
 );
 
+CREATE TABLE IF NOT EXISTS page_cache (
+  tag TEXT,
+  route TEXT
+);
+
 CREATE TABLE IF NOT EXISTS tags (
   tid INTEGER PRIMARY KEY,
+  tag TEXT NOT NULL,
+  UNIQUE(tag)
+);
+
+CREATE TABLE IF NOT EXISTS global_tags (
+  gid INTEGER PRIMARY KEY,
   tag TEXT NOT NULL,
   UNIQUE(tag)
 );
@@ -15,7 +26,7 @@ CREATE TABLE IF NOT EXISTS tags (
 CREATE TABLE IF NOT EXISTS routes (
   rid INTEGER PRIMARY KEY,
   route TEXT NOT NULL,
-  path TEXT NOT NULL,
+  path TEXT,
   timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(route)
 );

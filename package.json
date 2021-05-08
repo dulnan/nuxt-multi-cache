@@ -24,16 +24,20 @@
     "better-sqlite3": "^7.1.5",
     "cache-manager": "^3.4.3",
     "express": "^4.17.1",
+    "lru-cache": "^6.0.0",
     "make-dir": "^3.1.0",
     "mkdirp": "^0.5.5",
+    "sqlite3": "^5.0.2",
     "ufo": "^0.7.2"
   },
   "devDependencies": {
     "@nuxt/types": "^2.14.12",
     "@types/better-sqlite3": "^5.4.1",
     "@types/cache-manager": "^3.4.0",
+    "@types/lru-cache": "^5.1.0",
     "@types/mkdirp": "^1.0.1",
     "@types/node": "^14.14.22",
+    "@types/sqlite3": "^3.1.7",
     "eslint": "^7.17.0",
     "eslint-config-prettier": "^7.1.0",
     "eslint-plugin-nuxt": "^2.0.0",
@@ -42,6 +46,7 @@
     "nuxt": "^2.14.12",
     "prettier": "^2.2.1",
     "typescript": "^4.1.3",
-    "vue": "^2.6.12"
+    "vue": "^2.6.12",
+    "vue-server-renderer": "^2.6.12"
   }
 }
