@@ -47,14 +47,6 @@ export interface CacheConfig {
   debug: boolean
 
   /**
-   * The node-cache-manager store instance.
-   *
-   * If undefined, a default memory-store will be used, with a TTL of one day.
-   * @see: https://github.com/BryanDonovan/node-cache-manager#store-engines
-   */
-  cacheStore?: StoreConfig
-
-  /**
    * Enable the filesystem cache.
    *
    * This will save every cached page to the specified location, preserving URL
@@ -124,18 +116,6 @@ function enabledForRequest() {
   return true
 }
 
-/**
- * Default cache store.
- *
- * Use memory store with a TTL of one day.
- */
-function defaultCacheStore(): StoreConfig {
-  return {
-    store: 'memory',
-    ttl: 60 * 60 * 24
-  }
-}
-
 /*
  * Attaches a custom renderRoute method.
  *
@@ -151,7 +131,6 @@ const cacheModule: Module = function () {
   const config: CacheConfig = {
     enabled: !!provided.enabled,
     debug: !!provided.debug,
-    cacheStore:  provided.cacheStore || defaultCacheStore,
     filesystem: provided.filesystem,
     serverAuth: provided.serverAuth,
     enabledForRequest: provided.enabledForRequest || enabledForRequest,
