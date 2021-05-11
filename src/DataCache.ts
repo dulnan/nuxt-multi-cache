@@ -88,4 +88,8 @@ export default class DataCache {
   getCountForTag(tag: string): number {
     return this.tagCount[tag] || 0
   }
+
+  purgeAll() {
+    this.lru.reset()
+  }
 }

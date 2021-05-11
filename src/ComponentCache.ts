@@ -108,6 +108,10 @@ export default class ComponentCache implements RenderCache {
     return { rows, total: i }
   }
 
+  purgeAll() {
+    this.lru.reset()
+  }
+
   getCountForTag(tag: string): number {
     return this.tagCount[tag] || 0
   }

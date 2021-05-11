@@ -272,7 +272,8 @@ export default class Cache {
    */
   purgeAll(): Promise<any> {
     return this.disk.purgeAll().then(() => {
-      return this.db.exec('DELETE FROM files')
+      this.db.exec('DELETE FROM page_cache')
+      this.db.exec('DELETE FROM cache_groups')
     })
   }
 }

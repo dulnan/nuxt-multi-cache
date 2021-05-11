@@ -33,7 +33,6 @@ export default function createServerMiddleware(
 ) {
   const app = express()
   const serverAuthCheckFn = typeof serverAuth === 'object' ? getDefaultPurgeAuthCheck(serverAuth) : serverAuth
-  console.log(serverAuthCheckFn)
   app.use(express.json())
 
   // Create the middleware to check if a purge request is allowed or not.
@@ -57,10 +56,12 @@ export default function createServerMiddleware(
     logger('Purge all')
     try {
       await cache.purgeAll()
+      dataCache.purgeAll()
+      componentCache.purgeAll()
     } catch (e) {
       res.status(500).send()
     }
-    res.status(200).send()
+    res.status(200).send({ success: true })
   })
 
   /*
