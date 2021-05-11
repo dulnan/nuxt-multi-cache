@@ -14,19 +14,24 @@ export default class Disk {
     this.folderData = path.join(folder, 'data')
   }
 
-  write(route: string, markup: string): Promise<string> {
-    let dest = withoutTrailingSlash(normalizeURL(route))
+  mapUrlToFilePath(url = ''): string {
+    let dest = withoutTrailingSlash(normalizeURL(url))
     if (dest === '/') {
       dest = 'index.html'
     } else {
       dest += '.html'
     }
 
-    const destDir = path.join(this.folderPages, path.dirname(dest))
+    return path.join(this.folderPages, dest)
+  }
+
+  write(route: string, markup: string): Promise<string> {
+    const filePath = this.mapUrlToFilePath(route)
+    const destDir = path.dirname(filePath)
+
     return makeDir(destDir).then(() => {
-      const filePath = path.join(this.folderPages, dest)
       return fs.promises.writeFile(filePath, markup).then(() => {
-        return dest
+        return filePath
       })
     })
   }
@@ -58,15 +63,12 @@ export default class Disk {
   /**
    * Remove the file.
    */
-  remove(filePath = ''): Promise<boolean> {
-    if (!filePath) {
-      return Promise.resolve(false)
-    }
-    const dest = path.join(this.folderPages, filePath)
-    return this.fileExists(dest)
+  remove(route = ''): Promise<boolean> {
+    const filePath = this.mapUrlToFilePath(route)
+    return this.fileExists(filePath)
       .then((exists) => {
         if (exists) {
-          return fs.promises.unlink(dest)
+          return fs.promises.unlink(filePath)
         }
       })
       .then(() => true)

@@ -1,10 +1,13 @@
 import { CacheConfig } from "."
 import path from 'path'
 import Disk from "./helpers/disk"
-import SQLite, {Statement} from 'better-sqlite3'
 import sqlite3 from 'sqlite3'
 import { PREPARE } from './DB'
 import ComponentCache from "./ComponentCache"
+
+function onlyUnique(item: any, pos: number, self: any) {
+  return self.indexOf(item) == pos;
+}
 
 interface RouteCacheQueueEntry {
   tag: string
@@ -51,22 +54,13 @@ export default class Cache {
   /**
    * DB statements.
    */
-  dbSpaceGet: sqlite3.Statement
-  dbSpaceCreate: sqlite3.Statement
-  dbTagGet: sqlite3.Statement
-  dbTagCreate: sqlite3.Statement
-  dbRouteGet: sqlite3.Statement
-  dbRouteCreate: sqlite3.Statement
-  dbCacheInsert: sqlite3.Statement
-  dbRouteQueryRows: sqlite3.Statement
-  dbRouteQueryTotal: sqlite3.Statement
-  dbRouteQuerySearchRows: sqlite3.Statement
-  dbRouteQuerySearchTotal: sqlite3.Statement
-  dbRouteById: sqlite3.Statement
-  dbCacheRemove: sqlite3.Statement
-  dbRouteUpdate: sqlite3.Statement
+  dbRoutesTotal: sqlite3.Statement
+  dbRoutesRows: sqlite3.Statement
   dbTagsRows: sqlite3.Statement
   dbTagsTotal: sqlite3.Statement
+  dbRemoveRoute: sqlite3.Statement
+  dbGetGetCacheGroup: sqlite3.Statement
+  dbGetCacheGroups: sqlite3.Statement
 
   insertQueue: RouteCacheQueueEntry[]
 
@@ -84,27 +78,16 @@ export default class Cache {
     this.insertQueue = []
 
     this.initDatabase()
-    this.dbSpaceGet = this.db.prepare('SELECT sid FROM spaces WHERE space = ?')
-    this.dbSpaceCreate = this.db.prepare('INSERT or IGNORE INTO spaces (space) VALUES (?)')
-    this.dbTagGet = this.db.prepare('SELECT tid FROM tags WHERE tag = ?')
-    this.dbTagCreate = this.db.prepare('INSERT or IGNORE INTO tags (tag) VALUES (?)')
-    this.dbRouteGet = this.db.prepare('SELECT rid FROM routes WHERE route = ?')
-    this.dbRouteCreate = this.db.prepare('INSERT or IGNORE INTO routes (route, path) VALUES (?, ?)')
-    this.dbCacheInsert = this.db.prepare('INSERT or IGNORE INTO cache (sid, tid, rid) VALUES (?, ?, ?)')
 
-    this.dbRouteQueryRows = this.db.prepare('SELECT * FROM routes LIMIT 100 OFFSET ?')
-    this.dbRouteQueryTotal = this.db.prepare('SELECT COUNT() as count FROM routes')
+    this.dbTagsRows = this.db.prepare('SELECT tag, COUNT(tag) as count FROM page_cache GROUP BY tag ORDER BY count DESC LIMIT 100 OFFSET ?')
+    this.dbTagsTotal = this.db.prepare('SELECT COUNT(DISTINCT tag) as total FROM page_cache')
 
-    this.dbRouteQuerySearchRows = this.db.prepare('SELECT routes.rid, routes.route, routes.path, routes.timestamp FROM routes INNER JOIN cache c on routes.rid = c.rid WHERE c.tid = ? LIMIT 100 OFFSET ?')
-    this.dbRouteQuerySearchTotal = this.db.prepare('SELECT COUNT(routes.rid) as count FROM routes INNER JOIN cache c on routes.rid = c.rid WHERE c.tid = ?')
+    this.dbRoutesRows = this.db.prepare('SELECT COUNT(tag) as count, route FROM page_cache GROUP BY route ORDER BY count DESC LIMIT 100 OFFSET ?')
+    this.dbRoutesTotal = this.db.prepare('SELECT COUNT(DISTINCT route) as total FROM page_cache')
 
-    this.dbRouteById = this.db.prepare('SELECT * FROM routes WHERE rid = ?')
-    this.dbCacheRemove = this.db.prepare('DELETE FROM cache WHERE rid = ?')
-    this.dbRouteUpdate = this.db.prepare('UPDATE routes SET timestamp = CURRENT_TIMESTAMP, path = ? WHERE ? = rid')
-
-    this.dbTagsRows = this.db.prepare('SELECT tag, COUNT(*) as "count" FROM tags INNER JOIN cache c on tags.tid = c.tid GROUP BY c.tid ORDER BY count DESC LIMIT 48 OFFSET ?')
-    this.dbTagsTotal = this.db.prepare('SELECT COUNT() as count FROM tags')
-
+    this.dbRemoveRoute = this.db.prepare('DELETE FROM page_cache WHERE route = ?')
+    this.dbGetGetCacheGroup = this.db.prepare('SELECT name FROM cache_groups WHERE tag = ?')
+    this.dbGetCacheGroups = this.db.prepare('SELECT name, tag FROM cache_groups')
 
     setInterval(() => {
       this.performWrite()
@@ -131,9 +114,9 @@ export default class Cache {
   /**
    * Add a route to the cache.
    */
-  set(route: string, tags: string[] = [], globalTags: string[] = [], data: string): Promise<boolean> {
-    return this.disk.write(route, data).then(filePath => {
-      return this.insert(route, filePath, tags, globalTags)
+  set(route: string, tags: string[] = [], data: string): Promise<boolean> {
+    return this.disk.write(route, data).then(() => {
+      return this.insert(route, tags)
     }).then(() => {
       return true
     }).catch((e) => {
@@ -145,104 +128,51 @@ export default class Cache {
   /**
    * Insert tags in to the database.
    */
-  insert(route: string, filePath: string, tags: string[], globalTags: string[]) {
+  insert(route: string, tags: string[]) {
     for (const tag of tags) {
       this.insertQueue.push({ tag, route })
     }
   }
 
-  /**
-   * Get route ID.
-   */
-  getRouteId(route: string, filePath: string): number {
-    if (this.routeMap.has(route)) {
-      return this.routeMap.get(route) as number
-    }
-    let { rid } = this.dbRouteGet.get(route) || {}
-
-    if (!rid) {
-      const result = this.dbRouteCreate.run(route, filePath)
-      if (result.changes > 0) {
-        rid = result.lastInsertRowid
+  addCacheGroup(name: string, tags: string[] = []): Promise<void> {
+    return new Promise((resolve) => {
+      const statement = this.db.prepare('INSERT or IGNORE INTO cache_groups (name, tag) VALUES (?, ?)')
+      const queue: string[] = [...tags]
+      while (queue.length > 0) {
+        const tag = queue.pop()
+        statement.run(name, tag)
       }
-    }
-
-    this.routeMap.set(route, rid)
-
-    return rid
+      statement.finalize(() => {
+        resolve()
+      })
+    })
   }
 
-  /**
-   * Get space ID.
-   */
-  getTagId(tag: string, create = false): number|null {
-    if (this.tagMap.has(tag)) {
-      return this.tagMap.get(tag) as number
-    }
-    let { tid } = this.dbTagGet.get(tag) || {}
-
-    // Create the tag if 
-    if (!tid && create) {
-      const result = this.dbTagCreate.run(tag)
-      tid = result.lastInsertRowid
-    }
-
-    if (tid) {
-      this.tagMap.set(tag, tid)
-    }
-
-    return tid || null
-  }
-
-  /**
-   * Get space ID.
-   */
-  getSpaceId(space: string): number {
-    if (this.spaceMap.has(space)) {
-      return this.spaceMap.get(space) as number
-    }
-    let { sid } = this.dbSpaceGet.get(space) || {}
-
-    if (!sid) {
-      const result = this.dbSpaceCreate.run(space)
-      sid = result.lastInsertRowid
-    }
-
-    this.spaceMap.set(space, sid)
-
-    return sid
+  getAllPurgableTags(tags: string[]) {
+    return Promise.all(
+      tags.map((tag) =>
+        this.dbGetAll(this.dbGetGetCacheGroup, [tag]).then((v) => {
+          return [...v.map((e) => e.name), tag]
+        })
+      )
+    ).then(v => v.flat().filter(onlyUnique))
   }
 
   /**
    * Purge by tags.
    */
-  purgeTags(tags: string[] = []): Promise<boolean> {
-    // Map the tags to their IDs and filter any tags not currently used.
-    const tids = tags.map(tag => {
-      return this.getTagId(tag)
-    }).filter(Boolean)
+  async purgeTags(tags: string[] = []): Promise<any> {
+    const condition = tags.map(v => `'${v}'`).join(',')
+    const querySelect = `SELECT DISTINCT route FROM page_cache WHERE tag IN (${condition})`
+    const select = this.db.prepare(querySelect)
+    const routes = await this.dbGetAll(select).then(v => v.map(v => v.route))
 
-    // We can safely concat our query because we only have IDs in our tids
-    // array.
+    await Promise.all(routes.map(route => this.disk.remove(route)))
 
-    // Create the statement.
-    const querySelect = this.db.prepare(`SELECT DISTINCT path, cache.rid FROM cache INNER JOIN routes r on r.rid = cache.rid WHERE tid IN (${tids.join(',')})`)
-    // Get a list of all paths.
-    const rows = querySelect.all()
+    const remove = this.db.prepare(`DELETE FROM page_cache WHERE route IN (${querySelect})`)
+    remove.run()
 
-    return Promise.all(rows.map(row => {
-      return this.disk.remove(row.path)
-    })).then(() => {
-      const queryDelete = `
-        UPDATE routes SET timestamp = CURRENT_TIMESTAMP, path = '' WHERE rid IN (SELECT DISTINCT rid FROM cache WHERE tid IN (${tids.join(',')}));
-        DELETE FROM cache WHERE rid IN (SELECT DISTINCT rid FROM cache WHERE tid IN (${tids.join(',')}));
-      `
-      this.db.exec(queryDelete)
-      return true
-    }).catch((e) => {
-      console.log(e)
-      return false
-    })
+    return Promise.resolve({ total: routes.length })
   }
 
   /**
@@ -255,67 +185,86 @@ export default class Cache {
   /**
    * Get a list of routes.
    */
-  getRoutes(offset = 0, tag = '') {
-    if (tag) {
-      const tid = this.getTagId(tag)
-      const total = this.dbRouteQuerySearchTotal.get([tid])
-      console.log(total)
-      const rows = this.dbRouteQuerySearchRows.all([tid, offset])
-      return { total: total.count, rows }
-    }
+  async getRoutes(offset = 0) {
+    try {
+      const total = await this.dbGet(this.dbRoutesTotal).then(v => v.total)
+      const rows = await this.dbGetAll(this.dbRoutesRows, [offset])
 
-    const total = this.dbRouteQueryTotal.get().count
-    const rows = this.dbRouteQueryRows.all([offset])
-    return { total, rows }
+      return { total, rows }
+    } catch(e) {
+      console.log(e)
+    }
+  }
+
+  dbGetAll(query: sqlite3.Statement, params?: any[]): Promise<Record<string, any>[]> {
+    return new Promise((resolve, reject) => {
+      query.all(params, (err, rows) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(rows)
+        }
+      })
+    })
+  }
+
+  dbGet(query: sqlite3.Statement, params?: any[]): Promise<Record<string, any>> {
+    return new Promise((resolve, reject) => {
+      query.get(params, (err, row) => {
+        if (err) {
+          reject(err)
+        } else {
+          resolve(row)
+        }
+      })
+    })
+  }
+
+  getCacheGroups() {
+    return this.dbGetAll(this.dbGetCacheGroups).then(rows => {
+      const map = rows.reduce<Record<string, string[]>>((acc, row) => {
+        if (!acc[row.name]) {
+          acc[row.name] = []
+        }
+        acc[row.name].push(row.tag)
+        return acc
+      }, {})
+
+      const result = Object.keys(map).map(name => {
+        return {
+          name,
+          tags: map[name]
+        }
+      })
+
+      return { total: result.length, rows: result }
+    })
   }
 
   /**
    * Get a list of tags and their usage count.
    */
-  getTags(offset = 0) {
-    const total = this.dbTagsTotal.get().count
-    const rows = this.dbTagsRows.all([offset])
-    return { total, rows}
-  }
+  async getTags(offset = 0) {
+    try {
+      const total = await this.dbGet(this.dbTagsTotal).then(v => v.total)
+      const rows = await this.dbGetAll(this.dbTagsRows, [offset])
 
-  /**
-   * Purge a single route.
-   */
-  purgeRoute(rid: number) {
-    const route = this.dbRouteById.get(rid)
-    if (!route) {
-      console.log('Failed to purge route id:' + rid)
-      return Promise.reject('Route does not exist')
+    return { total, rows }
+    } catch(e) {
+      console.log(e)
+      return { total: 0, rows: [] }
     }
-
-    return this.disk.remove(route.path).then(success => {
-      return this.dbCacheRemove.run(rid)
-    }).then(() => {
-      return this.dbRouteUpdate.run(null, rid)
-    }).then(() => {
-      return route
-    })
   }
 
   /**
    * Purge URLs.
    */
-  purgeUrls(_urls: string[]) {
+  purgeUrls(urls: string[]) {
+    urls.forEach((url) => {
+      this.disk.remove(url)
+      this.dbRemoveRoute.run(url)
+    })
     return Promise.resolve(true)
-    // const route = this.dbRouteById.get(rid)
-    // console.log('::purgeRoute', route)
-    // if (!route) {
-    //   console.log('Failed to purge route id:' + rid)
-    //   return Promise.reject('Route does not exist')
-    // }
-    //
-    // return this.disk.remove(route.path).then(success => {
-    //   return this.dbCacheRemove.run(rid)
-    // }).then(() => {
-    //   return this.dbRouteUpdate.run(null, rid)
-    // }).then(() => {
-    //   return route
-    // })
   }
 
   /**

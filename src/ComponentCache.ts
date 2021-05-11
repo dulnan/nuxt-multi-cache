@@ -20,12 +20,14 @@ function parseCacheKey(value = '') {
 
 export default class ComponentCache implements RenderCache {
   lru: LRU<string, ComponentCacheEntry>
+  tagCount: Record<string, number>
 
   constructor(config: ComponentCacheConfig) {
     this.lru = new LRU({
       max: 100000,
       ...config.lruOptions
     })
+    this.tagCount = {}
   }
 
   get(value: string, cb?: (res: string) => void): string | void {
@@ -43,6 +45,7 @@ export default class ComponentCache implements RenderCache {
   set(value: string, component: any): void {
     const { key, tags } = parseCacheKey(value)
     console.log('ComponentCache::set()   ' + key)
+    this.updateTagCount(tags)
     this.lru.set(key, { tags, component, timestamp: Date.now() })
   }
 
@@ -54,6 +57,36 @@ export default class ComponentCache implements RenderCache {
       cb(result)
     }
     return result
+  }
+
+  updateTagCount(tags: string[] = []) {
+    tags.forEach(tag => {
+      if (!this.tagCount[tag]) {
+        this.tagCount[tag] = 0
+      }
+      this.tagCount[tag]++
+    })
+  }
+
+  purge(keys: string[] = []) {
+    keys.forEach(key => {
+      if (this.lru.has(key)) {
+        this.lru.del(key)
+      }
+    })
+  }
+
+  purgeTags(tags: string[] = []) {
+    const removedKeys: string[] = []
+    this.lru.forEach((entry, key) => {
+      const match = entry.tags.some(v => tags.includes(v))
+      if (match) {
+        removedKeys.push(key)
+        this.lru.del(key)
+      }
+    })
+
+    return { removed: removedKeys, total: removedKeys.length }
   }
 
   getEntries(offset = 0, perPage = 128) {
@@ -73,5 +106,9 @@ export default class ComponentCache implements RenderCache {
     })
 
     return { rows, total: i }
+  }
+
+  getCountForTag(tag: string): number {
+    return this.tagCount[tag] || 0
   }
 }

@@ -2,13 +2,22 @@ import express, { NextFunction, Request, Response } from 'express'
 import Cache from './Cache'
 import ComponentCache from './ComponentCache'
 import DataCache from './DataCache'
+import basicAuth from 'basic-auth'
 
-export type PurgeAuthCheckMethod = (req: Request) => boolean
+export type ServerAuthMethod = (req: Request) => boolean
+export interface ServerAuthCredentials {
+  username: string
+  password: string
+}
 
-function getDefaultPurgeAuthCheck(secret: string) {
-  return function (req: Request) {
-    const providedSecret = req.header('x-nuxt-cache-secret') || req.query.secret
-    return providedSecret === secret
+function getDefaultPurgeAuthCheck(config: ServerAuthCredentials): ServerAuthMethod {
+  return function (req: Request): boolean {
+    const auth = basicAuth(req)
+    if (auth) {
+      return auth.name === config.username && auth.pass === config.password
+    }
+
+    return false
   }
 }
 
@@ -20,10 +29,11 @@ export default function createServerMiddleware(
   cache: Cache,
   dataCache: DataCache,
   componentCache: ComponentCache,
-  purgeAuthCheck: PurgeAuthCheckMethod|string,
+  serverAuth: ServerAuthMethod|ServerAuthCredentials
 ) {
   const app = express()
-  const purgeAuthCheckFn = typeof purgeAuthCheck === 'string' ? getDefaultPurgeAuthCheck(purgeAuthCheck) : purgeAuthCheck
+  const serverAuthCheckFn = typeof serverAuth === 'object' ? getDefaultPurgeAuthCheck(serverAuth) : serverAuth
+  console.log(serverAuthCheckFn)
   app.use(express.json())
 
   // Create the middleware to check if a purge request is allowed or not.
@@ -32,7 +42,7 @@ export default function createServerMiddleware(
     res: Response,
     next: NextFunction
   ) {
-    if (purgeAuthCheckFn(req)) {
+    if (serverAuthCheckFn(req)) {
       next()
     } else {
       res.status(403).send()
@@ -62,9 +72,34 @@ export default function createServerMiddleware(
       return res.status(400).send({ success: false })
     }
     logger('Purge tags')
+    console.log(tags)
 
     try {
-      await cache.purgeTags(tags)
+      const allTags = await cache.getAllPurgableTags(tags)
+      const resultRoutes = await cache.purgeTags(allTags)
+      const resultComponents = componentCache.purgeTags(allTags)
+      const resultData = dataCache.purgeTags(allTags)
+      console.log('Purged tags: ')
+      console.table(allTags)
+      res.status(200).send({ success: true, routes: resultRoutes, components: resultComponents, data: resultData })
+    } catch (e) {
+      console.log(e)
+      res.status(500).send({ success: false })
+    }
+  })
+
+  /*
+   * Endpoint to purge components by key.
+   */
+  app.post('/purge/components', function (req: Request, res: Response) {
+    const components = req.body || []
+    if (!components.length) {
+      return res.status(400).send({ success: false })
+    }
+    logger('Purge components: ' + components.join(', '))
+
+    try {
+      componentCache.purge(components)
       console.log('success')
       res.status(200).send({ success: true })
     } catch (e) {
@@ -74,30 +109,9 @@ export default function createServerMiddleware(
   })
 
   /*
-   * Endpoint to purge a single route.
-   */
-  app.post('/purge/route/:rid', async function (req: Request, res: Response) {
-    const rid = parseInt(req.params.rid)
-    if (!rid) {
-      return res.status(400).send()
-    }
-    logger('Purge route')
-
-    try {
-      const route = await cache.purgeRoute(rid)
-      res.json({ success: true, route }).send()
-    } catch (e) {
-      res.status(500).send({
-        success: false,
-        error: 'Failed to purge route.'
-      })
-    }
-  })
-
-  /*
    * Endpoint to purge by URL.
    */
-  app.post('/purge/url', async function (req: Request, res: Response) {
+  app.post('/purge/routes', async function (req: Request, res: Response) {
     logger('Purge urls')
     const urls = req.body
     if (!urls) {
@@ -110,7 +124,30 @@ export default function createServerMiddleware(
     } catch (e) {
       res.status(500).send({
         success: false,
-        error: 'Failed to purge route.'
+        error: 'Failed to purge routes.'
+      })
+    }
+  })
+
+  /*
+   * Endpoint to purge by URL.
+   */
+  app.post('/purge/data', async function (req: Request, res: Response) {
+    logger('Purge urls')
+    const keys = req.body
+    if (!keys) {
+      return res.status(400).send({ success: false })
+    }
+
+    try {
+      keys.forEach((key: string) => {
+        dataCache.purgeEntry(key)
+      })
+      res.json({ success: true }).send()
+    } catch (e) {
+      res.status(500).send({
+        success: false,
+        error: 'Failed to purge routes.'
       })
     }
   })
@@ -122,8 +159,7 @@ export default function createServerMiddleware(
     try {
       const offsetValue = req.query.offset
       const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
-      const tag = typeof req.query.tag === 'string' ? req.query.tag : ''
-      res.json(cache.getRoutes(offset, tag))
+      res.json(await cache.getRoutes(offset))
     } catch (e) {
       res.status(500).send({ success: false })
     }
@@ -136,7 +172,17 @@ export default function createServerMiddleware(
     try {
       const offsetValue = req.query.offset
       const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
-      res.json(cache.getTags(offset))
+
+      const result = await cache.getTags(offset)
+      const rows = result?.rows.map(row => {
+        return {
+          ...row,
+          componentCount: componentCache.getCountForTag(row.tag),
+          dataCount: dataCache.getCountForTag(row.tag),
+        }
+      })
+
+      res.json({ total: result.total, rows })
     } catch (e) {
       res.status(500).send({ success: false })
     }
@@ -150,6 +196,30 @@ export default function createServerMiddleware(
       const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
     try {
       res.json(componentCache.getEntries(offset))
+    } catch (e) {
+      res.status(500).send({ success: false })
+    }
+  })
+
+  /*
+   * Endpoint to get stats about data cache.
+   */
+  app.get('/stats/data', async function (req: Request, res: Response) {
+      const offsetValue = req.query.offset
+      const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
+    try {
+      res.json(dataCache.getEntries(offset))
+    } catch (e) {
+      res.status(500).send({ success: false })
+    }
+  })
+
+  /*
+   * Endpoint to get stats about cache groups.
+   */
+  app.get('/stats/cache_groups', async function (req: Request, res: Response) {
+    try {
+      res.json(await cache.getCacheGroups())
     } catch (e) {
       res.status(500).send({ success: false })
     }

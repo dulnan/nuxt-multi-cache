@@ -44,18 +44,27 @@ export class RouteCacheHelper {
    *
    * When purging one of the global tags it will immediately purge all routes.
    */
-  addGlobalTags(tags = []) {
+  addCacheGroup(name: string, tags = []) {
     if (this.cacheHelper) {
-      this.cacheHelper.globalTags = [...this.cacheHelper.globalTags, ...tags]
+      this.cacheHelper.cacheGroups.push({ name, tags })
     }
   }
 
   /**
    * Set a data cache entry.
    */
-  setDataCache(key: string, data: string, _tags: string[] = []) {
+  setDataCache(key: string, data: any, tags: string[] = []) {
     if (this.dataCache) {
-      this.dataCache.set(key, data)
+      this.dataCache.set(key, data, tags)
+    }
+  }
+
+  /**
+   * Set a data cache entry tags.
+   */
+  setDataCacheTags(key: string, tags: string[] = []) {
+    if (this.dataCache) {
+      this.dataCache.setTags(key, tags)
     }
   }
 

@@ -21,6 +21,7 @@
     "lib/"
   ],
   "dependencies": {
+    "basic-auth": "^2.0.1",
     "better-sqlite3": "^7.1.5",
     "cache-manager": "^3.4.3",
     "express": "^4.17.1",
@@ -32,6 +33,7 @@
   },
   "devDependencies": {
     "@nuxt/types": "^2.14.12",
+    "@types/basic-auth": "^1.1.3",
     "@types/better-sqlite3": "^5.4.1",
     "@types/cache-manager": "^3.4.0",
     "@types/lru-cache": "^5.1.0",

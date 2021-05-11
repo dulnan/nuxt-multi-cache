@@ -1,11 +1,16 @@
+export interface CacheHelperCacheGroupEntry {
+  name: string
+  tags: string[]
+}
+
 export default class NuxtSSRCacheHelper {
   tags: string[]
-  globalTags: string[]
+  cacheGroups: CacheHelperCacheGroupEntry[]
   cacheable: boolean
 
   constructor() {
     this.tags = []
-    this.globalTags = []
+    this.cacheGroups = []
     this.cacheable = false
   }
 }

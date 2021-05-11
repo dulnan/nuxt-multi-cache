@@ -2,7 +2,7 @@ import path from 'path'
 import { Url } from 'url'
 import { Context, Module } from '@nuxt/types'
 import Cache from './Cache'
-import serverMiddleware, { PurgeAuthCheckMethod } from './serverMiddleware'
+import serverMiddleware, { ServerAuthMethod, ServerAuthCredentials } from './serverMiddleware'
 import NuxtSSRCacheHelper from './ssrContextHelper'
 import { StoreConfig } from 'cache-manager'
 import { Options as LRUOptions } from 'lru-cache'
@@ -64,16 +64,15 @@ export interface CacheConfig {
   filesystem: CacheConfigFilesystem|null|undefined
 
   /**
-   * Authenticate a purge request.
+   * Authenticate a server request.
    *
-   * If you provide a string it will use the default method and check the
-   * x-nuxt-cache-secret header for that string value.
-   *
+   * Provide an object with username and password properties to authenticate
+   * using basic auth.
    * If you provide a function, you can perform the authentication yourself.
    * The function receives the request as an argument and should return a
    * boolean.
    */
-  purgeAuthCheck: PurgeAuthCheckMethod|string
+  serverAuth: ServerAuthMethod|ServerAuthCredentials
 
   /**
    * A method to decide if a request should be considered for caching.
@@ -154,7 +153,7 @@ const cacheModule: Module = function () {
     debug: !!provided.debug,
     cacheStore:  provided.cacheStore || defaultCacheStore,
     filesystem: provided.filesystem,
-    purgeAuthCheck: provided.purgeAuthCheck,
+    serverAuth: provided.serverAuth,
     enabledForRequest: provided.enabledForRequest || enabledForRequest,
     getCacheKey: provided.getCacheKey || getCacheKey,
     componentCache: provided.componentCache || { enabled: true }
@@ -189,9 +188,9 @@ const cacheModule: Module = function () {
   }
 
   // Disable caching if no purge authorization if provided.
-  if (typeof provided.purgeAuthCheck !== 'string' && typeof provided.purgeAuthCheck !== 'function') {
+  if (typeof provided.serverAuth !== 'object' && typeof provided.serverAuth !== 'function') {
     logger(
-      'No purgeAuthCheck function or string provided, caching is disabled.',
+      'No serverAuth function or basic auth config provided, caching is disabled.',
       'warn'
     )
     return
@@ -214,7 +213,7 @@ const cacheModule: Module = function () {
   // Add the server middleware to manage the cache.
   this.addServerMiddleware({
     path: '/__route_cache',
-    handler: serverMiddleware(cache, dataCache, componentCache, config.purgeAuthCheck),
+    handler: serverMiddleware(cache, dataCache, componentCache, config.serverAuth),
   })
 
   // Inject the cache helper object into the SSR context.
@@ -249,9 +248,11 @@ const cacheModule: Module = function () {
         if (context.$cacheHelper && context.$cacheHelper.cacheable) {
           // console.log(context.$cacheHelper.componentTags)
           const tags = context.$cacheHelper.tags || []
-          const globalTags = context.$cacheHelper.globalTags || []
+          const cacheGroups = context.$cacheHelper.cacheGroups || []
+          cacheGroups.forEach((group: any) => cache.addCacheGroup(group.name, group.tags))
+          
           cache
-            .set(cacheKey as string, tags, globalTags, result.html)
+            .set(cacheKey as string, tags, result.html)
             .then(() => {
               logger('Cached route: ' + route)
               logger('         key: ' + cacheKey)
