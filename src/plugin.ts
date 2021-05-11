@@ -12,18 +12,38 @@ export class RouteCacheHelper {
     }
   }
 
+  /**
+   * Mark the current request as cacheable.
+   *
+   * Note: If the current request was set to 'uncachable' before, it will not
+   * set it to cacheable again.
+   */
   setCacheable() {
     if (this.cacheHelper) {
+      if (this.cacheHelper.cacheableSet) {
+        console.log('The request has already been set as uncachable.')
+        return
+      }
       this.cacheHelper.cacheable = true
     }
   }
 
+  /**
+   * Set this request to be uncachable.
+   *
+   * Note: This function should only be called once. Afterwards it's not
+   * possible to set the request to be cacheable again.
+   */
   seUncacheable() {
     if (this.cacheHelper) {
       this.cacheHelper.cacheable = false
+      this.cacheHelper.cacheableSet = true
     }
   }
 
+  /**
+   * Add cache tags for the current request.
+   */
   addTags(tags = []) {
     if (this.cacheHelper) {
       this.cacheHelper.tags = [...this.cacheHelper.tags, ...tags]
@@ -31,18 +51,22 @@ export class RouteCacheHelper {
   }
 
   /**
-   * Add global tags.
+   * Add a cache ground.
    *
    * These should be tags that are present on all or a significant amount of
    * routes, for example tags of menu items and their links.
    *
-   * Global tags are not added to the regular cache tags of a route, because
-   * that would add an unnecessary large amount of tags for every route which
-   * can quickly become an issue.
+   * Tags of a cache group are not added to the regular cache tags of a route,
+   * because that would add an unnecessary large amount of tags for every route
+   * which can quickly become an issue.
    *
-   * Global tags are stored separately and are not linked to the current route.
+   * Cache groups are stored separately and are not linked to the current route.
    *
-   * When purging one of the global tags it will immediately purge all routes.
+   * You can assign the cache group name as a regular tag to components, data
+   * or routes.
+   *
+   * If a tag of a cache group is purged, it will also automatically purge all
+   * entries that reference this cache group.
    */
   addCacheGroup(name: string, tags = []) {
     if (this.cacheHelper) {

@@ -1,7 +1,7 @@
 {
   "name": "nuxt-route-cache",
-  "version": "1.0.2",
-  "description": "SSR full page cache for Nuxt.js",
+  "version": "1.1.0",
+  "description": "SSR route, component and data cache for Nuxt.js",
   "author": {
     "name": "Jan Hug",
     "url": "https://dulnan.net",

@@ -4,7 +4,6 @@ import { Context, Module } from '@nuxt/types'
 import Cache from './Cache'
 import serverMiddleware, { ServerAuthMethod, ServerAuthCredentials } from './serverMiddleware'
 import NuxtSSRCacheHelper from './ssrContextHelper'
-import { StoreConfig } from 'cache-manager'
 import { Options as LRUOptions } from 'lru-cache'
 import ComponentCache, {ComponentCacheEntry} from './ComponentCache'
 import DataCache from './DataCache'
@@ -87,11 +86,21 @@ export interface CacheConfig {
    */
   getCacheKey?: GetCacheKeyMethod
 
+  /**
+   * Configuration for the component cache.
+   */
   componentCache?: ComponentCacheConfig
 }
 
 export interface ComponentCacheConfig {
+  /**
+   * Enable component caching.
+   */
   enabled: boolean
+
+  /**
+   * Options passed to the lru cache for components.
+   */
   lruOptions?: LRUOptions<string, ComponentCacheEntry>
 }
 
@@ -184,8 +193,7 @@ const cacheModule: Module = function () {
   // Create DataCache instance.
   const dataCache = new DataCache()
 
-  if (this.options.render.bundleRenderer) {
-    console.log('ADD COMPONENT CACHE')
+  if (config.componentCache?.enabled && this.options.render.bundleRenderer) {
     this.options.render.bundleRenderer.cache = componentCache
   }
 
