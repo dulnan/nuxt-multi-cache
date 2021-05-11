@@ -3,6 +3,7 @@ import Cache from './Cache'
 import ComponentCache from './ComponentCache'
 import DataCache from './DataCache'
 import basicAuth from 'basic-auth'
+export { getServerCacheKey } from './helpers/frontend'
 
 export type ServerAuthMethod = (req: Request) => boolean
 export interface ServerAuthCredentials {
