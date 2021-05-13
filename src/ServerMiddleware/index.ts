@@ -1,9 +1,9 @@
 import express, { NextFunction, Request, Response } from 'express'
-import Cache from './Cache'
-import ComponentCache from './ComponentCache'
-import DataCache from './DataCache'
+import FilesystemCache from './../Cache/Filesystem'
+import ComponentCache from './../Cache/Component'
+import DataCache from './../Cache/Data'
 import basicAuth from 'basic-auth'
-export { getServerCacheKey } from './helpers/frontend'
+export { getServerCacheKey } from './../helpers/frontend'
 
 export type ServerAuthMethod = (req: Request) => boolean
 export interface ServerAuthCredentials {
@@ -27,9 +27,9 @@ function logger(message: any) {
 }
 
 export default function createServerMiddleware(
-  cache: Cache,
-  dataCache: DataCache,
-  componentCache: ComponentCache,
+  cache: FilesystemCache|null,
+  dataCache: DataCache|null,
+  componentCache: ComponentCache|null,
   serverAuth: ServerAuthMethod|ServerAuthCredentials
 ) {
   const app = express()
@@ -56,9 +56,9 @@ export default function createServerMiddleware(
   app.post('/purge/all', async function (_req: Request, res: Response) {
     logger('Purge all')
     try {
-      await cache.purgeAll()
-      dataCache.purgeAll()
-      componentCache.purgeAll()
+      await cache?.purgeAll()
+      dataCache?.purgeAll()
+      componentCache?.purgeAll()
     } catch (e) {
       res.status(500).send()
     }
@@ -77,10 +77,10 @@ export default function createServerMiddleware(
     console.log(tags)
 
     try {
-      const allTags = await cache.getAllPurgableTags(tags)
-      const resultRoutes = await cache.purgeTags(allTags)
-      const resultComponents = componentCache.purgeTags(allTags)
-      const resultData = dataCache.purgeTags(allTags)
+      const allTags = await cache?.getAllPurgableTags(tags)
+      const resultRoutes = await cache?.purgeTags(allTags)
+      const resultComponents = componentCache?.purgeTags(allTags)
+      const resultData = dataCache?.purgeTags(allTags)
       console.log('Purged tags: ')
       console.table(allTags)
       res.status(200).send({ success: true, routes: resultRoutes, components: resultComponents, data: resultData })
@@ -101,7 +101,7 @@ export default function createServerMiddleware(
     logger('Purge components: ' + components.join(', '))
 
     try {
-      componentCache.purge(components)
+      componentCache?.purge(components)
       console.log('success')
       res.status(200).send({ success: true })
     } catch (e) {
@@ -121,7 +121,7 @@ export default function createServerMiddleware(
     }
 
     try {
-      const success = await cache.purgeUrls(urls)
+      const success = await cache?.purgeUrls(urls)
       res.json({ success }).send()
     } catch (e) {
       res.status(500).send({
@@ -143,7 +143,7 @@ export default function createServerMiddleware(
 
     try {
       keys.forEach((key: string) => {
-        dataCache.purgeEntry(key)
+        dataCache?.purgeEntry(key)
       })
       res.json({ success: true }).send()
     } catch (e) {
@@ -161,7 +161,7 @@ export default function createServerMiddleware(
     try {
       const offsetValue = req.query.offset
       const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
-      res.json(await cache.getRoutes(offset))
+      res.json(await cache?.getRoutes(offset))
     } catch (e) {
       res.status(500).send({ success: false })
     }
@@ -175,16 +175,16 @@ export default function createServerMiddleware(
       const offsetValue = req.query.offset
       const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
 
-      const result = await cache.getTags(offset)
+      const result = await cache?.getTags(offset)
       const rows = result?.rows.map(row => {
         return {
           ...row,
-          componentCount: componentCache.getCountForTag(row.tag),
-          dataCount: dataCache.getCountForTag(row.tag),
+          componentCount: componentCache?.getCountForTag(row.tag),
+          dataCount: dataCache?.getCountForTag(row.tag),
         }
       })
 
-      res.json({ total: result.total, rows })
+      res.json({ total: result?.total, rows })
     } catch (e) {
       res.status(500).send({ success: false })
     }
@@ -197,7 +197,7 @@ export default function createServerMiddleware(
       const offsetValue = req.query.offset
       const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
     try {
-      res.json(componentCache.getEntries(offset))
+      res.json(componentCache?.getEntries(offset))
     } catch (e) {
       res.status(500).send({ success: false })
     }
@@ -210,7 +210,7 @@ export default function createServerMiddleware(
       const offsetValue = req.query.offset
       const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
     try {
-      res.json(dataCache.getEntries(offset))
+      res.json(dataCache?.getEntries(offset))
     } catch (e) {
       res.status(500).send({ success: false })
     }
@@ -221,7 +221,7 @@ export default function createServerMiddleware(
    */
   app.get('/stats/cache_groups', async function (req: Request, res: Response) {
     try {
-      res.json(await cache.getCacheGroups())
+      res.json(await cache?.getCacheGroups())
     } catch (e) {
       res.status(500).send({ success: false })
     }

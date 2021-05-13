@@ -1,4 +1,5 @@
 import LRU from 'lru-cache'
+import { Options as LRUOptions } from 'lru-cache'
 
 export interface DataCacheEntry {
   tags: string[]
@@ -7,14 +8,21 @@ export interface DataCacheEntry {
   key: string
 }
 
+export interface DataCacheConfig {
+  enabled: boolean
+
+  /**
+   * Options passed to the lru cache for components.
+   */
+  lruOptions?: LRUOptions<string, DataCacheEntry>
+}
+
 export default class DataCache {
   lru: LRU<string, DataCacheEntry>
   tagCount: Record<string, number>
 
-  constructor() {
-    this.lru = new LRU({
-      max: 100000,
-    })
+  constructor(config: DataCacheConfig) {
+    this.lru = new LRU(config.lruOptions)
     this.tagCount = {}
   }
 

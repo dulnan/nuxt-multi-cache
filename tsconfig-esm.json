@@ -13,7 +13,11 @@
     "declarationDir": "./lib/types",
     "declarationMap": true,
     "removeComments": true,
-    "outDir": "./lib/esm"
+    "outDir": "./lib/esm",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["/*"]
+    }
   },
   "include": ["./src"]
 }

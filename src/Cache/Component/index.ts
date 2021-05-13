@@ -1,12 +1,24 @@
-import { ComponentCacheConfig } from './'
 import { RenderCache } from 'vue-server-renderer'
 import LRU from 'lru-cache'
+import { Options as LRUOptions } from 'lru-cache'
 
 export interface ComponentCacheEntry {
   tags: string[]
   timestamp?: number
   component?: any
   key?: string
+}
+
+export interface ComponentCacheConfig {
+  /**
+   * Enable component caching.
+   */
+  enabled: boolean
+
+  /**
+   * Options passed to the lru cache for components.
+   */
+  lruOptions?: LRUOptions<string, ComponentCacheEntry>
 }
 
 function parseCacheKey(value = '') {
@@ -18,15 +30,15 @@ function parseCacheKey(value = '') {
   }
 }
 
+/**
+ * Caches components.
+ */
 export default class ComponentCache implements RenderCache {
   lru: LRU<string, ComponentCacheEntry>
   tagCount: Record<string, number>
 
   constructor(config: ComponentCacheConfig) {
-    this.lru = new LRU({
-      max: 100000,
-      ...config.lruOptions
-    })
+    this.lru = new LRU(config.lruOptions)
     this.tagCount = {}
   }
 

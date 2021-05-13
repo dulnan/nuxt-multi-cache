@@ -1,5 +1,5 @@
-import DataCache from './DataCache'
-import NuxtSSRCacheHelper from './ssrContextHelper'
+import DataCache from './../Cache/Data'
+import NuxtSSRCacheHelper from './../ssrContextHelper'
 
 export class RouteCacheHelper {
   cacheHelper?: NuxtSSRCacheHelper
@@ -19,13 +19,15 @@ export class RouteCacheHelper {
    * set it to cacheable again.
    */
   setCacheable() {
-    if (this.cacheHelper) {
-      if (this.cacheHelper.cacheableSet) {
-        console.log('The request has already been set as uncachable.')
-        return
-      }
-      this.cacheHelper.cacheable = true
+    if (!this.cacheHelper) {
+      return
     }
+
+    if (this.cacheHelper.cacheableSet) {
+      console.log('The request has already been set as uncachable.')
+      return
+    }
+    this.cacheHelper.cacheable = true
   }
 
   /**
@@ -35,19 +37,22 @@ export class RouteCacheHelper {
    * possible to set the request to be cacheable again.
    */
   seUncacheable() {
-    if (this.cacheHelper) {
-      this.cacheHelper.cacheable = false
-      this.cacheHelper.cacheableSet = true
+    if (!this.cacheHelper) {
+      return
     }
+    this.cacheHelper.cacheable = false
+    this.cacheHelper.cacheableSet = true
   }
 
   /**
    * Add cache tags for the current request.
    */
   addTags(tags = []) {
-    if (this.cacheHelper) {
-      this.cacheHelper.tags = [...this.cacheHelper.tags, ...tags]
+    if (!this.cacheHelper) {
+      return
     }
+
+    this.cacheHelper.tags = [...this.cacheHelper.tags, ...tags]
   }
 
   /**
@@ -69,37 +74,45 @@ export class RouteCacheHelper {
    * entries that reference this cache group.
    */
   addCacheGroup(name: string, tags = []) {
-    if (this.cacheHelper) {
-      this.cacheHelper.cacheGroups.push({ name, tags })
+    if (!this.cacheHelper) {
+      return
     }
+
+    this.cacheHelper.cacheGroups.push({ name, tags })
   }
 
   /**
    * Set a data cache entry.
    */
   setDataCache(key: string, data: any, tags: string[] = []) {
-    if (this.dataCache) {
-      this.dataCache.set(key, data, tags)
+    if (!this.dataCache) {
+      return
     }
+
+    this.dataCache.set(key, data, tags)
   }
 
   /**
    * Set a data cache entry tags.
    */
   setDataCacheTags(key: string, tags: string[] = []) {
-    if (this.dataCache) {
-      this.dataCache.setTags(key, tags)
+    if (!this.dataCache) {
+      return
     }
+
+    this.dataCache.setTags(key, tags)
   }
 
   /**
    * Get a data cache entry.
    */
   getDataCache(key: string): any {
-    if (this.dataCache) {
-      if (this.dataCache.has(key)) {
-        return this.dataCache.get(key)
-      }
+    if (!this.dataCache) {
+      return
+    }
+
+    if (this.dataCache.has(key)) {
+      return this.dataCache.get(key)
     }
   }
 }

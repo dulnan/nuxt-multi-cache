@@ -1,37 +1,17 @@
 import path from 'path'
-import { Url } from 'url'
-import { Context, Module } from '@nuxt/types'
-import Cache from './Cache'
-import serverMiddleware, { ServerAuthMethod, ServerAuthCredentials } from './serverMiddleware'
+import { Module } from '@nuxt/types'
+import Filesystem, { CacheConfigFilesystem } from './Cache/Filesystem'
+import serverMiddleware, { ServerAuthMethod, ServerAuthCredentials } from './ServerMiddleware'
 import NuxtSSRCacheHelper from './ssrContextHelper'
-import { Options as LRUOptions } from 'lru-cache'
-import ComponentCache, {ComponentCacheEntry} from './ComponentCache'
-import DataCache from './DataCache'
+import ComponentCache, { ComponentCacheConfig } from './Cache/Component'
+import DataCache, { DataCacheConfig } from './Cache/Data'
 
-const PLUGIN_PATH = path.resolve(__dirname, 'plugin.js')
+const PLUGIN_PATH = path.resolve(__dirname, '/Plugin/')
 
 export type EnabledForRequestMethod = (req: any, route: string) => boolean
-export type GetCacheKeyMethod = (
-  route: string,
-  context: Context
-) => string | void
-
-export interface CacheConfigFilesystem {
-  /**
-   * Enable filesystem caching.
-   */
-  enabled: boolean
-
-  /**
-   * The folder where the routes should be written.
-   *
-   * You can use a relative or absolute path. It's also possible to use Nuxt
-   * path aliases: '~/cache'.
-   */
-  folder: string
-}
 
 export interface CacheConfig {
+
   /**
    * Enable the module globally.
    *
@@ -43,7 +23,7 @@ export interface CacheConfig {
   /**
    * Logs helpful debugging messages to the console.
    */
-  debug: boolean
+  debug?: boolean
 
   /**
    * Enable the filesystem cache.
@@ -52,7 +32,14 @@ export interface CacheConfig {
    * structure and mapping them to folders and file names. Use this to serve
    * cached routes directly from Apache, nginx or any web server.
    */
-  filesystem: CacheConfigFilesystem|null|undefined
+  filesystem?: CacheConfigFilesystem|null|undefined
+
+  /**
+   * Enable the route cache.
+   *
+   * This will cache routes in memory in a LRU cache.
+   */
+  route?: any
 
   /**
    * Authenticate a server request.
@@ -75,47 +62,14 @@ export interface CacheConfig {
   enabledForRequest: EnabledForRequestMethod
 
   /**
-   * Determine the unique cache key for a route.
-   *
-   * This can be used to rewrite how the route is identified in the caching
-   * process. For example, if you rely on query parameters for a route, you can
-   * rewrite them like this:
-   * /search?query=foo%20bar  => /search--query=foo__bar
-   * This will allow you to cache routes depending on the query parameter and
-   * then serve these from your webserver, if configured properly.
-   */
-  getCacheKey?: GetCacheKeyMethod
-
-  /**
    * Configuration for the component cache.
    */
   componentCache?: ComponentCacheConfig
-}
-
-export interface ComponentCacheConfig {
-  /**
-   * Enable component caching.
-   */
-  enabled: boolean
 
   /**
-   * Options passed to the lru cache for components.
+   * Configuration for the data cache.
    */
-  lruOptions?: LRUOptions<string, ComponentCacheEntry>
-}
-
-/**
- * Determine the cache key for a route.
- */
-function getCacheKey(route: string, context: any) {
-  const url = context.req._parsedUrl as Url
-  const pathname = url.pathname
-
-  if (!pathname) {
-    return
-  }
-
-  return route
+  dataCache?: DataCacheConfig
 }
 
 /**
@@ -143,8 +97,8 @@ const cacheModule: Module = function () {
     filesystem: provided.filesystem,
     serverAuth: provided.serverAuth,
     enabledForRequest: provided.enabledForRequest || enabledForRequest,
-    getCacheKey: provided.getCacheKey || getCacheKey,
-    componentCache: provided.componentCache || { enabled: true }
+    componentCache: provided.componentCache,
+    dataCache: provided.dataCache,
   }
 
   if (config.filesystem?.folder) {
@@ -153,8 +107,13 @@ const cacheModule: Module = function () {
   }
 
   // Add the cache helper plugin.
+  // There are different plugins for client and server. Only the server version
+  // actually does anything, the client plugin is implemting all methods as no-op.
   this.addPlugin({
-    src: PLUGIN_PATH,
+    src: PLUGIN_PATH + 'cache.server.js',
+  })
+  this.addPlugin({
+    src: PLUGIN_PATH + 'cache.client.js',
   })
 
   function logger(message: string, type: string = 'info') {
@@ -184,23 +143,28 @@ const cacheModule: Module = function () {
     return
   }
 
-  // Create component cache instance.
-  const componentCache = new ComponentCache(config.componentCache as ComponentCacheConfig)
+  // Create global cache instances.
+  let filesystemCache: Filesystem|null = null
+  let componentCache: ComponentCache|null = null
+  let dataCache: DataCache|null = null
 
-  // Create cache instance.
-  const cache = new Cache(config, componentCache)
-
-  // Create DataCache instance.
-  const dataCache = new DataCache()
-
-  if (config.componentCache?.enabled && this.options.render.bundleRenderer) {
+  if (config.componentCache && config.componentCache.enabled && this.options.render.bundleRenderer) {
+    componentCache = new ComponentCache(config.componentCache as ComponentCacheConfig)
     this.options.render.bundleRenderer.cache = componentCache
+  }
+
+  if (config.filesystem && config.filesystem.enabled) {
+    filesystemCache = new Filesystem(config.filesystem)
+  }
+
+  if (config.dataCache && config.dataCache.enabled) {
+    dataCache = new DataCache(config.dataCache)
   }
 
   // Add the server middleware to manage the cache.
   this.addServerMiddleware({
     path: '/__route_cache',
-    handler: serverMiddleware(cache, dataCache, componentCache, config.serverAuth),
+    handler: serverMiddleware(filesystemCache, dataCache, componentCache, config.serverAuth),
   })
 
   // Inject the cache helper object into the SSR context.
@@ -214,7 +178,10 @@ const cacheModule: Module = function () {
   const renderRoute = renderer.renderRoute.bind(renderer)
 
   renderer.renderRoute = function (route: string, context: any) {
-    const cacheKey = getCacheKey(route, context)
+    if (!filesystemCache) {
+      return renderRoute(route, context)
+    }
+    const cacheKey = filesystemCache?.getCacheKey(route, context)
     const cacheForRequest = config.enabledForRequest(context.req, route)
 
     if (!cacheKey || !cacheForRequest) {
@@ -229,16 +196,16 @@ const cacheModule: Module = function () {
     }
 
     // Render the page and put it in the cache if cacheable.
-    function renderSetCache() {
+    function renderWithCache() {
       return renderRoute(route, context).then((result: any) => {
         // Check if the route is set as cacheable.
-        if (context.$cacheHelper && context.$cacheHelper.cacheable) {
+        if (filesystemCache && context.$cacheHelper && context.$cacheHelper.cacheable) {
           // console.log(context.$cacheHelper.componentTags)
           const tags = context.$cacheHelper.tags || []
           const cacheGroups = context.$cacheHelper.cacheGroups || []
-          cacheGroups.forEach((group: any) => cache.addCacheGroup(group.name, group.tags))
-          
-          cache
+          cacheGroups.forEach((group: any) => filesystemCache?.addCacheGroup(group.name, group.tags))
+
+          filesystemCache
             .set(cacheKey as string, tags, result.html)
             .then(() => {
               logger('Cached route: ' + route)
@@ -252,7 +219,7 @@ const cacheModule: Module = function () {
       })
     }
 
-    return renderSetCache().catch(() => {
+    return renderWithCache().catch(() => {
       logger('Failed to cache route: ' + route, 'warn')
       return renderRoute(route, context)
     })
