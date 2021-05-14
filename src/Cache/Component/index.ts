@@ -1,6 +1,5 @@
-import { RenderCache } from 'vue-server-renderer'
-import LRU from 'lru-cache'
-import { Options as LRUOptions } from 'lru-cache'
+import { Cache } from './..'
+import LRU, { Options as LRUOptions } from 'lru-cache'
 
 export interface ComponentCacheEntry {
   tags: string[]
@@ -33,7 +32,7 @@ function parseCacheKey(value = '') {
 /**
  * Caches components.
  */
-export default class ComponentCache implements RenderCache {
+export default class ComponentCache implements Cache {
   lru: LRU<string, ComponentCacheEntry>
   tagCount: Record<string, number>
 
@@ -42,33 +41,38 @@ export default class ComponentCache implements RenderCache {
     this.tagCount = {}
   }
 
-  get(value: string, cb?: (res: string) => void): string | void {
+  getNamespace() {
+    return 'component'
+  }
+
+  get(value: string, cb?: (res: string) => void) {
     const { key } = parseCacheKey(value)
     const result = this.lru.get(key)
     const component = result?.component
     if (cb) {
       cb(component)
+      return
     }
 
-    console.log('ComponentCache::get()   ' + key)
-    return component
+    return Promise.resolve(component)
   }
 
-  set(value: string, component: any): void {
+  set(value: string, component: any) {
     const { key, tags } = parseCacheKey(value)
     console.log('ComponentCache::set()   ' + key)
     this.updateTagCount(tags)
     this.lru.set(key, { tags, component, timestamp: Date.now() })
+    return Promise.resolve(true)
   }
 
-  has(value: string, cb?: (hit: boolean) => void): boolean | void {
+  has(value: string, cb: (hit: boolean) => void) {
     const { key } = parseCacheKey(value)
     const result = this.lru.has(key)
 
     if (cb) {
-      cb(result)
+      return cb(result)
     }
-    return result
+    return Promise.resolve(result)
   }
 
   updateTagCount(tags: string[] = []) {
@@ -80,12 +84,14 @@ export default class ComponentCache implements RenderCache {
     })
   }
 
-  purge(keys: string[] = []) {
+  purgeKeys(keys: string[] = []) {
     keys.forEach(key => {
       if (this.lru.has(key)) {
         this.lru.del(key)
       }
     })
+
+    return Promise.resolve({ purged: keys.length, success: true })
   }
 
   purgeTags(tags: string[] = []) {
@@ -98,10 +104,11 @@ export default class ComponentCache implements RenderCache {
       }
     })
 
-    return { removed: removedKeys, total: removedKeys.length }
+    return Promise.resolve({ purged: removedKeys.length, success: true })
   }
 
-  getEntries(offset = 0, perPage = 128) {
+  getEntries(offset = 0) {
+    const perPage = 100
     const rows: ComponentCacheEntry[] = []
     const start = offset
     const end = start + (perPage - 1)
@@ -117,14 +124,16 @@ export default class ComponentCache implements RenderCache {
       i++
     })
 
-    return { rows, total: i }
+    return Promise.resolve({ rows, total: i })
   }
 
   purgeAll() {
+    const purged = this.lru.length
     this.lru.reset()
+    return Promise.resolve({ purged, success: true })
   }
 
-  getCountForTag(tag: string): number {
-    return this.tagCount[tag] || 0
+  getCountForTag(tag: string) {
+    return Promise.resolve(this.tagCount[tag] || 0)
   }
 }

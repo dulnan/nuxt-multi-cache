@@ -1,13 +1,18 @@
-export class RouteCacheHelperClient {
-  setCacheable() {}
-  seUncacheable() {}
-  addTags() {}
-  addCacheGroup() {}
-  setDataCache() {}
-  setDataCacheTags() {}
-  getDataCache() {}
-}
-
+// Create a mock plugin for use in a client context.
 export default (_context: any, inject: (key: string, value: any) => void) => {
-  inject('routeCache', new RouteCacheHelperClient())
+  inject('cache', {
+    route: {
+      setCacheable() {},
+      setUncacheable() {},
+      addTags() {},
+    },
+    data: {
+      set() {},
+      get() {},
+    },
+    groups: {
+      set() {},
+      get() {},
+    }
+  })
 }

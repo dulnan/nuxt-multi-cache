@@ -4,6 +4,7 @@ import Disk from './disk'
 import sqlite3 from 'sqlite3'
 import { PREPARE } from './db'
 import { Context } from '@nuxt/types'
+import { Cache } from './..'
 
 function onlyUnique(item: any, pos: number, self: any) {
   return self.indexOf(item) == pos
@@ -41,14 +42,6 @@ export interface CacheConfigFilesystem {
   enabled: boolean
 
   /**
-   * The folder where the routes should be written.
-   *
-   * You can use a relative or absolute path. It's also possible to use Nuxt
-   * path aliases: '~/cache'.
-   */
-  folder: string
-
-  /**
    * Determine the unique cache key for a route.
    *
    * This can be used to rewrite how the route is identified in the caching
@@ -71,7 +64,7 @@ export interface CacheConfigFilesystem {
  * Routes are saved to disk, so that they can directly be served by a web
  * server.
  */
-export default class FilesystemCache {
+export default class FilesystemCache implements Cache {
   disk: Disk
 
   /**
@@ -87,8 +80,7 @@ export default class FilesystemCache {
   dbTagsRows: sqlite3.Statement
   dbTagsTotal: sqlite3.Statement
   dbRemoveRoute: sqlite3.Statement
-  dbGetGetCacheGroup: sqlite3.Statement
-  dbGetCacheGroups: sqlite3.Statement
+  dbCountForTag: sqlite3.Statement
   insertQueue: RouteCacheQueueEntry[]
 
   /**
@@ -96,8 +88,8 @@ export default class FilesystemCache {
    */
   getCacheKey: GetCacheKeyMethod
 
-  constructor(config: CacheConfigFilesystem) {
-    this.disk = new Disk(config.folder as string)
+  constructor(config: CacheConfigFilesystem, outputDir = '') {
+    this.disk = new Disk(outputDir)
     this.disk.initFolders()
 
     this.getCacheKey = config.getCacheKey || getCacheKey
@@ -127,16 +119,18 @@ export default class FilesystemCache {
     this.dbRemoveRoute = this.db.prepare(
       'DELETE FROM page_cache WHERE route = ?'
     )
-    this.dbGetGetCacheGroup = this.db.prepare(
-      'SELECT name FROM cache_groups WHERE tag = ?'
-    )
-    this.dbGetCacheGroups = this.db.prepare(
-      'SELECT name, tag FROM cache_groups'
+
+   this.dbCountForTag = this.db.prepare(
+      'SELECT COUNT(DISTINCT route) as total FROM page_cache WHERE tag = ?'
     )
 
     setInterval(() => {
       this.performWrite()
     }, 5000)
+  }
+
+  getNamespace() {
+    return 'routes'
   }
 
   initDatabase() {
@@ -158,6 +152,10 @@ export default class FilesystemCache {
     })
   }
 
+  get(_key: string) {
+    return Promise.resolve(false)
+  }
+
   /**
    * Add a route to the cache.
    */
@@ -176,6 +174,10 @@ export default class FilesystemCache {
       })
   }
 
+  has(_key: string) {
+    return Promise.resolve(false)
+  }
+
   /**
    * Insert tags in to the database.
    */
@@ -183,32 +185,6 @@ export default class FilesystemCache {
     for (const tag of tags) {
       this.insertQueue.push({ tag, route })
     }
-  }
-
-  addCacheGroup(name: string, tags: string[] = []): Promise<void> {
-    return new Promise((resolve) => {
-      const statement = this.db.prepare(
-        'INSERT or IGNORE INTO cache_groups (name, tag) VALUES (?, ?)'
-      )
-      const queue: string[] = [...tags]
-      while (queue.length > 0) {
-        const tag = queue.pop()
-        statement.run(name, tag)
-      }
-      statement.finalize(() => {
-        resolve()
-      })
-    })
-  }
-
-  getAllPurgableTags(tags: string[]) {
-    return Promise.all(
-      tags.map((tag) =>
-        this.dbGetAll(this.dbGetGetCacheGroup, [tag]).then((v) => {
-          return [...v.map((e) => e.name), tag]
-        })
-      )
-    ).then((v) => v.flat().filter(onlyUnique))
   }
 
   /**
@@ -242,15 +218,15 @@ export default class FilesystemCache {
   /**
    * Get a list of routes.
    */
-  async getRoutes(offset = 0) {
-    try {
-      const total = await this.dbGet(this.dbRoutesTotal).then((v) => v.total)
-      const rows = await this.dbGetAll(this.dbRoutesRows, [offset])
+  async getEntries(offset = 0) {
+    const total = await this.dbGet(this.dbRoutesTotal).then((v) => v.total)
+    const rows = await this.dbGetAll(this.dbRoutesRows, [offset])
 
-      return { total, rows }
-    } catch (e) {
-      console.log(e)
-    }
+    return { total, rows }
+  }
+
+  getCountForTag(tag: string) {
+    return this.dbGet(this.dbCountForTag, [tag]).then(v => v.total)
   }
 
   dbGetAll(
@@ -283,27 +259,6 @@ export default class FilesystemCache {
     })
   }
 
-  getCacheGroups() {
-    return this.dbGetAll(this.dbGetCacheGroups).then((rows) => {
-      const map = rows.reduce<Record<string, string[]>>((acc, row) => {
-        if (!acc[row.name]) {
-          acc[row.name] = []
-        }
-        acc[row.name].push(row.tag)
-        return acc
-      }, {})
-
-      const result = Object.keys(map).map((name) => {
-        return {
-          name,
-          tags: map[name],
-        }
-      })
-
-      return { total: result.length, rows: result }
-    })
-  }
-
   /**
    * Get a list of tags and their usage count.
    */
@@ -322,21 +277,24 @@ export default class FilesystemCache {
   /**
    * Purge URLs.
    */
-  purgeUrls(urls: string[]) {
-    urls.forEach((url) => {
-      this.disk.remove(url)
-      this.dbRemoveRoute.run(url)
+  purgeKeys(keys: string[]) {
+    keys.forEach((key) => {
+      this.disk.remove(key)
+      this.dbRemoveRoute.run(key)
     })
-    return Promise.resolve(true)
+    return Promise.resolve({ success: true })
   }
 
   /**
    * Purge everything from disk and the database.
    */
-  purgeAll(): Promise<any> {
+  purgeAll() {
     return this.disk.purgeAll().then(() => {
       this.db.exec('DELETE FROM page_cache')
-      this.db.exec('DELETE FROM cache_groups')
+    }).then(() => {
+      return { success: true }
+    }).catch(() => {
+      return { success: false }
     })
   }
 }

@@ -5,8 +5,10 @@ import serverMiddleware, { ServerAuthMethod, ServerAuthCredentials } from './Ser
 import NuxtSSRCacheHelper from './ssrContextHelper'
 import ComponentCache, { ComponentCacheConfig } from './Cache/Component'
 import DataCache, { DataCacheConfig } from './Cache/Data'
+import GroupsCache, { GroupsCacheConfig } from './Cache/Groups'
+export { CachePlugin } from './Plugin/cache.server'
 
-const PLUGIN_PATH = path.resolve(__dirname, '/Plugin/')
+const PLUGIN_PATH = path.resolve(__dirname, 'Plugin')
 
 export type EnabledForRequestMethod = (req: any, route: string) => boolean
 
@@ -24,6 +26,8 @@ export interface CacheConfig {
    * Logs helpful debugging messages to the console.
    */
   debug?: boolean
+
+  outputDir: string
 
   /**
    * Enable the filesystem cache.
@@ -53,11 +57,18 @@ export interface CacheConfig {
   serverAuth: ServerAuthMethod|ServerAuthCredentials
 
   /**
-   * A method to decide if a request should be considered for caching.
+   * A method to decide if a request should be considered for caching at all.
    *
    * The default method returns true for every route.
-   * For example, you are able to completely prevent any caching if the user is
-   * logged in, by checking for the presence of a cookie.
+   *
+   * Returning true does not automatically cache all pages. It's still
+   * required to call app.$cache.route.setCacheable().
+   *
+   * Returning false here prevents anything to be cached during this request.
+   * You can use this to prevent sensitive data to be cached and potentially
+   * accessible by anyone.
+   *
+   * Calling setCacheable() will not make it cacheable.
    */
   enabledForRequest: EnabledForRequestMethod
 
@@ -70,6 +81,11 @@ export interface CacheConfig {
    * Configuration for the data cache.
    */
   dataCache?: DataCacheConfig
+
+  /**
+   * Configuration for the groups cache.
+   */
+  groupsCache?: GroupsCacheConfig
 }
 
 /**
@@ -80,11 +96,7 @@ function enabledForRequest() {
 }
 
 /*
- * Attaches a custom renderRoute method.
- *
- * It will store the SSR result in a local cache, if it is deemed cacheable.
- * Only anonymous requests (using the backend "API" user) will receive a cached
- * response.
+ * Install the module.
  */
 const cacheModule: Module = function () {
   const nuxt: any = this.nuxt
@@ -94,26 +106,30 @@ const cacheModule: Module = function () {
   const config: CacheConfig = {
     enabled: !!provided.enabled,
     debug: !!provided.debug,
+    outputDir: provided.outputDir,
     filesystem: provided.filesystem,
     serverAuth: provided.serverAuth,
     enabledForRequest: provided.enabledForRequest || enabledForRequest,
     componentCache: provided.componentCache,
     dataCache: provided.dataCache,
+    groupsCache: provided.groupsCache,
   }
 
-  if (config.filesystem?.folder) {
-    const resolver = this.nuxt.resolver.resolveAlias
-    config.filesystem.folder = resolver(config.filesystem.folder)
+  if (!config.outputDir) {
+    throw new Error('Missing config outputDir.')
   }
+
+  const resolver = this.nuxt.resolver.resolveAlias
+  config.outputDir = resolver(config.outputDir)
 
   // Add the cache helper plugin.
   // There are different plugins for client and server. Only the server version
   // actually does anything, the client plugin is implemting all methods as no-op.
   this.addPlugin({
-    src: PLUGIN_PATH + 'cache.server.js',
+    src: path.resolve(PLUGIN_PATH, 'cache.server.js'),
   })
   this.addPlugin({
-    src: PLUGIN_PATH + 'cache.client.js',
+    src: path.resolve(PLUGIN_PATH, 'cache.client.js'),
   })
 
   function logger(message: string, type: string = 'info') {
@@ -147,29 +163,35 @@ const cacheModule: Module = function () {
   let filesystemCache: Filesystem|null = null
   let componentCache: ComponentCache|null = null
   let dataCache: DataCache|null = null
+  let groupsCache: GroupsCache|null = null
 
   if (config.componentCache && config.componentCache.enabled && this.options.render.bundleRenderer) {
     componentCache = new ComponentCache(config.componentCache as ComponentCacheConfig)
-    this.options.render.bundleRenderer.cache = componentCache
+    this.options.render.bundleRenderer.cache = componentCache as any
   }
 
   if (config.filesystem && config.filesystem.enabled) {
-    filesystemCache = new Filesystem(config.filesystem)
+    filesystemCache = new Filesystem(config.filesystem, config.outputDir)
   }
 
   if (config.dataCache && config.dataCache.enabled) {
     dataCache = new DataCache(config.dataCache)
   }
 
+  if (config.groupsCache && config.groupsCache.enabled) {
+    groupsCache = new GroupsCache(config.groupsCache, config.outputDir)
+  }
+
   // Add the server middleware to manage the cache.
   this.addServerMiddleware({
     path: '/__route_cache',
-    handler: serverMiddleware(filesystemCache, dataCache, componentCache, config.serverAuth),
+    handler: serverMiddleware(filesystemCache, dataCache, componentCache, groupsCache, config.serverAuth),
   })
 
   // Inject the cache helper object into the SSR context.
   this.nuxt.hook('vue-renderer:ssr:prepareContext', (ssrContext: any) => {
     ssrContext.$dataCache = dataCache
+    ssrContext.$groupsCache = groupsCache
     ssrContext.$cacheHelper = new NuxtSSRCacheHelper()
   })
 
@@ -200,13 +222,10 @@ const cacheModule: Module = function () {
       return renderRoute(route, context).then((result: any) => {
         // Check if the route is set as cacheable.
         if (filesystemCache && context.$cacheHelper && context.$cacheHelper.cacheable) {
-          // console.log(context.$cacheHelper.componentTags)
           const tags = context.$cacheHelper.tags || []
-          const cacheGroups = context.$cacheHelper.cacheGroups || []
-          cacheGroups.forEach((group: any) => filesystemCache?.addCacheGroup(group.name, group.tags))
 
           filesystemCache
-            .set(cacheKey as string, tags, result.html)
+            .set(cacheKey as string, result.html, tags)
             .then(() => {
               logger('Cached route: ' + route)
               logger('         key: ' + cacheKey)

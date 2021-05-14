@@ -1,15 +1,12 @@
+import GroupsCache from './../Cache/Groups'
 import DataCache from './../Cache/Data'
 import NuxtSSRCacheHelper from './../ssrContextHelper'
 
-export class RouteCacheHelper {
-  cacheHelper?: NuxtSSRCacheHelper
-  dataCache?: DataCache
+export class CachePluginRoute {
+  helper: NuxtSSRCacheHelper
 
-  constructor(context: any) {
-    if (context) {
-      this.cacheHelper = context.$cacheHelper
-      this.dataCache = context.$dataCache
-    }
+  constructor(helper: NuxtSSRCacheHelper) {
+    this.helper = helper
   }
 
   /**
@@ -19,15 +16,11 @@ export class RouteCacheHelper {
    * set it to cacheable again.
    */
   setCacheable() {
-    if (!this.cacheHelper) {
-      return
-    }
-
-    if (this.cacheHelper.cacheableSet) {
+    if (this.helper.cacheableSet) {
       console.log('The request has already been set as uncachable.')
       return
     }
-    this.cacheHelper.cacheable = true
+    this.helper.cacheable = true
   }
 
   /**
@@ -36,27 +29,50 @@ export class RouteCacheHelper {
    * Note: This function should only be called once. Afterwards it's not
    * possible to set the request to be cacheable again.
    */
-  seUncacheable() {
-    if (!this.cacheHelper) {
-      return
-    }
-    this.cacheHelper.cacheable = false
-    this.cacheHelper.cacheableSet = true
+  setUncacheable() {
+    this.helper.cacheable = false
+    this.helper.cacheableSet = true
   }
 
   /**
    * Add cache tags for the current request.
    */
-  addTags(tags = []) {
-    if (!this.cacheHelper) {
-      return
-    }
+  addTags(tags: string[] = []) {
+    this.helper.tags = [...this.helper.tags, ...tags]
+  }
+}
 
-    this.cacheHelper.tags = [...this.cacheHelper.tags, ...tags]
+export class CachePluginData {
+  cache: DataCache
+
+  constructor(cache: DataCache) {
+    this.cache = cache
   }
 
   /**
-   * Add a cache ground.
+   * Set a data cache entry.
+   */
+  set(key: string, data: any, tags: string[] = []) {
+    this.cache.set(key, data, tags)
+  }
+
+  /**
+   * Get a data cache entry.
+   */
+  get(key: string): any {
+    return this.cache.get(key)
+  }
+}
+
+export class CachePluginGroups {
+  cache: GroupsCache
+
+  constructor(cache: GroupsCache) {
+    this.cache = cache
+  }
+
+  /**
+   * Add a cache group.
    *
    * These should be tags that are present on all or a significant amount of
    * routes, for example tags of menu items and their links.
@@ -73,50 +89,21 @@ export class RouteCacheHelper {
    * If a tag of a cache group is purged, it will also automatically purge all
    * entries that reference this cache group.
    */
-  addCacheGroup(name: string, tags = []) {
-    if (!this.cacheHelper) {
-      return
-    }
-
-    this.cacheHelper.cacheGroups.push({ name, tags })
-  }
-
-  /**
-   * Set a data cache entry.
-   */
-  setDataCache(key: string, data: any, tags: string[] = []) {
-    if (!this.dataCache) {
-      return
-    }
-
-    this.dataCache.set(key, data, tags)
-  }
-
-  /**
-   * Set a data cache entry tags.
-   */
-  setDataCacheTags(key: string, tags: string[] = []) {
-    if (!this.dataCache) {
-      return
-    }
-
-    this.dataCache.setTags(key, tags)
-  }
-
-  /**
-   * Get a data cache entry.
-   */
-  getDataCache(key: string): any {
-    if (!this.dataCache) {
-      return
-    }
-
-    if (this.dataCache.has(key)) {
-      return this.dataCache.get(key)
-    }
+  add(name: string, tags = []) {
+    this.cache.set(name, '', tags)
   }
 }
 
+export interface CachePlugin {
+  route: CachePluginRoute
+  data: CachePluginData
+  groups: CachePluginGroups
+}
+
 export default (context: any, inject: (key: string, value: any) => void) => {
-  inject('routeCache', new RouteCacheHelper(context.ssrContext))
+  inject('cache', {
+    route: new CachePluginRoute(context.ssrContext.$cacheHelper),
+    data: new CachePluginData(context.ssrContext.$dataCache),
+    groups: new CachePluginGroups(context.ssrContext.$groupsCache),
+  })
 }

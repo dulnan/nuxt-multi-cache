@@ -1,5 +1,6 @@
 import LRU from 'lru-cache'
 import { Options as LRUOptions } from 'lru-cache'
+import { Cache } from './../'
 
 export interface DataCacheEntry {
   tags: string[]
@@ -17,7 +18,7 @@ export interface DataCacheConfig {
   lruOptions?: LRUOptions<string, DataCacheEntry>
 }
 
-export default class DataCache {
+export default class DataCache implements Cache {
   lru: LRU<string, DataCacheEntry>
   tagCount: Record<string, number>
 
@@ -26,32 +27,27 @@ export default class DataCache {
     this.tagCount = {}
   }
 
-  get(key: string): Promise<any> {
-    const result = this.lru.get(key)
-    console.log('DataCache::get()   ' + key + ' ' + (!!result))
-    if (result) {
-      return result.data
-    }
-
-    return Promise.resolve(false)
+  getNamespace() {
+    return 'data'
   }
 
-  set(key: string, data: any, tags: string[] = []): any {
-    console.log('DataCache::set()   ' + key)
+  get(key: string) {
+    const result = this.lru.get(key)
+    if (result) {
+      return Promise.resolve(result.data)
+    }
+
+    return Promise.resolve()
+  }
+
+  set(key: string, data: any, tags: string[] = []) {
     this.updateTagCount(tags)
     this.lru.set(key, { key, data, tags, timestamp: Date.now() })
+    return Promise.resolve(true)
   }
 
-  setTags(key: string, tags: string[] = []) {
-    const entry = this.lru.get(key)
-    if (entry) {
-      entry.tags = tags
-      this.lru.set(key, entry)
-    }
-  }
-
-  has(key: string): boolean {
-    return this.lru.has(key)
+  has(key: string): Promise<boolean> {
+    return Promise.resolve(this.lru.has(key))
   }
 
   updateTagCount(tags: string[] = []) {
@@ -73,11 +69,15 @@ export default class DataCache {
       }
     })
 
-    return { removed: removedKeys, total: removedKeys.length }
+    return Promise.resolve({ purged: removedKeys.length, success: true })
   }
 
-  purgeEntry(key: string) {
-    this.lru.del(key)
+  purgeKeys(keys: string[]) {
+    keys.forEach(key => {
+      this.lru.del(key)
+    })
+
+    return Promise.resolve({ purged: keys.length, success: true })
   }
 
   getEntries(_offset = 0) {
@@ -90,14 +90,16 @@ export default class DataCache {
       })
     })
 
-    return { total: rows.length, rows }
+    return Promise.resolve({ total: rows.length, rows })
   }
 
-  getCountForTag(tag: string): number {
-    return this.tagCount[tag] || 0
+  getCountForTag(tag: string) {
+    return Promise.resolve(this.tagCount[tag] || 0)
   }
 
   purgeAll() {
+    const purged = this.lru.length
     this.lru.reset()
+    return Promise.resolve({ purged, success: true })
   }
 }

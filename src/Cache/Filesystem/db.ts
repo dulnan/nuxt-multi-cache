@@ -6,11 +6,5 @@ CREATE TABLE IF NOT EXISTS page_cache (
   UNIQUE(route, tag) ON CONFLICT IGNORE
 );
 
-CREATE TABLE IF NOT EXISTS cache_groups (
-  name TEXT,
-  tag TEXT,
-  UNIQUE(name, tag) ON CONFLICT IGNORE
-);
-
 CREATE INDEX IF NOT EXISTS index_space ON page_cache(tag);
 `
