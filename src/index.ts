@@ -105,7 +105,7 @@ const cacheModule: Module = function () {
     enabled: !!provided.enabled,
     debug: !!provided.debug,
     outputDir: provided.outputDir,
-    pageCache: provided.pageCache,
+    pageCache: provided.pageCache || PageCacheMode.Memory,
     serverAuth: provided.serverAuth,
     enabledForRequest: provided.enabledForRequest || enabledForRequest,
     componentCache: provided.componentCache,
@@ -186,7 +186,7 @@ const cacheModule: Module = function () {
 
   // Add the server middleware to manage the cache.
   this.addServerMiddleware({
-    path: '/__route_cache',
+    path: '/__nuxt_multi_cache',
     handler: serverMiddleware(pageCache, dataCache, componentCache, groupsCache, config.serverAuth),
   })
 
