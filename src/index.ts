@@ -52,7 +52,10 @@ export interface CacheConfig {
    * The function receives the request as an argument and should return a
    * boolean.
    */
-  serverAuth: ServerAuthMethod|ServerAuthCredentials
+  server: {
+    auth: ServerAuthMethod|ServerAuthCredentials
+    path?: string
+  }
 
   /**
    * A method to decide if a request should be considered for caching at all.
@@ -106,7 +109,10 @@ const cacheModule: Module = function () {
     debug: !!provided.debug,
     outputDir: provided.outputDir,
     pageCache: provided.pageCache || PageCacheMode.Memory,
-    serverAuth: provided.serverAuth,
+    server: {
+      auth: provided.server?.auth,
+      path: provided.server?.path || '/__nuxt_multi_cache',
+    },
     enabledForRequest: provided.enabledForRequest || enabledForRequest,
     componentCache: provided.componentCache,
     dataCache: provided.dataCache,
@@ -186,8 +192,8 @@ const cacheModule: Module = function () {
 
   // Add the server middleware to manage the cache.
   this.addServerMiddleware({
-    path: '/__nuxt_multi_cache',
-    handler: serverMiddleware(pageCache, dataCache, componentCache, groupsCache, config.serverAuth),
+    path: config.server.path,
+    handler: serverMiddleware(pageCache, dataCache, componentCache, groupsCache, config.server.auth),
   })
 
   // Inject the cache helper object into the SSR context.

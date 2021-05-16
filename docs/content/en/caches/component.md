@@ -26,10 +26,19 @@ module.exports = {
 
 nuxt-multi-cache uses the built-in [component cache
 implementation](https://ssr.vuejs.org/guide/caching.html#component-level-caching)
-of vue-server-renderer.
+of vue-server-renderer. Have a look at the documentation to understand how
+component caching works.
 
-It adds support for cache tags using a custom cache backend that extracts the
-tags from the string returned in `serverCacheKey`.
+<alert type="warning">
+
+A cached component should only rely on data passed in via props, so **no external
+state**, as this will result in unexpected behavior.
+
+</alert>
+
+This module adds support for cache tags using a custom cache backend that
+extracts the tags from the string returned in `serverCacheKey` and provides a
+way to purge components based on the key or the tag.
 
 ## Caching a component
 
@@ -98,42 +107,19 @@ exists in the cache, the previously rendered component is used instead.
 
 It's important that the component's cache key is unique, based on the provided
 props. In the example above, three different component cache entries will be
-created.
+created: 
+
+- `ProductTeaser::442_highlighted`
+- `ProductTeaser::131_default`
+- `ProductTeaser::442_default`
 
 ## Using cache tags
 
 Because this module uses the existing `serverCacheKey` method, the cache tags
 have to be part of the key. Note that the tags themselves **are not** part of
 the final key used to identify a cache entry! This is just a workaround (or you
-could call it a hack) so we're able to use the existing caching implementation
-of vue-server-renderer.
-
-**components/Footer.vue**
-```vue
-<template>
-  <div class="footer">
-    <!-- a lot of markup -->
-  </div>
-</template>
-
-<script>
-export default {
-  name: 'Footer',
-
-  serverCacheKey(props) {
-    return 'default____link:123$article:342$article:569'
-  }
-}
-</script>
-```
-
-The cache tags are appended after four underscores `____`, separated using a
-single dollar sign `$`.
-
-The actual component key would be `Footer::default`.
-
-Now that's not really a nice way to set the key, so there is a helper method
-available that builds the key for you:
+could call it a hack), so that we're able to use the existing caching
+implementation of vue-server-renderer.
 
 **components/Footer.vue**
 ```vue
@@ -155,3 +141,11 @@ export default {
 </script>
 ```
 
+The output of this method will be:
+
+`'default____link:123$article:342$article:569'`
+
+The cache tags are appended after four underscores `____`, separated using a
+single dollar sign `$`.
+
+The actual component key would be `Footer::default`.
