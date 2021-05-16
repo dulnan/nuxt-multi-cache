@@ -6,16 +6,13 @@ import NuxtSSRCacheHelper from './ssrContextHelper'
 import ComponentCache, { ComponentCacheConfig } from './Cache/Component'
 import DataCache, { DataCacheConfig } from './Cache/Data'
 import GroupsCache, { GroupsCacheConfig } from './Cache/Groups'
-export { CachePlugin } from './Plugin/cache.server'
+export { CachePlugin } from './Plugin/cache.client'
 export { PageCacheMode } from './Cache/Page'
+export { getServerCacheKey } from './helpers/frontend'
 
 const PLUGIN_PATH = path.resolve(__dirname, 'Plugin')
 
 export type EnabledForRequestMethod = (req: any, route: string) => boolean
-
-function isPageCacheDisk(object: any): object is PageCacheDisk {
-  return 'getCacheKey' in object
-}
 
 export interface CacheConfig {
 

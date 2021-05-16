@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import makeDir from 'make-dir'
-import { normalizeURL, joinURL, withoutTrailingSlash } from 'ufo'
+import { normalizeURL, withoutTrailingSlash } from 'ufo'
 
 export default class Disk {
   folder: string

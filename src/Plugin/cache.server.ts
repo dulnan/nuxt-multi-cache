@@ -1,6 +1,7 @@
 import GroupsCache from './../Cache/Groups'
 import DataCache from './../Cache/Data'
 import NuxtSSRCacheHelper from './../ssrContextHelper'
+import {CachePlugin} from './cache.client'
 
 export class CachePluginRoute {
   helper: NuxtSSRCacheHelper
@@ -89,21 +90,16 @@ export class CachePluginGroups {
    * If a tag of a cache group is purged, it will also automatically purge all
    * entries that reference this cache group.
    */
-  add(name: string, tags = []) {
+  add(name: string, tags: string[] = []) {
     this.cache.set(name, '', tags)
   }
 }
 
-export interface CachePlugin {
-  route: CachePluginRoute
-  data: CachePluginData
-  groups: CachePluginGroups
-}
-
 export default (context: any, inject: (key: string, value: any) => void) => {
-  inject('cache', {
+  const plugin: CachePlugin = {
     route: new CachePluginRoute(context.ssrContext.$cacheHelper),
     data: new CachePluginData(context.ssrContext.$dataCache),
     groups: new CachePluginGroups(context.ssrContext.$groupsCache),
-  })
+  }
+  inject('cache', plugin)
 }

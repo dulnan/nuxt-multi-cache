@@ -1,6 +1,21 @@
 // Create a mock plugin for use in a client context.
+export interface CachePlugin {
+  route: {
+    setCacheable(): void
+    setUncacheable(): void
+    addTags(tags: string[]): void
+  }
+  data: {
+    set(key: string, data: any, tags: string[]): void
+    get(key: string): any
+  }
+  groups: {
+    add(name: string, tags: string[]): void
+  }
+}
+
 export default (_context: any, inject: (key: string, value: any) => void) => {
-  inject('cache', {
+  const mock: CachePlugin = {
     route: {
       setCacheable() {},
       setUncacheable() {},
@@ -11,8 +26,8 @@ export default (_context: any, inject: (key: string, value: any) => void) => {
       get() {},
     },
     groups: {
-      set() {},
-      get() {},
+      add() {},
     }
-  })
+  }
+  inject('cache', mock)
 }
