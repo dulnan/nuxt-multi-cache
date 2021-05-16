@@ -1,16 +1,21 @@
 import path from 'path'
 import { Module } from '@nuxt/types'
-import Filesystem, { CacheConfigFilesystem } from './Cache/Filesystem'
+import { CacheConfigPage, PageCacheDisk, PageCacheMemory, PageCacheMode } from './Cache/Page'
 import serverMiddleware, { ServerAuthMethod, ServerAuthCredentials } from './ServerMiddleware'
 import NuxtSSRCacheHelper from './ssrContextHelper'
 import ComponentCache, { ComponentCacheConfig } from './Cache/Component'
 import DataCache, { DataCacheConfig } from './Cache/Data'
 import GroupsCache, { GroupsCacheConfig } from './Cache/Groups'
 export { CachePlugin } from './Plugin/cache.server'
+export { PageCacheMode } from './Cache/Page'
 
 const PLUGIN_PATH = path.resolve(__dirname, 'Plugin')
 
 export type EnabledForRequestMethod = (req: any, route: string) => boolean
+
+function isPageCacheDisk(object: any): object is PageCacheDisk {
+  return 'getCacheKey' in object
+}
 
 export interface CacheConfig {
 
@@ -27,23 +32,19 @@ export interface CacheConfig {
    */
   debug?: boolean
 
+  /**
+   * Folder where cache modules can write state.
+   */
   outputDir: string
 
   /**
-   * Enable the filesystem cache.
+   * Enable the page cache.
    *
    * This will save every cached page to the specified location, preserving URL
    * structure and mapping them to folders and file names. Use this to serve
    * cached routes directly from Apache, nginx or any web server.
    */
-  filesystem?: CacheConfigFilesystem|null|undefined
-
-  /**
-   * Enable the route cache.
-   *
-   * This will cache routes in memory in a LRU cache.
-   */
-  route?: any
+  pageCache?: CacheConfigPage|null|undefined
 
   /**
    * Authenticate a server request.
@@ -107,7 +108,7 @@ const cacheModule: Module = function () {
     enabled: !!provided.enabled,
     debug: !!provided.debug,
     outputDir: provided.outputDir,
-    filesystem: provided.filesystem,
+    pageCache: provided.pageCache,
     serverAuth: provided.serverAuth,
     enabledForRequest: provided.enabledForRequest || enabledForRequest,
     componentCache: provided.componentCache,
@@ -160,7 +161,7 @@ const cacheModule: Module = function () {
   }
 
   // Create global cache instances.
-  let filesystemCache: Filesystem|null = null
+  let pageCache: PageCacheDisk|PageCacheMemory|null = null
   let componentCache: ComponentCache|null = null
   let dataCache: DataCache|null = null
   let groupsCache: GroupsCache|null = null
@@ -170,8 +171,12 @@ const cacheModule: Module = function () {
     this.options.render.bundleRenderer.cache = componentCache as any
   }
 
-  if (config.filesystem && config.filesystem.enabled) {
-    filesystemCache = new Filesystem(config.filesystem, config.outputDir)
+  if (config.pageCache && config.pageCache.enabled) {
+    if (config.pageCache.mode === PageCacheMode.Memory) {
+      pageCache = new PageCacheMemory(config.pageCache)
+    } else if (config.pageCache.mode === PageCacheMode.Disk) {
+      pageCache = new PageCacheDisk(config.pageCache, config.outputDir)
+    }
   }
 
   if (config.dataCache && config.dataCache.enabled) {
@@ -185,7 +190,7 @@ const cacheModule: Module = function () {
   // Add the server middleware to manage the cache.
   this.addServerMiddleware({
     path: '/__route_cache',
-    handler: serverMiddleware(filesystemCache, dataCache, componentCache, groupsCache, config.serverAuth),
+    handler: serverMiddleware(pageCache, dataCache, componentCache, groupsCache, config.serverAuth),
   })
 
   // Inject the cache helper object into the SSR context.
@@ -199,11 +204,11 @@ const cacheModule: Module = function () {
   const renderer = nuxt.renderer
   const renderRoute = renderer.renderRoute.bind(renderer)
 
-  renderer.renderRoute = function (route: string, context: any) {
-    if (!filesystemCache) {
+  renderer.renderRoute = async function (route: string, context: any) {
+    if (!pageCache) {
       return renderRoute(route, context)
     }
-    const cacheKey = filesystemCache?.getCacheKey(route, context)
+    const cacheKey = pageCache?.getCacheKey(route, context)
     const cacheForRequest = config.enabledForRequest(context.req, route)
 
     if (!cacheKey || !cacheForRequest) {
@@ -217,15 +222,19 @@ const cacheModule: Module = function () {
       return renderRoute(route, context)
     }
 
+    if (await pageCache.has(cacheKey)) {
+      return await pageCache.get(cacheKey)
+    }
+
     // Render the page and put it in the cache if cacheable.
     function renderWithCache() {
       return renderRoute(route, context).then((result: any) => {
         // Check if the route is set as cacheable.
-        if (filesystemCache && context.$cacheHelper && context.$cacheHelper.cacheable) {
+        if (pageCache && context.$cacheHelper && context.$cacheHelper.cacheable) {
           const tags = context.$cacheHelper.tags || []
 
-          filesystemCache
-            .set(cacheKey as string, result.html, tags)
+          pageCache
+            .set(cacheKey as string, result, tags)
             .then(() => {
               logger('Cached route: ' + route)
               logger('         key: ' + cacheKey)

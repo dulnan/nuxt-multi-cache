@@ -1,61 +1,17 @@
 import path from 'path'
-import { Url } from 'url'
 import Disk from './disk'
 import sqlite3 from 'sqlite3'
 import { PREPARE } from './db'
-import { Context } from '@nuxt/types'
-import { Cache } from './..'
-
-function onlyUnique(item: any, pos: number, self: any) {
-  return self.indexOf(item) == pos
-}
+import { Cache } from './../..'
+import { CacheConfigPage, GetCacheKeyMethod, getCacheKey } from './..'
 
 interface RouteCacheQueueEntry {
   tag: string
   route: string
 }
 
-export type GetCacheKeyMethod = (
-  route: string,
-  context: Context
-) => string | void
-
 /**
- * Determine the cache key for a route.
- */
-function getCacheKey(route: string, context: any) {
-  const url = context.req._parsedUrl as Url
-  const pathname = url.pathname
-
-  if (!pathname) {
-    return
-  }
-
-  return route
-}
-
-export interface CacheConfigFilesystem {
-
-  /**
-   * Enable filesystem caching.
-   */
-  enabled: boolean
-
-  /**
-   * Determine the unique cache key for a route.
-   *
-   * This can be used to rewrite how the route is identified in the caching
-   * process. For example, if you rely on query parameters for a route, you can
-   * rewrite them like this:
-   * /search?query=foo%20bar  => /search--query=foo__bar
-   * This will allow you to cache routes depending on the query parameter and
-   * then serve these from your webserver, if configured properly.
-   */
-  getCacheKey?: GetCacheKeyMethod
-}
-
-/**
- * Filesystem cache.
+ * Page cache.
  *
  * Routes are cached by their route name (path) and optionally by tags.
  * It's possible to purge a single route or purge all routes containing certain
@@ -64,7 +20,7 @@ export interface CacheConfigFilesystem {
  * Routes are saved to disk, so that they can directly be served by a web
  * server.
  */
-export default class FilesystemCache implements Cache {
+export default class PageCacheDisk implements Cache {
   disk: Disk
 
   /**
@@ -88,7 +44,7 @@ export default class FilesystemCache implements Cache {
    */
   getCacheKey: GetCacheKeyMethod
 
-  constructor(config: CacheConfigFilesystem, outputDir = '') {
+  constructor(config: CacheConfigPage, outputDir = '') {
     this.disk = new Disk(outputDir)
     this.disk.initFolders()
 
@@ -99,38 +55,30 @@ export default class FilesystemCache implements Cache {
     )
 
     this.insertQueue = []
-
     this.initDatabase()
 
     this.dbTagsRows = this.db.prepare(
-      'SELECT tag, COUNT(tag) as count FROM page_cache GROUP BY tag ORDER BY count DESC LIMIT 100 OFFSET ?'
+      'SELECT tag, COUNT(tag) as count FROM page_cache GROUP BY tag ORDER BY count DESC'
     )
     this.dbTagsTotal = this.db.prepare(
       'SELECT COUNT(DISTINCT tag) as total FROM page_cache'
     )
-
     this.dbRoutesRows = this.db.prepare(
       'SELECT COUNT(tag) as count, route FROM page_cache GROUP BY route ORDER BY count DESC LIMIT 100 OFFSET ?'
     )
     this.dbRoutesTotal = this.db.prepare(
       'SELECT COUNT(DISTINCT route) as total FROM page_cache'
     )
-
     this.dbRemoveRoute = this.db.prepare(
       'DELETE FROM page_cache WHERE route = ?'
     )
-
-   this.dbCountForTag = this.db.prepare(
+    this.dbCountForTag = this.db.prepare(
       'SELECT COUNT(DISTINCT route) as total FROM page_cache WHERE tag = ?'
     )
 
     setInterval(() => {
       this.performWrite()
     }, 5000)
-  }
-
-  getNamespace() {
-    return 'routes'
   }
 
   initDatabase() {
@@ -159,9 +107,9 @@ export default class FilesystemCache implements Cache {
   /**
    * Add a route to the cache.
    */
-  set(route: string, data: string, tags: string[] = []): Promise<boolean> {
+  set(route: string, data: any, tags: string[] = []): Promise<boolean> {
     return this.disk
-      .write(route, data)
+      .write(route, data.html)
       .then(() => {
         return this.insert(route, tags)
       })
@@ -262,15 +210,13 @@ export default class FilesystemCache implements Cache {
   /**
    * Get a list of tags and their usage count.
    */
-  async getTags(offset = 0) {
+  async getTags() {
     try {
-      const total = await this.dbGet(this.dbTagsTotal).then((v) => v.total)
-      const rows = await this.dbGetAll(this.dbTagsRows, [offset])
-
-      return { total, rows }
+      const rows = await this.dbGetAll(this.dbTagsRows)
+      return rows
     } catch (e) {
       console.log(e)
-      return { total: 0, rows: [] }
+      return []
     }
   }
 

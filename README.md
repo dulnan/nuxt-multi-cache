@@ -174,7 +174,7 @@ export default {
 }
 ```
 
-# Filesystem route cache
+# Page cache
 
 This cache is kind of a hybrid between a statically generated and a SSR site.
 In essence, this feature will cache a route on disk, as a HTML file, with the

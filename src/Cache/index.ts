@@ -49,6 +49,11 @@ export interface Cache {
    * Purge the entire cache.
    */
   purgeAll(): Promise<CachePurgeResult>
+
+  /**
+   * Get all tags used in this cache.
+   */
+  getTags(): Promise<any[]>
 }
 
 export interface RouteCache {

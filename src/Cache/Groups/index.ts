@@ -2,6 +2,7 @@ import path from 'path'
 import { Cache } from './../'
 import low, { LowdbSync } from 'lowdb'
 import FileSync from 'lowdb/adapters/FileSync'
+import makeDir from 'make-dir'
 
 export interface GroupsCacheEntry {
   name: string
@@ -23,7 +24,9 @@ export default class GroupsCache implements Cache {
     if (!outputDir) {
       throw new Error('Missing outputDir for GroupsCache.')
     }
+    const dirPath = path.resolve(outputDir, 'data')
     const filePath = path.resolve(outputDir, 'data', 'groups.json')
+    makeDir.sync(dirPath)
     const adapter = new FileSync(filePath)
 
     this.db = low(adapter)
@@ -56,6 +59,22 @@ export default class GroupsCache implements Cache {
     })
 
     return Promise.resolve({ purged: removedKeys.length, success: true })
+  }
+
+  getTags() {
+    const tags: Record<string, number> = {}
+    this.db.get('groups').forEach(group => {
+      group.tags.forEach(tag => {
+        if (!tags[tag]) {
+          tags[tag] = 0
+        }
+        tags[tag]++
+      })
+    })
+
+    return Promise.resolve(Object.keys(tags).map(tag => {
+      return { tag, count: tags[tag] }
+    }))
   }
 
   purgeKeys(names: string[]) {

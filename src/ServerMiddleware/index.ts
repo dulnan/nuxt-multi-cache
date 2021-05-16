@@ -1,5 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express'
-import FilesystemCache from './../Cache/Filesystem'
+import { PageCacheDisk, PageCacheMemory} from './../Cache/Page'
 import ComponentCache from './../Cache/Component'
 import DataCache from './../Cache/Data'
 import { Cache } from './../Cache'
@@ -31,7 +31,7 @@ function logger(message: any) {
 }
 
 export default function createServerMiddleware(
-  pageCache: FilesystemCache | null,
+  pageCache: PageCacheMemory|PageCacheDisk| null,
   dataCache: DataCache | null,
   componentCache: ComponentCache | null,
   groupsCache: GroupsCache | null,
@@ -86,28 +86,55 @@ export default function createServerMiddleware(
     res.status(200).send({ success: true })
   })
 
+  const tagCount: any[] = []
+
+  async function getTagCount() {
+    const tagMap: Record<string, Record<string, number>> = {}
+    const cacheKeys = Object.keys(caches)
+
+    for (const key of cacheKeys) {
+      const cache = caches[key]
+      const items = await cache.getTags()
+      items.forEach(item=> {
+        const tag = item.tag
+        const count = item.count
+        if (!tagMap[tag]) {
+          tagMap[tag] = {}
+        }
+        tagMap[tag][key] = count
+      })
+    }
+
+    return Object.keys(tagMap).map(tag => {
+      return {
+        tag,
+        counts: tagMap[tag],
+        total: Object.keys(tagMap[tag]).reduce((acc, key) => {
+          const count = tagMap[tag][key]
+          acc += count
+          return acc
+        }, 0)
+      }
+    }).sort((a, b) => {
+      return b.total - a.total
+    })
+  }
+
   /*
    * Endpoint to get stats about the tags.
    */
   app.get('/stats/tags', async function (req: Request, res: Response) {
     try {
+      const perPage = 196
       const offsetValue = req.query.offset
       const offset = typeof offsetValue === 'string' ? parseInt(offsetValue) : 0
+      const rows = await getTagCount()
 
-      const result = await pageCache?.getTags(offset)
-      const tags = result?.rows || []
-      const rows = await Promise.all(
-        tags.map((row) => {
-          return getCountsForTag(row.tag).then((counts) => {
-            return {
-              ...row,
-              ...counts,
-            }
-          })
-        })
-      )
+      const start = offset
+      const end = start + (perPage - 1)
+      const total = rows.length
 
-      res.json({ total: result?.total, rows })
+      res.json({ rows: rows.slice(start, end), total })
     } catch (e) {
       res.status(500).send({ success: false })
     }
@@ -125,6 +152,7 @@ export default function createServerMiddleware(
 
     try {
       const allTags = groupsCache?.getAllPurgableTags(tags) || tags
+      console.log(allTags)
       const resultRoutes = await pageCache?.purgeTags(allTags)
       const resultComponents = await componentCache?.purgeTags(allTags)
       const resultData = await dataCache?.purgeTags(allTags)
