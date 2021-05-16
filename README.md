@@ -278,7 +278,7 @@ cache group name or any of the tags belonging to the group.
 # Setup
 ```javascript
 module.exports = {
-  modules: ['nuxt-route-cache'],
+  modules: ['nuxt-multi-cache'],
 
   routeCache: {
     /**
