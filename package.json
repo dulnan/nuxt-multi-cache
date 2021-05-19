@@ -1,7 +1,15 @@
 {
   "name": "nuxt-multi-cache",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SSR route, component and data cache for Nuxt.js",
+  "keywords": [
+    "nuxt",
+    "cache",
+    "ssr",
+    "page",
+    "caching",
+    "component"
+  ],
   "author": {
     "name": "Jan Hug",
     "url": "https://dulnan.net",
