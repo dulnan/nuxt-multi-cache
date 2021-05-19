@@ -2,5 +2,6 @@ lib
 node_modules
 temp
 docs/.nuxt
+docs/dist
 
 docs/static/sw.js
