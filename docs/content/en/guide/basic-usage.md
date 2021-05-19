@@ -4,9 +4,11 @@ position: 2
 category: 'Getting started'
 ---
 
+<p className="lead">
 By default nothing is cached, even if you enable a cache. This means that you
 have to set cache entries yourself. A helper plugin is provided in the global
 context as `$cache`.
+</p>
 
 ### Caching a page
 

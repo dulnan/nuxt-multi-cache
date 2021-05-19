@@ -1,11 +1,13 @@
 ---
 title: Cache Groups
-position: 10
+position: 130
 category: 'Caches'
 ---
 
-Cache groups allow you to group 2 or more cache tags together under a single
-tag.
+<p className="lead">
+Cache groups allow you to group two or more cache tags together under a single
+tag, which can then be used like a regular cache tag.
+</p>
 
 A typical use case would be a `<navbar />` component that fetches 100 menu
 links from a CMS, which results in 100 cache tags.

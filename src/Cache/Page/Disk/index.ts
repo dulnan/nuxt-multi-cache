@@ -3,7 +3,8 @@ import Disk from './disk'
 import sqlite3 from 'sqlite3'
 import { PREPARE } from './db'
 import { Cache } from './../..'
-import { CacheConfigPage, GetCacheKeyMethod, getCacheKey } from './..'
+import { getCacheKey } from './..'
+import { GetCacheKeyMethod, MultiCacheConfig } from './../../../config'
 
 interface RouteCacheQueueEntry {
   tag: string
@@ -44,11 +45,11 @@ export default class PageCacheDisk implements Cache {
    */
   getCacheKey: GetCacheKeyMethod
 
-  constructor(config: CacheConfigPage, outputDir = '') {
+  constructor(config: MultiCacheConfig['pageCache'], outputDir = '') {
     this.disk = new Disk(outputDir)
     this.disk.initFolders()
 
-    this.getCacheKey = config.getCacheKey || getCacheKey
+    this.getCacheKey = config?.getCacheKey || getCacheKey
 
     this.db = new sqlite3.Database(
       path.resolve(this.disk.getDatabaseFolder(), 'data.db')

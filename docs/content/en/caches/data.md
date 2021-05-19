@@ -1,15 +1,19 @@
 ---
 title: Data
-position: 5
+position: 120
 category: 'Caches'
+features:
+  - "API responses"
+  - "Result of complex calculations or array mappings"
+  - "Promises"
 ---
 
+<p className="lead">
 The data cache is the 'fallback' cache for anything that can be persisted
 across multiple requests:
+</p>
 
-- API responses
-- Result of complex calculations or array mappings
-- Promises
+<list :items="features"></list>
 
 ## Config
 

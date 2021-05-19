@@ -1,12 +1,18 @@
 ---
 title: Components
-position: 4
+position: 110
 category: 'Caches'
 ---
 
+<p className="lead">
 A component cache is useful if you have complex components that appear on
 multiple or all pages. Typically this includes navigations, footer, teasers or
-other components in your `default.vue` layout.
+other components in your default.vue layout.
+</p>
+
+Even if a component just appears on a single page, you may still want to cache
+it, in particular if its very complex. That way you can disable caching for a
+page, while still preventing the rendering of this component on every request.
 
 ## Config
 
@@ -113,6 +119,9 @@ created:
 - `ProductTeaser::131_default`
 - `ProductTeaser::442_default`
 
+You need to make sure that the key is _really_ unique for the exact resulting
+markup of a component.
+
 ## Using cache tags
 
 Because this module uses the existing `serverCacheKey` method, the cache tags
@@ -120,6 +129,9 @@ have to be part of the key. Note that the tags themselves **are not** part of
 the final key used to identify a cache entry! This is just a workaround (or you
 could call it a hack), so that we're able to use the existing caching
 implementation of vue-server-renderer.
+
+You can import the `getServerCacheKey` method to build the key including the
+cache tags.
 
 **components/Footer.vue**
 ```vue
@@ -143,9 +155,11 @@ export default {
 
 The output of this method will be:
 
-`'default____link:123$article:342$article:569'`
+`default____link:123$article:342$article:569`
 
 The cache tags are appended after four underscores `____`, separated using a
 single dollar sign `$`.
 
-The actual component key would be `Footer::default`.
+The component cache backend will split the string up before saving it to the
+cache. The actual component key will be `Footer::default` and the tags are
+`["link:123", "article:342", "article:569"]`

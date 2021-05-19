@@ -1,15 +1,18 @@
 ---
-title: TypeScript
+title: TypeScript support
 position: 3
 category: 'Getting started'
 ---
 
-nuxt-multi-cache is entirely written in TypeScript and exports various types, interfaces and enums.
+<p className="lead">
+nuxt-multi-cache is written entirely in TypeScript and exports various types,
+interfaces and enums.
+</p>
 
 ### nuxt.config.ts
 
 ```typescript
-import { CacheConfig, PageCacheMode } from 'nuxt-route-cache'
+import { MultiCacheConfig, PageCacheMode } from 'nuxt-multi-cache'
 
 const multiCache: CacheConfig = {
   enabled: true,

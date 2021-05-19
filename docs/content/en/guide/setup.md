@@ -8,6 +8,8 @@ category: 'Getting started'
 npm install --save nuxt-multi-cache
 ```
 
+## Minimal configuration
+
 In `nuxt.config.js`:
 
 ```javascript
@@ -30,3 +32,6 @@ module.exports = {
   }
 }
 ```
+
+Note that the `enabled` properties are not overridden by the module, e.g. when
+in dev mode. If you want to disable caches during development, set `enabled: false`.

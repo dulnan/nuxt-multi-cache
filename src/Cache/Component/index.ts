@@ -1,17 +1,5 @@
-import { Options as LRUOptions } from 'lru-cache'
-import LRUCache, { LRUCacheEntry } from './../LRUCache'
-
-export interface ComponentCacheConfig {
-  /**
-   * Enable component caching.
-   */
-  enabled: boolean
-
-  /**
-   * Options passed to the lru cache for components.
-   */
-  lruOptions?: LRUOptions<string, LRUCacheEntry>
-}
+import { MultiCacheConfig } from 'config'
+import LRUCache  from './../LRUCache'
 
 function parseCacheKey(value = '') {
   const [key = '', rest = ''] = value.split('____')
@@ -26,8 +14,8 @@ function parseCacheKey(value = '') {
  * Caches components.
  */
 export default class ComponentCache extends LRUCache {
-  constructor(config: ComponentCacheConfig) {
-    super(config.lruOptions)
+  constructor(config: MultiCacheConfig['componentCache']) {
+    super(config?.lruOptions)
   }
 
   get(value: string, cb?: (res: string) => void) {

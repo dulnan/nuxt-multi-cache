@@ -4,8 +4,10 @@ position: 7
 category: 'Getting started'
 ---
 
+<p className="lead">
 Cache tags make cache invalidation easier, because they directly link cached
 items to a data source.
+</p>
 
 ## Basics
 

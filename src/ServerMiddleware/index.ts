@@ -50,7 +50,7 @@ export default function createServerMiddleware(
     res: Response,
     next: NextFunction
   ) {
-    if (serverAuthCheckFn(req)) {
+    if (serverAuthCheckFn(req) === true) {
       next()
     } else {
       res.status(403).send()

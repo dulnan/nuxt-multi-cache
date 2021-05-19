@@ -1,4 +1,5 @@
-import { CacheConfigPage, getCacheKey, GetCacheKeyMethod } from '..'
+import { GetCacheKeyMethod, MultiCacheConfig } from './../../../config'
+import { getCacheKey } from '..'
 import LRUCache from './../../LRUCache'
 
 export interface PageCacheMemoryEntry {
@@ -22,8 +23,8 @@ export default class PageCacheMemory extends LRUCache {
    */
   getCacheKey: GetCacheKeyMethod
 
-  constructor(config: CacheConfigPage) {
+  constructor(config: MultiCacheConfig['pageCache']) {
     super()
-    this.getCacheKey = config.getCacheKey || getCacheKey
+    this.getCacheKey = config?.getCacheKey || getCacheKey
   }
 }

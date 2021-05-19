@@ -1,21 +1,21 @@
 ---
-title: Purge by tag
-position: 220
+title: Purge data
+position: 240
 category: 'REST API'
 ---
 <p className="lead">
-Purge all cache entries belonging to one or more cache tags.
+Purge one or more data items from the data cache.
 </p>
 
 ## Resource
-POST: `/__nuxt_multi_cache/purge/tags`
+POST: `/__nuxt_multi_cache/purge/data`
 
 ## Body
 
-JSON encoded array of tags.
+JSON encoded array of data keys.
 
 ```json
-[ "tag:1", "tag:4", "tag:42" ]
+["api_navbar"]
 ```
 
 ## Example
@@ -27,8 +27,8 @@ JSON encoded array of tags.
 curl -X POST -i \
   -H "Authorization: Basic YWRtaW46aHVudGVyMgo=" \
   -H "Content-Type: application/json" \
-  --data '["article:5"]' \
-  http://localhost:3000/__nuxt_multi_cache/purge/tags
+  --data '["api_navbar"]' \
+  http://localhost:3000/__nuxt_multi_cache/purge/data
 ```
 
 </code-block>
@@ -36,12 +36,12 @@ curl -X POST -i \
 <code-block label="node-fetch">
 
 ```javascript
-fetch('http://localhost:3000/__nuxt_multi_cache/purge/tags', {
+fetch('http://localhost:3000/__nuxt_multi_cache/purge/data', {
   method: 'POST',
   headers: new Headers({
     Authorization: 'Basic YWRtaW46aHVudGVyMgo='
   }),
-  body: JSON.stringify(['article:5'])
+  body: JSON.stringify(['api_navbar'])
 })
 ```
 

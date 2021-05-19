@@ -1,12 +1,14 @@
 ---
 title: Page
-position: 10
+position: 100
 category: 'Caches'
 ---
 
+<p className="lead">
 Using a page cache significantly improves performance of your website, by
 caching the entire rendered markup of a page and serving it immediately when a
 cached page is requested.
+</p>
 
 nuxt-multi-cache hooks into the main renderRoute method of Nuxt and will return
 cached markup if available. Since this happens very early in the lifecycle, you

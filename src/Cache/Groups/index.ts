@@ -3,6 +3,7 @@ import { Cache } from './../'
 import low, { LowdbSync } from 'lowdb'
 import FileSync from 'lowdb/adapters/FileSync'
 import makeDir from 'make-dir'
+import {MultiCacheConfig} from 'config'
 
 export interface GroupsCacheEntry {
   name: string
@@ -13,14 +14,10 @@ interface DBGroupsCache {
   groups: GroupsCacheEntry[]
 }
 
-export interface GroupsCacheConfig {
-  enabled: boolean
-}
-
 export default class GroupsCache implements Cache {
   db: LowdbSync<DBGroupsCache>
 
-  constructor(config: GroupsCacheConfig, outputDir?: string) {
+  constructor(_config: MultiCacheConfig['groupsCache'], outputDir?: string) {
     if (!outputDir) {
       throw new Error('Missing outputDir for GroupsCache.')
     }
