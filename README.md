@@ -1,9 +1,11 @@
-# Nuxt Route Cache
+# nuxt-multi-cache
 
-Caches pages based on the route and purge a cached page.
+SSR page, component and data cache for Nuxt. Supports purging cache entries by key or by cache tags.
+
+**[Installation](https://nuxt-multi-cache.netlify.app/guide/setup)** - **[Documentation](https://nuxt-multi-cache.netlify.app)** - **[NPM](https://www.npmjs.com/package/nuxt-multi-cache)**
 
 # Concepts
-- **Cache:** Page, component and data
+- **Cache:** Page, component and data with support for cache tags
 - **Purge:** Using cache tags or by key
 - **Pick:** Enable only what you need
 - **Manage:** REST API for purging and getting stats about the caches
