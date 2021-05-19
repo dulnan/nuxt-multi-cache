@@ -84,7 +84,7 @@ const cacheModule: Module = function () {
   }
 
   // Disable caching if no purge authorization if provided.
-  if (typeof provided.serverAuth !== 'object' && typeof provided.serverAuth !== 'function') {
+  if (!provided.server || typeof provided.server.auth !== 'object' && typeof provided.server.auth !== 'function') {
     logger(
       'No serverAuth function or basic auth config provided, caching is disabled.',
       'warn'

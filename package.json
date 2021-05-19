@@ -18,8 +18,13 @@
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
   "types": "./lib/types/index.d.ts",
+  "browser": {
+    "./index.js": "./client.js"
+  },
   "files": [
-    "lib/"
+    "lib/",
+    "client.js",
+    "client.d.ts"
   ],
   "dependencies": {
     "basic-auth": "^2.0.1",

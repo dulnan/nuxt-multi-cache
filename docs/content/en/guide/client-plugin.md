@@ -59,8 +59,6 @@ rendered successfully and is deemed cacheable.
 | `setCacheable` | () => *void* |
 | `setUncacheable` | () => *void* |
 
-Defined in: [Plugin/cache.client.ts:3](https://github.com/dulnan/nuxt-route-cache/blob/5d0cfe9/src/Plugin/cache.client.ts#L3)
-
 ___
 
 ### `data`
@@ -73,8 +71,6 @@ multiple requests running in parallel all interact with the same cache.
 | `get` | (`key`: *string*) => *any* |
 | `set` | (`key`: *string*, `data`: *any*, `tags`: *string*[]) => *void* |
 
-Defined in: [Plugin/cache.client.ts:8](https://github.com/dulnan/nuxt-route-cache/blob/5d0cfe9/src/Plugin/cache.client.ts#L8)
-___
 
 ### `groups`
 
@@ -84,5 +80,3 @@ the underlying storage.
 | Name | Type |
 | :------ | :------ |
 | `add` | (`name`: *string*, `tags`: *string*[]) => *void* |
-
-Defined in: [Plugin/cache.client.ts:12](https://github.com/dulnan/nuxt-route-cache/blob/5d0cfe9/src/Plugin/cache.client.ts#L12)

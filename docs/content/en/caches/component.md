@@ -142,7 +142,7 @@ cache tags.
 </template>
 
 <script>
-import { getServerCacheKey } from 'nuxt-multi-cache'
+import { getServerCacheKey } from 'nuxt-multi-cache/client'
 export default {
   name: 'Footer',
 

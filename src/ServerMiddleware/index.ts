@@ -5,7 +5,6 @@ import DataCache from './../Cache/Data'
 import { Cache } from './../Cache'
 import basicAuth from 'basic-auth'
 import GroupsCache from './../Cache/Groups'
-export { getServerCacheKey } from './../helpers/frontend'
 
 export type ServerAuthMethod = (req: Request) => boolean
 export interface ServerAuthCredentials {

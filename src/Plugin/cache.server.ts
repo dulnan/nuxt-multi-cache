@@ -54,14 +54,18 @@ export class CachePluginData {
    * Set a data cache entry.
    */
   set(key: string, data: any, tags: string[] = []) {
-    this.cache.set(key, data, tags)
+    if (this.cache) {
+      this.cache.set(key, data, tags)
+    }
   }
 
   /**
    * Get a data cache entry.
    */
   get(key: string): any {
-    return this.cache.get(key)
+    if (this.cache) {
+      return this.cache.get(key)
+    }
   }
 }
 
@@ -91,7 +95,9 @@ export class CachePluginGroups {
    * entries that reference this cache group.
    */
   add(name: string, tags: string[] = []) {
-    this.cache.set(name, '', tags)
+    if (this.cache) {
+      this.cache.set(name, '', tags)
+    }
   }
 }
 
