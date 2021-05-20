@@ -1,8 +1,11 @@
 ---
 title: Configuration
+description: Definition of the configuration
 position: 20
 category: 'API'
 ---
+
+**Interface:** [MultiCacheConfig](https://github.com/dulnan/nuxt-multi-cache/blob/main/src/config.ts)
 
 ## componentCache
 
@@ -15,7 +18,7 @@ Configuration for the component cache.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `enabled` | *boolean* | Enable component caching. |
-| `lruOptions?` | *Options*<string, LRUCacheEntry\> | Options passed to the lru cache for components. |
+| `lruOptions?` | [*Options*<string, LRUCacheEntry\>](https://www.npmjs.com/package/lru-cache#options) | Options passed to the lru cache for components. |
 
 Defined in: config.ts:96
 
@@ -32,7 +35,7 @@ Configuration for the data cache.
 | Name | Type | Description |
 | :------ | :------ | :------ |
 | `enabled` | *boolean* | - |
-| `lruOptions?` | *Options*<string, LRUCacheEntry\> | Options passed to the lru cache for components. |
+| `lruOptions?` | [*Options*<string, LRUCacheEntry\>](https://www.npmjs.com/package/lru-cache#options) | Options passed to the lru cache for data. |
 
 Defined in: config.ts:111
 
@@ -138,6 +141,7 @@ cached routes directly from Apache, nginx or any web server.
 | `enabled` | *boolean* | Enable page caching. |
 | `getCacheKey?` | (`route`: *string*, `context`: Context) => *string* \| *void* | Determine the unique cache key for a route.  This can be used to rewrite how the route is identified in the caching process. For example, if you rely on query parameters for a route, you can rewrite them like this: /search?query=foo%20bar  => /search--query=foo__bar This will allow you to cache routes depending on the query parameter and then serve these from your webserver, if configured properly. |
 | `mode` | [*PageCacheMode*](/configuration/enums/pagecachemode.md) | Set the mode for the page cache. |
+| `lruOptions?` | [*Options*<string, LRUCacheEntry\>](https://www.npmjs.com/package/lru-cache#options) | Options passed to the lru cache for pages. |
 
 Defined in: config.ts:39
 

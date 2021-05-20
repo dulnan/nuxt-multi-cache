@@ -1,5 +1,6 @@
 ---
 title: TypeScript support
+description: Fully compatible with TypeScript projects.
 position: 3
 category: 'Getting started'
 ---

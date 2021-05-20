@@ -1,5 +1,6 @@
 ---
 title: Plugin
+description: Use the client helper plugin to interact with the caches.
 position: 30
 category: 'API'
 ---
@@ -16,6 +17,8 @@ implements no-op methods that always return successfully and don't throw an
 error.
 
 ## Usage
+
+**Interface:** [CachePlugin](https://github.com/dulnan/nuxt-multi-cache/blob/main/src/Plugin/cache.server.ts)
 
 ### asyncData
 ```javascript

@@ -1,5 +1,6 @@
 ---
 title: Cache Groups
+description: Group multiple cache tags in one cache group.
 position: 130
 category: 'Caches'
 ---
@@ -18,6 +19,9 @@ all of them.
 
 You could add those 100 tags to the cache tags of the page, but that's quite a
 lot of duplication. That's where cache groups are a good solution.
+
+The cache is using a sqlite3 database to persist data, because some other
+caches are persistent (like the [static page cache](/caches/page-static)).
 
 ## Config
 

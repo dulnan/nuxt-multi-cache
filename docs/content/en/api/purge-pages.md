@@ -1,5 +1,6 @@
 ---
 title: Purge pages
+description: Purge one or more pages from the page cache.
 position: 230
 category: 'REST API'
 ---

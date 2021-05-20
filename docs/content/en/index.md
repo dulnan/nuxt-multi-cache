@@ -16,6 +16,12 @@ page cache (with a static option), component render cache and a general data
 cache for anything else.
 </p>
 
+---
+
+<img src="/hero-image.svg">
+
+---
+
 <list :items="features"></list>
 
 ## Features

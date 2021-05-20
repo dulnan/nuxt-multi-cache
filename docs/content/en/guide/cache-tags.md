@@ -1,5 +1,6 @@
 ---
 title: Cache tags
+description: Quick introduction about cache tags.
 position: 7
 category: 'Getting started'
 ---

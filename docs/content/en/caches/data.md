@@ -1,5 +1,6 @@
 ---
 title: Data
+description: Cache data like responses, objects or promises across requests.
 position: 120
 category: 'Caches'
 features:

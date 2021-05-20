@@ -1,11 +1,15 @@
 ---
 title: Purge everything
+description: Purge all caches.
 position: 210
 category: 'REST API'
 ---
 <p className="lead">
 Purge all caches.
 </p>
+
+This will completely purge all caches, including persisted data from the sqlite
+databases.
 
 ## Resource
 POST: `/__nuxt_multi_cache/purge/all`

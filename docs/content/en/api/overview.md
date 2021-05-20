@@ -1,5 +1,6 @@
 ---
 title: Overview
+description: The API provides stats and methods to purge caches.
 position: 200
 category: 'REST API'
 ---

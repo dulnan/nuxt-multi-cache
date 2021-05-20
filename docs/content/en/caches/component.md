@@ -1,5 +1,6 @@
 ---
 title: Components
+description: Cache fully rendered components.
 position: 110
 category: 'Caches'
 ---

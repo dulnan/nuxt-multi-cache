@@ -1,5 +1,6 @@
 ---
 title: Installation
+description: Installing the package and enabling the module
 position: 1
 category: 'Getting started'
 ---

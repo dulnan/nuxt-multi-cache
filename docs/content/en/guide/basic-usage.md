@@ -1,5 +1,6 @@
 ---
 title: Basic usage
+description: Getting started using the module.
 position: 2
 category: 'Getting started'
 ---

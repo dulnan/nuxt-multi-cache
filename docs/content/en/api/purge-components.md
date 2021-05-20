@@ -1,5 +1,6 @@
 ---
 title: Purge components
+description: Purge one or more components from the component cache.
 position: 240
 category: 'REST API'
 ---

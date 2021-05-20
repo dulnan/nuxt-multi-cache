@@ -1,5 +1,6 @@
 ---
 title: Get tags
+description: Get stats about all tags.
 position: 260
 category: 'REST API'
 ---

@@ -1,7 +1,9 @@
 ---
 title: Page (static HTML)
+description: Cache rendered pages as HTML on disk.
 position: 103
 category: 'Caches'
+badge: Experimental
 ---
 
 <p className="lead">
@@ -17,6 +19,57 @@ example during a deployment.
 Be aware that this might create a significant amount of disk writes, depending
 on how many unique pages your app has.
 </alert>
+
+This cache also keeps track of cached pages and their tags via a sqlite3
+database, which means that this cache is persistent.
+
+## Config
+
+Enable the page cache module and set mode to `static`.
+
+<code-group>
+<code-block label="JavaScript" active>
+
+```javascript
+module.exports = {
+  multiCache: {
+  outputDir: './cache',
+    pageCache: {
+      enabled: true
+      mode: 'static'
+    },
+  }
+}
+```
+
+</code-block>
+
+<code-block label="TypeScript">
+
+```typescript
+import { PageCacheMode } from 'nuxt-multi-cache'
+
+module.exports = {
+  multiCache: {
+    outputDir: './cache',
+    pageCache: {
+      enabled: true
+      mode: PageCacheMode.Static
+    },
+  }
+}
+```
+
+</code-block>
+
+</code-group>
+
+Note the `outputDir` configuration: This is where your cached pages and the
+sqlite DB file are stored.
+
+Pages are stored in a `pages` subdirectory, the sqlite database in a `data`
+subdirectory.
+
 
 ## How it works
 

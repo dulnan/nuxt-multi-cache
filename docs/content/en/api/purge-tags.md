@@ -1,5 +1,6 @@
 ---
 title: Purge by tag
+description: Purge all cache entries belonging to one or more cache tags.
 position: 220
 category: 'REST API'
 ---

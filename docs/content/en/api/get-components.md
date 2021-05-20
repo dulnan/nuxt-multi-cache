@@ -1,5 +1,6 @@
 ---
 title: Get components
+description: Get stats about all cached components.
 position: 264
 category: 'REST API'
 ---

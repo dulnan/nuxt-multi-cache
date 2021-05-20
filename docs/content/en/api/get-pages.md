@@ -1,5 +1,6 @@
 ---
 title: Get pages
+description: Get stats about all cached pages.
 position: 262
 category: 'REST API'
 ---

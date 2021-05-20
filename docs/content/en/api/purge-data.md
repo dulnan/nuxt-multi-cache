@@ -1,5 +1,6 @@
 ---
 title: Purge data
+description: Purge one or more data items from the data cache.
 position: 240
 category: 'REST API'
 ---

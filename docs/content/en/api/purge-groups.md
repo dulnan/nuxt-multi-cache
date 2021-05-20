@@ -1,5 +1,6 @@
 ---
 title: Purge groups
+description: Purge one or more cache groups from the groups cache.
 position: 250
 category: 'REST API'
 ---

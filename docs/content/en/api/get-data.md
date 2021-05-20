@@ -1,5 +1,6 @@
 ---
 title: Get data
+description: Get stats about all cached data items.
 position: 266
 category: 'REST API'
 ---

@@ -1,28 +1,37 @@
 ---
 title: Page
+description: Cache rendered pages in memory.
 position: 100
 category: 'Caches'
 ---
 
 <p className="lead">
-Using a page cache significantly improves performance of your website, by
-caching the entire rendered markup of a page and serving it immediately when a
-cached page is requested.
+Using an in-memory page cache significantly improves performance of your
+website, by caching the entire rendered markup of a page and serving it
+immediately when a cached page is requested.
 </p>
 
 nuxt-multi-cache hooks into the main renderRoute method of Nuxt and will return
 cached markup if available. Since this happens very early in the lifecycle, you
 can achieve response times below 50ms.
 
+It is using [lru-cache](https://www.npmjs.com/package/lru-cache) to cache
+pages in memory, which is *not* persistent. This means the cache is gone when
+the node app is quit.
+
 ## Config
 
-Enable the page cache module:
+Enable the page cache module and optionally specify options for
+[lru-cache](https://www.npmjs.com/package/lru-cache#options).
 
 ```javascript
 module.exports = {
   multiCache: {
     pageCache: {
       enabled: true
+      lruOptions: {
+        max: 1000
+      }
     },
   }
 }
@@ -81,3 +90,27 @@ It's up to the user of this module to decide if it should be cached.
 
 When a cached response is returned, the corresponding HTTP status code is
 returned as well.
+
+## Custom cache key
+
+You can alter the key which is used to store the page in the cache or on disk.
+Provide your own `getCacheKey` method (see
+[configuration](http://localhost:3000/guide/configuration#pagecache)) that
+should return a string.
+
+### Default method
+
+```typescript
+import { Url } from 'url'
+
+export function getCacheKey(route: string, context: any) {
+  const url = context.req._parsedUrl as Url
+  const pathname = url.pathname
+
+  if (!pathname) {
+    return
+  }
+
+  return route
+}
+```
