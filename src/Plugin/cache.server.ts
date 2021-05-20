@@ -17,6 +17,9 @@ export class CachePluginRoute {
    * set it to cacheable again.
    */
   setCacheable() {
+    if (!this.helper) {
+      return
+    }
     if (this.helper.cacheableSet) {
       console.log('The request has already been set as uncachable.')
       return
@@ -31,6 +34,9 @@ export class CachePluginRoute {
    * possible to set the request to be cacheable again.
    */
   setUncacheable() {
+    if (!this.helper) {
+      return
+    }
     this.helper.cacheable = false
     this.helper.cacheableSet = true
   }
@@ -39,6 +45,9 @@ export class CachePluginRoute {
    * Add cache tags for the current request.
    */
   addTags(tags: string[] = []) {
+    if (!this.helper) {
+      return
+    }
     this.helper.tags = [...this.helper.tags, ...tags]
   }
 }
@@ -54,18 +63,20 @@ export class CachePluginData {
    * Set a data cache entry.
    */
   set(key: string, data: any, tags: string[] = []) {
-    if (this.cache) {
-      this.cache.set(key, data, tags)
+    if (!this.cache) {
+      return
     }
+    this.cache.set(key, data, tags)
   }
 
   /**
    * Get a data cache entry.
    */
   get(key: string): any {
-    if (this.cache) {
-      return this.cache.get(key)
+    if (!this.cache) {
+      return
     }
+    return this.cache.get(key)
   }
 }
 
@@ -95,9 +106,10 @@ export class CachePluginGroups {
    * entries that reference this cache group.
    */
   add(name: string, tags: string[] = []) {
-    if (this.cache) {
-      this.cache.set(name, '', tags)
+    if (!this.cache) {
+      return
     }
+    this.cache.set(name, '', tags)
   }
 }
 
