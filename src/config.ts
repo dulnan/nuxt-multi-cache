@@ -4,7 +4,7 @@ import { Options as LRUOptions } from 'lru-cache'
 import { LRUCacheEntry } from './Cache/LRUCache'
 
 export enum PageCacheMode {
-  Static = 'Static',
+  Static = 'static',
   Memory = 'memory',
 }
 
@@ -58,6 +58,11 @@ export interface MultiCacheConfig {
      * then serve these from your webserver, if configured properly.
      */
     getCacheKey?: (route: string, context: Context) => string | void
+
+    /**
+     * Options passed to the lru cache for components.
+     */
+    lruOptions?: LRUOptions<string, LRUCacheEntry>
   }
 
   /**

@@ -24,7 +24,7 @@ export default class PageCacheMemory extends LRUCache {
   getCacheKey: GetCacheKeyMethod
 
   constructor(config: MultiCacheConfig['pageCache']) {
-    super()
+    super(config?.lruOptions)
     this.getCacheKey = config?.getCacheKey || getCacheKey
   }
 }
