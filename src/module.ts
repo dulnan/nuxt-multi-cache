@@ -78,6 +78,13 @@ const cacheModule: Module = function () {
     }
   }
 
+  // Attach a dummy component cache in case the cache is disabled, but the
+  // components still implement the serverCacheKey method. If they do and no
+  // cache is available, vue-server-renderer complains.
+  if (this.options.render.bundleRenderer) {
+    this.options.render.bundleRenderer.cache = dummyComponentCache as any
+  }
+
   // Disable caching if disabled or renderer not available.
   if (!enabled || !nuxt.renderer) {
     logger('Caching is disabled.')
@@ -99,13 +106,9 @@ const cacheModule: Module = function () {
   let dataCache: DataCache|null = null
   let groupsCache: GroupsCache|null = null
 
-  if (this.options.render.bundleRenderer) {
-    if (configComponentCache && configComponentCache.enabled) {
-      componentCache = new ComponentCache(configComponentCache)
-      this.options.render.bundleRenderer.cache = componentCache as any
-    } else {
-      this.options.render.bundleRenderer.cache = dummyComponentCache as any
-    }
+  if (configComponentCache && configComponentCache.enabled && this.options.render.bundleRenderer) {
+    componentCache = new ComponentCache(configComponentCache)
+    this.options.render.bundleRenderer.cache = componentCache as any
   }
 
   if (configPageCache && configPageCache.enabled) {

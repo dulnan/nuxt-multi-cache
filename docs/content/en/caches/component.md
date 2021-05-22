@@ -28,6 +28,11 @@ module.exports = {
   }
 }
 ```
+<alert>
+If you disable the cache, the module will still attach a dummy cache that
+returns nothing. This is because vue-server-renderer will complain if a
+component implements the `serverCacheKey` method but no cache is provided.
+</alert>
 
 ## How it works
 
