@@ -41,6 +41,8 @@ export default function createServerMiddleware(
     typeof serverAuth === 'object'
       ? getDefaultPurgeAuthCheck(serverAuth)
       : serverAuth
+
+  // @ts-ignore
   app.use(express.json())
 
   // Create the middleware to check if a purge request is allowed or not.
@@ -151,7 +153,6 @@ export default function createServerMiddleware(
 
     try {
       const allTags = groupsCache?.getAllPurgableTags(tags) || tags
-      console.log(allTags)
       const resultRoutes = await pageCache?.purgeTags(allTags)
       const resultComponents = await componentCache?.purgeTags(allTags)
       const resultData = await dataCache?.purgeTags(allTags)
@@ -160,6 +161,7 @@ export default function createServerMiddleware(
         routes: resultRoutes,
         components: resultComponents,
         data: resultData,
+        tags: allTags
       })
     } catch (e) {
       console.log(e)
