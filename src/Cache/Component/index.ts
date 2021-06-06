@@ -32,7 +32,6 @@ export default class ComponentCache extends LRUCache {
 
   set(value: string, data: any) {
     const { key, tags } = parseCacheKey(value)
-    console.log('ComponentCache::set()   ' + key)
     this.updateTagCount(tags)
     this.lru.set(key, { tags, data, timestamp: Date.now() })
     return Promise.resolve(true)
