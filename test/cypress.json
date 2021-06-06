@@ -1,0 +1,11 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "viewportWidth": 1024,
+  "viewportHeight": 768,
+  "chromeWebSecurity": false,
+  "trashAssetsBeforeRuns": true,
+  "componentFolder": "components",
+  "component": {
+    "testFiles": ["**/test.ts", "/cypress/integration"]
+  }
+}

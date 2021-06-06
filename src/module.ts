@@ -1,11 +1,11 @@
 import path from 'path'
 import { Module } from '@nuxt/types'
 import { PageCacheDisk, PageCacheMemory } from './Cache/Page'
-import serverMiddleware  from './ServerMiddleware'
+import serverMiddleware from './ServerMiddleware'
 import NuxtSSRCacheHelper from './ssrContextHelper'
 import ComponentCache from './Cache/Component'
 import dummyComponentCache from './Cache/Component/dummyCache'
-import DataCache  from './Cache/Data'
+import DataCache from './Cache/Data'
 import GroupsCache from './Cache/Groups'
 import { PageCacheMode } from './config'
 
@@ -27,7 +27,8 @@ const cacheModule: Module = function () {
 
   // Map the configuration and add defaults.
   const enabled = !!provided.enabled
-  const enabledForRequest = provided.enabledForRequest || defaultEnabledForRequest
+  const enabledForRequest =
+    provided.enabledForRequest || defaultEnabledForRequest
   const debug = !!provided.debug
   const outputDirRaw = provided.outputDir
   const configServer = {
@@ -36,17 +37,17 @@ const cacheModule: Module = function () {
   }
   const configPageCache = {
     ...provided?.pageCache,
-    mode: provided?.pageCache.mode || PageCacheMode.Memory
+    mode: provided?.pageCache.mode || PageCacheMode.Memory,
   }
 
   const configComponentCache = {
-    ...provided?.componentCache
+    ...provided?.componentCache,
   }
   const configDataCache = {
-    ...provided?.dataCache
+    ...provided?.dataCache,
   }
-  const configGroupsCache= {
-    ...provided?.groupsCache
+  const configGroupsCache = {
+    ...provided?.groupsCache,
   }
 
   if (!outputDirRaw) {
@@ -92,7 +93,11 @@ const cacheModule: Module = function () {
   }
 
   // Disable caching if no purge authorization if provided.
-  if (!provided.server || typeof provided.server.auth !== 'object' && typeof provided.server.auth !== 'function') {
+  if (
+    !provided.server ||
+    (typeof provided.server.auth !== 'object' &&
+      typeof provided.server.auth !== 'function')
+  ) {
     logger(
       'No serverAuth function or basic auth config provided, caching is disabled.',
       'warn'
@@ -101,12 +106,16 @@ const cacheModule: Module = function () {
   }
 
   // Create global cache instances.
-  let pageCache: PageCacheDisk|PageCacheMemory|null = null
-  let componentCache: ComponentCache|null = null
-  let dataCache: DataCache|null = null
-  let groupsCache: GroupsCache|null = null
+  let pageCache: PageCacheDisk | PageCacheMemory | null = null
+  let componentCache: ComponentCache | null = null
+  let dataCache: DataCache | null = null
+  let groupsCache: GroupsCache | null = null
 
-  if (configComponentCache && configComponentCache.enabled && this.options.render.bundleRenderer) {
+  if (
+    configComponentCache &&
+    configComponentCache.enabled &&
+    this.options.render.bundleRenderer
+  ) {
     componentCache = new ComponentCache(configComponentCache)
     this.options.render.bundleRenderer.cache = componentCache as any
   }
@@ -126,13 +135,23 @@ const cacheModule: Module = function () {
   }
 
   if (configGroupsCache && configGroupsCache.enabled) {
-    groupsCache = new GroupsCache(configGroupsCache, outputDir, isPageCacheStatic)
+    groupsCache = new GroupsCache(
+      configGroupsCache,
+      outputDir,
+      isPageCacheStatic
+    )
   }
 
   // Add the server middleware to manage the cache.
   this.addServerMiddleware({
     path: configServer.path,
-    handler: serverMiddleware(pageCache, dataCache, componentCache, groupsCache, configServer.auth),
+    handler: serverMiddleware(
+      pageCache,
+      dataCache,
+      componentCache,
+      groupsCache,
+      configServer.auth
+    ),
   })
 
   // Inject the cache helper object into the SSR context.
@@ -172,7 +191,11 @@ const cacheModule: Module = function () {
     function renderWithCache() {
       return renderRoute(route, context).then((result: any) => {
         // Check if the route is set as cacheable.
-        if (pageCache && context.$cacheHelper && context.$cacheHelper.cacheable) {
+        if (
+          pageCache &&
+          context.$cacheHelper &&
+          context.$cacheHelper.cacheable
+        ) {
           const tags = context.$cacheHelper.tags || []
 
           pageCache
