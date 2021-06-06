@@ -70,7 +70,7 @@ const cacheModule: Module = function () {
     if (!debug) {
       return
     }
-    const output = '[Nuxt Route Cache] - ' + message
+    const output = '[Nuxt Multi Cache] - ' + message
     if (type === 'info') {
       console.info(output)
     } else if (type === 'warn') {
@@ -111,11 +111,13 @@ const cacheModule: Module = function () {
     this.options.render.bundleRenderer.cache = componentCache as any
   }
 
+  const isPageCacheStatic = configPageCache?.mode === PageCacheMode.Static
+
   if (configPageCache && configPageCache.enabled) {
-    if (configPageCache.mode === PageCacheMode.Memory) {
-      pageCache = new PageCacheMemory(configPageCache)
-    } else if (configPageCache.mode === PageCacheMode.Static) {
+    if (isPageCacheStatic) {
       pageCache = new PageCacheDisk(configPageCache, outputDir)
+    } else {
+      pageCache = new PageCacheMemory(configPageCache)
     }
   }
 
@@ -124,7 +126,7 @@ const cacheModule: Module = function () {
   }
 
   if (configGroupsCache && configGroupsCache.enabled) {
-    groupsCache = new GroupsCache(configGroupsCache, outputDir)
+    groupsCache = new GroupsCache(configGroupsCache, outputDir, isPageCacheStatic)
   }
 
   // Add the server middleware to manage the cache.

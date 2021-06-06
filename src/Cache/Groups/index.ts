@@ -1,9 +1,8 @@
 import path from 'path'
 import { Cache } from './../'
-import low, { LowdbSync } from 'lowdb'
-import FileSync from 'lowdb/adapters/FileSync'
+import { LowSync, MemorySync, JSONFileSync } from 'lowdb'
 import makeDir from 'make-dir'
-import {MultiCacheConfig} from 'config'
+import { MultiCacheConfig } from 'config'
 
 export interface GroupsCacheEntry {
   name: string
@@ -15,43 +14,54 @@ interface DBGroupsCache {
 }
 
 export default class GroupsCache implements Cache {
-  db: LowdbSync<DBGroupsCache>
+  db: LowSync<DBGroupsCache>
 
-  constructor(_config: MultiCacheConfig['groupsCache'], outputDir?: string) {
-    if (!outputDir) {
-      throw new Error('Missing outputDir for GroupsCache.')
+  constructor(
+    _config: MultiCacheConfig['groupsCache'],
+    outputDir?: string,
+    persisting = false
+  ) {
+    if (persisting) {
+      if (!outputDir) {
+        throw new Error('Missing outputDir for GroupsCache.')
+      }
+      const dirPath = path.resolve(outputDir, 'data')
+      const filePath = path.resolve(outputDir, 'data', 'groups.json')
+      makeDir.sync(dirPath)
+      const adapter = new JSONFileSync<DBGroupsCache>(filePath)
+
+      this.db = new LowSync<DBGroupsCache>(adapter)
+    } else {
+      this.db = new LowSync<DBGroupsCache>(new MemorySync<DBGroupsCache>())
     }
-    const dirPath = path.resolve(outputDir, 'data')
-    const filePath = path.resolve(outputDir, 'data', 'groups.json')
-    makeDir.sync(dirPath)
-    const adapter = new FileSync(filePath)
-
-    this.db = low(adapter)
-    this.db.defaults({ groups: [] }).write()
+    if (!this.db.data) {
+      this.db.data = { groups: [] }
+    }
   }
 
   get(name: string) {
-    const group = this.db.get('groups').find({ name }).value()
+    const group = this.db.data?.groups.find((v) => v.name === name)
     return Promise.resolve(group)
   }
 
   set(name: string, _data: any, tags: string[] = []) {
-    this.db.get('groups').remove({ name }).write()
-    this.db.get('groups').push({ name, tags }).write()
+    this.db.data?.groups.filter((v) => v.name)
+    this.db.data?.groups.push({ name, tags })
+    this.db.write()
     return Promise.resolve(true)
   }
 
   has(name: string): Promise<boolean> {
-    return Promise.resolve(!!this.db.get('groups').find({ name }).value)
+    return Promise.resolve(!!this.db.data?.groups.find((v) => v.name === name))
   }
 
   purgeTags(tags: string[] = []) {
     const removedKeys: string[] = []
-    this.db.get('groups').forEach((entry) => {
+    this.db.data?.groups.forEach((entry) => {
       const match = entry.tags.some((v) => tags.includes(v))
       if (match) {
         removedKeys.push(entry.name)
-        this.db.get('groups').remove(entry)
+        this.db.data?.groups.filter((v) => v.name !== entry.name)
       }
     })
 
@@ -60,8 +70,8 @@ export default class GroupsCache implements Cache {
 
   getTags() {
     const tags: Record<string, number> = {}
-    this.db.get('groups').forEach(group => {
-      group.tags.forEach(tag => {
+    this.db.data?.groups.forEach((group) => {
+      group.tags.forEach((tag) => {
         if (!tags[tag]) {
           tags[tag] = 0
         }
@@ -69,14 +79,16 @@ export default class GroupsCache implements Cache {
       })
     })
 
-    return Promise.resolve(Object.keys(tags).map(tag => {
-      return { tag, count: tags[tag] }
-    }))
+    return Promise.resolve(
+      Object.keys(tags).map((tag) => {
+        return { tag, count: tags[tag] }
+      })
+    )
   }
 
   purgeKeys(names: string[]) {
     names.forEach((name) => {
-      this.db.get('groups').remove({ name })
+      this.db.data?.groups.filter((v) => v.name !== name)
     })
 
     return Promise.resolve({ purged: names.length, success: true })
@@ -85,7 +97,7 @@ export default class GroupsCache implements Cache {
   getAllPurgableTags(tags: string[]) {
     const allTags: string[] = [...tags]
 
-    this.db.get('groups').forEach(group => {
+    this.db.data?.groups.forEach((group) => {
       const match = group.tags.some((v) => tags.includes(v))
       if (match) {
         allTags.push(group.name)
@@ -96,14 +108,14 @@ export default class GroupsCache implements Cache {
   }
 
   getEntries(_offset = 0) {
-    const rows = this.db.get('groups').value()
+    const rows = this.db.data?.groups || []
 
     return Promise.resolve({ total: rows.length, rows })
   }
 
   getCountForTag(tag: string) {
     let count = 0
-    this.db.get('groups').forEach((entry) => {
+    this.db.data?.groups.forEach((entry) => {
       const match = entry.tags.includes(tag)
       if (match) {
         count++
@@ -113,8 +125,8 @@ export default class GroupsCache implements Cache {
   }
 
   purgeAll() {
-    const purged = this.db.get('groups').toLength().value()
-    this.db.get('groups').remove().write()
+    const purged = this.db.data?.groups.length
+    this.db.data = { groups: [] }
     return Promise.resolve({ purged, success: true })
   }
 }
