@@ -23,7 +23,7 @@ function defaultEnabledForRequest() {
  */
 const cacheModule: Module = function () {
   const nuxt: any = this.nuxt
-  const provided = this.options.routeCache || {}
+  const provided = this.options.multiCache || {}
 
   // Map the configuration and add defaults.
   const enabled = !!provided.enabled
