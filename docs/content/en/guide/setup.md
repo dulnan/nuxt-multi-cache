@@ -20,9 +20,11 @@ module.exports = {
   multiCache: {
     enabled: true,
     outputDir: '~/cache',
-    serverAuth: {
-      username: 'admin',
-      password: 'hunter2'
+    server: {
+      auth: {
+        username: 'admin',
+        password: 'hunter2'
+      },
     },
     pageCache: {
       enabled: true

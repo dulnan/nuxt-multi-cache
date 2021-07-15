@@ -99,7 +99,7 @@ const cacheModule: Module = function () {
       typeof provided.server.auth !== 'function')
   ) {
     logger(
-      'No serverAuth function or basic auth config provided, caching is disabled.',
+      'No server.auth function or basic auth config provided, caching is disabled.',
       'warn'
     )
     return

@@ -8,7 +8,10 @@ export enum PageCacheMode {
   Memory = 'memory',
 }
 
-export type GetCacheKeyMethod = (route: string, context: Context) => string | void
+export type GetCacheKeyMethod = (
+  route: string,
+  context: Context
+) => string | void
 
 export interface MultiCacheConfig {
   /**
