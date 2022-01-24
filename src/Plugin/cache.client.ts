@@ -33,3 +33,24 @@ export default (_context: any, inject: (key: string, value: any) => void) => {
   }
   inject('cache', mock)
 }
+
+declare module 'vue/types/vue' {
+  interface Vue {
+    $cache: CachePlugin
+  }
+}
+
+declare module 'vuex/types/index' {
+  interface Store<S> {
+    readonly $cache: CachePlugin
+  }
+}
+
+declare module '@nuxt/types' {
+  interface NuxtAppOptions {
+    $cache: CachePlugin
+  }
+  interface Context {
+    $cache: CachePlugin
+  }
+}
