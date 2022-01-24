@@ -7,7 +7,7 @@ export interface CachePlugin {
   }
   data: {
     set(key: string, data: any, tags: string[]): void
-    get(key: string): any
+    get(key: string): Promise<any>
   }
   groups: {
     add(name: string, tags: string[]): void
@@ -23,11 +23,13 @@ export default (_context: any, inject: (key: string, value: any) => void) => {
     },
     data: {
       set() {},
-      get() {},
+      get() {
+        return Promise.resolve()
+      },
     },
     groups: {
       add() {},
-    }
+    },
   }
   inject('cache', mock)
 }
