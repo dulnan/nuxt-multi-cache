@@ -41,9 +41,9 @@ export default class Disk {
   }
 
   initFolders() {
-    return Promise.all([
-      this.folder, this.folderPages, this.folderData
-    ].map(v => makeDir(v)))
+    return Promise.all(
+      [this.folder, this.folderPages, this.folderData].map((v) => makeDir(v))
+    )
   }
 
   /**
@@ -57,7 +57,10 @@ export default class Disk {
    * Check if the file under the given path exists.
    */
   fileExists(fullPath: string): Promise<boolean> {
-    return fs.promises.access(fullPath).then(() => true).catch(() => false)
+    return fs.promises
+      .access(fullPath)
+      .then(() => true)
+      .catch(() => false)
   }
 
   /**

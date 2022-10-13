@@ -1,7 +1,7 @@
 import GroupsCache from './../Cache/Groups'
 import DataCache from './../Cache/Data'
 import NuxtSSRCacheHelper from './../ssrContextHelper'
-import {CachePlugin} from './cache.client'
+import { CachePlugin } from './cache.client'
 
 export class CachePluginRoute {
   helper: NuxtSSRCacheHelper

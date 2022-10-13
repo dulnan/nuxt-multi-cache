@@ -15,5 +15,5 @@ export default {
       return cb(false)
     }
     return false
-  }
+  },
 }

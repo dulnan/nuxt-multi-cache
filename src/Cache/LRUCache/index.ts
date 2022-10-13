@@ -49,7 +49,7 @@ export default class LRUCache implements Cache {
   }
 
   updateTagCount(tags: string[] = []) {
-    tags.forEach(tag => {
+    tags.forEach((tag) => {
       if (!this.tagCount[tag]) {
         this.tagCount[tag] = 0
       }
@@ -60,7 +60,7 @@ export default class LRUCache implements Cache {
   rebuildTagCount() {
     const map: Record<string, number> = {}
     this.lru.forEach((entry, key) => {
-      entry.tags.forEach(tag => {
+      entry.tags.forEach((tag) => {
         if (!map[tag]) {
           map[tag] = 0
         }
@@ -74,7 +74,7 @@ export default class LRUCache implements Cache {
   purgeTags(tags: string[] = []) {
     const removedKeys: string[] = []
     this.lru.forEach((entry, key) => {
-      const match = entry.tags.some(v => tags.includes(v))
+      const match = entry.tags.some((v) => tags.includes(v))
       if (match) {
         removedKeys.push(key)
         this.lru.del(key)
@@ -87,7 +87,7 @@ export default class LRUCache implements Cache {
   }
 
   purgeKeys(keys: string[]) {
-    keys.forEach(key => {
+    keys.forEach((key) => {
       this.lru.del(key)
     })
 
@@ -96,10 +96,10 @@ export default class LRUCache implements Cache {
   }
 
   getTags() {
-    const rows = Object.keys(this.tagCount).map(tag => {
+    const rows = Object.keys(this.tagCount).map((tag) => {
       return {
         tag,
-        count: this.tagCount[tag]
+        count: this.tagCount[tag],
       }
     })
     return Promise.resolve(rows)
@@ -116,7 +116,7 @@ export default class LRUCache implements Cache {
         rows.push({
           tags: entry.tags,
           timestamp: entry.timestamp,
-          key
+          key,
         })
       }
       i++

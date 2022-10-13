@@ -175,7 +175,7 @@ export default class PageCacheDisk implements Cache {
   }
 
   getCountForTag(tag: string) {
-    return this.dbGet(this.dbCountForTag, [tag]).then(v => v.total)
+    return this.dbGet(this.dbCountForTag, [tag]).then((v) => v.total)
   }
 
   dbGetAll(
@@ -236,12 +236,16 @@ export default class PageCacheDisk implements Cache {
    * Purge everything from disk and the database.
    */
   purgeAll() {
-    return this.disk.purgeAll().then(() => {
-      this.db.exec('DELETE FROM page_cache')
-    }).then(() => {
-      return { success: true }
-    }).catch(() => {
-      return { success: false }
-    })
+    return this.disk
+      .purgeAll()
+      .then(() => {
+        this.db.exec('DELETE FROM page_cache')
+      })
+      .then(() => {
+        return { success: true }
+      })
+      .catch(() => {
+        return { success: false }
+      })
   }
 }

@@ -17,12 +17,12 @@ export interface Cache {
   /**
    * Get a cache entry for a key.
    */
-  get(key: string, cb?: (res: string) => void): Promise<any>|void
+  get(key: string, cb?: (res: string) => void): Promise<any> | void
 
   /**
    * Check if a cache entry for the key exists.
    */
-  has(key: string, cb?: (hit: boolean) => void): void|Promise<boolean>
+  has(key: string, cb?: (hit: boolean) => void): void | Promise<boolean>
 
   /**
    * Get all entries, optionally paginated.
