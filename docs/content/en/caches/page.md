@@ -42,7 +42,7 @@ module.exports = {
 By default nothing is cached. You have to manually mark a page as cacheable:
 
 ```javascript
-context.app.$cache.page.setCacheable()
+context.app.$cache.route.setCacheable()
 ```
 
 This method can be called anywhere, it's not limited to a page component. It
@@ -56,7 +56,7 @@ same page a second time.
 You can bail out from caching a page anytime during SSR by calling:
 
 ```javascript
-context.app.$cache.page.setUncacheable()
+context.app.$cache.route.setUncacheable()
 ```
 
 Note that calling this method is *final*, which means that the page will not be
@@ -73,7 +73,7 @@ In order to be able to purge pages using cache tags, you can assign each page a
 set of cache tags:
 
 ```javascript
-context.app.$cache.page.addTags(['article:5', 'image:14'])
+context.app.$cache.route.addTags(['article:5', 'image:14'])
 ```
 
 Typically you would receive these tags directly from the source, e.g. when

@@ -47,7 +47,7 @@ You can then use `group_menu` like any regular cache tag. This is basically the
 same as adding 100 cache tags - but just with one:
 
 ```javascript
-this.$cache.page.addTags(['article:5', 'image:14', 'group_menu'])
+this.$cache.route.addTags(['article:5', 'image:14', 'group_menu'])
 ```
 
 ## Cache group invalidation

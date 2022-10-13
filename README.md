@@ -24,8 +24,8 @@ SSR page, component and data cache for Nuxt. Supports purging cache entries by k
 export default {
   asyncData({ app }) {
     return app.$api.get('article', { id: 10 }).then(article => {
-      app.$cache.page.setCacheable()
-      app.$cache.page.addTags(['article:10'])
+      app.$cache.route.setCacheable()
+      app.$cache.route.addTags(['article:10'])
       return { article }
     })
   },

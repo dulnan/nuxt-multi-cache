@@ -51,7 +51,7 @@ export default (ctx) {
 
 ## Properties
 
-### `page`
+### `route`
 
 Any actions performed with these methods are only persisted once the page has
 rendered successfully and is deemed cacheable.

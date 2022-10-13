@@ -13,7 +13,7 @@ context as `$cache`.
 
 ### Caching a page
 
-Calling `$cache.page.setCacheable()` will mark the current page as cacheable.
+Calling `$cache.route.setCacheable()` will mark the current page as cacheable.
 You can call this method anywhere (page, layout, components, nuxtServerInit,
 middleware, etc), as long as the code is called during server-side rendering.
 
@@ -29,7 +29,7 @@ middleware, etc), as long as the code is called during server-side rendering.
 export default {
   asyncData({ app }) {
     return app.$api.get('article').then(article => {
-      app.$cache.page.setCacheable()
+      app.$cache.route.setCacheable()
       return { article }
     })
   },
@@ -58,8 +58,8 @@ For example, if you have a route to view an article with an image, you may want
 to add cache tags for the article ID and the image ID:
 
 ```javascript
-app.$cache.page.setCacheable()
-app.$cache.page.addTags(['article:5', 'image:14'])
+app.$cache.route.setCacheable()
+app.$cache.route.addTags(['article:5', 'image:14'])
 ```
 
 Now this page is associated with two tags. Whenever the article or image
