@@ -1,5 +1,5 @@
 import express, { NextFunction, Request, Response } from 'express'
-import { PageCacheDisk, PageCacheMemory} from './../Cache/Page'
+import { PageCacheDisk, PageCacheMemory } from './../Cache/Page'
 import ComponentCache from './../Cache/Component'
 import DataCache from './../Cache/Data'
 import { Cache } from './../Cache'
@@ -30,7 +30,7 @@ function logger(message: any) {
 }
 
 export default function createServerMiddleware(
-  pageCache: PageCacheMemory|PageCacheDisk| null,
+  pageCache: PageCacheMemory | PageCacheDisk | null,
   dataCache: DataCache | null,
   componentCache: ComponentCache | null,
   groupsCache: GroupsCache | null,
@@ -96,7 +96,7 @@ export default function createServerMiddleware(
     for (const key of cacheKeys) {
       const cache = caches[key]
       const items = await cache.getTags()
-      items.forEach(item=> {
+      items.forEach((item) => {
         const tag = item.tag
         const count = item.count
         if (!tagMap[tag]) {
@@ -106,19 +106,21 @@ export default function createServerMiddleware(
       })
     }
 
-    return Object.keys(tagMap).map(tag => {
-      return {
-        tag,
-        counts: tagMap[tag],
-        total: Object.keys(tagMap[tag]).reduce((acc, key) => {
-          const count = tagMap[tag][key]
-          acc += count
-          return acc
-        }, 0)
-      }
-    }).sort((a, b) => {
-      return b.total - a.total
-    })
+    return Object.keys(tagMap)
+      .map((tag) => {
+        return {
+          tag,
+          counts: tagMap[tag],
+          total: Object.keys(tagMap[tag]).reduce((acc, key) => {
+            const count = tagMap[tag][key]
+            acc += count
+            return acc
+          }, 0),
+        }
+      })
+      .sort((a, b) => {
+        return b.total - a.total
+      })
   }
 
   /*
@@ -161,7 +163,7 @@ export default function createServerMiddleware(
         routes: resultRoutes,
         components: resultComponents,
         data: resultData,
-        tags: allTags
+        tags: allTags,
       })
     } catch (e) {
       console.log(e)

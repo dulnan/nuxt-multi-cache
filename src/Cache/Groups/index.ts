@@ -2,7 +2,7 @@ import path from 'path'
 import { Cache } from './../'
 import { LowSync, MemorySync, JSONFileSync } from 'lowdb'
 import makeDir from 'make-dir'
-import { MultiCacheConfig } from 'config'
+import { MultiCacheConfig } from './../../config'
 
 export interface GroupsCacheEntry {
   name: string

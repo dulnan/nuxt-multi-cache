@@ -1,5 +1,5 @@
-import { MultiCacheConfig } from 'config'
-import LRUCache  from './../LRUCache'
+import { MultiCacheConfig } from './../../config'
+import LRUCache from './../LRUCache'
 
 export default class DataCache extends LRUCache {
   constructor(config: MultiCacheConfig['dataCache']) {

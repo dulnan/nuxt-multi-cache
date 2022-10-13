@@ -1,12 +1,12 @@
-import { MultiCacheConfig } from 'config'
-import LRUCache  from './../LRUCache'
+import { MultiCacheConfig } from './../../config'
+import LRUCache from './../LRUCache'
 
 function parseCacheKey(value = '') {
   const [key = '', rest = ''] = value.split('____')
   const tags = rest.split('$').filter(Boolean)
   return {
     key,
-    tags
+    tags,
   }
 }
 
