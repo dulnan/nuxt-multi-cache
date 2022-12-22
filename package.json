@@ -1,7 +1,16 @@
 {
   "name": "nuxt-multi-cache",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "SSR route, component and data cache for Nuxt.js",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs"
+    }
+  },
+  "main": "./dist/module.cjs",
+  "types": "./dist/types.d.ts",
   "keywords": [
     "nuxt",
     "cache",
@@ -16,7 +25,10 @@
     "email": "me@dulnan.net"
   },
   "scripts": {
-    "build": "tsc -p tsconfig-esm.json && tsc -p tsconfig-cjs.json",
+    "prepack": "nuxt-module-build",
+    "dev": "nuxi dev playground",
+    "dev:build": "nuxi build playground",
+    "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground",
     "typedoc": "typedoc --out foo --namedAnchors true --publicPath /configuration/ src/index.ts",
     "prettier": "prettier ./src --write"
   },
@@ -24,45 +36,18 @@
     "type": "git",
     "url": "git+https://github.com/dulnan/nuxt-multi-cache.git"
   },
-  "main": "./lib/cjs/index.js",
-  "module": "./lib/esm/index.js",
-  "types": "./lib/types/index.d.ts",
-  "browser": {
-    "./index.js": "./client.js"
-  },
   "files": [
-    "lib/",
-    "client.js",
-    "client.d.ts"
+    "dist"
   ],
   "dependencies": {
-    "basic-auth": "^2.0.1",
-    "express": "^4.17.1",
-    "lowdb": "^2.1.0",
-    "lru-cache": "^6.0.0",
-    "make-dir": "^3.1.0",
-    "mkdirp": "^1.0.4",
-    "sqlite3": "^5.0.2",
-    "ufo": "^0.7.5"
+    "@nuxt/kit": "^3.0.0"
   },
   "devDependencies": {
-    "@nuxt/types": "^2.15.6",
-    "@types/basic-auth": "^1.1.3",
-    "@types/lru-cache": "^5.1.0",
-    "@types/mkdirp": "^1.0.1",
-    "@types/node": "^15.12.1",
-    "@types/sqlite3": "^3.1.7",
-    "eslint": "^7.28.0",
-    "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-nuxt": "^2.0.0",
-    "eslint-plugin-prettier": "^3.4.0",
-    "globby": "^11.0.3",
-    "nuxt": "^2.15.6",
-    "prettier": "^2.3.1",
-    "typedoc": "^0.20.36",
-    "typedoc-plugin-markdown": "^3.9.0",
-    "typescript": "^4.2.4",
-    "vue": "^2.6.13",
-    "vue-server-renderer": "^2.6.13"
+    "@nuxt/module-builder": "^0.2.1",
+    "@nuxt/schema": "^3.0.0",
+    "@nuxtjs/eslint-config-typescript": "^12.0.0",
+    "eslint": "^8.29.0",
+    "nuxt": "^3.0.0",
+    "prettier": "^2.8.1"
   }
 }
