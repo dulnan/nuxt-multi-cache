@@ -5,6 +5,14 @@ import {
   getCurrentInstance,
   h,
 } from 'vue'
+import type {
+  Slots,
+  ComponentInternalInstance,
+  VNode,
+  RendererNode,
+  RendererElement,
+} from 'vue'
+import type { Storage } from 'unstorage'
 import { ssrRenderSlotInner } from 'vue/server-renderer'
 import { useNuxtApp } from '#app'
 import { useRouteCache } from '../composables/useRouteCache'
@@ -40,6 +48,118 @@ async function unrollBuffer(buffer: any[]) {
     }
   }
   return ret
+}
+
+/**
+ * Render the contents of a slot and return the markup.
+ *
+ * This is approximately the same behavior as in vue/server-renderer. The
+ * ssrRenderSlotInner pushes the rendered fragments of the entire tree in the
+ * buffer array. Then the unrollBuffer method is called which merges the
+ * nested array into a single string of markup.
+ */
+function renderSlot(
+  slots: Slots,
+  parent: ComponentInternalInstance,
+): Promise<string> {
+  // Set up buffer and push method. Ideally we could use
+  // vue/server-renderer's "createBuffer" method, but unfortunately it
+  // isn't exported.
+  const buffer: any[] = []
+  const push = (v: any) => {
+    buffer.push(v)
+  }
+
+  // Render the contents of the default slot. We pass in the push method
+  // that will mutate our buffer array and add items to it.
+  ssrRenderSlotInner(
+    // Slots of this wrapper component.
+    slots,
+    // Chose the default slot.
+    'default',
+    // Slot props are not supported.
+    {},
+    // No fallback render function.
+    null,
+    // Method that pushes markup fragments or promises to our buffer.
+    push,
+    // This wrapper component's parent.
+    parent,
+  )
+
+  // The buffer now contains a nested array of strings or promises. This
+  // method flattens the array down to a single string.
+  return unrollBuffer(buffer)
+}
+
+type RenderCacheableSlotVNode = VNode<
+  RendererNode,
+  RendererElement,
+  { [key: string]: any }
+>
+
+type RenderCacheableProps = {
+  tag?: string
+  noCache?: boolean
+  cacheKey?: string
+  cacheTags?: string[]
+}
+
+/**
+ * Build the cache key.
+ *
+ * A custom key is used if provided. If not, a key is generated based on the
+ * props of the given vnode. If no props are available or if the component has
+ * no name, return.
+ */
+function getCacheKey(
+  props: RenderCacheableProps,
+  vnode: RenderCacheableSlotVNode,
+): string | undefined {
+  const cacheKeyBase = props.cacheKey || JSON.stringify(vnode.props || {})
+  if (!cacheKeyBase) {
+    return
+  }
+  const componentName =
+    typeof vnode.type === 'object' && '__name' in vnode.type
+      ? vnode.type.__name
+      : ''
+
+  // Skip caching if neither component name nor cache key is available.
+  if (!componentName && !cacheKeyBase) {
+    console.debug(
+      `Skipped caching component because either component name or cache key must be provided.`,
+    )
+    return
+  }
+  return componentName + '::' + cacheKeyBase
+}
+
+/**
+ * Check the cache for an already rendered component. If available, return the
+ * data.
+ */
+async function getCachedComponent(storage: Storage, cacheKey: string) {
+  // Get the cached item from the storage.
+  const cached = await storage.getItem(cacheKey)
+  if (cached) {
+    // Component cached together with payload. Nitro has already parsed the
+    // JSON for us.
+    if (typeof cached === 'object' && 'markup' in cached) {
+      const { markup, payload, cacheTags } = cached as any
+      return {
+        markup: markup || '',
+        payload,
+        cacheTags: cacheTags || [],
+      }
+    } else if (typeof cached === 'string') {
+      return {
+        markup: cached,
+        cacheTags: [],
+        payload: null,
+      }
+    }
+  }
 }
 
 /**
@@ -87,6 +207,14 @@ export default defineComponent({
     },
 
     /**
+     * Disable caching entirely.
+     */
+    noCache: {
+      type: Boolean,
+      default: false,
+    },
+
+    /**
      * The key to use for the cache entry. If left empty a key is automatically
      * generated based on the props passed to the child.
      */
@@ -103,7 +231,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-  async setup(props: any) {
+  async setup(props) {
     // Extract the contents of the default slot.
     const slots = useSlots()
     if (!slots.default) {
@@ -120,19 +248,13 @@ export default defineComponent({
     // Wrap all server-side code in an if statement so that it gets properly
     // removed from the client bundles.
     if (process.server) {
-      const cacheKeyBase = props.cacheKey || JSON.stringify(first.props || {})
-      if (!cacheKeyBase) {
+      if (props.noCache) {
         return
       }
-      const componentName =
-        typeof first.type === 'object' && '__name' in first.type
-          ? first.type.__name
-          : ''
-      const cacheKey = componentName + '::' + cacheKeyBase
 
-      // Get the current instance and check if a parent is available. Its
-      // parent is the parent of the slot components.
-      // A parent is required for the ssrRenderSlotInner call.
+      const cacheKey = getCacheKey(props as any, first)
+
+      // Get the current instance.
       const currentInstance = getCurrentInstance()
 
       // Method to get the cached version of a component.
@@ -141,11 +263,14 @@ export default defineComponent({
       const getOrCreateCachedComponent = async (): Promise<
         string | undefined
       > => {
-        // Skip caching if neither component name nor cache key is available.
-        if (!componentName && !cacheKeyBase) {
-          console.debug(
-            `Skipped caching component because either component name or cache key must be provided.`,
-          )
+        if (!cacheKey) {
+          return
+        }
+
+        // A parent component is required when calling the ssrRenderSlotInner
+        // method.
+        if (!currentInstance || !currentInstance.parent) {
+          console.log('Failed to get parent component in Cacheable component.')
           return
         }
 
@@ -165,40 +290,24 @@ export default defineComponent({
         const nuxtApp = useNuxtApp()
 
         // Get the cached item from the storage.
-        const cached = await multiCache.component.getItem(cacheKey)
+        const cached = await getCachedComponent(multiCache.component, cacheKey)
 
         if (cached) {
-          // Component cached together with payload. Nitro has already parsed the
-          // JSON for us.
-          if (typeof cached === 'object' && 'markup' in cached) {
-            const { markup, payload, cacheTags } = cached as any
-            // If payload is available it will be appended to the payload of this response.
-            if (payload) {
-              Object.keys(payload).forEach((key) => {
-                nuxtApp.payload.data[key] = payload[key]
-              })
-            }
+          const { markup, payload, cacheTags } = cached
 
-            // Make sure the cache tags of this component get added to the
-            // cache tags for the route.
-            if (cacheTags && cacheTags.length) {
-              const routeContext = useRouteCache()
-              routeContext.addTags(cacheTags)
-            }
-            return markup
-          } else if (typeof cached === 'string') {
-            // Only component markup cached as string.
-            return cached
+          // If payload is available for component add it to the global payload
+          // object.
+          if (payload) {
+            Object.keys(payload).forEach((key) => {
+              nuxtApp.payload.data[key] = payload[key]
+            })
           }
-        }
+          if (cacheTags.length) {
+            const routeContext = useRouteCache()
+            routeContext.addTags(cacheTags)
+          }
 
-        if (!currentInstance) {
-          console.log('Failed to get current instance in Cacheable component.')
-          return
-        }
-        if (!currentInstance.parent) {
-          console.log('Failed to get parent component in Cacheable component.')
-          return
+          return markup
         }
 
         // Helper method to get all the payload data keys.
@@ -209,34 +318,8 @@ export default defineComponent({
         // Payload keys before rendering the slot.
         const payloadBefore = getPayloadKeys()
 
-        // Set up buffer and push method. Ideally we could use
-        // vue/server-renderer's "createBuffer" method, but unfortunately it
-        // isn't exported.
-        const buffer: any[] = []
-        const push = (v: any) => {
-          buffer.push(v)
-        }
-
-        // Render the contents of the default slot. We pass in the push method
-        // that will mutate our buffer array and add items to it.
-        ssrRenderSlotInner(
-          // Slots of this wrapper component.
-          slots,
-          // Chose the default slot.
-          'default',
-          // Slot props are not supported.
-          {},
-          // No fallback render function.
-          null,
-          // Method that pushes markup fragments or promises to our buffer.
-          push,
-          // This wrapper component's parent.
-          currentInstance.parent,
-        )
-
-        // The buffer now contains a nested array of strings or promises. This
-        // method flattens the array down to a single string.
-        const markup = await unrollBuffer(buffer)
+        // Render the contents of the slot to string.
+        const markup = await renderSlot(slots, currentInstance.parent)
 
         // Find out if new payload was added.
         // This has a big flaw though: If the component depends on a payload
