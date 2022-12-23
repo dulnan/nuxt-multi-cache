@@ -1,5 +1,5 @@
-import type { NuxtModule } from '@nuxt/schema'
 import { fileURLToPath } from 'url'
+import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
 import {
   addComponentsDir,

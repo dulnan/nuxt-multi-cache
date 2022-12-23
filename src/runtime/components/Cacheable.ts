@@ -1,7 +1,14 @@
-import { useSSRContext, useSlots, getCurrentInstance } from 'vue'
-import { getMultiCacheContext } from './../helpers/server'
+import {
+  defineComponent,
+  useSSRContext,
+  useSlots,
+  getCurrentInstance,
+  h,
+} from 'vue'
 import { ssrRenderSlotInner } from 'vue/server-renderer'
+import { useNuxtApp } from '#app'
 import { useRouteCache } from '../composables/useRouteCache'
+import { getMultiCacheContext } from './../helpers/server'
 
 /**
  * Check if something is a promise.
@@ -67,7 +74,8 @@ async function unrollBuffer(buffer: any[]) {
  * data via a separate cache.
  */
 export default defineComponent({
-  name: 'Cacheable',
+  name: 'RenderCacheable',
+
   props: {
     /**
      * The tag to use for the wrapper. It's unfortunately not possible to
@@ -281,13 +289,10 @@ export default defineComponent({
         const cachedMarkup = await getOrCreateCachedComponent()
         if (cachedMarkup) {
           return () =>
-            h(
-              props.tag,
-              {
-                'data-cache-key': cacheKey,
-              },
-              { innerHTML: cachedMarkup },
-            )
+            h(props.tag, {
+              innerHTML: cachedMarkup,
+              'data-cacheable-key': cacheKey,
+            })
         }
       } catch (e) {
         console.debug(e)

@@ -29,8 +29,10 @@
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground",
+    "generate": "nuxi generate",
     "typedoc": "typedoc --out foo --namedAnchors true --publicPath /configuration/ src/index.ts",
-    "prettier": "prettier ./src --write"
+    "prettier": "prettier ./src --write",
+    "fake-data": "node ./scripts/fakeData.js"
   },
   "repository": {
     "type": "git",
@@ -43,10 +45,14 @@
     "@nuxt/kit": "^3.0.0"
   },
   "devDependencies": {
+    "@faker-js/faker": "^7.6.0",
     "@nuxt/module-builder": "^0.2.1",
     "@nuxt/schema": "^3.0.0",
     "@nuxtjs/eslint-config-typescript": "^12.0.0",
-    "eslint": "^8.29.0",
+    "eslint": "^8.30.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-vue": "^9.8.0",
     "nuxt": "^3.0.0",
     "prettier": "^2.8.1"
   }

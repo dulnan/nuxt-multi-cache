@@ -1,4 +1,7 @@
 {
   "private": true,
-  "name": "my-module-playground"
+  "name": "my-module-playground",
+  "scripts": {
+    "generate": "nuxi generate"
+  }
 }

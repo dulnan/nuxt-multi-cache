@@ -3,6 +3,10 @@ node_modules
 temp
 docs/.nuxt
 docs/dist
+.nuxt
+.output
+dist
+playground/data/*.json
 
 docs/static/sw.js
 
