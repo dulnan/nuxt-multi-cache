@@ -11,6 +11,7 @@ import type {
   VNode,
   RendererNode,
   RendererElement,
+  PropType,
 } from 'vue'
 import type { Storage } from 'unstorage'
 import { ssrRenderSlotInner } from 'vue/server-renderer'
@@ -103,6 +104,7 @@ type RenderCacheableProps = {
   noCache?: boolean
   cacheKey?: string
   cacheTags?: string[]
+  asyncDataKeys?: string[]
 }
 
 /**
@@ -227,7 +229,19 @@ export default defineComponent({
      * Cache tags that can be later used for invalidation.
      */
     cacheTags: {
-      type: Array,
+      type: Array as PropType<string[]>,
+      default: () => [],
+    },
+
+    /**
+     * Provide the async data keys used by the cached component.
+     *
+     * If provided the payload data will be cached alongside the component.
+     * If the component uses asyncData and the keys are not provided you will
+     * receive a hydration mismatch error in the client.
+     */
+    asyncDataKeys: {
+      type: Array as PropType<string[]>,
       default: () => [],
     },
   },
@@ -287,6 +301,7 @@ export default defineComponent({
           return
         }
 
+        // Get Nuxt app.
         const nuxtApp = useNuxtApp()
 
         // Get the cached item from the storage.
@@ -310,27 +325,8 @@ export default defineComponent({
           return markup
         }
 
-        // Helper method to get all the payload data keys.
-        const getPayloadKeys = (): string[] => {
-          return Object.keys(nuxtApp.payload.data || {})
-        }
-
-        // Payload keys before rendering the slot.
-        const payloadBefore = getPayloadKeys()
-
         // Render the contents of the slot to string.
         const markup = await renderSlot(slots, currentInstance.parent)
-
-        // Find out if new payload was added.
-        // This has a big flaw though: If the component depends on a payload
-        // that another component produced before, it will not show up here, as
-        // Nuxt has already reused the data from before. This means the
-        // component is now dependent on another component and won't have its
-        // data cached along with it. This will trigger a request on the client
-        // side to get the data if the dependent component is rendered alone.
-        const newPayloadKeys = getPayloadKeys().filter(
-          (v) => !payloadBefore.includes(v),
-        )
 
         // Storing the markup in cache is wrapped in a try/catch. That way if
         // the cache backend is down for some reason we can still return the
@@ -339,9 +335,9 @@ export default defineComponent({
           // The cache tags for this component.
           const cacheTags = props.cacheTags || []
           // We have payload or cache tags.
-          if (newPayloadKeys.length || cacheTags.length) {
+          if (props.asyncDataKeys.length || cacheTags.length) {
             // Extract the payload relevant to the component.
-            const payload: Record<string, any> = newPayloadKeys.reduce<
+            const payload: Record<string, any> = props.asyncDataKeys.reduce<
               Record<string, string>
             >((acc, key) => {
               acc[key] = nuxtApp.payload.data[key]

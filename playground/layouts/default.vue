@@ -1,7 +1,7 @@
 <template>
   <div class="main-layout">
     <header>
-      <RenderCacheable cache-key="navbar">
+      <RenderCacheable cache-key="navbar" :async-data-keys="['navbar']">
         <Navbar />
       </RenderCacheable>
     </header>
