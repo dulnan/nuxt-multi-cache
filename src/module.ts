@@ -25,7 +25,7 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt: '^3.0.0',
     },
   },
-  defaults: defaultOptions,
+  defaults: defaultOptions as any,
   async setup(passedOptions, nuxt) {
     const options = defu({}, passedOptions, {}) as ModuleOptions
     const { resolve } = createResolver(import.meta.url)
@@ -52,6 +52,7 @@ export default defineNuxtModule<ModuleOptions>({
     // request event.
     addServerHandler({
       handler: resolve('./runtime/serverHandler/cacheContext'),
+      middleware: true,
     })
 
     // Add the server handler that handles route caching.
@@ -85,6 +86,11 @@ export default defineNuxtModule<ModuleOptions>({
       handler: resolve('./runtime/serverHandler/api/stats'),
       method: 'get',
       route: prefix('stats/:cacheName'),
+    })
+    addServerHandler({
+      handler: resolve('./runtime/serverHandler/api/inspectItem'),
+      method: 'get',
+      route: prefix('inspect/:cacheName/:key'),
     })
   },
 }) as NuxtModule<ModuleOptions>
