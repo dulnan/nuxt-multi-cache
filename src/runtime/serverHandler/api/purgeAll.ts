@@ -1,7 +1,10 @@
 import { getMultiCacheContext } from '../../helpers/server'
-import { NuxtMultiCacheSSRContext } from '../../../types'
+import { NuxtMultiCacheSSRContext } from '../../types'
+import { checkAuth } from './helpers'
 
 export default defineEventHandler(async (event) => {
+  await checkAuth(event)
+
   const cacheContext = getMultiCacheContext(event)
   if (!cacheContext) {
     return

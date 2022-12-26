@@ -15,7 +15,7 @@ const userId = computed(() => {
 })
 
 const { data: user } = await useAsyncData('user_' + userId.value, () => {
-  return $fetch('/api/getUser/' + userId.value).then((v) => {
+  return $fetch<any>('/api/getUser/' + userId.value).then((v) => {
     return v
   })
 })

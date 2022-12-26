@@ -1,6 +1,7 @@
-import { getCacheInstance } from './helpers'
+import { checkAuth, getCacheInstance } from './helpers'
 
 export default defineEventHandler(async (event) => {
+  await checkAuth(event)
   const cache = getCacheInstance(event)
   const rows = await cache.getKeys().then((keys) => {
     return Promise.all(

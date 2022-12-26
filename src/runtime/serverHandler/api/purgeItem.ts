@@ -1,6 +1,6 @@
-import { getCacheInstance } from './helpers'
 import type { H3Event } from 'h3'
 import { readBody } from 'h3'
+import { checkAuth, getCacheInstance } from './helpers'
 
 async function getKeysToPurge(event: H3Event): Promise<string[]> {
   const key = event.context.params.key
@@ -20,6 +20,7 @@ async function getKeysToPurge(event: H3Event): Promise<string[]> {
 }
 
 export default defineEventHandler(async (event) => {
+  await checkAuth(event)
   const affectedKeys = await getKeysToPurge(event)
   const cache = getCacheInstance(event)
   affectedKeys.forEach((key) => cache.removeItem(key))

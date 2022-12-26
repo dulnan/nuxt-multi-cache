@@ -1,6 +1,6 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import users from './data/users.json'
 import NuxtMultiCache from '..'
+import users from './data/users.json'
 
 export default defineNuxtConfig({
   modules: [NuxtMultiCache],
@@ -8,5 +8,12 @@ export default defineNuxtConfig({
     routes: users.map((v) => {
       return '/user/' + v.userId
     }),
+  },
+  multiCache: {
+    caches: {
+      route: {
+        enabled: true,
+      },
+    },
   },
 })

@@ -1,5 +1,5 @@
 import { useSSRContext } from 'vue'
-import type { NuxtMultiCacheSSRContext } from '../../types'
+import type { NuxtMultiCacheSSRContext } from './../../types'
 
 const PROPERTY = '__MULTI_CACHE'
 

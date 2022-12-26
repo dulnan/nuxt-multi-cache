@@ -42,7 +42,8 @@
     "dist"
   ],
   "dependencies": {
-    "@nuxt/kit": "^3.0.0"
+    "@nuxt/kit": "^3.0.0",
+    "@tusbar/cache-control": "^0.6.1"
   },
   "devDependencies": {
     "@faker-js/faker": "^7.6.0",

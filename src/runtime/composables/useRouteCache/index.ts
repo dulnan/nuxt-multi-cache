@@ -1,5 +1,6 @@
+import type { H3Event } from 'h3'
 import { useSSRContext } from 'vue'
-import { getMultiCacheRouteContext } from '../helpers/server'
+import { getMultiCacheRouteContext } from '../../helpers/server'
 
 type NuxtMultiCacheRouteContextHelper = {
   /**
@@ -43,7 +44,9 @@ type NuxtMultiCacheRouteContextHelper = {
  * The helper provides ways to set the cacheability, cache tags, max age for
  * the current route.
  */
-export function useRouteCache(): NuxtMultiCacheRouteContextHelper {
+export function useRouteCache(
+  event?: H3Event,
+): NuxtMultiCacheRouteContextHelper {
   const dummy: NuxtMultiCacheRouteContextHelper = {
     addTags: () => {},
     getTags: () => [],
@@ -52,17 +55,27 @@ export function useRouteCache(): NuxtMultiCacheRouteContextHelper {
     setMaxAge: () => {},
   }
 
-  if (!process.server) {
+  if (process.client) {
     return dummy
   }
 
-  // SSR context should exist at this point, but TS doesn't know that.
-  const ssrContext = useSSRContext()
-  if (!ssrContext) {
+  const getEvent = () => {
+    if (event) {
+      return event
+    }
+    // SSR context should exist at this point, but TS doesn't know that.
+    const ssrContext = useSSRContext()
+    if (ssrContext) {
+      return ssrContext.event
+    }
+  }
+
+  const h3Event = getEvent()
+  if (!h3Event) {
     return dummy
   }
 
-  const routeContext = getMultiCacheRouteContext(ssrContext.event)
+  const routeContext = getMultiCacheRouteContext(h3Event)
   if (!routeContext) {
     return dummy
   }
@@ -86,8 +99,11 @@ export function useRouteCache(): NuxtMultiCacheRouteContextHelper {
     },
     setMaxAge: (maxAge = 0) => {
       // Only set the maxAge if the value is smaller than the current.
-      if (!routeContext.maxAge || maxAge < routeContext.maxAge) {
-        routeContext.maxAge = maxAge
+      if (
+        !routeContext.control.maxAge ||
+        maxAge < routeContext.control.maxAge
+      ) {
+        routeContext.control.maxAge = maxAge
       }
     },
   }

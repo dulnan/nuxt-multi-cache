@@ -7,8 +7,9 @@ import {
   createResolver,
   defineNuxtModule,
   addImportsDir,
+  addServerPlugin,
 } from '@nuxt/kit'
-import type { NuxtMultiCacheOptions } from './types'
+import type { NuxtMultiCacheOptions } from './runtime/types'
 import { defaultOptions } from './runtime/settings'
 
 // Nuxt needs this.
@@ -19,7 +20,7 @@ export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'nuxt-multi-cache',
     configKey: 'multiCache',
-    version: '1.0.0',
+    version: '2.0.0',
     compatibility: {
       nuxt: '^3.0.0',
     },
@@ -38,6 +39,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Add composables.
     addImportsDir(resolve('./runtime/composables'))
+    nuxt.options.alias['#nuxt-multi-cache'] = resolve('runtime/composables')
 
     await addComponentsDir({
       path: resolve('./runtime/components'),
@@ -52,6 +54,15 @@ export default defineNuxtModule<ModuleOptions>({
       handler: resolve('./runtime/serverHandler/cacheContext'),
     })
 
+    // Add the server handler that handles route caching.
+    addServerHandler({
+      handler: resolve('./runtime/serverHandler/routeCache'),
+    })
+
+    // Server plugin that sets cache related headers.
+    addServerPlugin(resolve('./runtime/plugins/cacheHeaders'))
+
+    // The prefix for the internal cache management routes.
     const prefix = (path: string) => options.api!.prefix + '/' + path
 
     // Add the server API handlers for cache management.

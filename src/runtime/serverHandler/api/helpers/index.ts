@@ -1,8 +1,11 @@
 import type { H3Event } from 'h3'
-import { createError } from 'h3'
+import { createError, getHeader } from 'h3'
 import type { Storage } from 'unstorage'
-import { NuxtMultiCacheSSRContext } from '~~/modules/componentCache/types'
+import { NuxtMultiCacheSSRContext } from '../../../types'
 import { getMultiCacheContext } from './../../../helpers/server'
+import { getModuleConfig } from './../../helpers'
+
+const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 
 export function getCacheInstance(event: H3Event): Storage {
   const cacheContext = getMultiCacheContext(event)
@@ -23,4 +26,33 @@ export function getCacheInstance(event: H3Event): Storage {
   }
 
   return cache
+}
+
+/**
+ * Check the authorization for API endpoints.
+ */
+export async function checkAuth(event: H3Event) {
+  const moduleConfig = await getModuleConfig()
+  const authorization = moduleConfig.api.authorization
+
+  // Auth is disabled if it's explicity set to false.
+  if (authorization === false) {
+    return
+  } else if (typeof authorization === 'function') {
+    const result = await authorization(event)
+    if (result) {
+      return
+    }
+  } else {
+    // Check authorization.
+    const headerToken = getHeader(event, AUTH_HEADER)
+    if (headerToken === moduleConfig.api.authorization) {
+      return
+    }
+  }
+
+  // Unauthorized.
+  createError({
+    statusCode: 401,
+  })
 }

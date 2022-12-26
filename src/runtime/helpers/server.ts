@@ -1,8 +1,5 @@
 import type { H3Event } from 'h3'
-import {
-  NuxtMultiCacheRouteContext,
-  NuxtMultiCacheSSRContext,
-} from '../../types'
+import { NuxtMultiCacheRouteContext, NuxtMultiCacheSSRContext } from '../types'
 
 export const MULTI_CACHE_CONTEXT_KEY = '__MULTI_CACHE'
 export const MULTI_CACHE_ROUTE_CONTEXT_KEY = '__MULTI_CACHE_ROUTE'
