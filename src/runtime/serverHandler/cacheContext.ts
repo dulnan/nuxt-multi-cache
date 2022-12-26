@@ -9,13 +9,14 @@ import {
 import { getModuleConfig } from './helpers'
 import { loadCacheContext } from './helpers/storage'
 
+// Cache if the enabledForRequest method is provided.
 let hasEnabledForRequestMethod: null | boolean = null
 
 /**
  * Determine if the cache context should be added to the request.
  *
- * If the enabledForRequest method is provided, it is called and the result is
- * checked.
+ * If the enabledForRequest method is provided, it is called with the H3 event.
+ * If the method returns false, the cache context is not added.
  */
 async function shouldAddCacheContext(event: H3Event): Promise<boolean> {
   if (hasEnabledForRequestMethod === false) {

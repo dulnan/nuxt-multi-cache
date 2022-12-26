@@ -179,9 +179,10 @@ async function getCachedComponent(storage: Storage, cacheKey: string) {
  * rendered. This means that the entire tree of the slot must not produce any
  * side effects and must not access any form of global state:
  *
- * - Using any form of global state (Pinia, vue-router, session, cookie, auth)
- *   won't work and can lead to unexpected (and dangerous) behavior. This is
- *   also true for provide/inject (unless it's a helper/instance of some sort).
+ * - Using or changing any form of global state (Pinia, vue-router, session,
+ *   cookie, auth, meta) won't work and can lead to unexpected (and dangerous)
+ *   behavior. This is also true for provide/inject (unless it's a
+ *   helper/instance of some sort).
  * - All data must be provided using props. That way it's possible to generate a
  *   unique cache key that changes when the props are different.
  * - For example in a multi-lingual setup you would need to pass the "current
@@ -219,6 +220,7 @@ export default defineComponent({
     /**
      * The key to use for the cache entry. If left empty a key is automatically
      * generated based on the props passed to the child.
+     * The key is automatically prefixed by the component name.
      */
     cacheKey: {
       type: String,
@@ -261,11 +263,7 @@ export default defineComponent({
 
     // Wrap all server-side code in an if statement so that it gets properly
     // removed from the client bundles.
-    if (process.server) {
-      if (props.noCache) {
-        return
-      }
-
+    if (process.server && !props.noCache) {
       const cacheKey = getCacheKey(props as any, first)
 
       // Get the current instance.
