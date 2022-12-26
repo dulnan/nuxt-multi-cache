@@ -191,9 +191,9 @@ async function getCachedComponent(storage: Storage, cacheKey: string) {
  *   or not.
  *
  * In addition to the markup it will also cache payloads produced by the
- * component (e.g. via useAsyncData). It is advisable though to not fetch any
- * data in cached components but instead pass it in via props and cache this
- * data via a separate cache.
+ * component (e.g. via useAsyncData) if the keys are provided. It is advisable
+ * though to not fetch any data in cached components but instead pass it in
+ * via props and cache this data via a separate cache.
  */
 export default defineComponent({
   name: 'RenderCacheable',
@@ -209,7 +209,7 @@ export default defineComponent({
     },
 
     /**
-     * Disable caching entirely.
+     * Disable caching entirely for this component.
      */
     noCache: {
       type: Boolean,

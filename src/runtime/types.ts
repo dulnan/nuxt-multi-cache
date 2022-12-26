@@ -27,6 +27,18 @@ export interface NuxtMultiCacheOptions {
   cacheHeaders?: NuxtMultiCacheHeaderOptions
 
   /**
+   * Determine if caching should be used for the given request.
+   *
+   * If the method resolves to `false` the cache context singleton is not
+   * attached to the request, which prevents getting and setting cache entries
+   * for the duration of the request.
+   *
+   * One use case might be to prevent caching for requests coming from
+   * authenticated users.
+   */
+  enabledForRequest?: (event: H3Event) => Promise<boolean>
+
+  /**
    * Settings for the API endpoints.
    */
   api: {

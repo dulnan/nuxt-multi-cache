@@ -21,7 +21,11 @@ export function getModuleConfig(): Promise<NuxtMultiCacheOptions> {
   return loadNuxtConfig({
     cwd: multiCache.rootDir,
   }).then((v: any) => {
-    moduleConfig = defu({}, v.multiCache, defaultOptions)
+    moduleConfig = defu(
+      {},
+      v.multiCache,
+      defaultOptions,
+    ) as NuxtMultiCacheOptions
     return moduleConfig
   })
 }
