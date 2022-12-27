@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch, createBrowser, getBrowser } from '@nuxt/test-utils'
-import { describe, expect, test, vi } from 'vitest'
+import { setup, $fetch } from '@nuxt/test-utils'
+import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import { purgeAll } from './helpers'
 
@@ -12,7 +12,7 @@ function sleep(delay: number): Promise<void> {
   })
 }
 
-describe('nuxt-graphql-middleware', async () => {
+describe.todo('nuxt-graphql-middleware', async () => {
   const multiCache: NuxtMultiCacheOptions = {
     caches: {
       component: {
@@ -120,7 +120,7 @@ describe('nuxt-graphql-middleware', async () => {
     expect(await $fetch('/noCache?v=two')).toContain('The query value is: two')
   })
 
-  test.only('Caches payload along component if asyncDataKeys provided.', async () => {
+  test('Caches payload along component if asyncDataKeys provided.', async () => {
     await purgeAll()
 
     const first = await $fetch('/payloadData')

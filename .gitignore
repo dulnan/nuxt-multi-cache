@@ -14,3 +14,6 @@ test/node_modules
 test/.nuxt
 test/cypress/videos
 test/cypress/screenshots
+coverage
+
+.vscode/

@@ -5,6 +5,7 @@ import {
   getCurrentInstance,
   h,
 } from 'vue'
+import { hash } from 'ohash'
 import type {
   Slots,
   ComponentInternalInstance,
@@ -19,6 +20,7 @@ import { useNuxtApp } from '#app'
 import { useRouteCache } from '../composables/useRouteCache'
 import { getMultiCacheContext } from './../helpers/server'
 
+/* c8 ignore start */
 /**
  * Check if something is a promise.
  */
@@ -50,6 +52,7 @@ async function unrollBuffer(buffer: any[]) {
   }
   return ret
 }
+/* c8 ignore stop */
 
 /**
  * Render the contents of a slot and return the markup.
@@ -118,14 +121,9 @@ function getCacheKey(
   props: RenderCacheableProps,
   vnode: RenderCacheableSlotVNode,
 ): string | undefined {
-  const cacheKeyBase = props.cacheKey || JSON.stringify(vnode.props || {})
-  if (!cacheKeyBase) {
-    return
-  }
-  const componentName =
-    typeof vnode.type === 'object' && '__name' in vnode.type
-      ? vnode.type.__name
-      : ''
+  const componentName = getComponentName(vnode)
+  const hasProps = Object.keys(vnode.props || {}).length > 0
+  const cacheKeyBase = props.cacheKey || (hasProps ? hash(vnode.props) : '')
 
   // Skip caching if neither component name nor cache key is available.
   if (!componentName && !cacheKeyBase) {
@@ -134,7 +132,18 @@ function getCacheKey(
     )
     return
   }
-  return componentName + '::' + cacheKeyBase
+
+  return `${componentName || 'AnonymousComponent'}::${cacheKeyBase}`
+}
+
+function getComponentName(vnode: RenderCacheableSlotVNode): string | undefined {
+  if (typeof vnode.type === 'object') {
+    if ('__name' in vnode.type) {
+      return vnode.type.__name
+    } else if ('name' in vnode.type) {
+      return vnode.type.name
+    }
+  }
 }
 
 /**
@@ -251,15 +260,11 @@ export default defineComponent({
     // Extract the contents of the default slot.
     const slots = useSlots()
     if (!slots.default) {
-      return
+      return () => ''
     }
 
-    // Early return when there is nothing to render.
     const defaultSlot = slots.default()
     const first = defaultSlot[0]
-    if (!first) {
-      return
-    }
 
     // Wrap all server-side code in an if statement so that it gets properly
     // removed from the client bundles.
@@ -371,8 +376,10 @@ export default defineComponent({
               'data-cacheable-key': cacheKey,
             })
         }
+        return () => ''
       } catch (e) {
         console.debug(e)
+        return () => ''
       }
     }
 

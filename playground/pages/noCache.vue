@@ -1,7 +1,15 @@
 <template>
   <div>
-    <RenderCacheable cache-key="one" :cache-tags="['tag1']" :no-cache="true">
+    <RenderCacheableComponent
+      cache-key="one"
+      :cache-tags="['tag1']"
+      :no-cache="true"
+    >
       <QueryValue />
-    </RenderCacheable>
+    </RenderCacheableComponent>
   </div>
 </template>
+
+<script setup lang="ts">
+import RenderCacheableComponent from '../../src/runtime/components/RenderCacheable'
+</script>

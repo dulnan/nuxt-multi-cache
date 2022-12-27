@@ -1,10 +1,14 @@
 <template>
   <div>
-    <RenderCacheable
+    <RenderCacheableComponent
       cache-key="test_18539"
       :async-data-keys="['withAsyncData']"
     >
       <WithAsyncData />
-    </RenderCacheable>
+    </RenderCacheableComponent>
   </div>
 </template>
+
+<script setup lang="ts">
+import RenderCacheableComponent from '../../src/runtime/components/RenderCacheable'
+</script>
