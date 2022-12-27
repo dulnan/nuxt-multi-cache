@@ -1,6 +1,5 @@
 /* eslint-disable vue/one-component-per-file */
 import { createSSRApp, defineComponent, nextTick } from 'vue'
-import { createStorage } from 'unstorage'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi } from 'vitest'
 import { mount } from '@vue/test-utils'

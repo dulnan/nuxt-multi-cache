@@ -3,15 +3,22 @@ import type { NuxtMultiCacheSSRContext } from './../../types'
 
 const PROPERTY = '__MULTI_CACHE'
 
-type AddToCacheMethod<T> = (data: T, tags?: string[]) => void
+type AddToCacheMethod<T> = (data: T, tags?: string[]) => Promise<void>
+type DataCacheItem = { data: any; cacheTags: string[] } | string
 
 type CallbackContext<T> = {
   addToCache: AddToCacheMethod<T>
   value?: T
+  cacheTags: string[]
 }
 
 export function useDataCache<T>(key: string): Promise<CallbackContext<T>> {
-  const dummy: CallbackContext<T> = { addToCache: () => {} }
+  const dummy: CallbackContext<T> = {
+    addToCache: () => {
+      return Promise.resolve()
+    },
+    cacheTags: [] as string[],
+  }
 
   if (process.server) {
     try {
@@ -30,26 +37,33 @@ export function useDataCache<T>(key: string): Promise<CallbackContext<T>> {
       }
 
       // Try to get the item from cache.
-      return multiCache.data.getItem(key).then((value: any) => {
-        if (value) {
+      return multiCache.data.getItem(key).then((v: any) => {
+        const value = v as DataCacheItem
+        const addToCache = (data: any, cacheTags: string[] = []) => {
+          const item = cacheTags.length ? { data, cacheTags } : data
+          return multiCache.data!.setItem(key, item).then(() => {
+            return data
+          })
+        }
+        if (typeof value === 'object') {
           return {
-            ...dummy,
+            addToCache,
             // Extract the value. If the item was stored along its cache tags, it
             // will be an object with a cacheTags property.
-            value:
-              typeof value === 'object' && 'cacheTags' in value
-                ? value.data
-                : value,
+            value: value.data,
+            cacheTags: value.cacheTags,
+          }
+        } else if (typeof value === 'string') {
+          return {
+            addToCache,
+            value,
+            cacheTags: [],
           }
         }
 
         return {
-          addToCache: (data: any, cacheTags: string[] = []) => {
-            const item = cacheTags.length ? { data, cacheTags } : data
-            return multiCache.data!.setItem(key, item).then(() => {
-              return data
-            })
-          },
+          addToCache,
+          cacheTags: [],
         }
       })
     } catch (e) {
