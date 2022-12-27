@@ -136,7 +136,6 @@ export default defineEventHandler(async (event) => {
     invalidator.delay = delay
   }
 
-  console.log('DELAY: ' + invalidator.delay)
   await checkAuth(event)
   const tags = await getTagsToPurge(event)
   invalidator.add(tags)

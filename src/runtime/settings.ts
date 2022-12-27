@@ -11,11 +11,6 @@ type Subset<K> = {
 }
 
 export const defaultOptions: Subset<NuxtMultiCacheOptions> = {
-  caches: {
-    component: {
-      enabled: true,
-    },
-  },
   api: {
     prefix: '/__nuxt_multi_cache',
     cacheTagInvalidationDelay: 60000,

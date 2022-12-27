@@ -1,3 +1,4 @@
+import { defineEventHandler } from 'h3'
 import { checkAuth, getCacheInstance } from './helpers'
 
 export default defineEventHandler(async (event) => {

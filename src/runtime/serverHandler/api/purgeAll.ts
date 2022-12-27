@@ -1,3 +1,4 @@
+import { defineEventHandler } from 'h3'
 import { getMultiCacheContext } from '../../helpers/server'
 import { NuxtMultiCacheSSRContext } from '../../types'
 import { checkAuth } from './helpers'

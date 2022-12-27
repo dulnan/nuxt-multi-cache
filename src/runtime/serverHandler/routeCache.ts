@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
     // Set the cache entry if the route is set as cacheable.
     if (routeContext && routeContext.cacheable) {
       const multiCache = getMultiCacheContext(event)
-      if (multiCache?.route) {
+      if (multiCache?.route && event.path) {
         const response = event.node.res as ServerResponse
         const headers = response.getHeaders()
         const item = { data: chunk, cacheTags: routeContext.tags, headers }

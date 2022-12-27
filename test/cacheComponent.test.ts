@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { setup, $fetch } from '@nuxt/test-utils'
 import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
-import { purgeAll } from './helpers'
+import { purgeAll } from './__helpers__'
 
 function sleep(delay: number): Promise<void> {
   return new Promise((resolve) => {

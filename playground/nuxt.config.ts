@@ -14,6 +14,9 @@ export default defineNuxtConfig({
       route: {
         enabled: true,
       },
+      component: {
+        enabled: true,
+      },
     },
     api: {
       cacheTagInvalidationDelay: 5000,

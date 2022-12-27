@@ -1,4 +1,4 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, createError } from 'h3'
 import { checkAuth, getCacheInstance } from './helpers'
 
 function getData(cacheName: string, item: any) {
@@ -25,6 +25,7 @@ export default defineEventHandler(async (event) => {
   if (!item) {
     throw createError({
       statusCode: 404,
+      statusMessage: 'Cache item does not exist.',
     })
   }
   return getData(cacheName, item)
