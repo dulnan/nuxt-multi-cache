@@ -5,6 +5,9 @@ import type { CacheControl } from '@tusbar/cache-control'
 export interface MultiCacheOptions {
   /**
    * Set if the cache is enabled.
+   *
+   * While the cache will be disabled, all the corresponding code (components,
+   * composables, etc.) will still be added.
    */
   enabled?: boolean
 
@@ -18,13 +21,56 @@ export interface NuxtMultiCacheHeaderOptions {
   enabled?: boolean
 }
 
+export type NuxtMultiCacheCDNHeadersOptions = {
+  /**
+   * Enable the CDN headers feature.
+   */
+  enabled: boolean
+
+  /**
+   * The header to use for the cache-control settings.
+   *
+   * For cloudflare this is `cdn-cache-control`. Fastly uses
+   * `surrogate-control`.
+   */
+  cacheControlHeader?: string
+
+  /**
+   * The header to use for the cache tags header.
+   *
+   * Cloudflare: Cache-Tag
+   * Fastly: Surrogate-Key
+   */
+  cacheTagHeader?: string
+}
+
 export interface NuxtMultiCacheOptions {
   caches?: {
-    component?: MultiCacheOptions
-    data?: MultiCacheOptions
-    route?: MultiCacheOptions
+    /**
+     * Component cache.
+     */
+    component?: MultiCacheOptions | false
+
+    /**
+     * Generic data cache.
+     */
+    data?: MultiCacheOptions | false
+
+    /**
+     * Route cache.
+     */
+    route?: MultiCacheOptions | false
   }
-  cacheHeaders?: NuxtMultiCacheHeaderOptions
+
+  /**
+   * Configuration for the CDN headers feature.
+   *
+   * This feature allows you to manage special HTTP headers used by
+   * Cloudflare, Fastly and other caching services. These headers control how
+   * long a page should be cached, how long stale cache entries should be
+   * served, etc.
+   */
+  cdnHeaders?: NuxtMultiCacheCDNHeadersOptions
 
   /**
    * Determine if caching should be used for the given request.
@@ -64,6 +110,18 @@ export interface NuxtMultiCacheOptions {
      * anyone to purge cache entries!
      */
     authorization: string | false | ((event: H3Event) => Promise<boolean>)
+
+    /**
+     * Delay for invalidating cache tags.
+     *
+     * Since purging by cache tag requires looping over all cache entries this
+     * action is debounced. The value (in milliseconds) will be the amount of
+     * delay that is used to buffer incoming tag invalidations. The delay is
+     * fixed and starts when the first invalidation request comes in, then all
+     * requests are added to the buffer. Once the delay is over, the cache
+     * entries for all the tags are purged.
+     */
+    cacheTagInvalidationDelay?: number
   }
 }
 

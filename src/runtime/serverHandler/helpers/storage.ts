@@ -4,11 +4,8 @@ import { getModuleConfig } from './../helpers'
 
 type CacheKeys = keyof NuxtMultiCacheSSRContext
 
-function createCacheStorage(
-  name: keyof NuxtMultiCacheSSRContext,
-  config: MultiCacheOptions,
-) {
-  return prefixStorage(createStorage(config.storage), 'multiCache_' + name)
+function createCacheStorage(config: MultiCacheOptions) {
+  return createStorage(config.storage)
 }
 
 let CACHE_CONTEXT: NuxtMultiCacheSSRContext | null = null
@@ -27,7 +24,7 @@ export function loadCacheContext() {
       cacheKeys.forEach((key: CacheKeys) => {
         const cacheConfig = moduleConfig.caches?.[key]
         if (cacheConfig && cacheConfig.enabled) {
-          cacheContext[key] = createCacheStorage(key, cacheConfig)
+          cacheContext[key] = createCacheStorage(cacheConfig)
         }
       })
     }

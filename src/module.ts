@@ -75,12 +75,12 @@ export default defineNuxtModule<ModuleOptions>({
     addServerHandler({
       handler: resolve('./runtime/serverHandler/api/purgeTags'),
       method: 'post',
-      route: prefix('purge/tags/:tag?'),
+      route: prefix('purge/tags'),
     })
     addServerHandler({
       handler: resolve('./runtime/serverHandler/api/purgeItem'),
       method: 'post',
-      route: prefix('purge/:cacheName/:key?'),
+      route: prefix('purge/:cacheName'),
     })
     addServerHandler({
       handler: resolve('./runtime/serverHandler/api/stats'),
@@ -90,7 +90,7 @@ export default defineNuxtModule<ModuleOptions>({
     addServerHandler({
       handler: resolve('./runtime/serverHandler/api/inspectItem'),
       method: 'get',
-      route: prefix('inspect/:cacheName/:key'),
+      route: prefix('inspect/:cacheName'),
     })
   },
 }) as NuxtModule<ModuleOptions>

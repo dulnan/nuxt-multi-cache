@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { readBody } from 'h3'
 import { NuxtMultiCacheSSRContext } from '../../types'
+import { getModuleConfig } from '../helpers'
 import { loadCacheContext } from './../helpers/storage'
 import { checkAuth } from './helpers'
 
@@ -11,11 +12,6 @@ import { checkAuth } from './helpers'
  * request body.
  */
 async function getTagsToPurge(event: H3Event): Promise<string[]> {
-  const tag = event.context.params.tag
-  if (tag) {
-    return [tag]
-  }
-
   const body = await readBody(event)
   if (body && Array.isArray(body)) {
     return body
@@ -50,7 +46,7 @@ class DebouncedInvalidator {
   /**
    * Debounce delay.
    */
-  delay: number
+  delay: number | undefined
 
   /**
    * The current timeout ID for the next run. Reset after each run.
@@ -60,7 +56,6 @@ class DebouncedInvalidator {
   constructor() {
     this.tags = []
     this.timeout = null
-    this.delay = 60000
   }
 
   /**
@@ -102,7 +97,7 @@ class DebouncedInvalidator {
         // Get the keys of all cache items.
         const cacheItemKeys = await cache.getKeys()
         // Loop over all keys and load the value.
-        for (const cacheKey in cacheItemKeys) {
+        for (const cacheKey of cacheItemKeys) {
           const item = await cache.getItem(cacheKey)
           // We only care about items that are stored as objects.
           if (item && typeof item === 'object' && 'cacheTags' in item) {
@@ -135,6 +130,13 @@ const invalidator = new DebouncedInvalidator()
  * track of all cache tags and the cache items that use them.
  */
 export default defineEventHandler(async (event) => {
+  if (!invalidator.delay) {
+    const moduleConfig = await getModuleConfig()
+    const delay = moduleConfig.api.cacheTagInvalidationDelay
+    invalidator.delay = delay
+  }
+
+  console.log('DELAY: ' + invalidator.delay)
   await checkAuth(event)
   const tags = await getTagsToPurge(event)
   invalidator.add(tags)

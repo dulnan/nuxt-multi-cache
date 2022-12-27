@@ -14,7 +14,6 @@ import { useAsyncData } from 'nuxt/app'
 
 const { data: users } = await useAsyncData('navbar', () => {
   return $fetch('/api/getUsers').then((v) => {
-    console.log('Fetching USERS')
     return v
   })
 })
