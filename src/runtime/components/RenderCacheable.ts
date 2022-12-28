@@ -17,6 +17,7 @@ import type {
 import type { Storage } from 'unstorage'
 import { ssrRenderSlotInner } from 'vue/server-renderer'
 import { useNuxtApp } from '#app'
+import { ComponentCacheEntry, ComponentCacheItem } from '../types'
 import { getMultiCacheContext } from './../helpers/server'
 
 /* c8 ignore start */
@@ -149,24 +150,23 @@ function getComponentName(vnode: RenderCacheableSlotVNode): string | undefined {
  * Check the cache for an already rendered component. If available, return the
  * data.
  */
-async function getCachedComponent(storage: Storage, cacheKey: string) {
+async function getCachedComponent(
+  storage: Storage,
+  cacheKey: string,
+): Promise<ComponentCacheItem | void> {
   // Get the cached item from the storage.
-  const cached = await storage.getItem(cacheKey)
+  const cached: ComponentCacheEntry | null = (await storage.getItem(
+    cacheKey,
+  )) as ComponentCacheEntry
+
   if (cached) {
     // Component cached together with payload. Nitro has already parsed the
     // JSON for us.
-    if (typeof cached === 'object' && 'markup' in cached) {
-      const { markup, payload, cacheTags } = cached as any
-      return {
-        markup: markup || '',
-        payload,
-        cacheTags: cacheTags || [],
-      }
+    if (typeof cached === 'object') {
+      return cached
     } else if (typeof cached === 'string') {
       return {
         markup: cached,
-        cacheTags: [],
-        payload: null,
       }
     }
   }
@@ -310,7 +310,15 @@ export default defineComponent({
         const cached = await getCachedComponent(multiCache.component, cacheKey)
 
         if (cached) {
-          const { markup, payload } = cached
+          const { markup, payload, expires } = cached
+
+          // Check if the cache entry is expired.
+          if (expires) {
+            const now = Date.now() / 1000
+            if (now >= expires) {
+              return
+            }
+          }
 
           // If payload is available for component add it to the global payload
           // object.

@@ -19,10 +19,11 @@ export default defineEventHandler((event) => {
   }, event)
 
   useRouteCache((helper) => {
-    helper.addTags(cacheTags).setCacheable()
+    helper.addTags(cacheTags).setCacheable().setMaxAge(10)
   }, event)
   return {
     api: 'This is data from the API.',
+    now: new Date(),
     cacheTags,
   }
 })

@@ -195,4 +195,19 @@ export interface NuxtMultiCacheSSRContext {
   route?: Storage
 }
 
+export type RouteCacheEntry = {
+  data: string
+  headers: Record<string, any>
+  statusCode: number
+  cacheTags?: string[]
+  expires?: number
+}
 
+export type ComponentCacheItem = {
+  markup: string
+  cacheTags?: string[]
+  payload?: Record<string, any>
+  expires?: number
+}
+
+export type ComponentCacheEntry = ComponentCacheItem | string

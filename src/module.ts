@@ -56,14 +56,20 @@ export default defineNuxtModule<ModuleOptions>({
       middleware: true,
     })
 
+    // Adds the CDN helper to the event context.
     addServerHandler({
       handler: resolve('./runtime/serverHandler/cdnHeaders'),
       middleware: true,
     })
 
-    // Add the server handler that handles route caching.
+    // Serves cached routes.
     addServerHandler({
-      handler: resolve('./runtime/serverHandler/routeCache'),
+      handler: resolve('./runtime/serverHandler/serveCachedRoute'),
+    })
+
+    // Hooks into sending the response.
+    addServerHandler({
+      handler: resolve('./runtime/serverHandler/responseSend'),
     })
 
     // Add cache management API if enabled.

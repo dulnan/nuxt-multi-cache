@@ -8,6 +8,10 @@ import { NuxtMultiCacheRouteCacheHelper } from './../../helpers/RouteCacheHelper
  *
  * The helper provides ways to set the cacheability, cache tags, max age for
  * the current route.
+ *
+ * The helper is provided via a callback, which is only called server side.
+ * That way the entire code patch, incl. calling useRouteCache, is removed
+ * from client bundles.
  */
 export function useRouteCache(
   cb: (helper: NuxtMultiCacheRouteCacheHelper) => void,

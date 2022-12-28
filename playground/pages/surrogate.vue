@@ -6,7 +6,7 @@
 import { useRouteCache, useCDNHeaders } from '#imports'
 
 useRouteCache((helper) => {
-  helper.setMaxAge(6000000).setCacheable()
+  helper.setMaxAge(5).setCacheable()
 })
 
 useCDNHeaders((helper) => {

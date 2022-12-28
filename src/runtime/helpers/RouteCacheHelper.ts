@@ -29,13 +29,6 @@ export class NuxtMultiCacheRouteCacheHelper {
   }
 
   /**
-   * Get all cache tags.
-   */
-  getTags(): string[] {
-    return this.tags
-  }
-
-  /**
    * Mark this route as cacheable.
    *
    * The initial value is null and this method only changes the value if it is
@@ -62,10 +55,12 @@ export class NuxtMultiCacheRouteCacheHelper {
   }
 
   /**
-   * Set the max age.
+   * Set the max age in seconds.
    *
    * The value is only set if it's smaller than the current max age or if it
    * hasn't been set yet. The initial value is `null`.
+   *
+   * You can always directly set the maxAge property on this object.
    */
   setMaxAge(maxAge = 0): NuxtMultiCacheRouteCacheHelper {
     // Only set the maxAge if the value is smaller than the current.

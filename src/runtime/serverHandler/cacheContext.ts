@@ -1,6 +1,10 @@
 import { defineEventHandler } from 'h3'
 import type { H3Event } from 'h3'
-import { MULTI_CACHE_CONTEXT_KEY } from '../helpers/server'
+import {
+  MULTI_CACHE_CONTEXT_KEY,
+  MULTI_CACHE_ROUTE_CONTEXT_KEY,
+} from '../helpers/server'
+import { NuxtMultiCacheRouteCacheHelper } from '../helpers/RouteCacheHelper'
 import { getModuleConfig } from './helpers'
 import { loadCacheContext } from './helpers/storage'
 
@@ -38,5 +42,9 @@ export default defineEventHandler(async (event) => {
 
     // Add the cache context object to the SSR context object.
     event.context[MULTI_CACHE_CONTEXT_KEY] = cacheContext
+
+    // Add the route cache helper.
+    event.context[MULTI_CACHE_ROUTE_CONTEXT_KEY] =
+      new NuxtMultiCacheRouteCacheHelper()
   }
 })
