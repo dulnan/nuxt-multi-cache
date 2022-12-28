@@ -10,7 +10,7 @@ import {
   addServerPlugin,
 } from '@nuxt/kit'
 import type { NuxtMultiCacheOptions } from './runtime/types'
-import { defaultOptions } from './runtime/settings'
+import { defaultOptions, DEFAULT_API_PREFIX } from './runtime/settings'
 
 // Nuxt needs this.
 export type ModuleOptions = NuxtMultiCacheOptions
@@ -41,12 +41,14 @@ export default defineNuxtModule<ModuleOptions>({
     addImportsDir(resolve('./runtime/composables'))
     nuxt.options.alias['#nuxt-multi-cache'] = resolve('runtime/composables')
 
-    await addComponentsDir({
-      path: resolve('./runtime/components'),
-      pathPrefix: false,
-      prefix: '',
-      global: true,
-    })
+    if (options.component) {
+      await addComponentsDir({
+        path: resolve('./runtime/components'),
+        pathPrefix: false,
+        prefix: '',
+        global: true,
+      })
+    }
 
     // Add the event handler that attaches the SSR context object to the
     // request event.
@@ -63,34 +65,39 @@ export default defineNuxtModule<ModuleOptions>({
     // Server plugin that sets cache related headers.
     addServerPlugin(resolve('./runtime/plugins/cacheHeaders'))
 
-    // The prefix for the internal cache management routes.
-    const prefix = (path: string) => options.api!.prefix + '/' + path
+    // Add cache management API if enabled.
+    if (options.api?.enabled) {
+      const apiPrefix = options.api.prefix || DEFAULT_API_PREFIX
 
-    // Add the server API handlers for cache management.
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/api/purgeAll'),
-      method: 'post',
-      route: prefix('purge/all'),
-    })
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/api/purgeTags'),
-      method: 'post',
-      route: prefix('purge/tags'),
-    })
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/api/purgeItem'),
-      method: 'post',
-      route: prefix('purge/:cacheName'),
-    })
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/api/stats'),
-      method: 'get',
-      route: prefix('stats/:cacheName'),
-    })
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/api/inspectItem'),
-      method: 'get',
-      route: prefix('inspect/:cacheName'),
-    })
+      // The prefix for the internal cache management routes.
+      const prefix = (path: string) => apiPrefix + '/' + path
+
+      // Add the server API handlers for cache management.
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/purgeAll'),
+        method: 'post',
+        route: prefix('purge/all'),
+      })
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/purgeTags'),
+        method: 'post',
+        route: prefix('purge/tags'),
+      })
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/purgeItem'),
+        method: 'post',
+        route: prefix('purge/:cacheName'),
+      })
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/stats'),
+        method: 'get',
+        route: prefix('stats/:cacheName'),
+      })
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/inspectItem'),
+        method: 'get',
+        route: prefix('inspect/:cacheName'),
+      })
+    }
   },
 }) as NuxtModule<ModuleOptions>

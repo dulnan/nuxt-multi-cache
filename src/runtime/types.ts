@@ -1,13 +1,17 @@
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
-import type { CacheControl } from '@tusbar/cache-control'
 
 export interface MultiCacheOptions {
   /**
    * Set if the cache is enabled.
    *
-   * While the cache will be disabled, all the corresponding code (components,
-   * composables, etc.) will still be added.
+   * While the cache will be disabled during the app's runtime, all the
+   * corresponding code (components, composables, etc.) will still be added,
+   * even if the value is `false` here. This is so that it's possible to
+   * disable caching without having to refactor your code.
+   *
+   * If you wish to completely disable a feature so that no code is added just
+   * leave the entire configuration property undefined.
    */
   enabled?: boolean
 
@@ -45,32 +49,59 @@ export type NuxtMultiCacheCDNHeadersOptions = {
 }
 
 export interface NuxtMultiCacheOptions {
-  caches?: {
-    /**
-     * Component cache.
-     */
-    component?: MultiCacheOptions | false
+  /**
+   * Component cache.
+   *
+   * When enabled you can use the <RenderCacheable> wrapper component to cache
+   * the generated markup of its slot children. Each subsequent request will
+   * load the markup from cache and bypass rendering entirely.
+   *
+   * This is generally used for global components like navigation or footer,
+   * but it can also be used to cache an entire page when used in a layout
+   * component. It also supports caching payloads.
+   *
+   * The performance improvements are most noticeable if you have complex
+   * components and a lot of pages.
+   */
+  component?: MultiCacheOptions
 
-    /**
-     * Generic data cache.
-     */
-    data?: MultiCacheOptions | false
+  /**
+   * Generic data cache.
+   *
+   * Can be used for anything: Caching API responses, expensive calculations,
+   * slow external APIs, etc.
+   */
+  data?: MultiCacheOptions
 
-    /**
-     * Route cache.
-     */
-    route?: MultiCacheOptions | false
-  }
+  /**
+   * Route cache.
+   *
+   * Caches routes based on the path. Works for both rendered Nuxt pages and
+   * server API routes.
+   */
+  route?: MultiCacheOptions
 
   /**
    * Configuration for the CDN headers feature.
    *
    * This feature allows you to manage special HTTP headers used by
-   * Cloudflare, Fastly and other caching services. These headers control how
-   * long a page should be cached, how long stale cache entries should be
-   * served, etc.
+   * Cloudflare, Fastly, Varnish and other caching services. These headers
+   * control how long a page should be cached, how long stale cache entries
+   * should be served, what the cache tags are, etc.
+   *
+   * Note that this is fundamentally different to the route cache: This
+   * feature only sets response headers, while the route cache actually caches
+   * pages.
+   *
+   * In addition, these headers are never sent to the client. They are
+   * intercepted by the CDN/HTTP cache and only used internally.
+   *
+   * It's possible to use both the CDN feature and the route cache at the same
+   * time. Note that they each have independent state; e.g. if you set a max
+   * age for the route cache it doesn't affect the max age value for the CDN
+   * headers.
    */
-  cdnHeaders?: NuxtMultiCacheCDNHeadersOptions
+  cdn?: NuxtMultiCacheCDNHeadersOptions
 
   /**
    * Determine if caching should be used for the given request.
@@ -80,14 +111,35 @@ export interface NuxtMultiCacheOptions {
    * for the duration of the request.
    *
    * One use case might be to prevent caching for requests coming from
-   * authenticated users.
+   * authenticated users to make it impossible to cache sensitive data.
+   * Or to offer a quick way to disable caching based on local or remote
+   * configuration.
    */
   enabledForRequest?: (event: H3Event) => Promise<boolean>
 
   /**
+   * Define a global cache key prefix.
+   *
+   * Can be a string or a method that returns a promise that resolves to a
+   * string given the H3 request event.
+   *
+   * This is useful if you have multiple Nuxt instances running on the same
+   * code base but with a different global context. For example in a
+   * multi-domain setup you might have one instance per domain, but each
+   * instance uses the same cache backend (e.g. redis). Setting a global prefix
+   * will make sure that each instance is scoped.
+   */
+  cacheKeyPrefix?: string | ((event: H3Event) => Promise<string>)
+
+  /**
    * Settings for the API endpoints.
    */
-  api: {
+  api?: {
+    /**
+     * Enable the API endpoints for cache management.
+     */
+    enabled?: boolean
+
     /**
      * The prefix used for the API endpoints.
      *
@@ -119,20 +171,42 @@ export interface NuxtMultiCacheOptions {
      * delay that is used to buffer incoming tag invalidations. The delay is
      * fixed and starts when the first invalidation request comes in, then all
      * requests are added to the buffer. Once the delay is over, the cache
-     * entries for all the tags are purged.
+     * entries for all the tags are purged and the timeout is reset.
      */
     cacheTagInvalidationDelay?: number
   }
 }
 
 export interface NuxtMultiCacheSSRContext {
+  /**
+   * The component cache instance.
+   */
   component?: Storage
+
+  /**
+   * The data cache instance.
+   */
   data?: Storage
+
+  /**
+   * The route cache instance.
+   */
   route?: Storage
 }
 
 export interface NuxtMultiCacheRouteContext {
+  /**
+   * The collected cache tags.
+   */
   tags: string[]
+
+  /**
+   * Indicates if the route should be cacheable.
+   */
   cacheable: boolean | null
-  control: CacheControl
+
+  /**
+   * The maximum age.
+   */
+  maxAge: number | null
 }

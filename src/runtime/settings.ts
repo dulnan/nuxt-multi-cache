@@ -10,9 +10,12 @@ type Subset<K> = {
     : K[attr]
 }
 
+export const DEFAULT_CACHE_TAG_INVALIDATION_DELAY = 60000
+export const DEFAULT_API_PREFIX = '/__nuxt_multi_cache'
+
 export const defaultOptions: Subset<NuxtMultiCacheOptions> = {
   api: {
-    prefix: '/__nuxt_multi_cache',
-    cacheTagInvalidationDelay: 60000,
+    prefix: DEFAULT_API_PREFIX,
+    cacheTagInvalidationDelay: DEFAULT_CACHE_TAG_INVALIDATION_DELAY,
   },
 }

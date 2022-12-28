@@ -71,7 +71,7 @@ describe('inspectItem API handler', () => {
     ).toMatchInlineSnapshot('"<div>Object OBJECT</div>"')
   })
 
-  test.only('Returns details for a data cache item.', async () => {
+  test('Returns details for a data cache item.', async () => {
     const storage = createStorage()
     storage.setItem('data1', 'My data')
     storage.setItem('data2', { data: 'My second data' })

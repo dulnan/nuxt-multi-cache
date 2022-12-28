@@ -110,11 +110,8 @@ export function useRouteCache(
     },
     setMaxAge: (maxAge = 0) => {
       // Only set the maxAge if the value is smaller than the current.
-      if (
-        !routeContext.control.maxAge ||
-        maxAge < routeContext.control.maxAge
-      ) {
-        routeContext.control.maxAge = maxAge
+      if (!routeContext.maxAge || maxAge < routeContext.maxAge) {
+        routeContext.maxAge = maxAge
       }
       return helper
     },

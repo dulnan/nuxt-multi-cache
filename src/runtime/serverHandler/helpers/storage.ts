@@ -1,35 +1,36 @@
-import { createStorage, prefixStorage } from 'unstorage'
-import { MultiCacheOptions, NuxtMultiCacheSSRContext } from '../../types'
+import { createStorage } from 'unstorage'
+import { NuxtMultiCacheSSRContext } from '../../types'
 import { getModuleConfig } from './../helpers'
 
-type CacheKeys = keyof NuxtMultiCacheSSRContext
-
-function createCacheStorage(config: MultiCacheOptions) {
-  return createStorage(config.storage)
-}
-
-let CACHE_CONTEXT: NuxtMultiCacheSSRContext | null = null
+// Store a single promise to prevent initializing caches multiple times.
 let promise: Promise<NuxtMultiCacheSSRContext> | null = null
 
+/**
+ * Method to initialize the caches.
+ *
+ * The method will only initialize it once and return the same promise
+ * afterwards.
+ */
 export function loadCacheContext() {
   if (promise) {
     return promise
   }
-  promise = getModuleConfig().then((moduleConfig) => {
+  promise = getModuleConfig().then((config) => {
     const cacheContext: NuxtMultiCacheSSRContext = {}
-    if (moduleConfig.caches) {
-      const cacheKeys: CacheKeys[] = Object.keys(
-        moduleConfig.caches,
-      ) as CacheKeys[]
-      cacheKeys.forEach((key: CacheKeys) => {
-        const cacheConfig = moduleConfig.caches?.[key]
-        if (cacheConfig && cacheConfig.enabled) {
-          cacheContext[key] = createCacheStorage(cacheConfig)
-        }
-      })
+
+    // Initialize all enabled caches. Explicit initialization because some
+    // caches might need additional configuration options and/or checks.
+    if (config.component && config.component.enabled) {
+      cacheContext.component = createStorage(config.component?.storage)
     }
-    CACHE_CONTEXT = cacheContext
-    return CACHE_CONTEXT
+    if (config.data && config.data.enabled) {
+      cacheContext.data = createStorage(config.data?.storage)
+    }
+    if (config.route && config.route.enabled) {
+      cacheContext.route = createStorage(config.route?.storage)
+    }
+
+    return cacheContext
   })
 
   return promise

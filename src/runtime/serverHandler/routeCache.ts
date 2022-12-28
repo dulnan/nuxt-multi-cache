@@ -8,7 +8,8 @@ import {
 /**
  * Route cache event handler.
  *
- * Returns a cached response if available and caches responses if cacheable.
+ * Returns a cached response if available and caches responses if they are
+ * marked cacheable.
  */
 export default defineEventHandler(async (event) => {
   if (!event.path) {

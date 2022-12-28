@@ -1,6 +1,5 @@
 import { defineEventHandler } from 'h3'
 import type { H3Event } from 'h3'
-import { CacheControl } from '@tusbar/cache-control'
 import { NuxtMultiCacheRouteContext } from '../types'
 import {
   MULTI_CACHE_CONTEXT_KEY,
@@ -48,7 +47,7 @@ export default defineEventHandler(async (event) => {
     const routeContext: NuxtMultiCacheRouteContext = {
       tags: [],
       cacheable: null,
-      control: new CacheControl(),
+      maxAge: null,
     }
     event.context[MULTI_CACHE_ROUTE_CONTEXT_KEY] = routeContext
   }

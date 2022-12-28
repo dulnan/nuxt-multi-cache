@@ -10,16 +10,15 @@ export default defineNuxtConfig({
     }),
   },
   multiCache: {
-    caches: {
-      route: {
-        enabled: true,
-      },
-      component: {
-        enabled: true,
-      },
+    route: {
+      enabled: true,
+    },
+    component: {
+      enabled: true,
     },
     api: {
       cacheTagInvalidationDelay: 5000,
+      authorization: false,
     },
   },
 })
