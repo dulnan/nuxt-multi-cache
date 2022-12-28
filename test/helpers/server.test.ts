@@ -1,7 +1,8 @@
 import { describe, expect, test, vi } from 'vitest'
+import { NuxtMultiCacheRouteCacheHelper } from '../../src/runtime/helpers/RouteCacheHelper'
 import {
   getMultiCacheContext,
-  getMultiCacheRouteContext,
+  getMultiCacheRouteHelper,
 } from './../../src/runtime/helpers/server'
 
 const EVENT: any = {
@@ -11,11 +12,7 @@ const EVENT: any = {
         getItem: () => {},
       },
     },
-    __MULTI_CACHE_ROUTE: {
-      tags: [],
-      cacheable: null,
-      control: {},
-    },
+    __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
   },
 }
 
@@ -26,8 +23,8 @@ describe('Server helpers', () => {
   })
 
   test('getMultiCacheRouteContext', () => {
-    expect(getMultiCacheRouteContext({} as any)).toBeUndefined()
-    expect(getMultiCacheRouteContext(EVENT)).toEqual(
+    expect(getMultiCacheRouteHelper({} as any)).toBeUndefined()
+    expect(getMultiCacheRouteHelper(EVENT)).toEqual(
       EVENT.context.__MULTI_CACHE_ROUTE,
     )
   })

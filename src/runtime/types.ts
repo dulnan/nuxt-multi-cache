@@ -1,5 +1,6 @@
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
+import type { CacheControl } from '@tusbar/cache-control'
 
 export interface MultiCacheOptions {
   /**
@@ -194,19 +195,4 @@ export interface NuxtMultiCacheSSRContext {
   route?: Storage
 }
 
-export interface NuxtMultiCacheRouteContext {
-  /**
-   * The collected cache tags.
-   */
-  tags: string[]
 
-  /**
-   * Indicates if the route should be cacheable.
-   */
-  cacheable: boolean | null
-
-  /**
-   * The maximum age.
-   */
-  maxAge: number | null
-}

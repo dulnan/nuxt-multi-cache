@@ -1,8 +1,10 @@
-import { ServerResponse } from 'http'
+import type { ServerResponse } from 'http'
 import { defineEventHandler, setResponseHeaders } from 'h3'
+import { format } from '@tusbar/cache-control'
 import {
+  getMultiCacheCDNHelper,
   getMultiCacheContext,
-  getMultiCacheRouteContext,
+  getMultiCacheRouteHelper,
 } from '../helpers/server'
 
 /**
@@ -38,21 +40,38 @@ export default defineEventHandler(async (event) => {
     console.debug(e)
   }
 
+  const response: ServerResponse = event.node.res
+
   // Store the original end method that sends the response data.
   const _end = event.node.res.end
 
-  // Overwrite with custom method.
+  // Overwrite with custom method. This is at the very end of the request,
+  // after which no more changes to the state can be made.
   event.node.res.end = function (chunk: any, encoding: any, cb: any) {
-    // This is executed right before the request is ended.
-    const routeContext = getMultiCacheRouteContext(event)
+    // Add CDN headers first.
+    const cdnHelper = getMultiCacheCDNHelper(event)
+    if (cdnHelper) {
+      const cacheTagsValue = cdnHelper._tags.join(' ')
+      if (cacheTagsValue) {
+        response.setHeader('Cache-Tag', cacheTagsValue)
+      }
+
+      const cacheControlValue = format(cdnHelper._control)
+      if (cacheControlValue) {
+        response.setHeader('Surrogate-Control', cacheControlValue)
+      }
+    }
+
+    // Handle route caching.
+    const routeHelper = getMultiCacheRouteHelper(event)
 
     // Set the cache entry if the route is set as cacheable.
-    if (routeContext && routeContext.cacheable) {
+    if (routeHelper && routeHelper.cacheable) {
       const multiCache = getMultiCacheContext(event)
       if (multiCache?.route && event.path) {
         const response = event.node.res as ServerResponse
         const headers = response.getHeaders()
-        const item = { data: chunk, cacheTags: routeContext.tags, headers }
+        const item = { data: chunk, cacheTags: routeHelper.tags, headers }
         multiCache.route.setItem(event.path, item)
       }
     }

@@ -9,7 +9,8 @@ const getResult = function () {
 }
 
 export default defineEventHandler((event) => {
-  const { setCacheable } = useRouteCache(event)
-  setCacheable()
+  useRouteCache((helper) => {
+    helper.setCacheable()
+  }, event)
   return getResult()
 })

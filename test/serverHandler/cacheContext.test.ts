@@ -16,10 +16,8 @@ vi.mock('@nuxt/kit', () => {
     loadNuxtConfig: () => {
       return Promise.resolve({
         multiCache: {
-          caches: {
-            component: {
-              enabled: true,
-            },
+          component: {
+            enabled: true,
           },
           enabledForRequest: (event: any) => {
             return Promise.resolve(!!event.__ENABLED_FOR_REQUEST)

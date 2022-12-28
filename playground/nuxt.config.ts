@@ -17,6 +17,7 @@ export default defineNuxtConfig({
       enabled: true,
     },
     api: {
+      enabled: true,
       cacheTagInvalidationDelay: 5000,
       authorization: false,
     },

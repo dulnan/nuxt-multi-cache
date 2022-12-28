@@ -7,7 +7,6 @@ import {
   createResolver,
   defineNuxtModule,
   addImportsDir,
-  addServerPlugin,
 } from '@nuxt/kit'
 import type { NuxtMultiCacheOptions } from './runtime/types'
 import { defaultOptions, DEFAULT_API_PREFIX } from './runtime/settings'
@@ -57,13 +56,15 @@ export default defineNuxtModule<ModuleOptions>({
       middleware: true,
     })
 
+    addServerHandler({
+      handler: resolve('./runtime/serverHandler/cdnHeaders'),
+      middleware: true,
+    })
+
     // Add the server handler that handles route caching.
     addServerHandler({
       handler: resolve('./runtime/serverHandler/routeCache'),
     })
-
-    // Server plugin that sets cache related headers.
-    addServerPlugin(resolve('./runtime/plugins/cacheHeaders'))
 
     // Add cache management API if enabled.
     if (options.api?.enabled) {

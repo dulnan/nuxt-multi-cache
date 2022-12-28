@@ -1,8 +1,11 @@
 import type { H3Event } from 'h3'
-import { NuxtMultiCacheRouteContext, NuxtMultiCacheSSRContext } from '../types'
+import { NuxtMultiCacheSSRContext } from '../types'
+import { NuxtMultiCacheCDNHelper } from './CDNHelper'
+import { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 
 export const MULTI_CACHE_CONTEXT_KEY = '__MULTI_CACHE'
 export const MULTI_CACHE_ROUTE_CONTEXT_KEY = '__MULTI_CACHE_ROUTE'
+export const MULTI_CACHE_CDN_CONTEXT_KEY = '__MULTI_CACHE_CDN'
 
 export function getMultiCacheContext(
   event: H3Event,
@@ -10,8 +13,14 @@ export function getMultiCacheContext(
   return event?.context?.[MULTI_CACHE_CONTEXT_KEY]
 }
 
-export function getMultiCacheRouteContext(
+export function getMultiCacheRouteHelper(
   event: H3Event,
-): NuxtMultiCacheRouteContext {
+): NuxtMultiCacheRouteCacheHelper {
   return event?.context?.[MULTI_CACHE_ROUTE_CONTEXT_KEY]
+}
+
+export function getMultiCacheCDNHelper(
+  event: H3Event,
+): NuxtMultiCacheCDNHelper | undefined {
+  return event?.context?.[MULTI_CACHE_CDN_CONTEXT_KEY]
 }

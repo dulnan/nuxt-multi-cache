@@ -3,9 +3,13 @@
 </template>
 
 <script lang="ts" setup>
-import { useRouteCache } from '#imports'
+import { useRouteCache, useCDNHeaders } from '#imports'
 
-const routeCache = useRouteCache()
-routeCache.setMaxAge(6000000)
-routeCache.setCacheable()
+useRouteCache((helper) => {
+  helper.setMaxAge(6000000).setCacheable()
+})
+
+useCDNHeaders((helper) => {
+  helper.addTags(['hello']).public()
+})
 </script>
