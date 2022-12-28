@@ -17,7 +17,6 @@ import type {
 import type { Storage } from 'unstorage'
 import { ssrRenderSlotInner } from 'vue/server-renderer'
 import { useNuxtApp } from '#app'
-import { useRouteCache } from '../composables/useRouteCache'
 import { getMultiCacheContext } from './../helpers/server'
 
 /* c8 ignore start */
@@ -311,7 +310,7 @@ export default defineComponent({
         const cached = await getCachedComponent(multiCache.component, cacheKey)
 
         if (cached) {
-          const { markup, payload, cacheTags } = cached
+          const { markup, payload } = cached
 
           // If payload is available for component add it to the global payload
           // object.
@@ -319,10 +318,6 @@ export default defineComponent({
             Object.keys(payload).forEach((key) => {
               nuxtApp.payload.data[key] = payload[key]
             })
-          }
-          if (cacheTags.length) {
-            const routeContext = useRouteCache()
-            routeContext.addTags(cacheTags)
           }
 
           return markup
