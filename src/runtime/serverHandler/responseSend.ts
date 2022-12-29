@@ -18,11 +18,26 @@ export default defineEventHandler((event) => {
   const response: ServerResponse = event.node.res
 
   // Store the original end method that sends the response data.
-  const _end = event.node.res.end
+  const _end: any = response.end
 
   // Overwrite with custom method. This is at the very end of the request,
   // after which no more changes to the state can be made.
-  event.node.res.end = function (chunk: any, encoding: any, cb: any) {
+  response.end = function (
+    arg1: Function | any,
+    arg2?: Function | string,
+    arg3?: Function,
+  ) {
+    // Handle three different function signatures. The first argument can be a
+    // callback, in this case no chunk is provided and we have to pass. In the
+    // other two cases the first argument is the chunk.
+    if (typeof arg1 === 'function') {
+      // No chunk provided, we have to end here.
+      _end.call(event.node.res, arg1)
+      return
+    }
+
+    const chunk = arg1
+
     // Add CDN headers first if feature is enabled.
     const cdnHelper = getMultiCacheCDNHelper(event)
     if (cdnHelper) {
@@ -66,7 +81,6 @@ export default defineEventHandler((event) => {
     }
 
     // Call the original end method.
-    _end.call(event.node.res, chunk, encoding, cb)
-    return this
-  }.bind(event.node.res)
+    _end.call(event.node.res, arg1, arg2, arg3)
+  }
 })
