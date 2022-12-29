@@ -1,6 +1,5 @@
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
-import type { CacheControl } from '@tusbar/cache-control'
 
 export interface MultiCacheOptions {
   /**
@@ -110,6 +109,8 @@ export interface NuxtMultiCacheOptions {
    * If the method resolves to `false` the cache context singleton is not
    * attached to the request, which prevents getting and setting cache entries
    * for the duration of the request.
+   *
+   * This does not affect the CDN feature.
    *
    * One use case might be to prevent caching for requests coming from
    * authenticated users to make it impossible to cache sensitive data.

@@ -1,5 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import NuxtMultiCache from '..'
+import NuxtMultiCache from './../src/module'
 import users from './data/users.json'
 
 export default defineNuxtConfig({

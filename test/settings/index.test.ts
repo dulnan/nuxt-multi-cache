@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { defaultOptions } from './../../src/runtime/settings'
 
 describe('Default options', () => {
@@ -12,8 +12,11 @@ describe('Default options', () => {
     ).toBeGreaterThanOrEqual(60000)
   })
 
-  test('Do not enable a cache.', () => {
-    expect(defaultOptions.caches).toBeUndefined()
+  test('All features are disabled by default.', () => {
+    expect(defaultOptions.component).toBeUndefined()
+    expect(defaultOptions.data).toBeUndefined()
+    expect(defaultOptions.route).toBeUndefined()
+    expect(defaultOptions.cdn).toBeUndefined()
   })
 
   test('Do not define authorization.', () => {

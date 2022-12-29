@@ -36,7 +36,7 @@ export async function checkAuth(
   providedModuleConfig?: NuxtMultiCacheOptions,
 ) {
   const moduleConfig = providedModuleConfig || (await getModuleConfig())
-  const authorization = moduleConfig.api.authorization
+  const authorization = moduleConfig?.api?.authorization
 
   // Auth is disabled if it's explicity set to false.
   if (authorization === false) {
@@ -49,7 +49,7 @@ export async function checkAuth(
   } else if (typeof authorization === 'string') {
     // Check authorization.
     const headerToken = getHeader(event, AUTH_HEADER)
-    if (headerToken === moduleConfig.api.authorization) {
+    if (headerToken === authorization) {
       return
     }
   } else {

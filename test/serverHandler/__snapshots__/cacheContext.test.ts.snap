@@ -20,5 +20,10 @@ exports[`cacheContext server handler > Adds cache context to event 1`] = `
       "watch": [Function],
     },
   },
+  "__MULTI_CACHE_ROUTE": NuxtMultiCacheRouteCacheHelper {
+    "cacheable": null,
+    "maxAge": null,
+    "tags": [],
+  },
 }
 `;
