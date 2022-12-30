@@ -65,4 +65,71 @@ describe('useDataCache composable', () => {
     expect((await useDataCache('data_with_tags')).value).toEqual('Hello')
     expect((await useDataCache('data_with_tags')).cacheTags).toEqual(['my_tag'])
   })
+
+  test('Returns dummy if SSR context not found', async () => {
+    process.client = false
+
+    const vue = await import('vue')
+    vue.useSSRContext = vi.fn().mockReturnValueOnce({})
+
+    const cache = await useDataCache('foobar')
+    expect(cache.value).toBeFalsy()
+    expect(cache.addToCache).toBeDefined()
+  })
+
+  test('Returns dummy if data cache not enabled.', async () => {
+    process.client = false
+
+    const vue = await import('vue')
+    vue.useSSRContext = vi.fn().mockReturnValueOnce({})
+
+    const cache = await useDataCache('foobar')
+    expect(cache.value).toBeFalsy()
+  })
+
+  test('Uses provided event to get data cache.', async () => {
+    process.server = true
+    const storage: Record<string, any> = {
+      foobar: 'More cached data.',
+    }
+    const event = {
+      context: {
+        __MULTI_CACHE: {
+          data: {
+            getItem: (key: string) => {
+              return Promise.resolve(storage[key])
+            },
+            setItem: (key: string, data: any) => {
+              storage[key] = data
+              return Promise.resolve()
+            },
+          },
+        },
+      },
+    }
+
+    const cache = await useDataCache('foobar', event as any)
+    expect(cache.value).toEqual('More cached data.')
+  })
+
+  test('Catches errors and logs them.', async () => {
+    process.server = true
+    const consoleSpy = vi.spyOn(global.console, 'debug')
+
+    const event = {
+      context: {
+        __MULTI_CACHE: {
+          data: {
+            getItem: () => {
+              throw new Error('Failed to get item from cache.')
+            },
+          },
+        },
+      },
+    }
+
+    const cache = await useDataCache('foobar', event as any)
+    expect(cache.value).toBeUndefined()
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to get item from cache.')
+  })
 })

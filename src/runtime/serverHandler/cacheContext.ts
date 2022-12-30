@@ -17,7 +17,7 @@ let hasEnabledForRequestMethod: null | boolean = null
  * If the enabledForRequest method is provided, it is called with the H3 event.
  * If the method returns false, the cache context is not added.
  */
-async function shouldAddCacheContext(event: H3Event): Promise<boolean> {
+export async function shouldAddCacheContext(event: H3Event): Promise<boolean> {
   if (hasEnabledForRequestMethod === false) {
     return true
   }

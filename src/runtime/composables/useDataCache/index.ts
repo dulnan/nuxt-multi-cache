@@ -1,7 +1,6 @@
 import { useSSRContext } from 'vue'
-import type { NuxtMultiCacheSSRContext } from './../../types'
-
-const PROPERTY = '__MULTI_CACHE'
+import type { H3Event } from 'h3'
+import { getMultiCacheContext } from '../../helpers/server'
 
 type AddToCacheMethod<T> = (data: T, tags?: string[]) => Promise<void>
 type DataCacheItem = { data: any; cacheTags: string[] } | string
@@ -12,7 +11,12 @@ type CallbackContext<T> = {
   cacheTags: string[]
 }
 
-export function useDataCache<T>(key: string): Promise<CallbackContext<T>> {
+export function useDataCache<T>(
+  key: string,
+  providedEvent?: H3Event,
+): Promise<CallbackContext<T>> {
+  // Dummy argument for the callback used when something goes wrong accessing
+  // the cache or on client side.
   const dummy: CallbackContext<T> = {
     addToCache: () => {
       return Promise.resolve()
@@ -20,19 +24,26 @@ export function useDataCache<T>(key: string): Promise<CallbackContext<T>> {
     cacheTags: [] as string[],
   }
 
+  // Code only available on server side.
   if (process.server) {
     try {
-      // SSR context should exist at this point, but TS doesn't know that.
-      const ssrContext = useSSRContext()
-      if (!ssrContext) {
-        return Promise.resolve(dummy)
-      }
+      const event: H3Event = (() => {
+        // Event provided by user.
+        if (providedEvent) {
+          return providedEvent
+        }
 
+        // SSR context should exist at this point, but TS doesn't know that.
+        const ssrContext = useSSRContext()
+        if (ssrContext) {
+          return ssrContext.event
+        }
+      })()
+
+      const multiCache = getMultiCacheContext(event)
       // Get the cache storage. If the module is disabled this will be
       // undefined.
-      const multiCache: NuxtMultiCacheSSRContext =
-        ssrContext.event?.context?.[PROPERTY]
-      if (!multiCache || !multiCache.data) {
+      if (!multiCache?.data) {
         return Promise.resolve(dummy)
       }
 
@@ -67,8 +78,10 @@ export function useDataCache<T>(key: string): Promise<CallbackContext<T>> {
         }
       })
     } catch (e) {
-      // For some reason cache is not available.
-      console.debug(e)
+      if (e instanceof Error) {
+        // For some reason cache is not available.
+        console.debug(e.message)
+      }
     }
   }
 

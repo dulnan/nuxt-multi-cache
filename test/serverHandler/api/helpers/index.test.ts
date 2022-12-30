@@ -14,6 +14,18 @@ vi.mock('#imports', () => {
   }
 })
 
+vi.mock('./../../../../src/runtime/serverHandler/helpers/index', () => {
+  return {
+    getModuleConfig: () => {
+      return {
+        api: {
+          authorization: false,
+        },
+      }
+    },
+  }
+})
+
 describe('checkAuth', () => {
   test('Skips auth check if defined in config', async () => {
     expect(
@@ -24,6 +36,11 @@ describe('checkAuth', () => {
       }),
     ).toBeUndefined()
   })
+
+  test('Loads config if not provided.', async () => {
+    expect(await checkAuth({} as any)).toBeUndefined()
+  })
+
   test('Performs custom auth check provided in config', async () => {
     expect(
       await checkAuth({} as any, {

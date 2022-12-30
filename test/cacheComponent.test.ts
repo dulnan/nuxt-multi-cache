@@ -10,7 +10,17 @@ describe('nuxt-graphql-middleware', async () => {
     component: {
       enabled: true,
     },
+    data: {
+      enabled: true,
+    },
+    route: {
+      enabled: true,
+    },
+    cdn: {
+      enabled: true,
+    },
     api: {
+      enabled: true,
       authorization: false,
       cacheTagInvalidationDelay: 5000,
     },
@@ -20,14 +30,16 @@ describe('nuxt-graphql-middleware', async () => {
   }
   await setup({
     server: true,
-    browser: true,
+    logLevel: 0,
+    runner: 'vitest',
+    build: true,
+    // browser: true,
     rootDir: fileURLToPath(new URL('../playground', import.meta.url)),
     nuxtConfig,
   })
 
   test('Caches a component', async () => {
     await purgeAll()
-
     // First call puts it into cache.
     const htmlBefore = await $fetch('/test?v=foobar', {
       method: 'get',
@@ -57,9 +69,7 @@ describe('nuxt-graphql-middleware', async () => {
     // Remove component from cache.
     await $fetch('/__nuxt_multi_cache/purge/component', {
       method: 'post',
-      query: {
-        key: 'QueryValue::one',
-      },
+      body: ['QueryValue::one'],
     })
 
     // Third call should render it again with the new value.

@@ -38,7 +38,7 @@ function onlyUnique(value: string, index: number, self: Array<string>) {
  * could lead to performance issues since tag invalidation is very
  * inefficient.
  */
-class DebouncedInvalidator {
+export class DebouncedInvalidator {
   /**
    * Buffer of tags to invalidate in the next run.
    */
@@ -62,6 +62,11 @@ class DebouncedInvalidator {
   constructor() {
     this.tags = []
     this.timeout = null
+    this.delay = DEFAULT_CACHE_TAG_INVALIDATION_DELAY
+  }
+
+  setDelay(delay = DEFAULT_CACHE_TAG_INVALIDATION_DELAY) {
+    this.delay = delay
   }
 
   /**
@@ -122,6 +127,8 @@ class DebouncedInvalidator {
         }
       }
     }
+
+    return true
   }
 }
 
@@ -144,10 +151,7 @@ export default defineEventHandler(async (event) => {
   if (!invalidator.cacheContext) {
     invalidator.cacheContext = getMultiCacheContext(event)
     const moduleConfig = await getModuleConfig()
-    const delay =
-      moduleConfig.api?.cacheTagInvalidationDelay ||
-      DEFAULT_CACHE_TAG_INVALIDATION_DELAY
-    invalidator.delay = delay
+    invalidator.setDelay(moduleConfig.api?.cacheTagInvalidationDelay)
   }
 
   invalidator.add(tags)

@@ -3,9 +3,7 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <RenderCacheable cache-key="helloworld">
-      <div>HELLO THERE</div>
-    </RenderCacheable>
+    <div>HELLO THERE</div>
   </div>
 </template>
 

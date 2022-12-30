@@ -38,6 +38,8 @@ export default defineEventHandler(async (event) => {
       return data
     }
   } catch (e) {
-    console.debug(e)
+    if (e instanceof Error) {
+      console.debug(e.message)
+    }
   }
 })

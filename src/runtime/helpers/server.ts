@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
-import { NuxtMultiCacheSSRContext } from '../types'
-import { NuxtMultiCacheCDNHelper } from './CDNHelper'
-import { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
+import type { NuxtMultiCacheSSRContext } from '../types'
+import type { NuxtMultiCacheCDNHelper } from './CDNHelper'
+import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 
 export const MULTI_CACHE_CONTEXT_KEY = '__MULTI_CACHE'
 export const MULTI_CACHE_ROUTE_CONTEXT_KEY = '__MULTI_CACHE_ROUTE'

@@ -2,14 +2,14 @@ import { fileURLToPath } from 'url'
 import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
 import {
-  addComponentsDir,
   addServerHandler,
   createResolver,
   defineNuxtModule,
   addImportsDir,
+  addComponent,
 } from '@nuxt/kit'
 import type { NuxtMultiCacheOptions } from './runtime/types'
-import { defaultOptions, DEFAULT_API_PREFIX } from './runtime/settings'
+import { defaultOptions } from './runtime/settings'
 
 // Nuxt needs this.
 export type ModuleOptions = NuxtMultiCacheOptions
@@ -40,11 +40,11 @@ export default defineNuxtModule<ModuleOptions>({
     addImportsDir(resolve('./runtime/composables'))
     nuxt.options.alias['#nuxt-multi-cache'] = resolve('runtime/composables')
 
+    // Add RenderCacheable component if feature is enabled.
     if (options.component) {
-      await addComponentsDir({
-        path: resolve('./runtime/components'),
-        pathPrefix: false,
-        prefix: '',
+      await addComponent({
+        filePath: resolve('./runtime/components/RenderCacheable/index.ts'),
+        name: 'RenderCacheable',
         global: true,
       })
     }
@@ -57,24 +57,31 @@ export default defineNuxtModule<ModuleOptions>({
     })
 
     // Adds the CDN helper to the event context.
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/cdnHeaders'),
-      middleware: true,
-    })
+    if (options.cdn?.enabled) {
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/cdnHeaders'),
+        middleware: true,
+      })
+    }
 
     // Serves cached routes.
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/serveCachedRoute'),
-    })
+    if (options.route?.enabled) {
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/serveCachedRoute'),
+      })
+    }
 
     // Hooks into sending the response.
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/responseSend'),
-    })
+    if (options.cdn?.enabled || options.route?.enabled) {
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/responseSend'),
+      })
+    }
 
     // Add cache management API if enabled.
     if (options.api?.enabled) {
-      const apiPrefix = options.api.prefix || DEFAULT_API_PREFIX
+      // Prefix is defined in default config.
+      const apiPrefix = options.api.prefix as string
 
       // The prefix for the internal cache management routes.
       const prefix = (path: string) => apiPrefix + '/' + path

@@ -10,6 +10,7 @@ export default defineConfig({
       provider: 'c8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.*'],
+      exclude: ['src/runtime/types.ts'],
     },
   },
 })

@@ -76,4 +76,36 @@ describe('useRouteCache composable', () => {
       expect(helper).toHaveProperty('tags')
     })
   })
+
+  test('Does not call callback if event is missing.', async () => {
+    process.client = false
+
+    const vue = await import('vue')
+    vue.useSSRContext = vi.fn().mockReturnValueOnce({})
+
+    const params = {
+      cb() {},
+    }
+
+    const spyCallback = vi.spyOn(params, 'cb')
+    useRouteCache(spyCallback as any)
+    expect(spyCallback).not.toHaveBeenCalled()
+  })
+
+  test('Does not call callback if route helper is missing.', async () => {
+    process.client = false
+
+    const vue = await import('vue')
+    vue.useSSRContext = vi.fn().mockReturnValueOnce({
+      event: {},
+    })
+
+    const params = {
+      cb() {},
+    }
+
+    const spyCallback = vi.spyOn(params, 'cb')
+    useRouteCache(spyCallback as any)
+    expect(spyCallback).not.toHaveBeenCalled()
+  })
 })

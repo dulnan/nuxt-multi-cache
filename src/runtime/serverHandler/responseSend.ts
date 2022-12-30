@@ -15,6 +15,13 @@ import { RouteCacheEntry } from '../types'
  * marked cacheable.
  */
 export default defineEventHandler((event) => {
+  const cdnHelper = getMultiCacheCDNHelper(event)
+  const multiCache = getMultiCacheContext(event)
+
+  if (!cdnHelper && !multiCache?.route) {
+    return
+  }
+
   const response: ServerResponse = event.node.res
 
   // Store the original end method that sends the response data.
@@ -32,14 +39,12 @@ export default defineEventHandler((event) => {
     // other two cases the first argument is the chunk.
     if (typeof arg1 === 'function') {
       // No chunk provided, we have to end here.
-      _end.call(event.node.res, arg1)
-      return
+      return _end.call(event.node.res, arg1)
     }
 
     const chunk = arg1
 
     // Add CDN headers first if feature is enabled.
-    const cdnHelper = getMultiCacheCDNHelper(event)
     if (cdnHelper) {
       const cacheTagsValue = cdnHelper._tags.join(' ')
       if (cacheTagsValue) {
@@ -52,9 +57,7 @@ export default defineEventHandler((event) => {
       }
     }
 
-    const multiCache = getMultiCacheContext(event)
-
-    if (event.path && multiCache && multiCache.route) {
+    if (event.path) {
       // Handle route caching.
       const routeHelper = getMultiCacheRouteHelper(event)
 
@@ -81,6 +84,6 @@ export default defineEventHandler((event) => {
     }
 
     // Call the original end method.
-    _end.call(event.node.res, arg1, arg2, arg3)
+    return _end.call(event.node.res, arg1, arg2, arg3)
   }
 })

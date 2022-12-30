@@ -21,13 +21,13 @@ export function loadCacheContext() {
     // Initialize all enabled caches. Explicit initialization because some
     // caches might need additional configuration options and/or checks.
     if (config.component && config.component.enabled) {
-      cacheContext.component = createStorage(config.component?.storage)
+      cacheContext.component = createStorage(config.component.storage)
     }
     if (config.data && config.data.enabled) {
-      cacheContext.data = createStorage(config.data?.storage)
+      cacheContext.data = createStorage(config.data.storage)
     }
     if (config.route && config.route.enabled) {
-      cacheContext.route = createStorage(config.route?.storage)
+      cacheContext.route = createStorage(config.route.storage)
     }
 
     return cacheContext

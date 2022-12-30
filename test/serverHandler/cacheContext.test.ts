@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { beforeEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import cacheContextHandler from './../../src/runtime/serverHandler/cacheContext'
 
 vi.mock('#imports', () => {
@@ -31,9 +31,11 @@ vi.mock('@nuxt/kit', () => {
 describe('cacheContext server handler', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    vi.restoreAllMocks()
+    vi.resetModules()
   })
-
+  beforeAll(() => {
+    vi.resetModules()
+  })
   test('Adds cache context to event', async () => {
     const event: any = {
       context: {},
@@ -50,5 +52,23 @@ describe('cacheContext server handler', () => {
     }
     await cacheContextHandler(event)
     expect(event.context).toEqual({})
+  })
+
+  test('Caches that there is no enabledForRequest method.', async () => {
+    const event: any = {
+      context: {},
+    }
+    const shouldAddCacheContext = await import(
+      './../../src/runtime/serverHandler/cacheContext'
+    ).then((v) => v.shouldAddCacheContext)
+
+    const kit = await import('@nuxt/kit')
+    kit.loadNuxtConfig = vi.fn().mockReturnValueOnce(
+      Promise.resolve({
+        multiCache: {},
+      }),
+    )
+    expect(await shouldAddCacheContext(event)).toEqual(true)
+    expect(await shouldAddCacheContext(event)).toEqual(true)
   })
 })

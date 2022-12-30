@@ -1,7 +1,9 @@
 import { describe, expect, test, vi } from 'vitest'
 import { createStorage } from 'unstorage'
 import { sleep } from '../../__helpers__'
-import purgeTags from './../../../src/runtime/serverHandler/api/purgeTags'
+import purgeTags, {
+  DebouncedInvalidator,
+} from './../../../src/runtime/serverHandler/api/purgeTags'
 
 vi.mock('#imports', () => {
   return {
@@ -126,5 +128,13 @@ describe('purgeTags API handler', () => {
         body: 'Invalid body',
       } as any),
     ).rejects.toThrowErrorMatchingInlineSnapshot('"No valid tags provided."')
+  })
+})
+
+describe('DebouncedInvalidator', () => {
+  test('Returns if cache context is not available.', async () => {
+    const invalidator = new DebouncedInvalidator()
+    const result = await invalidator.invalidate()
+    expect(result).toBeUndefined()
   })
 })

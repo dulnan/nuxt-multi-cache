@@ -15,6 +15,7 @@ export default defineEventHandler((event) => {
       .public()
       .set('staleIfError', 24000)
       .set('staleWhileRevalidate', 60000)
+      .set('mustRevalidate', true)
       .addTags(cacheTags)
   }, event)
 
