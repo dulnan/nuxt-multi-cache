@@ -9,7 +9,11 @@ import {
   addComponent,
 } from '@nuxt/kit'
 import type { NuxtMultiCacheOptions } from './runtime/types'
-import { defaultOptions } from './runtime/settings'
+import {
+  defaultOptions,
+  DEFAULT_CDN_CONTROL_HEADER,
+  DEFAULT_CDN_TAG_HEADER,
+} from './runtime/settings'
 
 // Nuxt needs this.
 export type ModuleOptions = NuxtMultiCacheOptions
@@ -34,6 +38,11 @@ export default defineNuxtModule<ModuleOptions>({
     nuxt.options.build.transpile.push(runtimeDir)
     nuxt.options.runtimeConfig.multiCache = {
       rootDir,
+      cdn: {
+        cacheControlHeader:
+          options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER,
+        cacheTagHeader: options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER,
+      },
     }
 
     // Add composables.
@@ -49,12 +58,14 @@ export default defineNuxtModule<ModuleOptions>({
       })
     }
 
-    // Add the event handler that attaches the SSR context object to the
-    // request event.
-    addServerHandler({
-      handler: resolve('./runtime/serverHandler/cacheContext'),
-      middleware: true,
-    })
+    if (options.component || options.route || options.data) {
+      // Add the event handler that attaches the SSR context object to the
+      // request event.
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/cacheContext'),
+        middleware: true,
+      })
+    }
 
     // Adds the CDN helper to the event context.
     if (options.cdn?.enabled) {

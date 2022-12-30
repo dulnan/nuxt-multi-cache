@@ -46,14 +46,21 @@ export default defineEventHandler((event) => {
 
     // Add CDN headers first if feature is enabled.
     if (cdnHelper) {
+      const runtimeConfig = useRuntimeConfig()
       const cacheTagsValue = cdnHelper._tags.join(' ')
       if (cacheTagsValue) {
-        response.setHeader('Cache-Tag', cacheTagsValue)
+        response.setHeader(
+          runtimeConfig.multiCache.cdn.cacheTagHeader,
+          cacheTagsValue,
+        )
       }
 
       const cacheControlValue = format(cdnHelper._control)
       if (cacheControlValue) {
-        response.setHeader('Surrogate-Control', cacheControlValue)
+        response.setHeader(
+          runtimeConfig.multiCache.cdn.cacheControlHeader,
+          cacheControlValue,
+        )
       }
     }
 
