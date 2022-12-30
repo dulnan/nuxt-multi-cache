@@ -4,10 +4,18 @@ import NuxtMultiCache from './../src/module'
 export default defineNuxtConfig({
   modules: [NuxtMultiCache],
   multiCache: {
+    component: {
+      enabled: true,
+    },
     route: {
       enabled: true,
     },
-    component: {
+
+    data: {
+      enabled: true,
+    },
+
+    cdn: {
       enabled: true,
     },
     api: {

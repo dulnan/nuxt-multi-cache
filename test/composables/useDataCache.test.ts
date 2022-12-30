@@ -1,9 +1,14 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables'
+import { CacheItem } from './../../src/runtime/types'
 
 vi.mock('vue', () => {
-  const storage: Record<string, any> = {
-    foobar: 'Cached data.',
+  const storage: Record<string, CacheItem> = {
+    foobar: { data: 'Cached data.' },
+    expires: {
+      data: 'Data with expiration date.',
+      expires: 1669849200,
+    },
   }
   return {
     useSSRContext: () => {
@@ -29,6 +34,13 @@ vi.mock('vue', () => {
 })
 
 describe('useDataCache composable', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
   test('Returns dummy in client', async () => {
     const cache = await useDataCache('foobar')
 
@@ -43,6 +55,25 @@ describe('useDataCache composable', () => {
 
     expect((await useDataCache('foobar')).value).toEqual('Cached data.')
     expect((await useDataCache('something')).value).toBeUndefined()
+  })
+
+  test('Does not return expired data.', async () => {
+    process.server = true
+    const date = new Date(2023, 11, 1)
+    vi.setSystemTime(date)
+
+    expect((await useDataCache('expires')).value).toBeUndefined()
+  })
+
+  test('Returns not yet expired data', async () => {
+    process.server = true
+
+    const date = new Date(2021, 11, 1)
+    vi.setSystemTime(date)
+
+    expect((await useDataCache('expires')).value).toEqual(
+      'Data with expiration date.',
+    )
   })
 
   test('Puts data in cache', async () => {
@@ -64,6 +95,21 @@ describe('useDataCache composable', () => {
 
     expect((await useDataCache('data_with_tags')).value).toEqual('Hello')
     expect((await useDataCache('data_with_tags')).cacheTags).toEqual(['my_tag'])
+  })
+
+  test('Puts data in cache with expiration value', async () => {
+    process.server = true
+    const date = new Date(2021, 11, 1)
+    vi.setSystemTime(date)
+
+    const { addToCache, value } = await useDataCache('data_with_expires')
+    expect(value).toBeUndefined()
+    await addToCache('Hello', ['my_tag'], 1800)
+
+    expect((await useDataCache('data_with_expires')).value).toEqual('Hello')
+    expect(
+      (await useDataCache('data_with_expires')).expires,
+    ).toMatchInlineSnapshot('1638315000')
   })
 
   test('Returns dummy if SSR context not found', async () => {
@@ -89,8 +135,8 @@ describe('useDataCache composable', () => {
 
   test('Uses provided event to get data cache.', async () => {
     process.server = true
-    const storage: Record<string, any> = {
-      foobar: 'More cached data.',
+    const storage: Record<string, CacheItem> = {
+      foobar: { data: 'More cached data.' },
     }
     const event = {
       context: {

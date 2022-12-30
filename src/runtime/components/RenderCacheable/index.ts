@@ -7,7 +7,8 @@ import {
 } from 'vue'
 import type { PropType } from 'vue'
 import { useNuxtApp } from '#app'
-import { getMultiCacheContext } from './../../helpers/server'
+import { ComponentCacheItem } from '../../types'
+import { getExpiresValue, getMultiCacheContext } from './../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
 
 /**
@@ -82,6 +83,14 @@ export default defineComponent({
     },
 
     /**
+     * Define a max age for the cached entry.
+     */
+    maxAge: {
+      type: Number,
+      default: 0,
+    },
+
+    /**
      * Provide the async data keys used by the cached component.
      *
      * If provided the payload data will be cached alongside the component.
@@ -150,7 +159,7 @@ export default defineComponent({
         const cached = await getCachedComponent(multiCache.component, cacheKey)
 
         if (cached) {
-          const { markup, payload, expires } = cached
+          const { data, payload, expires } = cached
 
           // Check if the cache entry is expired.
           if (expires) {
@@ -168,11 +177,11 @@ export default defineComponent({
             })
           }
 
-          return markup
+          return data
         }
 
         // Render the contents of the slot to string.
-        const markup = await renderSlot(slots, currentInstance.parent)
+        const data = await renderSlot(slots, currentInstance.parent)
 
         // Storing the markup in cache is wrapped in a try/catch. That way if
         // the cache backend is down for some reason we can still return the
@@ -181,7 +190,7 @@ export default defineComponent({
           // The cache tags for this component.
           const cacheTags = props.cacheTags
           // We have payload or cache tags.
-          if (props.asyncDataKeys.length || cacheTags.length) {
+          if (props.asyncDataKeys.length || cacheTags.length || props.maxAge) {
             // Extract the payload relevant to the component.
             const payload: Record<string, any> = props.asyncDataKeys.reduce<
               Record<string, string>
@@ -190,14 +199,16 @@ export default defineComponent({
               return acc
             }, {})
 
-            // Store the markup + payload in the cache.
-            multiCache.component.setItem(
-              cacheKey,
-              JSON.stringify({ payload, markup, cacheTags }),
-            )
+            const item: ComponentCacheItem = { payload, data, cacheTags }
+            if (props.maxAge) {
+              item.expires = getExpiresValue(props.maxAge)
+            }
+
+            // Store object in the cache.
+            multiCache.component.setItem(cacheKey, item)
           } else {
             // Only store the markup in cache.
-            multiCache.component.setItem(cacheKey, markup)
+            multiCache.component.setItem(cacheKey, data)
           }
         } catch (e) {
           if (e instanceof Error) {
@@ -206,7 +217,7 @@ export default defineComponent({
         }
 
         // Return the stringified slot content as innerHTML.
-        return markup
+        return data
       }
 
       // Try to get a cached version of the child.

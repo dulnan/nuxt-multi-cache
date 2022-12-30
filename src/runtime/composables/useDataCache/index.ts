@@ -1,14 +1,23 @@
 import { useSSRContext } from 'vue'
 import type { H3Event } from 'h3'
-import { getMultiCacheContext } from '../../helpers/server'
+import {
+  getExpiresValue,
+  getMultiCacheContext,
+  isExpired,
+} from '../../helpers/server'
+import type { CacheItem } from '../../types'
 
-type AddToCacheMethod<T> = (data: T, tags?: string[]) => Promise<void>
-type DataCacheItem = { data: any; cacheTags: string[] } | string
+type AddToCacheMethod<T> = (
+  data: T,
+  tags?: string[],
+  maxAge?: number,
+) => Promise<void>
 
 type CallbackContext<T> = {
   addToCache: AddToCacheMethod<T>
   value?: T
   cacheTags: string[]
+  expires?: number
 }
 
 export function useDataCache<T>(
@@ -18,7 +27,7 @@ export function useDataCache<T>(
   // Dummy argument for the callback used when something goes wrong accessing
   // the cache or on client side.
   const dummy: CallbackContext<T> = {
-    addToCache: () => {
+    addToCache: (v: T) => {
       return Promise.resolve()
     },
     cacheTags: [] as string[],
@@ -49,29 +58,31 @@ export function useDataCache<T>(
 
       // Try to get the item from cache.
       return multiCache.data.getItem(key).then((v: any) => {
-        const value = v as DataCacheItem
-        const addToCache = (data: any, cacheTags: string[] = []) => {
-          const item = cacheTags.length ? { data, cacheTags } : data
-          return multiCache.data!.setItem(key, item).then(() => {
-            return data
-          })
+        const item = v as CacheItem | null
+        const addToCache: AddToCacheMethod<T> = (
+          data: T,
+          cacheTags: string[] = [],
+          maxAge?: number,
+        ) => {
+          const item: CacheItem = { data: data as any, cacheTags }
+          if (maxAge) {
+            item.expires = getExpiresValue(maxAge)
+          }
+          return multiCache.data!.setItem(key, item)
         }
-        if (typeof value === 'object') {
+
+        if (item && !isExpired(item)) {
           return {
             addToCache,
             // Extract the value. If the item was stored along its cache tags, it
             // will be an object with a cacheTags property.
-            value: value.data,
-            cacheTags: value.cacheTags,
-          }
-        } else if (typeof value === 'string') {
-          return {
-            addToCache,
-            value,
-            cacheTags: [],
+            value: item.data as T,
+            cacheTags: item.cacheTags || [],
+            expires: item.expires,
           }
         }
 
+        // Return a dummy item.
         return {
           addToCache,
           cacheTags: [],

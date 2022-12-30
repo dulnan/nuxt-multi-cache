@@ -6,7 +6,7 @@ import {
   getMultiCacheContext,
   getMultiCacheRouteHelper,
 } from '../helpers/server'
-import { RouteCacheEntry } from '../types'
+import { RouteCacheItem } from '../types'
 
 /**
  * Route cache event handler.
@@ -67,7 +67,7 @@ export default defineEventHandler((event) => {
         if (multiCache?.route && event.path) {
           const response = event.node.res as ServerResponse
           const headers = response.getHeaders()
-          const item: RouteCacheEntry = {
+          const item: RouteCacheItem = {
             data: chunk,
             headers,
             statusCode: response.statusCode,

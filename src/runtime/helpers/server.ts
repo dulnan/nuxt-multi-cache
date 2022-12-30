@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import type { NuxtMultiCacheSSRContext } from '../types'
+import type { CacheItem, NuxtMultiCacheSSRContext } from '../types'
 import type { NuxtMultiCacheCDNHelper } from './CDNHelper'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 
@@ -23,4 +23,12 @@ export function getMultiCacheCDNHelper(
   event: H3Event,
 ): NuxtMultiCacheCDNHelper | undefined {
   return event?.context?.[MULTI_CACHE_CDN_CONTEXT_KEY]
+}
+
+export function getExpiresValue(maxAge: number) {
+  return Math.round(Date.now() / 1000 + maxAge)
+}
+
+export function isExpired(item: CacheItem) {
+  return item.expires ? Date.now() / 1000 > item.expires : false
 }

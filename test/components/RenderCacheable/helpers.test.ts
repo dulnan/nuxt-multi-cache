@@ -81,15 +81,15 @@ describe('getCachedComponent', () => {
 
   test('Returns cached component.', async () => {
     const storage = createStorage()
-    storage.setItem('foobar', { markup: '<div></div>' })
+    storage.setItem('foobar', { data: '<div></div>' })
     const item = await getCachedComponent(storage, 'foobar')
-    expect(item).toEqual({ markup: '<div></div>' })
+    expect(item).toEqual({ data: '<div></div>' })
   })
 
   test('Returns cached string component.', async () => {
     const storage = createStorage()
     storage.setItem('foobar', '<div></div>')
     const item = await getCachedComponent(storage, 'foobar')
-    expect(item).toEqual({ markup: '<div></div>' })
+    expect(item).toEqual({ data: '<div></div>' })
   })
 })

@@ -1,7 +1,7 @@
 /* eslint-disable vue/one-component-per-file */
 import { defineComponent, nextTick } from 'vue'
 import { renderToString } from 'vue/server-renderer'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import RenderCacheable from '../../../src/runtime/components/RenderCacheable'
 import { createTestApp } from './__helpers__'
@@ -27,6 +27,13 @@ vi.mock('#app', () => {
 })
 
 describe('RenderCacheable', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
   test('Renders the default slot', async () => {
     const InnerComponent = defineComponent({
       template: `
@@ -99,7 +106,15 @@ describe('RenderCacheable', () => {
     )
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      '"{\\"payload\\":{},\\"markup\\":\\"<div>Hello world</div>\\",\\"cacheTags\\":[\\"test\\"]}"',
+      `
+      {
+        "cacheTags": [
+          "test",
+        ],
+        "data": "<div>Hello world</div>",
+        "payload": {},
+      }
+    `,
     )
   })
 
@@ -111,8 +126,39 @@ describe('RenderCacheable', () => {
     )
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      '"{\\"payload\\":{\\"examplePayload\\":{\\"data\\":\\"This is example payload.\\"}},\\"markup\\":\\"<div>Hello world</div>\\",\\"cacheTags\\":[\\"test\\"]}"',
+      `
+      {
+        "cacheTags": [
+          "test",
+        ],
+        "data": "<div>Hello world</div>",
+        "payload": {
+          "examplePayload": {
+            "data": "This is example payload.",
+          },
+        },
+      }
+    `,
     )
+  })
+
+  test('Calculates expires value when maxAge is provided.', async () => {
+    process.server = true
+    const date = new Date(2022, 11, 1)
+    vi.setSystemTime(date)
+
+    const { app, ssrContext, storage } = createTestApp(
+      `cacheKey="withExpiration" :max-age="1800"`,
+    )
+    await renderToString(app, ssrContext)
+    expect(storage['InnerComponent::withExpiration']).toMatchInlineSnapshot(`
+      {
+        "cacheTags": [],
+        "data": "<div>Hello world</div>",
+        "expires": 1669851000,
+        "payload": {},
+      }
+    `)
   })
 
   test('Renders a component from cache.', async () => {
@@ -140,7 +186,7 @@ describe('RenderCacheable', () => {
       '',
       {
         'InnerComponent::foobar': {
-          markup: '<div>SHOULD NOT BE RENDERED</div>',
+          data: '<div>SHOULD NOT BE RENDERED</div>',
           payload: { myPayload: 'Foobar' },
           expires: 1000,
         },
@@ -163,7 +209,7 @@ describe('RenderCacheable', () => {
       '',
       {
         'InnerComponent::foobar': {
-          markup: '<div>Hello</div>',
+          data: '<div>Hello</div>',
           payload: { myPayload: 'Foobar' },
         },
       },

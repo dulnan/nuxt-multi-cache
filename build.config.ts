@@ -1,5 +1,5 @@
 import { defineBuildConfig } from 'unbuild'
 
 export default defineBuildConfig({
-  externals: ['unstorage', 'defu'],
+  externals: ['unstorage', 'defu', 'h3'],
 })

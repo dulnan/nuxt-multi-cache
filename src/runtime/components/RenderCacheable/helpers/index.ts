@@ -160,7 +160,7 @@ export async function getCachedComponent(
       return cached
     } else if (typeof cached === 'string') {
       return {
-        markup: cached,
+        data: cached,
       }
     }
   }

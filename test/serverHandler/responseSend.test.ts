@@ -1,9 +1,7 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { createStorage } from 'unstorage'
 import { sleep } from '../__helpers__'
-import responseSend from './../../src/runtime/serverHandler/responseSend'
-
-const consoleSpy = vi.spyOn(global.console, 'debug')
+import responseSend from '../../src/runtime/serverHandler/responseSend'
 
 describe('responseSend server handler', () => {
   test('Returns if route cache or CDN helper is not available.', () => {
@@ -18,7 +16,7 @@ describe('responseSend server handler', () => {
     expect(responseSend(event)).toBeUndefined()
   })
 
-  test('Overwrites response.end method', async () => {
+  test('Overwrites response.end method', () => {
     const storage = createStorage()
     const event: any = {
       path: '/test',
@@ -39,7 +37,7 @@ describe('responseSend server handler', () => {
     expect(event.node.res.end).toMatchInlineSnapshot('[Function]')
   })
 
-  test('Calls original end method if no chunk is provided.', async () => {
+  test('Calls original end method if no chunk is provided.', () => {
     const storage = createStorage()
     const res = {
       end: () => {},

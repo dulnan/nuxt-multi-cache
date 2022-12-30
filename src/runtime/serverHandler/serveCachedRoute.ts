@@ -1,6 +1,6 @@
 import { defineEventHandler, setResponseHeaders } from 'h3'
 import { getMultiCacheContext } from '../helpers/server'
-import { RouteCacheEntry } from '../types'
+import { RouteCacheItem } from '../types'
 
 /**
  * Route cache event handler. Returns a cached response if available.
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     // Check if there is a cache entry for this path.
     const cached = await multiCache.route.getItem(event.path)
     if (cached && typeof cached === 'object') {
-      const { data, headers, statusCode, expires } = cached as RouteCacheEntry
+      const { data, headers, statusCode, expires } = cached as RouteCacheItem
 
       // Check if the item is stale.
       if (expires) {
