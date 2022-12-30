@@ -21,10 +21,6 @@ export interface MultiCacheOptions {
   storage?: CreateStorageOptions
 }
 
-export interface NuxtMultiCacheHeaderOptions {
-  enabled?: boolean
-}
-
 export type NuxtMultiCacheCDNHeadersOptions = {
   /**
    * Enable the CDN headers feature.
@@ -33,17 +29,11 @@ export type NuxtMultiCacheCDNHeadersOptions = {
 
   /**
    * The header to use for the cache-control settings.
-   *
-   * For cloudflare this is `cdn-cache-control`. Fastly uses
-   * `surrogate-control`.
    */
   cacheControlHeader?: string
 
   /**
    * The header to use for the cache tags header.
-   *
-   * Cloudflare: Cache-Tag
-   * Fastly: Surrogate-Key
    */
   cacheTagHeader?: string
 }

@@ -17,3 +17,6 @@ test/cypress/screenshots
 coverage
 
 .vscode/
+.cache
+docs/.vitepress/cache
+docs/.vitepress/dist

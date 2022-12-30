@@ -1,22 +1,14 @@
 import { useCDNHeaders } from '#nuxt-multi-cache'
 
 export default defineEventHandler((event) => {
-  const cacheTags: string[] = [
-    'page:1',
-    'image:234',
-    'user:32',
-    'language',
-    'translations',
-  ]
   useCDNHeaders((helper) => {
     helper
-      .set('maxAge', 1337)
-      .setNumeric('maxAge', 0)
       .public()
+      .setNumeric('maxAge', 3600)
       .set('staleIfError', 24000)
       .set('staleWhileRevalidate', 60000)
       .set('mustRevalidate', true)
-      .addTags(cacheTags)
+      .addTags(['api'])
   }, event)
 
   return {
