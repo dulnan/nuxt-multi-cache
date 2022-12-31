@@ -9,6 +9,8 @@ Ultimate caching for Nuxt 3.
 - API for cache management
 - Cache tag based invalidation
 
+**[Documentation](https://nuxt-multi-cache.dulnan.net)** - **[NPM](https://www.npmjs.com/package/nuxt-multi-cache)**
+
 # Features
 
 ## Component caching
@@ -72,4 +74,3 @@ response is sent.
 
 The optional API provides endpoints to manage the caches.
 
-**[Installation](https://nuxt-multi-cache.netlify.app/guide/setup)** - **[Documentation](https://nuxt-multi-cache.netlify.app)** - **[NPM](https://www.npmjs.com/package/nuxt-multi-cache)**
