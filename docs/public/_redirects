@@ -1,0 +1,24 @@
+/guide/setup                  /overview/introduction
+/guide/basic-usage            /overview/introduction
+/guide/typescript             /overview/introduction
+/guide/cache-tags             /overview/cache-tags
+/guide/configuration          /overview/configuration
+/guide/client-plugin          /overview/migrating-from-v1
+
+/caches/page                  /features/route-cache
+/caches/page-static           /features/route-cache
+/caches/component             /features/component-cache
+/caches/data                  /features/data-cache
+/caches/cache-groups          /overview/migrating-from-v1
+
+/api/overview                 /features/api
+/api/purge-everything         /features/api
+/api/purge-tags               /features/api
+/api/purge-pages              /features/api
+/api/purge-components         /features/api
+/api/purge-data               /features/api
+/api/purge-groups             /features/api
+/api/get-tags                 /features/api
+/api/get-pages                /features/api
+/api/get-components           /features/api
+/api/get-data                 /features/api

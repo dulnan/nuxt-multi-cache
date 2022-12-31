@@ -19,3 +19,4 @@ coverage
 .cache
 docs/.vitepress/cache
 docs/.vitepress/dist
+docs/.vitepress/.temp

@@ -39,7 +39,7 @@ export default defineNuxtConfig({
 By default the module does not enable a single feature, you have to manually
 define which you'd like to use.
 
-## [Component Cache](/features/componentCache)
+## [Component Cache](/features/component-cache)
 
 Cache rendered markup of components on the server. Ideal for complex, deeply
 nested components like menu or footer.
@@ -54,7 +54,7 @@ nested components like menu or footer.
 </template>
 ```
 
-## [Route Cache](/features/routeCache)
+## [Route Cache](/features/route-cache)
 
 Dynamically cache pages and API routes.
 
@@ -64,7 +64,7 @@ useRouteCache((helper) => {
 })
 ```
 
-## [Data Cache](/features/dataCache)
+## [Data Cache](/features/data-cache)
 
 Generic cache for anything that can be stringified.
 
@@ -72,7 +72,7 @@ Generic cache for anything that can be stringified.
 const { value, addToCache } = await useDataCache('weather')
 ```
 
-## [CDN Cache Control](/features/cdnCacheControl)
+## [CDN Cache Control](/features/cdn-cache-control)
 
 Dynamically set `Cache-Control` and `Cache-Tag` headers for Cloudflare, Fastly
 and other services.
