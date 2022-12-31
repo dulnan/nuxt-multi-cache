@@ -13,7 +13,7 @@ type Subset<K> = {
 export const DEFAULT_CACHE_TAG_INVALIDATION_DELAY = 60000
 export const DEFAULT_API_PREFIX = '/__nuxt_multi_cache'
 export const DEFAULT_CDN_CONTROL_HEADER = 'Surrogate-Control'
-export const DEFAULT_CDN_TAG_HEADER = 'Surrogate-Control'
+export const DEFAULT_CDN_TAG_HEADER = 'Cache-Tag'
 
 export const defaultOptions: Subset<NuxtMultiCacheOptions> = {
   api: {

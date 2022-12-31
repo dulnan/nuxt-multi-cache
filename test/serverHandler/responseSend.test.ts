@@ -3,6 +3,17 @@ import { createStorage } from 'unstorage'
 import { sleep } from '../__helpers__'
 import responseSend from '../../src/runtime/serverHandler/responseSend'
 
+const useRuntimeConfig = vi.fn(() => ({
+  multiCache: {
+    cdn: {
+      cacheTagHeader: 'Cache-Tag',
+      cacheControlHeader: 'Surrogate-Control',
+    },
+  },
+}))
+
+vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
+
 describe('responseSend server handler', () => {
   test('Returns if route cache or CDN helper is not available.', () => {
     const event: any = {

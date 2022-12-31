@@ -48,7 +48,11 @@ describe('inspectItem API handler', () => {
           },
           params: {
             cacheName: 'component',
-            key: 'component1',
+          },
+        },
+        node: {
+          req: {
+            url: 'http://localhost:3000/api/inspect/component?key=component1',
           },
         },
         __CACHE_NAME: 'component',
@@ -63,12 +67,20 @@ describe('inspectItem API handler', () => {
           },
           params: {
             cacheName: 'component',
-            key: 'component2',
+          },
+        },
+        node: {
+          req: {
+            url: 'http://localhost:3000/api/inspect/component?key=component2',
           },
         },
         __CACHE_NAME: 'component',
       } as any),
-    ).toMatchInlineSnapshot('"<div>Object OBJECT</div>"')
+    ).toMatchInlineSnapshot(`
+      {
+        "markup": "<div>Object OBJECT</div>",
+      }
+    `)
   })
 
   test('Returns details for a data cache item.', async () => {
@@ -84,7 +96,11 @@ describe('inspectItem API handler', () => {
           },
           params: {
             cacheName: 'data',
-            key: 'data1',
+          },
+        },
+        node: {
+          req: {
+            url: 'http://localhost:3000/api/inspect/data?key=data1',
           },
         },
         __CACHE_NAME: 'data',
@@ -99,12 +115,20 @@ describe('inspectItem API handler', () => {
           },
           params: {
             cacheName: 'data',
-            key: 'data2',
+          },
+        },
+        node: {
+          req: {
+            url: 'http://localhost:3000/api/inspect/data?key=data2',
           },
         },
         __CACHE_NAME: 'data',
       } as any),
-    ).toMatchInlineSnapshot('"My second data"')
+    ).toMatchInlineSnapshot(`
+      {
+        "data": "My second data",
+      }
+    `)
   })
 
   test('Throws 404 if item is not found.', () => {
@@ -116,7 +140,11 @@ describe('inspectItem API handler', () => {
           },
           params: {
             cacheName: 'component',
-            key: 'component2',
+          },
+        },
+        node: {
+          req: {
+            url: 'http://localhost:3000/api/inspect/component?key=component2',
           },
         },
         __CACHE_NAME: 'component',

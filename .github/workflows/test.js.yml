@@ -22,7 +22,8 @@ jobs:
       - name: Vitest
         run: |
           npm ci
-          npm run dev:build
+          npm run dev:prepare
+          npm run prepack
           npm run test:ci
 
       - name: Prettier
