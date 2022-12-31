@@ -1,222 +1,128 @@
-import path from 'path'
-import { Module } from '@nuxt/types'
-import { PageCacheDisk, PageCacheMemory } from './Cache/Page'
-import serverMiddleware from './ServerMiddleware'
-import NuxtSSRCacheHelper from './ssrContextHelper'
-import ComponentCache from './Cache/Component'
-import dummyComponentCache from './Cache/Component/dummyCache'
-import DataCache from './Cache/Data'
-import GroupsCache from './Cache/Groups'
-import { PageCacheMode } from './config'
+import { fileURLToPath } from 'url'
+import type { NuxtModule } from '@nuxt/schema'
+import { defu } from 'defu'
+import {
+  addServerHandler,
+  createResolver,
+  defineNuxtModule,
+  addImportsDir,
+  addComponent,
+} from '@nuxt/kit'
+import { NuxtMultiCacheOptions } from './runtime/types'
+import {
+  defaultOptions,
+  DEFAULT_CDN_CONTROL_HEADER,
+  DEFAULT_CDN_TAG_HEADER,
+} from './runtime/settings'
 
-const PLUGIN_PATH = path.resolve(__dirname, 'Plugin')
+// Nuxt needs this.
+export type ModuleOptions = NuxtMultiCacheOptions
+export type ModuleHooks = {}
 
-/**
- * Default method enables caching for every request.
- */
-function defaultEnabledForRequest() {
-  return true
-}
+export default defineNuxtModule<ModuleOptions>({
+  meta: {
+    name: 'nuxt-multi-cache',
+    configKey: 'multiCache',
+    version: '2.0.0',
+    compatibility: {
+      nuxt: '^3.0.0',
+    },
+  },
+  defaults: defaultOptions as any,
+  async setup(passedOptions, nuxt) {
+    const options = defu({}, passedOptions, {}) as ModuleOptions
+    const { resolve } = createResolver(import.meta.url)
+    const rootDir = nuxt.options.rootDir
 
-/*
- * Install the module.
- */
-const cacheModule: Module = function () {
-  const nuxt: any = this.nuxt
-  const provided = this.options.multiCache || {}
-
-  // Map the configuration and add defaults.
-  const enabled = !!provided.enabled
-  const enabledForRequest =
-    provided.enabledForRequest || defaultEnabledForRequest
-  const debug = !!provided.debug
-  const outputDirRaw = provided.outputDir
-  const configServer = {
-    auth: provided.server?.auth,
-    path: provided.server?.path || '/__nuxt_multi_cache',
-  }
-  const configPageCache = {
-    ...provided?.pageCache,
-    mode: provided?.pageCache.mode || PageCacheMode.Memory,
-  }
-
-  const configComponentCache = {
-    ...provided?.componentCache,
-  }
-  const configDataCache = {
-    ...provided?.dataCache,
-  }
-  const configGroupsCache = {
-    ...provided?.groupsCache,
-  }
-
-  if (!outputDirRaw) {
-    throw new Error('Missing config outputDir.')
-  }
-
-  const resolver = this.nuxt.resolver.resolveAlias
-  const outputDir = resolver(outputDirRaw)
-
-  // Add the cache helper plugin.
-  // There are different plugins for client and server. Only the server version
-  // actually does anything, the client plugin is implemting all methods as no-op.
-  this.addPlugin({
-    src: path.resolve(PLUGIN_PATH, 'cache.server.js'),
-  })
-  this.addPlugin({
-    src: path.resolve(PLUGIN_PATH, 'cache.client.js'),
-  })
-
-  function logger(message: string, type: string = 'info') {
-    if (!debug) {
-      return
-    }
-    const output = '[Nuxt Multi Cache] - ' + message
-    if (type === 'info') {
-      console.info(output)
-    } else if (type === 'warn') {
-      console.warn(output)
-    }
-  }
-
-  // Attach a dummy component cache in case the cache is disabled, but the
-  // components still implement the serverCacheKey method. If they do and no
-  // cache is available, vue-server-renderer complains.
-  if (this.options.render.bundleRenderer) {
-    this.options.render.bundleRenderer.cache = dummyComponentCache as any
-  }
-
-  // Disable caching if disabled or renderer not available.
-  if (!enabled || !nuxt.renderer) {
-    logger('Caching is disabled.')
-    return
-  }
-
-  // Disable caching if no purge authorization if provided.
-  if (
-    !provided.server ||
-    (typeof provided.server.auth !== 'object' &&
-      typeof provided.server.auth !== 'function')
-  ) {
-    logger(
-      'No server.auth function or basic auth config provided, caching is disabled.',
-      'warn'
-    )
-    return
-  }
-
-  // Create global cache instances.
-  let pageCache: PageCacheDisk | PageCacheMemory | null = null
-  let componentCache: ComponentCache | null = null
-  let dataCache: DataCache | null = null
-  let groupsCache: GroupsCache | null = null
-
-  if (
-    configComponentCache &&
-    configComponentCache.enabled &&
-    this.options.render.bundleRenderer
-  ) {
-    componentCache = new ComponentCache(configComponentCache)
-    this.options.render.bundleRenderer.cache = componentCache as any
-  }
-
-  const isPageCacheStatic = configPageCache?.mode === PageCacheMode.Static
-
-  if (configPageCache && configPageCache.enabled) {
-    if (isPageCacheStatic) {
-      pageCache = new PageCacheDisk(configPageCache, outputDir)
-    } else {
-      pageCache = new PageCacheMemory(configPageCache)
-    }
-  }
-
-  if (configDataCache && configDataCache.enabled) {
-    dataCache = new DataCache(configDataCache)
-  }
-
-  if (configGroupsCache && configGroupsCache.enabled) {
-    groupsCache = new GroupsCache(
-      configGroupsCache,
-      outputDir,
-      isPageCacheStatic
-    )
-  }
-
-  // Add the server middleware to manage the cache.
-  this.addServerMiddleware({
-    path: configServer.path,
-    handler: serverMiddleware(
-      pageCache,
-      dataCache,
-      componentCache,
-      groupsCache,
-      configServer.auth
-    ),
-  })
-
-  // Inject the cache helper object into the SSR context.
-  this.nuxt.hook('vue-renderer:ssr:prepareContext', (ssrContext: any) => {
-    ssrContext.$dataCache = dataCache
-    ssrContext.$groupsCache = groupsCache
-    ssrContext.$cacheHelper = new NuxtSSRCacheHelper()
-  })
-
-  // Attach custom renderer.
-  const renderer = nuxt.renderer
-  const renderRoute = renderer.renderRoute.bind(renderer)
-
-  renderer.renderRoute = async function (route: string, context: any) {
-    if (!pageCache) {
-      return renderRoute(route, context)
-    }
-    const cacheKey = pageCache?.getCacheKey(route, context)
-    const cacheForRequest = enabledForRequest(context.req, route)
-
-    if (!cacheKey || !cacheForRequest) {
-      if (!cacheKey) {
-        logger('No cache key returned for route: ' + route)
-      }
-      if (!cacheForRequest) {
-        logger('Caching skipped for request.')
-      }
-      // Don't do any caching for this request.
-      return renderRoute(route, context)
+    const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
+    nuxt.options.build.transpile.push(runtimeDir)
+    nuxt.options.runtimeConfig.multiCache = {
+      rootDir,
+      cdn: {
+        cacheControlHeader:
+          options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER,
+        cacheTagHeader: options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER,
+      },
     }
 
-    if (await pageCache.has(cacheKey)) {
-      return await pageCache.get(cacheKey)
-    }
+    // Add composables.
+    addImportsDir(resolve('./runtime/composables'))
+    nuxt.options.alias['#nuxt-multi-cache'] = resolve('runtime/composables')
 
-    // Render the page and put it in the cache if cacheable.
-    function renderWithCache() {
-      return renderRoute(route, context).then((result: any) => {
-        // Check if the route is set as cacheable.
-        if (
-          pageCache &&
-          context.$cacheHelper &&
-          context.$cacheHelper.cacheable
-        ) {
-          const tags = context.$cacheHelper.tags || []
-
-          pageCache
-            .set(cacheKey as string, result, tags)
-            .then(() => {
-              logger('Cached route: ' + route)
-              logger('         key: ' + cacheKey)
-            })
-            .catch((e) => {
-              logger('Failed to cache route: ' + route, 'warn')
-            })
-        }
-        return result
+    // Add RenderCacheable component if feature is enabled.
+    if (options.component) {
+      await addComponent({
+        filePath: resolve('./runtime/components/RenderCacheable/index.ts'),
+        name: 'RenderCacheable',
+        global: true,
       })
     }
 
-    return renderWithCache().catch(() => {
-      logger('Failed to cache route: ' + route, 'warn')
-      return renderRoute(route, context)
-    })
-  }
-}
+    if (options.component || options.route || options.data) {
+      // Add the event handler that attaches the SSR context object to the
+      // request event.
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/cacheContext'),
+        middleware: true,
+      })
+    }
 
-export default cacheModule
+    // Adds the CDN helper to the event context.
+    if (options.cdn?.enabled) {
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/cdnHeaders'),
+        middleware: true,
+      })
+    }
+
+    // Serves cached routes.
+    if (options.route?.enabled) {
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/serveCachedRoute'),
+      })
+    }
+
+    // Hooks into sending the response.
+    if (options.cdn?.enabled || options.route?.enabled) {
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/responseSend'),
+      })
+    }
+
+    // Add cache management API if enabled.
+    if (options.api?.enabled) {
+      // Prefix is defined in default config.
+      const apiPrefix = options.api.prefix as string
+
+      // The prefix for the internal cache management routes.
+      const prefix = (path: string) => apiPrefix + '/' + path
+
+      // Add the server API handlers for cache management.
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/purgeAll'),
+        method: 'post',
+        route: prefix('purge/all'),
+      })
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/purgeTags'),
+        method: 'post',
+        route: prefix('purge/tags'),
+      })
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/purgeItem'),
+        method: 'post',
+        route: prefix('purge/:cacheName'),
+      })
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/stats'),
+        method: 'get',
+        route: prefix('stats/:cacheName'),
+      })
+      addServerHandler({
+        handler: resolve('./runtime/serverHandler/api/inspectItem'),
+        method: 'get',
+        route: prefix('inspect/:cacheName'),
+      })
+    }
+  },
+}) as NuxtModule<ModuleOptions>

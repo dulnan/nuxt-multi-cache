@@ -1,4 +1,0 @@
-[build]
-  base    = "docs"
-  publish = "dist"
-  command = "npm run generate"

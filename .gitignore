@@ -3,6 +3,9 @@ node_modules
 temp
 docs/.nuxt
 docs/dist
+.nuxt
+.output
+dist
 
 docs/static/sw.js
 
@@ -10,3 +13,10 @@ test/node_modules
 test/.nuxt
 test/cypress/videos
 test/cypress/screenshots
+coverage
+
+.vscode/
+.cache
+docs/.vitepress/cache
+docs/.vitepress/dist
+docs/.vitepress/.temp

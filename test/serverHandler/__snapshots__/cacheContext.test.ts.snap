@@ -1,0 +1,29 @@
+// Vitest Snapshot v1
+
+exports[`cacheContext server handler > Adds cache context to event 1`] = `
+{
+  "__MULTI_CACHE": {
+    "component": {
+      "clear": [Function],
+      "dispose": [Function],
+      "getItem": [Function],
+      "getKeys": [Function],
+      "getMeta": [Function],
+      "hasItem": [Function],
+      "mount": [Function],
+      "removeItem": [Function],
+      "removeMeta": [Function],
+      "setItem": [Function],
+      "setMeta": [Function],
+      "unmount": [Function],
+      "unwatch": [Function],
+      "watch": [Function],
+    },
+  },
+  "__MULTI_CACHE_ROUTE": NuxtMultiCacheRouteCacheHelper {
+    "cacheable": null,
+    "maxAge": null,
+    "tags": [],
+  },
+}
+`;
