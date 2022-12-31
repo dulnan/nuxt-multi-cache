@@ -6,6 +6,9 @@ title: Nuxt Multi Cache for Nuxt 3
 hero:
   name: Advanced Caching for Nuxt 3
   tagline: Seamless caching of components, routes and data. Dynamically define CDN cache control headers. Provides cache management API for purging items by key or using cache tags.
+  image:
+    src: /nuxt-multi-cache.svg
+    alt: nuxt-multi-cache
   actions:
     - theme: brand
       text: Get Started

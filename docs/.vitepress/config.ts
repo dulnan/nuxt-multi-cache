@@ -10,12 +10,22 @@ export default defineConfig({
     },
   },
   themeConfig: {
+    footer: {
+      message: 'Released under the MIT License.',
+      copyright: 'Copyright © 2021-present Jan Hug',
+    },
+    nav: [
+      {
+        text: '1.x (for Nuxt 2)',
+        link: 'https://nuxt-multi-cache-legacy.dulnan.net',
+      },
+      { text: 'GitHub', link: 'https://github.com/dulnan/nuxt-multi-cache' },
+    ],
     sidebar: [
       {
         text: 'Overview',
         items: [
           { text: 'Introduction', link: '/overview/introduction' },
-          { text: 'Setup', link: '/overview/setup' },
           { text: 'Configuration', link: '/overview/configuration' },
         ],
       },
