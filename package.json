@@ -37,9 +37,9 @@
     "prettier": "prettier ./src --check",
     "prettier:fix": "prettier ./src --write",
     "fake-data": "node ./scripts/fakeData.js",
-    "test": "vitest",
-    "test:ci": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test": "TZ=utc vitest",
+    "test:ci": "TZ=utc vitest run",
+    "test:coverage": "TZ=utc vitest run --coverage"
   },
   "repository": {
     "type": "git",

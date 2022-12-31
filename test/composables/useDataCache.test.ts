@@ -109,7 +109,7 @@ describe('useDataCache composable', () => {
     expect((await useDataCache('data_with_expires')).value).toEqual('Hello')
     expect(
       (await useDataCache('data_with_expires')).expires,
-    ).toMatchInlineSnapshot('1638315000')
+    ).toMatchInlineSnapshot('1638318600')
   })
 
   test('Returns dummy if SSR context not found', async () => {

@@ -155,7 +155,7 @@ describe('RenderCacheable', () => {
       {
         "cacheTags": [],
         "data": "<div>Hello world</div>",
-        "expires": 1669851000,
+        "expires": 1669854600,
         "payload": {},
       }
     `)

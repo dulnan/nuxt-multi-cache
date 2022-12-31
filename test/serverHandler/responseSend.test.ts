@@ -246,7 +246,7 @@ describe('responseSend server handler', () => {
     await sleep(100)
     const item: any = await storage.getItem('test:route:nested')
     expect(new Date(item.expires * 1000)).toMatchInlineSnapshot(
-      '2022-12-29T13:00:00.000Z',
+      '2022-12-29T14:00:00.000Z',
     )
   })
 
