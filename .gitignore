@@ -6,7 +6,6 @@ docs/dist
 .nuxt
 .output
 dist
-playground/data/*.json
 
 docs/static/sw.js
 
