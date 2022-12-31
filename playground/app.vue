@@ -3,7 +3,6 @@
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <div>HELLO THERE</div>
   </div>
 </template>
 

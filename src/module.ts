@@ -8,7 +8,7 @@ import {
   addImportsDir,
   addComponent,
 } from '@nuxt/kit'
-import type { NuxtMultiCacheOptions } from './runtime/types'
+import { NuxtMultiCacheOptions } from './runtime/types'
 import {
   defaultOptions,
   DEFAULT_CDN_CONTROL_HEADER,

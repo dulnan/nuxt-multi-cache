@@ -1,17 +1,15 @@
 ---
 layout: home
 
-title: Nuxt Multi Cache
-titleTemplate: 
+title: Nuxt Multi Cache for Nuxt 3
 
 hero:
   name: Advanced Caching for Nuxt 3
-  text: nuxt-multi-cache
-  tagline: Seamless caching of components, routes and data. CDN header integration. Cache management API.
+  tagline: Seamless caching of components, routes and data. Dynamically define CDN cache control headers. Provides cache management API for purging items by key or using cache tags.
   actions:
     - theme: brand
       text: Get Started
-      link: /introduction/overview
+      link: /overview/introduction
     - theme: alt
       text: View on GitHub
       link: https://github.com/dulnan/nuxt-multi-cache
@@ -19,10 +17,10 @@ hero:
 features:
   - title: Component Cache
     icon: ⚡
-    details: Cache the rendered markup of components to reduce render time of pages significantly.
+    details: Cache the rendered markup of components to reduce server render time of pages significantly.
   - title: Route Cache
     icon: 📑
-    details: Cache the full response of pages or custom API routes.
+    details: Cache the full response of pages or custom API routes, including headers.
   - title: Data Cache
     icon: 💾
     details: Generic composable to cache any data like external API responses or performance heavy calculations.

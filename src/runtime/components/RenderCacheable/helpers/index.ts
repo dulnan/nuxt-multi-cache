@@ -61,7 +61,6 @@ export function getComponentName(
       return vnode.type.name
     }
   }
-  console.log(vnode)
 }
 
 /* c8 ignore start */

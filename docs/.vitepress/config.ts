@@ -12,10 +12,11 @@ export default defineConfig({
   themeConfig: {
     sidebar: [
       {
-        text: 'Introduction',
+        text: 'Overview',
         items: [
-          { text: 'Overview', link: '/introduction/overview' },
-          { text: 'Setup', link: '/introduction/setup' },
+          { text: 'Introduction', link: '/overview/introduction' },
+          { text: 'Setup', link: '/overview/setup' },
+          { text: 'Configuration', link: '/overview/configuration' },
         ],
       },
       {
@@ -29,19 +30,27 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Configuration',
+        text: 'Advanced',
         items: [
           {
-            text: 'Module',
-            link: '/configuration/module',
+            text: 'Defining Default Values',
+            link: '/advanced/defaultValues',
           },
           {
-            text: 'Full Example',
-            link: '/configuration/full-example',
+            text: 'Cache Backend',
+            link: '/advanced/cacheBackend',
           },
           {
-            text: 'Composable',
-            link: '/configuration/composable',
+            text: 'Using Storage Instance',
+            link: '/advanced/storageInstance',
+          },
+          {
+            text: 'Using Route Cache + CDN',
+            link: '/advanced/routeAndCDN',
+          },
+          {
+            text: 'Enable Caching Conditionally',
+            link: '/advanced/enableCacheConditionally',
           },
         ],
       },

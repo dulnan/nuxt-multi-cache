@@ -21,6 +21,8 @@ import { defineNuxtConfig } from 'nuxt'
 import redisDriver from 'unstorage/drivers/redis'
 
 export default defineNuxtConfig({
+  modules: ['nuxt-multi-cache'],
+
   // Component cache is enabled.
   component: {
     enabled: true,
@@ -89,3 +91,7 @@ export default defineNuxtConfig({
   }
 }
 ```
+
+## Reference
+
+<<< @/../src/runtime/types.ts

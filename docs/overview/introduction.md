@@ -1,9 +1,9 @@
 ---
-title: Overview
+title: Introduction
 editLink: true
 ---
 
-# Overview
+# Introduction
 
 nuxt-multi-cache is the ultimate caching module for Nuxt 3. It greatly improves
 performance for Nuxt apps that have a lot of dynamic content (think of large
@@ -13,11 +13,12 @@ pages you can increase average performance.
 - Fully modular, pick whatever you need
 - Minimal impact on client bundle and performance
 - Several cache backends (memory, redis, Cloudflare KV) via [unstorage](https://github.com/unjs/unstorage)
-- 100% test coverage
+- Large test coverage
 
 ## [Component Cache](/features/componentCache)
 
-Cache rendered markup of components on the server.
+Cache rendered markup of components on the server. Ideal for complex, deeply
+nested components like menu or footer.
 
 ```vue
 <template>

@@ -1,7 +1,7 @@
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
 
-export interface MultiCacheOptions {
+interface CacheOptions {
   /**
    * Set if the cache is enabled.
    *
@@ -21,7 +21,7 @@ export interface MultiCacheOptions {
   storage?: CreateStorageOptions
 }
 
-export type NuxtMultiCacheCDNHeadersOptions = {
+export type CDNOptions = {
   /**
    * Enable the CDN headers feature.
    */
@@ -53,7 +53,7 @@ export interface NuxtMultiCacheOptions {
    * The performance improvements are most noticeable if you have complex
    * components and a lot of pages.
    */
-  component?: MultiCacheOptions
+  component?: CacheOptions
 
   /**
    * Generic data cache.
@@ -61,7 +61,7 @@ export interface NuxtMultiCacheOptions {
    * Can be used for anything: Caching API responses, expensive calculations,
    * slow external APIs, etc.
    */
-  data?: MultiCacheOptions
+  data?: CacheOptions
 
   /**
    * Route cache.
@@ -69,7 +69,7 @@ export interface NuxtMultiCacheOptions {
    * Caches routes based on the path. Works for both rendered Nuxt pages and
    * server API routes.
    */
-  route?: MultiCacheOptions
+  route?: CacheOptions
 
   /**
    * Configuration for the CDN headers feature.
@@ -91,7 +91,7 @@ export interface NuxtMultiCacheOptions {
    * age for the route cache it doesn't affect the max age value for the CDN
    * headers.
    */
-  cdn?: NuxtMultiCacheCDNHeadersOptions
+  cdn?: CDNOptions
 
   /**
    * Determine if caching should be used for the given request.

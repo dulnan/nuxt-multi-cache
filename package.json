@@ -30,7 +30,6 @@
     "dev:build": "nuxi build playground",
     "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground",
     "generate": "nuxi generate",
-    "typedoc": "typedoc --out foo --namedAnchors true --publicPath /configuration/ src/index.ts",
     "docs:dev": "vitepress dev docs --port 5000",
     "docs:build": "vitepress build docs",
     "docs:serve": "vitepress serve docs --port 5000",

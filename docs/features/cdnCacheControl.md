@@ -16,17 +16,17 @@ export default defineNuxtConfig({
       /**
       * Enable the CDN headers feature.
       */
-      enabled: boolean
+      enabled: true,
 
       /**
       * The header to use for the cache-control settings.
       */
-      cacheControlHeader?: string
+      cacheControlHeader: 'CDN-Cache-Control',
 
       /**
       * The header to use for the cache tags header.
       */
-      cacheTagHeader?: string
+      cacheTagHeader: 'Cache-Tag'
     }
   }
 }

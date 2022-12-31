@@ -202,18 +202,56 @@ the cache and also is not put into the cache.
 
 ## All Props
 
-- tag (String, default: 'div'): The tag to use for the wrapper. It's
-  unfortunately not possible to implement this without a wrapper.
-- noCache (Boolean, default: false): Disable caching entirely for this
-  component.
-- cacheKey (String, default: ''): The key to use for the cache entry. If left
-  empty, a key is automatically generated based on the props passed to the
-  child. The key is automatically prefixed by the component name.
-- cacheTags (Array, default: []): Cache tags that can be later used for
-  invalidation.
-- asyncDataKeys (Array, default: []): Provide the async data keys used by the
-  cached component. If provided, the payload data will be cached alongside the
-  component. If the component uses asyncData and the keys are not provided, you
-  will receive a hydration mismatch error in the client.
+```vue
+<template>
+  <div>
+    <RenderCacheable
+      tag="aside"
+      :async-data-keys="['weatherData']"
+      :cache-tags="['weather', 'global']"
+      :cache-key="language"
+      :no-cache="userIsLoggedIn"
+    >
+      <Weather />
+    </RenderCacheable>
+  </div>
+</template>
+```
+### `tag (string, default: 'div')`
+The tag to use for the wrapper. It's unfortunately not possible to implement
+this without a wrapper.
 
+### `noCache (boolean, default: false)`
+Disable caching entirely for this component.
 
+### `cacheKey (string, default: '')`
+The key to use for the cache entry. If left empty, a key is automatically
+generated based on the props passed to the child. The key is automatically
+prefixed by the component name.
+
+### `cacheTags (string[], default: [])`
+Cache tags that can be later used for invalidation.
+
+### `asyncDataKeys (string[], default: [])`
+Provide the async data keys used by the cached component. If provided, the
+payload data will be cached alongside the component. If the component uses
+asyncData and the keys are not provided, you will receive a hydration mismatch
+error in the client.
+
+## Behind the Scenes
+
+In Vue 2 / Nuxt 2 component caching was integrated in vue-server-renderer using
+the `serverCacheKey` method on components. This feature was removed with the V3
+releases, so an alternative solution had to be found.
+
+The `<RenderCacheable>` component uses the `ssrRenderSlotInner` method from
+`vue/server-renderer` to get the rendered markup and stores it in the cache.
+This markup is then returned as a render function:
+
+```typescript
+return () => h('div', { innerHTML: cachedMarkup })
+```
+
+This works reasonably well. On the client the component is rendered normally.
+This approach has the same limitations as before: Cached components can't get
+or set any global state and they must render the same way for the given props.
