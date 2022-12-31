@@ -1,8 +1,11 @@
 # nuxt-multi-cache
 
-SSR page, component and data cache for Nuxt. Supports purging cache entries by key or by cache tags.
+SSR page, component and data cache for Nuxt 2. Supports purging cache entries by key or by cache tags.
 
 **[Installation](https://nuxt-multi-cache.netlify.app/guide/setup)** - **[Documentation](https://nuxt-multi-cache.netlify.app)** - **[NPM](https://www.npmjs.com/package/nuxt-multi-cache)**
+
+**Version 1.x of this module is only compatible with Nuxt 2.**
+**Use > 2.x for Nuxt 3 compatibility.**
 
 # Concepts
 - **Cache:** Page, component and data with support for cache tags

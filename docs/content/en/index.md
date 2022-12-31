@@ -10,10 +10,20 @@ features:
   - "Manage: REST API for purging and getting stats about the caches"
 ---
 
+<alert type="warning">
+This is the documentation for the V1 release, compatible with Nuxt 2.
+
+<p>
+  <a href="https://nuxt-multi-cache.dulnan.net">Switch to documentation for the Nuxt 3 compatible release of nuxt-multi-cache.</a>
+</p>
+</alert>
+
+---
+
 <p className="lead">
-nuxt-multi-cache is the all-in-one SSR caching solution for Nuxt. It offers a full
-page cache (with a static option), component render cache and a general data
-cache for anything else.
+nuxt-multi-cache V1 is the all-in-one SSR caching solution for Nuxt 2 . It
+offers a full page cache (with a static option), component render cache and a
+general data cache for anything else.
 </p>
 
 ---

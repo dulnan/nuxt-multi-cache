@@ -6,7 +6,7 @@ category: 'Getting started'
 ---
 
 ```bash
-npm install --save nuxt-multi-cache
+npm install --save nuxt-multi-cache@1
 ```
 
 ## Minimal configuration
