@@ -59,6 +59,19 @@ export default defineConfig({
         ],
       },
       {
+        text: 'Use Cases',
+        items: [
+          {
+            text: 'Static Site Generation',
+            link: '/use-cases/static-site-generation',
+          },
+          {
+            text: 'External APIs',
+            link: '/use-cases/external-apis',
+          },
+        ],
+      },
+      {
         text: 'Advanced',
         items: [
           {
