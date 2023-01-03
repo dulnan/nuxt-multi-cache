@@ -1,5 +1,5 @@
 import { createStorage } from 'unstorage'
-import { NuxtMultiCacheSSRContext } from '../../types'
+import type { NuxtMultiCacheSSRContext } from './../../types'
 import { getModuleConfig } from './../helpers'
 
 // Store a single promise to prevent initializing caches multiple times.

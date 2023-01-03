@@ -8,7 +8,7 @@ import type {
   Slots,
   ComponentInternalInstance,
 } from 'vue'
-import { ComponentCacheEntry, ComponentCacheItem } from '../../../types'
+import type { ComponentCacheEntry, ComponentCacheItem } from './../../../types'
 
 type RenderCacheableSlotVNode = VNode<
   RendererNode,

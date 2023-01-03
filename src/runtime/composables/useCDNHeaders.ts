@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { useSSRContext } from 'vue'
-import { getMultiCacheCDNHelper } from '../../helpers/server'
-import type { NuxtMultiCacheCDNHelper } from '../../helpers/CDNHelper'
+import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
+import { getMultiCacheCDNHelper } from './../helpers/server'
 
 /**
  * Return the helper to be used for interacting with the CDN headers feature.

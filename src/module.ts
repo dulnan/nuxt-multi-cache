@@ -5,8 +5,8 @@ import {
   addServerHandler,
   createResolver,
   defineNuxtModule,
-  addImportsDir,
   addComponent,
+  addImports,
 } from '@nuxt/kit'
 import { NuxtMultiCacheOptions } from './runtime/types'
 import {
@@ -45,9 +45,39 @@ export default defineNuxtModule<ModuleOptions>({
       },
     }
 
+    // @TODO: Why is this needed?!
+    nuxt.hook('nitro:config', (nitroConfig) => {
+      nitroConfig.externals = defu(
+        typeof nitroConfig.externals === 'object' ? nitroConfig.externals : {},
+        {
+          inline: [resolve('./runtime')],
+        },
+      )
+    })
+
     // Add composables.
-    addImportsDir(resolve('./runtime/composables'))
-    nuxt.options.alias['#nuxt-multi-cache'] = resolve('runtime/composables')
+    if (options.data) {
+      addImports({
+        from: resolve('./runtime/composables/useDataCache'),
+        name: 'useDataCache',
+      })
+    }
+    if (options.route) {
+      addImports({
+        from: resolve('./runtime/composables/useRouteCache'),
+        name: 'useRouteCache',
+      })
+    }
+    if (options.cdn) {
+      addImports({
+        from: resolve('./runtime/composables/useCDNHeaders'),
+        name: 'useCDNHeaders',
+      })
+    }
+
+    nuxt.options.alias['#nuxt-multi-cache/composables'] = resolve(
+      'runtime/composables/index',
+    )
 
     // Add RenderCacheable component if feature is enabled.
     if (options.component) {

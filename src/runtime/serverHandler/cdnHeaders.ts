@@ -1,6 +1,6 @@
 import { defineEventHandler } from 'h3'
-import { MULTI_CACHE_CDN_CONTEXT_KEY } from '../helpers/server'
-import { NuxtMultiCacheCDNHelper } from '../helpers/CDNHelper'
+import { MULTI_CACHE_CDN_CONTEXT_KEY } from './../helpers/server'
+import { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
 
 /**
  * Add the CDN helper to the event context.

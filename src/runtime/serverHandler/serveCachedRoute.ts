@@ -1,6 +1,6 @@
 import { defineEventHandler, setResponseHeaders } from 'h3'
-import { getMultiCacheContext } from '../helpers/server'
-import { RouteCacheItem } from '../types'
+import { getMultiCacheContext } from './../helpers/server'
+import { RouteCacheItem } from './../types'
 
 /**
  * Route cache event handler. Returns a cached response if available.

@@ -7,7 +7,7 @@ import {
 } from 'vue'
 import type { PropType } from 'vue'
 import { useNuxtApp } from '#app'
-import { ComponentCacheItem } from '../../types'
+import type { ComponentCacheItem } from './../../types'
 import { getExpiresValue, getMultiCacheContext } from './../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
 

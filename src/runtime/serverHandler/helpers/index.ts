@@ -1,6 +1,6 @@
 import { defu } from 'defu'
 import { loadNuxtConfig } from '@nuxt/kit'
-import { defaultOptions } from '../../settings'
+import { defaultOptions } from './../../settings'
 import type { NuxtMultiCacheOptions } from './../../types'
 import { useRuntimeConfig } from '#imports'
 

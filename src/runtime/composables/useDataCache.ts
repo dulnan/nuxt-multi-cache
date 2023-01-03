@@ -1,11 +1,11 @@
 import { useSSRContext } from 'vue'
 import type { H3Event } from 'h3'
+import type { CacheItem } from './../types'
 import {
   getExpiresValue,
   getMultiCacheContext,
   isExpired,
-} from '../../helpers/server'
-import type { CacheItem } from '../../types'
+} from './../helpers/server'
 
 type AddToCacheMethod<T> = (
   data: T,

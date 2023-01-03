@@ -1,3 +1,3 @@
-export { useDataCache } from './useDataCache/index'
-export { useRouteCache } from './useRouteCache/index'
-export { useCDNHeaders } from './useCDNHeaders/index'
+export { useDataCache } from './useDataCache'
+export { useRouteCache } from './useRouteCache'
+export { useCDNHeaders } from './useCDNHeaders'

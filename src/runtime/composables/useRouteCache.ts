@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { useSSRContext } from 'vue'
-import { getMultiCacheRouteHelper } from '../../helpers/server'
-import { NuxtMultiCacheRouteCacheHelper } from './../../helpers/RouteCacheHelper'
+import { NuxtMultiCacheRouteCacheHelper } from './../helpers/RouteCacheHelper'
+import { getMultiCacheRouteHelper } from './../helpers/server'
 
 /**
  * Get the helper to be used for interacting with the route cache.

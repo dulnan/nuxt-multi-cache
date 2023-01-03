@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import type { CacheItem, NuxtMultiCacheSSRContext } from '../types'
+import type { CacheItem, NuxtMultiCacheSSRContext } from './../types'
 import type { NuxtMultiCacheCDNHelper } from './CDNHelper'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 

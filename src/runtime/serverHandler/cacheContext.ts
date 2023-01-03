@@ -3,8 +3,8 @@ import type { H3Event } from 'h3'
 import {
   MULTI_CACHE_CONTEXT_KEY,
   MULTI_CACHE_ROUTE_CONTEXT_KEY,
-} from '../helpers/server'
-import { NuxtMultiCacheRouteCacheHelper } from '../helpers/RouteCacheHelper'
+} from './../helpers/server'
+import { NuxtMultiCacheRouteCacheHelper } from './../helpers/RouteCacheHelper'
 import { getModuleConfig } from './helpers'
 import { loadCacheContext } from './helpers/storage'
 

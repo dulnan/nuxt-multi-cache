@@ -5,8 +5,8 @@ import {
   getMultiCacheCDNHelper,
   getMultiCacheContext,
   getMultiCacheRouteHelper,
-} from '../helpers/server'
-import { RouteCacheItem } from '../types'
+} from './../helpers/server'
+import { RouteCacheItem } from './../types'
 
 /**
  * Route cache event handler.
