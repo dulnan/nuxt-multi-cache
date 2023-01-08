@@ -66,7 +66,7 @@ You can use it in custom server handlers, but you have to provide the `H3Event`
 object as the second argument.
 
 ```typescript
-import { useDataCache } from '#nuxt-multi-cache'
+import { useDataCache } from '#nuxt-multi-cache/composables'
 
 export default defineEventHandler(async (event) => {
   const { value, addToCache } = await useDataCache('weather')

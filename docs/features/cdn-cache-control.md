@@ -109,7 +109,7 @@ automatically. In addition you have to provide the H3Event object as the second
 argument:
 
 ```typescript
-import { useCDNHeaders } from '#nuxt-multi-cache'
+import { useCDNHeaders } from '#nuxt-multi-cache/composables'
 
 export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {

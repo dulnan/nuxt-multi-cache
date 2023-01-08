@@ -1,4 +1,4 @@
-import { useCDNHeaders, useRouteCache } from '#nuxt-multi-cache'
+import { useCDNHeaders, useRouteCache } from '#nuxt-multi-cache/composables'
 
 export default defineEventHandler((event) => {
   const cacheTags: string[] = [

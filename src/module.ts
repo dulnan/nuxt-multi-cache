@@ -82,7 +82,7 @@ export default defineNuxtModule<ModuleOptions>({
     // Add RenderCacheable component if feature is enabled.
     if (options.component) {
       await addComponent({
-        filePath: resolve('./runtime/components/RenderCacheable/index.ts'),
+        filePath: resolve('./runtime/components/RenderCacheable/index'),
         name: 'RenderCacheable',
         global: true,
       })
@@ -112,7 +112,8 @@ export default defineNuxtModule<ModuleOptions>({
       })
     }
 
-    // Hooks into sending the response.
+    // Hooks into sending the response and adds route to cache and adds CDN
+    // headers.
     if (options.cdn?.enabled || options.route?.enabled) {
       addServerHandler({
         handler: resolve('./runtime/serverHandler/responseSend'),

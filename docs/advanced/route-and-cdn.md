@@ -13,7 +13,7 @@ does not affect the max age of the CDN cache control header.
 Decide in a middleware where the page should be cached.
 
 ```typescript
-import { useCDNHeaders } from '#nuxt-multi-cache'
+import { useCDNHeaders } from '#nuxt-multi-cache/composables'
 
 export default defineEventHandler((event) => {
   if (event.path.startsWith('/dashboard')) {

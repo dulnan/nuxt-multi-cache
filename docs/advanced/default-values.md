@@ -39,7 +39,7 @@ middleware](https://nuxt.com/docs/guide/directory-structure/server#server-middle
 
 ::: code-group
 ```typescript [./server/middleware/routeCache.ts]
-import { useRouteCache } from '#nuxt-multi-cache'
+import { useRouteCache } from '#nuxt-multi-cache/composables'
 
 export default defineEventHandler((event) => {
   // Cache all routes for 7 days.
@@ -156,7 +156,7 @@ useCDNHeaders((helper) => {
 
 ::: code-group
 ```typescript [./server/middleware/routeCache.ts]
-import { useRouteCache } from '#nuxt-multi-cache'
+import { useRouteCache } from '#nuxt-multi-cache/composables'
 
 export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {

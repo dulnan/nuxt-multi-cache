@@ -1,4 +1,4 @@
-import { useRouteCache } from '#nuxt-multi-cache'
+import { useRouteCache } from '#nuxt-multi-cache/composables'
 
 const getResult = function () {
   return new Promise((resolve) => {

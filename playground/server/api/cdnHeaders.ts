@@ -1,4 +1,4 @@
-import { useCDNHeaders } from '#nuxt-multi-cache'
+import { useCDNHeaders } from '#nuxt-multi-cache/composables'
 
 export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {
