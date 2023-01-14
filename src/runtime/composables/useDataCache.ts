@@ -34,65 +34,67 @@ export function useDataCache<T>(
   }
 
   // Code only available on server side.
-  if (process.server) {
-    try {
-      const event: H3Event = (() => {
-        // Event provided by user.
-        if (providedEvent) {
-          return providedEvent
-        }
+  if (process.client) {
+    return Promise.resolve(dummy)
+  }
 
-        // SSR context should exist at this point, but TS doesn't know that.
-        const ssrContext = useSSRContext()
-        if (ssrContext) {
-          return ssrContext.event
-        }
-      })()
-
-      const multiCache = getMultiCacheContext(event)
-      // Get the cache storage. If the module is disabled this will be
-      // undefined.
-      if (!multiCache?.data) {
-        return Promise.resolve(dummy)
+  try {
+    const event: H3Event = (() => {
+      // Event provided by user.
+      if (providedEvent) {
+        return providedEvent
       }
 
-      // Try to get the item from cache.
-      return multiCache.data.getItem(key).then((v: any) => {
-        const item = v as CacheItem | null
-        const addToCache: AddToCacheMethod<T> = (
-          data: T,
-          cacheTags: string[] = [],
-          maxAge?: number,
-        ) => {
-          const item: CacheItem = { data: data as any, cacheTags }
-          if (maxAge) {
-            item.expires = getExpiresValue(maxAge)
-          }
-          return multiCache.data!.setItem(key, item)
-        }
+      // SSR context should exist at this point, but TS doesn't know that.
+      const ssrContext = useSSRContext()
+      if (ssrContext) {
+        return ssrContext.event
+      }
+    })()
 
-        if (item && !isExpired(item)) {
-          return {
-            addToCache,
-            // Extract the value. If the item was stored along its cache tags, it
-            // will be an object with a cacheTags property.
-            value: item.data as T,
-            cacheTags: item.cacheTags || [],
-            expires: item.expires,
-          }
-        }
+    const multiCache = getMultiCacheContext(event)
+    // Get the cache storage. If the module is disabled this will be
+    // undefined.
+    if (!multiCache?.data) {
+      return Promise.resolve(dummy)
+    }
 
-        // Return a dummy item.
+    // Try to get the item from cache.
+    return multiCache.data.getItem(key).then((v: any) => {
+      const item = v as CacheItem | null
+      const addToCache: AddToCacheMethod<T> = (
+        data: T,
+        cacheTags: string[] = [],
+        maxAge?: number,
+      ) => {
+        const item: CacheItem = { data: data as any, cacheTags }
+        if (maxAge) {
+          item.expires = getExpiresValue(maxAge)
+        }
+        return multiCache.data!.setItem(key, item)
+      }
+
+      if (item && !isExpired(item)) {
         return {
           addToCache,
-          cacheTags: [],
+          // Extract the value. If the item was stored along its cache tags, it
+          // will be an object with a cacheTags property.
+          value: item.data as T,
+          cacheTags: item.cacheTags || [],
+          expires: item.expires,
         }
-      })
-    } catch (e) {
-      if (e instanceof Error) {
-        // For some reason cache is not available.
-        console.debug(e.message)
       }
+
+      // Return a dummy item.
+      return {
+        addToCache,
+        cacheTags: [],
+      }
+    })
+  } catch (e) {
+    if (e instanceof Error) {
+      // For some reason cache is not available.
+      console.debug(e.message)
     }
   }
 
