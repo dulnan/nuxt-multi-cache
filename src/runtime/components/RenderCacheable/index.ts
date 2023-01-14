@@ -232,7 +232,6 @@ export default defineComponent({
               'data-cacheable-key': cacheKey,
             })
         }
-        return () => ''
       } catch (e) {
         if (e instanceof Error) {
           console.error(e.message)
