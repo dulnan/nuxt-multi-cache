@@ -1,6 +1,6 @@
-# Nuxt Multi Cache
+# Nuxt Multi Cache for Nuxt 3
 
-Ultimate caching for Nuxt 3.
+This module provides several layers of server-side caching for your Nuxt 3 app:
 
 - SSR component caching (caches rendered markup of a component)
 - Route caching (pages, API routes)
@@ -10,6 +10,32 @@ Ultimate caching for Nuxt 3.
 - Cache tag based invalidation
 
 **[Documentation](https://nuxt-multi-cache.dulnan.net)** - **[NPM](https://www.npmjs.com/package/nuxt-multi-cache)**
+
+## Nuxt 2
+[Version 1.x](https://github.com/dulnan/nuxt-multi-cache/tree/1.x) (which is in maintenance mode) supports Nuxt 2.
+
+## Why?
+
+Does your Nuxt app serve thousands of pages from a CMS? Does it have tens of
+thousands of requests per day? Does the data change frequently? Does rendering
+a single page require fetching data from multiple APIs?
+If you've answered any of these questions with "yes", then this module might be
+for you.
+
+I work fulltime on building frontends with Nuxt for large CMS sites. Rendering
+a single page might require up to 10 API calls to get all the data: Menu,
+footer, translations, route, page data, user state, additional data... It all
+adds up and doing that for every request can quickly become a bottleneck. Maybe
+you can work around this problem by getting all the data in a single API call,
+but I didn't like to have components dependent on global state.
+
+Instead my solution was to cache the API responses locally on the server.
+Either for a fixed amount of time, like 5 minutes, or until the cache entry is
+being invalidated. In addition, I cache components that appear on most pages,
+like menu or footer.
+
+The hardest thing in IT is cache invalidation, so I also added a way to
+invalidate cache entries by key or using cache tags.
 
 # Features
 
