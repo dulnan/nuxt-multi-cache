@@ -5,7 +5,7 @@ import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
 import { sleep } from './__helpers__'
 
-describe('nuxt-graphql-middleware', async () => {
+describe('The component cache feature', async () => {
   const multiCache: NuxtMultiCacheOptions = {
     component: {
       enabled: true,

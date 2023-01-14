@@ -42,6 +42,7 @@ describe('useDataCache composable', () => {
     vi.useRealTimers()
   })
   test('Returns dummy in client', async () => {
+    process.client = true
     const cache = await useDataCache('foobar')
 
     expect(cache.value).toBeFalsy()
@@ -51,14 +52,14 @@ describe('useDataCache composable', () => {
   })
 
   test('Returns cached data in server', async () => {
-    process.server = true
+    process.client = false
 
     expect((await useDataCache('foobar')).value).toEqual('Cached data.')
     expect((await useDataCache('something')).value).toBeUndefined()
   })
 
   test('Does not return expired data.', async () => {
-    process.server = true
+    process.client = false
     const date = new Date(2023, 11, 1)
     vi.setSystemTime(date)
 
@@ -66,7 +67,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Returns not yet expired data', async () => {
-    process.server = true
+    process.client = false
 
     const date = new Date(2021, 11, 1)
     vi.setSystemTime(date)
@@ -77,7 +78,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Puts data in cache', async () => {
-    process.server = true
+    process.client = false
 
     const { addToCache, value } = await useDataCache('should_be_in_cache')
     expect(value).toBeUndefined()
@@ -87,7 +88,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Puts data in cache with cache tags', async () => {
-    process.server = true
+    process.client = false
 
     const { addToCache, value } = await useDataCache('data_with_tags')
     expect(value).toBeUndefined()
@@ -98,7 +99,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Puts data in cache with expiration value', async () => {
-    process.server = true
+    process.client = false
     const date = new Date(2021, 11, 1)
     vi.setSystemTime(date)
 
@@ -134,7 +135,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Uses provided event to get data cache.', async () => {
-    process.server = true
+    process.client = false
     const storage: Record<string, CacheItem> = {
       foobar: { data: 'More cached data.' },
     }
@@ -159,7 +160,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Catches errors and logs them.', async () => {
-    process.server = true
+    process.client = false
     const consoleSpy = vi.spyOn(global.console, 'debug')
 
     const event = {

@@ -28,6 +28,7 @@
     "prepack": "nuxt-module-build",
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
+    "dev:serve": "node playground/.output/server/index.mjs",
     "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground",
     "generate": "nuxi generate",
     "typecheck": "nuxi typecheck",
