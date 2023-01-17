@@ -1,6 +1,6 @@
 {
   "name": "nuxt-multi-cache",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "SSR route, component and data cache for Nuxt.js",
   "type": "module",
   "exports": {
@@ -24,6 +24,7 @@
     "url": "https://dulnan.net",
     "email": "me@dulnan.net"
   },
+  "license": "MIT",
   "scripts": {
     "prepack": "nuxt-module-build",
     "dev": "nuxi dev playground",

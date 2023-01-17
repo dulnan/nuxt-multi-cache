@@ -23,7 +23,7 @@ export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'nuxt-multi-cache',
     configKey: 'multiCache',
-    version: '2.0.0',
+    version: '2.0.1',
     compatibility: {
       nuxt: '^3.0.0',
     },
