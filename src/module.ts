@@ -1,5 +1,4 @@
 import { fileURLToPath } from 'url'
-import { existsSync } from 'node:fs'
 import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
 import {
@@ -16,27 +15,39 @@ import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
 } from './runtime/settings'
+import { logger, fileExists } from './utils'
 
 // Nuxt needs this.
 export type ModuleOptions = NuxtMultiCacheOptions
 export type ModuleHooks = {}
 
-export const fileExists = (
-  path?: string,
-  extensions = ['js', 'ts'],
-): string | null => {
-  if (!path) {
-    return null
-  } else if (existsSync(path)) {
-    // If path already contains/forces the extension
-    return path
+/**
+ * Log error message if obsolete configuration options are used.
+ */
+function checkObsoleteOptions(options: any) {
+  const caches = ['component', 'data', 'route']
+  caches.forEach((v) => {
+    if (options[v] && options[v].storage) {
+      logger.error(
+        `The "storage" option on the cache configuration has been moved to the server options file.\n` +
+          'Learn more: https://nuxt-multi-cache.dulnan.net/overview/server-options',
+      )
+    }
+  })
+
+  if (typeof options.api?.authorization === 'function') {
+    logger.error(
+      `The "api.authorization" option to use a custom callback has been moved to the server options file.\n` +
+        'Learn more: https://nuxt-multi-cache.dulnan.net/overview/server-options',
+    )
   }
 
-  const extension = extensions.find((extension) =>
-    existsSync(`${path}.${extension}`),
-  )
-
-  return extension ? `${path}.${extension}` : null
+  if (options.enabledForRequest) {
+    logger.error(
+      `The "enabledForRequest" option has been moved to the server options file.\n` +
+        'Learn more: https://nuxt-multi-cache.dulnan.net/overview/server-options',
+    )
+  }
 }
 
 export default defineNuxtModule<ModuleOptions>({
@@ -51,6 +62,7 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: defaultOptions as any,
   async setup(passedOptions, nuxt) {
     const options = defu({}, passedOptions, {}) as ModuleOptions
+    checkObsoleteOptions(options)
     const { resolve } = createResolver(import.meta.url)
     const rootDir = nuxt.options.rootDir
 
