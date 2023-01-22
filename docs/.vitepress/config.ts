@@ -33,6 +33,13 @@ export default defineConfig({
         href: '/favicon-16x16.png',
       },
     ],
+    [
+      'meta',
+      {
+        property: 'og:image',
+        content: 'https://nuxt-multi-cache.dulnan.net/banner.jpg',
+      },
+    ],
   ],
   transformHead: (ctx) => {
     let url =

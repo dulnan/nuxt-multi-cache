@@ -1,3 +1,5 @@
+![nuxt-multi-cache banner](./docs/public/banner.jpg?raw=true "nuxt-multi-cache for Nuxt 3")
+
 # Nuxt Multi Cache for Nuxt 3
 
 This module provides several layers of server-side caching for your Nuxt 3 app:
