@@ -9,7 +9,11 @@ vi.mock('#imports', () => {
   return {
     useRuntimeConfig: () => {
       return {
-        multiCache: {},
+        multiCache: {
+          api: {
+            cacheTagInvalidationDelay: 1000,
+          },
+        },
       }
     },
   }
@@ -25,33 +29,17 @@ vi.mock('h3', async () => {
   }
 })
 
-vi.mock('@nuxt/kit', () => {
-  return {
-    loadNuxtConfig: () => {
-      return Promise.resolve({
-        multiCache: {
-          caches: {
-            component: {
-              enabled: true,
-            },
-            data: {
-              enabled: true,
-            },
-          },
-          api: {
-            cacheTagInvalidationDelay: 1000,
-          },
-        },
-      })
-    },
-  }
-})
-
 vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
   return {
     checkAuth: () => {
       return Promise.resolve()
     },
+  }
+})
+
+vi.mock('#multi-cache-server-options', () => {
+  return {
+    default: {},
   }
 })
 

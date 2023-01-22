@@ -2,11 +2,15 @@ import type { H3Event } from 'h3'
 import { createError, getHeader } from 'h3'
 import type { Storage } from 'unstorage'
 import type {
-  NuxtMultiCacheOptions,
+  MultiCacheRuntimeConfig,
+  MutliCacheServerOptions,
   NuxtMultiCacheSSRContext,
 } from './../../../types'
-import { getModuleConfig } from './../../helpers'
 import { getMultiCacheContext } from './../../../helpers/server'
+import { useRuntimeConfig } from '#imports'
+import serverOptions from '#multi-cache-server-options'
+
+const runtimeConfig = useRuntimeConfig()
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 
@@ -33,33 +37,49 @@ export function getCacheInstance(event: H3Event): Storage {
 
 /**
  * Check the authorization for API endpoints.
+ *
+ * Throws an error if authorization failed.
  */
 export async function checkAuth(
   event: H3Event,
-  providedModuleConfig?: NuxtMultiCacheOptions,
+  providedRuntimeConfig?: MultiCacheRuntimeConfig,
+  providedServerOptions?: MutliCacheServerOptions,
 ) {
-  const moduleConfig = providedModuleConfig || (await getModuleConfig())
-  const authorization = moduleConfig?.api?.authorization
+  const { authorizationDisabled, authorizationToken } =
+    (providedRuntimeConfig || runtimeConfig.multiCache).api || {}
 
-  // Auth is disabled if it's explicity set to false.
-  if (authorization === false) {
+  // Allow if authorization is explicitly disabled.
+  if (authorizationDisabled) {
     return
-  } else if (typeof authorization === 'function') {
-    const result = await authorization(event)
-    if (result) {
-      return
-    }
-  } else if (typeof authorization === 'string') {
-    // Check authorization.
+  }
+
+  // Check authorization using token.
+  if (authorizationToken) {
     const headerToken = getHeader(event, AUTH_HEADER)
-    if (headerToken === authorization) {
+    if (headerToken === authorizationToken) {
       return
     }
-  } else {
+    // Unauthorized.
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'Unauthorized',
+    })
+  }
+
+  const authorization = (providedServerOptions || serverOptions).authorization
+
+  // At this stage if this method is missing, we throw an error to indicate
+  // that the module is not configured properly.
+  if (!authorization) {
     throw createError({
       statusCode: 500,
       statusMessage: 'No authorization configuration option provided.',
     })
+  }
+
+  const result = await authorization(event)
+  if (result) {
+    return
   }
 
   // Unauthorized.

@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'url'
+import { existsSync } from 'node:fs'
 import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
 import {
@@ -7,8 +8,9 @@ import {
   defineNuxtModule,
   addComponent,
   addImports,
+  addTemplate,
 } from '@nuxt/kit'
-import { NuxtMultiCacheOptions } from './runtime/types'
+import { MutliCacheServerOptions, NuxtMultiCacheOptions } from './runtime/types'
 import {
   defaultOptions,
   DEFAULT_CDN_CONTROL_HEADER,
@@ -18,6 +20,24 @@ import {
 // Nuxt needs this.
 export type ModuleOptions = NuxtMultiCacheOptions
 export type ModuleHooks = {}
+
+export const fileExists = (
+  path?: string,
+  extensions = ['js', 'ts'],
+): string | null => {
+  if (!path) {
+    return null
+  } else if (existsSync(path)) {
+    // If path already contains/forces the extension
+    return path
+  }
+
+  const extension = extensions.find((extension) =>
+    existsSync(`${path}.${extension}`),
+  )
+
+  return extension ? `${path}.${extension}` : null
+}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -42,6 +62,20 @@ export default defineNuxtModule<ModuleOptions>({
         cacheControlHeader:
           options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER,
         cacheTagHeader: options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER,
+      },
+      component: !!options.component?.enabled,
+      data: !!options.data?.enabled,
+      route: !!options.data?.enabled,
+      api: {
+        enabled: !!options.api?.enabled,
+        prefix: options.api?.prefix || '',
+        cacheTagInvalidationDelay: options.api
+          ?.cacheTagInvalidationDelay as number,
+        authorizationToken:
+          typeof options.api?.authorization === 'string'
+            ? options.api.authorization
+            : '',
+        authorizationDisabled: options.api?.authorization === false,
       },
     }
 
@@ -120,6 +154,41 @@ export default defineNuxtModule<ModuleOptions>({
       })
     }
 
+    // Shamelessly copied and adapted from:
+    // https://github.com/nuxt-modules/prismic/blob/fd90dc9acaa474f79b8831db5b8f46a9a9f039ca/src/module.ts#L55
+    // Creates the template with runtime server configuration.
+    const extensions = ['js', 'mjs', 'ts']
+    const resolvedPath = '~/app/multiCache.serverOptions'
+      .replace(/^(~~|@@)/, nuxt.options.rootDir)
+      .replace(/^(~|@)/, nuxt.options.srcDir)
+
+    const template = (() => {
+      const resolvedFilename = `multiCache.serverOptions.ts`
+
+      const maybeUserFile = fileExists(resolvedPath, extensions)
+
+      if (maybeUserFile) {
+        return addTemplate({
+          filename: resolvedFilename,
+          write: true,
+          getContents: () => `export { default } from '${resolvedPath}'`,
+        })
+      }
+
+      // Else provide `undefined` fallback
+      return addTemplate({
+        filename: resolvedFilename,
+        write: true,
+        getContents: () => 'export default {}',
+      })
+    })()
+
+    nuxt.options.nitro.externals = nuxt.options.nitro.externals || {}
+    nuxt.options.nitro.externals.inline =
+      nuxt.options.nitro.externals.inline || []
+    nuxt.options.nitro.externals.inline.push(template.dst)
+    nuxt.options.alias['#multi-cache-server-options'] = template.dst
+
     // Add cache management API if enabled.
     if (options.api?.enabled) {
       // Prefix is defined in default config.
@@ -157,3 +226,7 @@ export default defineNuxtModule<ModuleOptions>({
     }
   },
 }) as NuxtModule<ModuleOptions>
+
+export function defineMultiCacheOptions(options: MutliCacheServerOptions) {
+  return options
+}

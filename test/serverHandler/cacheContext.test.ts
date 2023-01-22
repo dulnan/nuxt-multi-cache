@@ -1,29 +1,24 @@
 import { beforeEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import cacheContextHandler from './../../src/runtime/serverHandler/cacheContext'
 
-vi.mock('#imports', () => {
+vi.mock('#multi-cache-server-options', () => {
   return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {},
-      }
+    default: {
+      enabledForRequest: (event: any) => {
+        return Promise.resolve(!!event.__ENABLED_FOR_REQUEST)
+      },
     },
   }
 })
 
-vi.mock('@nuxt/kit', () => {
+vi.mock('#imports', () => {
   return {
-    loadNuxtConfig: () => {
-      return Promise.resolve({
+    useRuntimeConfig: () => {
+      return {
         multiCache: {
-          component: {
-            enabled: true,
-          },
-          enabledForRequest: (event: any) => {
-            return Promise.resolve(!!event.__ENABLED_FOR_REQUEST)
-          },
+          component: true,
         },
-      })
+      }
     },
   }
 })
@@ -52,23 +47,5 @@ describe('cacheContext server handler', () => {
     }
     await cacheContextHandler(event)
     expect(event.context).toEqual({})
-  })
-
-  test('Caches that there is no enabledForRequest method.', async () => {
-    const event: any = {
-      context: {},
-    }
-    const shouldAddCacheContext = await import(
-      './../../src/runtime/serverHandler/cacheContext'
-    ).then((v) => v.shouldAddCacheContext)
-
-    const kit = await import('@nuxt/kit')
-    kit.loadNuxtConfig = vi.fn().mockReturnValueOnce(
-      Promise.resolve({
-        multiCache: {},
-      }),
-    )
-    expect(await shouldAddCacheContext(event)).toEqual(true)
-    expect(await shouldAddCacheContext(event)).toEqual(true)
   })
 })

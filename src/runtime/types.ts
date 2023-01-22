@@ -1,7 +1,7 @@
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
 
-interface CacheOptions {
+interface CacheConfigOptions {
   /**
    * Set if the cache is enabled.
    *
@@ -14,11 +14,6 @@ interface CacheOptions {
    * leave the entire configuration property undefined.
    */
   enabled?: boolean
-
-  /**
-   * Configuration for the unstorage instance.
-   */
-  storage?: CreateStorageOptions
 }
 
 export type CDNOptions = {
@@ -53,7 +48,7 @@ export interface NuxtMultiCacheOptions {
    * The performance improvements are most noticeable if you have complex
    * components and a lot of pages.
    */
-  component?: CacheOptions
+  component?: CacheConfigOptions
 
   /**
    * Generic data cache.
@@ -61,7 +56,7 @@ export interface NuxtMultiCacheOptions {
    * Can be used for anything: Caching API responses, expensive calculations,
    * slow external APIs, etc.
    */
-  data?: CacheOptions
+  data?: CacheConfigOptions
 
   /**
    * Route cache.
@@ -69,7 +64,7 @@ export interface NuxtMultiCacheOptions {
    * Caches routes based on the path. Works for both rendered Nuxt pages and
    * server API routes.
    */
-  route?: CacheOptions
+  route?: CacheConfigOptions
 
   /**
    * Configuration for the CDN headers feature.
@@ -92,22 +87,6 @@ export interface NuxtMultiCacheOptions {
    * headers.
    */
   cdn?: CDNOptions
-
-  /**
-   * Determine if caching should be used for the given request.
-   *
-   * If the method resolves to `false` the cache context singleton is not
-   * attached to the request, which prevents getting and setting cache entries
-   * for the duration of the request.
-   *
-   * This does not affect the CDN feature.
-   *
-   * One use case might be to prevent caching for requests coming from
-   * authenticated users to make it impossible to cache sensitive data.
-   * Or to offer a quick way to disable caching based on local or remote
-   * configuration.
-   */
-  enabledForRequest?: (event: H3Event) => Promise<boolean>
 
   /**
    * Define a global cache key prefix.
@@ -153,7 +132,7 @@ export interface NuxtMultiCacheOptions {
      * can potentially leak sensitive information via cached data or allow
      * anyone to purge cache entries!
      */
-    authorization: string | false | ((event: H3Event) => Promise<boolean>)
+    authorization: string | false
 
     /**
      * Delay for invalidating cache tags.
@@ -202,3 +181,55 @@ export interface ComponentCacheItem extends CacheItem {
 }
 
 export type ComponentCacheEntry = ComponentCacheItem | string
+
+export type MutliCacheServerOptions = {
+  component?: {
+    storage?: CreateStorageOptions
+  }
+  data?: {
+    storage?: CreateStorageOptions
+  }
+  route?: {
+    storage?: CreateStorageOptions
+  }
+
+  /**
+   * Determine if caching should be used for the given request.
+   *
+   * If the method resolves to `false` the cache context singleton is not
+   * attached to the request, which prevents getting and setting cache entries
+   * for the duration of the request.
+   *
+   * This does not affect the CDN feature.
+   *
+   * One use case might be to prevent caching for requests coming from
+   * authenticated users to make it impossible to cache sensitive data.
+   * Or to offer a quick way to disable caching based on local or remote
+   * configuration.
+   */
+  enabledForRequest?: (event: H3Event) => Promise<boolean>
+
+  /**
+   * The authorization for the API endpoints.
+   *
+   * should return a Promise that resolves to true or false.
+   */
+  authorization?: (event: H3Event) => Promise<boolean>
+}
+
+export type MultiCacheRuntimeConfig = {
+  cdn: {
+    cacheControlHeader: string
+    cacheTagHeader: string
+  }
+  component: boolean
+  data: boolean
+  route: boolean
+  api: {
+    enabled: boolean
+    prefix: string
+    cacheTagInvalidationDelay: number
+    authorizationToken: string
+    authorizationDisabled: boolean
+  }
+}
