@@ -6,6 +6,34 @@ export default defineConfig({
   lang: 'en',
   cleanUrls: 'without-subfolders',
   appearance: 'dark',
+  head: [
+    [
+      'link',
+      {
+        rel: 'apple-touch-icon',
+        sizes: '180x180',
+        href: '/apple-touch-icon.png',
+      },
+    ],
+    [
+      'link',
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        href: '/favicon-32x32.png',
+      },
+    ],
+    [
+      'link',
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '16x16',
+        href: '/favicon-16x16.png',
+      },
+    ],
+  ],
   transformHead: (ctx) => {
     let url =
       '/' + ctx.pageData.relativePath.replace('index.md', '').replace('.md', '')
@@ -20,7 +48,7 @@ export default defineConfig({
       ],
     ])
   },
-  description: '',
+  description: 'Component, route and data cache for Nuxt 3.',
   locales: {
     '/': {
       lang: 'en-US',

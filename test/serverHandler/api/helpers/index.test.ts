@@ -32,7 +32,7 @@ describe('checkAuth', () => {
     ).toBeUndefined()
   })
 
-  test('Performs custom auth check provided in config', async () => {
+  test('Performs custom auth check provided in config', () => {
     expect(
       checkAuth({} as any, { multiCache: {} } as any, {
         api: {
