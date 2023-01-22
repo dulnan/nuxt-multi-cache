@@ -35,8 +35,10 @@ describe('checkAuth', () => {
   test('Performs custom auth check provided in config', async () => {
     expect(
       checkAuth({} as any, { multiCache: {} } as any, {
-        authorization() {
-          return Promise.resolve(false)
+        api: {
+          authorization() {
+            return Promise.resolve(false)
+          },
         },
       }),
     ).rejects.toThrowErrorMatchingInlineSnapshot('"Unauthorized"')

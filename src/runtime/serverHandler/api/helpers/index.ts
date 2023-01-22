@@ -66,7 +66,8 @@ export async function checkAuth(
     })
   }
 
-  const authorization = (providedServerOptions || serverOptions).authorization
+  const authorization = (providedServerOptions || serverOptions).api
+    ?.authorization
 
   // At this stage if this method is missing, we throw an error to indicate
   // that the module is not configured properly.

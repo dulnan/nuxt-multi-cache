@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   base: (process.env.BASE_URL as `/${string}/` | undefined) || '/',
-  title: 'Nuxt Multi Cache V2',
+  title: 'Multi Cache for Nuxt 3',
   lang: 'en',
   cleanUrls: 'without-subfolders',
   appearance: 'dark',
@@ -36,6 +36,7 @@ export default defineConfig({
         text: '1.x (for Nuxt 2)',
         link: 'https://nuxt-multi-cache-v1.dulnan.net',
       },
+      { text: 'NPM', link: 'https://www.npmjs.com/package/nuxt-multi-cache' },
       { text: 'GitHub', link: 'https://github.com/dulnan/nuxt-multi-cache' },
     ],
     sidebar: [
@@ -44,6 +45,7 @@ export default defineConfig({
         items: [
           { text: 'Introduction', link: '/overview/introduction' },
           { text: 'Configuration', link: '/overview/configuration' },
+          { text: 'Server Options', link: '/overview/server-options' },
           { text: 'Cache Tags', link: '/overview/cache-tags' },
           { text: 'Migrating from V1', link: '/overview/migrating-from-v1' },
         ],

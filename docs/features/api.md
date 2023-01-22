@@ -6,7 +6,9 @@ by cache tags.
 
 ## Configuration
 
-```typescript
+::: code-group
+
+```typescript [nuxt.config.ts]
 import { defineNuxtConfig } from 'nuxt'
 
 export default defineNuxtConfig({
@@ -20,6 +22,23 @@ export default defineNuxtConfig({
   }
 }
 ```
+
+```typescript [multiCache.serverOptions.ts]
+// ~/app/multiCache.serverOptions.ts
+import { defineMultiCacheOptions } from 'nuxt-multi-cache'
+import { isAuthenticated } from './somewhere'
+
+export default defineMultiCacheOptions({
+  api: {
+    // Use a custom method that checks authorization. Can be something like
+    // cookie, basic auth or request IP.
+    authorization: async function (event) {
+      return await isAuthenticated(event)
+    },
+  }
+})
+```
+:::
 
 ### Authorization
 
@@ -54,10 +73,8 @@ curl -X POST -i \
 
 #### Custom Callback
 
-If the value of `api.authorization` is a function, then this is executed for
-each request to the API. The function receives the `H3Event` object as an
-argument and can then decide if authorization is granted by returning a Promise
-that resolves to `true` or `false`.
+You can also implement your own [authorization check via the server options](/overview/server-options#custom-api-authorization).
+
 
 #### Disabled
 

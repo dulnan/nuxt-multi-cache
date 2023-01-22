@@ -209,12 +209,14 @@ export type MutliCacheServerOptions = {
    */
   enabledForRequest?: (event: H3Event) => Promise<boolean>
 
-  /**
-   * The authorization for the API endpoints.
-   *
-   * should return a Promise that resolves to true or false.
-   */
-  authorization?: (event: H3Event) => Promise<boolean>
+  api?: {
+    /**
+     * The authorization for the API endpoints.
+     *
+     * should return a Promise that resolves to true or false.
+     */
+    authorization?: (event: H3Event) => Promise<boolean>
+  }
 }
 
 export type MultiCacheRuntimeConfig = {

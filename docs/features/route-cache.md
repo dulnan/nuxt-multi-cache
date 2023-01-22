@@ -5,20 +5,35 @@ helper via a composable that manages if a response should be cached.
 
 ## Configuration
 
-```typescript
+::: code-group
+
+```typescript [nuxt.config.ts]
 import { defineNuxtConfig } from 'nuxt'
 
 export default defineNuxtConfig({
   multiCache: {
     route: {
       enabled: true,
-
-      // Provide custom options for unstorage.
-      storage: {}
     }
   }
 }
 ```
+
+```typescript [multiCache.serverOptions.ts]
+// ~/app/multiCache.serverOptions.ts
+import { defineMultiCacheOptions } from 'nuxt-multi-cache'
+import myCustomDriver from './somehwere'
+
+export default defineMultiCacheOptions({
+  route: {
+    storage: {
+      driver: myCustomDriver()
+    }
+  }
+})
+```
+:::
+
 
 ## Usage in Components
 

@@ -18,7 +18,9 @@ multiple children, you have to create a separate component for that.
 
 ## Configuration
 
-```typescript
+::: code-group
+
+```typescript [nuxt.config.ts]
 import { defineNuxtConfig } from 'nuxt'
 
 export default defineNuxtConfig({
@@ -28,13 +30,24 @@ export default defineNuxtConfig({
       // If false the cache is disabled, but the component is still added to
       // the build.
       enabled: true,
-
-      // Provide custom options for unstorage.
-      storage: {}
     }
   }
 }
 ```
+
+```typescript [multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache'
+import myCustomDriver from './somehwere'
+
+export default defineMultiCacheOptions({
+  component: {
+    storage: {
+      driver: myCustomDriver()
+    }
+  }
+})
+```
+:::
 
 ## Usage
 

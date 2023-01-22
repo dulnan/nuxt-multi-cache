@@ -12,6 +12,7 @@ pages you can increase average performance.
 
 - Several cache backends (memory, redis, Cloudflare KV) via [unstorage](https://github.com/unjs/unstorage)
 - Fully modular, pick whatever you need
+- Cache invalidation API
 - Minimal impact on client side bundle and performance
 - Works in SSR (server-side rendering) and SSG (static site generation)
 - Large test coverage
