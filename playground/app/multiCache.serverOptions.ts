@@ -2,22 +2,22 @@ import { defineDriver } from 'unstorage'
 import { defineMultiCacheOptions } from './../../src/module'
 
 const customDriver = defineDriver(() => {
-  let cache = {}
+  let cache: Record<string, string> = {}
   return {
     hasItem(key: string) {
-      console.log('hasItem: ' + key)
       return !!cache[key]
     },
     getItem(key: string) {
-      console.log('getItem: ' + key)
+      if (key === 'static_item_for_test') {
+        return JSON.stringify({ data: 'just_an_example_value' })
+      }
       return cache[key]
     },
     setItem(key, value) {
-      console.log('setItem: ' + key)
       cache[key] = value
     },
     removeItem(key) {
-      cache[key] = undefined
+      delete cache[key]
     },
     getKeys() {
       return Object.keys(cache)
