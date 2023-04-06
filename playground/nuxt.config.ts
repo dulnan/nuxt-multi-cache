@@ -6,7 +6,6 @@ export default defineNuxtConfig({
   multiCache: {
     component: {
       enabled: true,
-      storage: {},
     },
     route: {
       enabled: true,
