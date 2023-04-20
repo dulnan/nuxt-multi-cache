@@ -8,7 +8,11 @@ import {
 import type { PropType } from 'vue'
 import { useNuxtApp } from '#app'
 import type { ComponentCacheItem } from './../../types'
-import { getExpiresValue, getMultiCacheContext } from './../../helpers/server'
+import {
+  getExpiresValue,
+  getMultiCacheContext,
+  getCacheKeyWithPrefix,
+} from './../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
 
 /**
@@ -119,7 +123,25 @@ export default defineComponent({
 
       // Get the current instance.
       const currentInstance = getCurrentInstance()
+      const ssrContext = useSSRContext()
+      // SSR context should exist at this point, but TS doesn't know that.
+      if (!ssrContext) {
+        console.log('Failed to get SSR context.')
+        return () => h(props.tag, slots.default!())
+      }
+      const multiCache = getMultiCacheContext(ssrContext.event)
+      // Get the cache storage. If the module is disabled this will be
+      // undefined.
 
+      if (!multiCache?.component) {
+        console.log('Component cache is disabled.')
+        return () => h(props.tag, slots.default!())
+      }
+
+      const fullCacheKey = getCacheKeyWithPrefix(
+        multiCache.cacheKeyPrefix,
+        cacheKey || '',
+      )
       // Method to get the cached version of a component.
       // If it doesn't exist, it will be rendered to a string and then stored
       // in the cache.
@@ -137,26 +159,14 @@ export default defineComponent({
           return
         }
 
-        // SSR context should exist at this point, but TS doesn't know that.
-        const ssrContext = useSSRContext()
-        if (!ssrContext) {
-          console.log('Failed to get SSR context.')
-          return
-        }
-
-        // Get the cache storage. If the module is disabled this will be
-        // undefined.
-        const multiCache = getMultiCacheContext(ssrContext.event)
-        if (!multiCache?.component) {
-          console.log('Component cache is disabled.')
-          return
-        }
-
         // Get Nuxt app.
         const nuxtApp = useNuxtApp()
 
         // Get the cached item from the storage.
-        const cached = await getCachedComponent(multiCache.component, cacheKey)
+        const cached = await getCachedComponent(
+          multiCache.component,
+          fullCacheKey,
+        )
 
         if (cached) {
           const { data, payload, expires } = cached
@@ -205,10 +215,10 @@ export default defineComponent({
             }
 
             // Store object in the cache.
-            multiCache.component.setItem(cacheKey, item)
+            multiCache.component.setItem(fullCacheKey, item)
           } else {
             // Only store the markup in cache.
-            multiCache.component.setItem(cacheKey, data)
+            multiCache.component.setItem(fullCacheKey, data)
           }
         } catch (e) {
           if (e instanceof Error) {
@@ -229,7 +239,7 @@ export default defineComponent({
           return () =>
             h(props.tag, {
               innerHTML: cachedMarkup,
-              'data-cacheable-key': cacheKey,
+              'data-cacheable-key': fullCacheKey,
             })
         }
       } catch (e) {

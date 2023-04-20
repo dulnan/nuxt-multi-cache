@@ -5,6 +5,7 @@ import {
   getMultiCacheCDNHelper,
   getMultiCacheContext,
   getMultiCacheRouteHelper,
+  getCacheKeyWithPrefix,
 } from './../helpers/server'
 import { RouteCacheItem } from './../types'
 
@@ -85,7 +86,12 @@ export default defineEventHandler((event) => {
           if (routeHelper.tags.length) {
             item.cacheTags = routeHelper.tags
           }
-          multiCache.route.setItem(event.path, item)
+
+          const fullKey = getCacheKeyWithPrefix(
+            multiCache.cacheKeyPrefix,
+            event.path,
+          )
+          multiCache.route.setItem(fullKey, item)
         }
       }
     }

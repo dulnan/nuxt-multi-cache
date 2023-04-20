@@ -38,7 +38,12 @@ export default defineEventHandler(async (event) => {
     // Init cache context if not already done.
     // Returns a single promise so that we don't initialize it multiple times
     // when multiple requests come in.
-    const cacheContext = await loadCacheContext()
+    const cacheContext = await loadCacheContext(event)
+
+    const config = await getModuleConfig()
+    if (config.cacheKeyPrefix && typeof config.cacheKeyPrefix !== 'string') {
+      cacheContext.cacheKeyPrefix = await config.cacheKeyPrefix(event)
+    }
 
     // Add the cache context object to the SSR context object.
     event.context[MULTI_CACHE_CONTEXT_KEY] = cacheContext

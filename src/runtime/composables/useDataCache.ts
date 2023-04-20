@@ -4,6 +4,7 @@ import type { CacheItem } from './../types'
 import {
   getExpiresValue,
   getMultiCacheContext,
+  getCacheKeyWithPrefix,
   isExpired,
 } from './../helpers/server'
 
@@ -60,7 +61,8 @@ export function useDataCache<T>(
     }
 
     // Try to get the item from cache.
-    return multiCache.data.getItem(key).then((v: any) => {
+    const fullKey = getCacheKeyWithPrefix(multiCache.cacheKeyPrefix, key)
+    return multiCache.data.getItem(fullKey).then((v: any) => {
       const item = v as CacheItem | null
       const addToCache: AddToCacheMethod<T> = (
         data: T,
@@ -71,7 +73,7 @@ export function useDataCache<T>(
         if (maxAge) {
           item.expires = getExpiresValue(maxAge)
         }
-        return multiCache.data!.setItem(key, item)
+        return multiCache.data!.setItem(fullKey, item)
       }
 
       if (item && !isExpired(item)) {
