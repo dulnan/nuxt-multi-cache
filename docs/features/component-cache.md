@@ -13,8 +13,8 @@ first child in the slot. Alternatively, you can provide a custom cache key.
 On the server, the contents of the default slot will be cached as markup. After
 that, rendering is skipped and the markup is directly rendered.
 
-Note that the slot can only have a single child. If you need to include
-multiple children, you have to create a separate component for that.
+Note that the slot can only have a single child. If you need to include multiple
+children, you have to create a separate component for that.
 
 ## Configuration
 
@@ -42,11 +42,12 @@ import myCustomDriver from './somehwere'
 export default defineMultiCacheOptions({
   component: {
     storage: {
-      driver: myCustomDriver()
-    }
-  }
+      driver: myCustomDriver(),
+    },
+  },
 })
 ```
+
 :::
 
 ## Usage
@@ -61,15 +62,15 @@ export default defineMultiCacheOptions({
 </template>
 ```
 
-The contents of the default slot are rendered only once and the resulting
-markup is cached. Each subsequent request will directly return the cached
-markup and skip rendering.
+The contents of the default slot are rendered only once and the resulting markup
+is cached. Each subsequent request will directly return the cached markup and
+skip rendering.
 
 ## Cache Key
 
 Because the component is only rendered once it can't rely on external state.
-This means the following features should not be used in a cached component
-(list not exhaustive):
+This means the following features should not be used in a cached component (list
+not exhaustive):
 
 - Global state (useState)
 - Pinia (useStore)
@@ -94,8 +95,8 @@ this into account:
 </template>
 ```
 
-The cache key is automatically derived from the component's name and props.
-The props are hashed and appended to the component name:
+The cache key is automatically derived from the component's name and props. The
+props are hashed and appended to the component name:
 
 ```
 Navbar::voBC1hkg5S
@@ -125,8 +126,8 @@ The resulting keys of the cache entries will be something like:
 
 ## Cache Tags
 
-You can provide custom cache tags that can later be used to remove
-components from the cache:
+You can provide custom cache tags that can later be used to remove components
+from the cache:
 
 ```vue
 <template>
@@ -139,8 +140,8 @@ components from the cache:
 ```
 
 Assuming there are a lot of language and currency combinations you will end up
-with dozens of cache entries for this component. But because each share the
-same cache tag (`navbar`) you can remove all of them from the cache at once by
+with dozens of cache entries for this component. But because each share the same
+cache tag (`navbar`) you can remove all of them from the cache at once by
 purging by cache tag:
 
 ```bash
@@ -152,8 +153,8 @@ curl -X POST -i \
 
 ## Max Age
 
-You can cache components only for a limited amount of time by defining a max
-age in seconds:
+You can cache components only for a limited amount of time by defining a max age
+in seconds:
 
 ```vue
 <template>
@@ -166,8 +167,8 @@ age in seconds:
 ```
 
 Here the component will be rendered again once 1 hour passes. Note that cache
-entries are not automatically removed when they expire. They will be
-overwritten the next time they're rendered.
+entries are not automatically removed when they expire. They will be overwritten
+the next time they're rendered.
 
 ## Payload Extraction
 
@@ -202,9 +203,9 @@ We use the `weather` key in `useAsyncData`. So we have to provide the same key:
 </template>
 ```
 
-Now after the initial rendering the corresponding payload with the `weather`
-key is extracted and cached alongside the component. Each subsequent request
-will now return the cached markup _and_ add the payload to the response.
+Now after the initial rendering the corresponding payload with the `weather` key
+is extracted and cached alongside the component. Each subsequent request will
+now return the cached markup _and_ add the payload to the response.
 
 ## Skipping Caching
 
@@ -230,22 +231,28 @@ the cache and also is not put into the cache.
   </div>
 </template>
 ```
+
 ### `tag (string, default: 'div')`
+
 The tag to use for the wrapper. It's unfortunately not possible to implement
 this without a wrapper.
 
 ### `noCache (boolean, default: false)`
+
 Disable caching entirely for this component.
 
 ### `cacheKey (string, default: '')`
+
 The key to use for the cache entry. If left empty, a key is automatically
 generated based on the props passed to the child. The key is automatically
 prefixed by the component name.
 
 ### `cacheTags (string[], default: [])`
+
 Cache tags that can be later used for invalidation.
 
 ### `asyncDataKeys (string[], default: [])`
+
 Provide the async data keys used by the cached component. If provided, the
 payload data will be cached alongside the component. If the component uses
 asyncData and the keys are not provided, you will receive a hydration mismatch
@@ -266,5 +273,5 @@ return () => h('div', { innerHTML: cachedMarkup })
 ```
 
 This works reasonably well. On the client the component is rendered normally.
-This approach has the same limitations as before: Cached components can't get
-or set any global state and they must render the same way for the given props.
+This approach has the same limitations as before: Cached components can't get or
+set any global state and they must render the same way for the given props.

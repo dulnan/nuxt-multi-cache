@@ -10,8 +10,8 @@ that you have to use an external cache backend.
 
 ## Example using Redis
 
-This minimal example uses the [Redis
-driver](https://github.com/unjs/unstorage/blob/main/src/drivers/redis.ts)
+This minimal example uses the
+[Redis driver](https://github.com/unjs/unstorage/blob/main/src/drivers/redis.ts)
 provided by unstorage.
 
 ::: code-group
@@ -24,18 +24,22 @@ export default defineMultiCacheOptions({
   component: {
     storage: {
       driver: redisDriver({
-        base: 'component:'
-      })
-    }
-  }
+        base: 'component:',
+      }),
+    },
+  },
 })
 ```
+
 :::
 
 ## Custom Driver
 
-Checkout the full example on [how to create a custom
-driver](https://github.com/unjs/unstorage#making-custom-drivers).
+Checkout the full example on
+[how to create a custom driver](https://github.com/unjs/unstorage#making-custom-drivers).
+
+This example recreates the default storage (in-memory) using a simple `cache`
+object.
 
 ::: code-group
 
@@ -46,16 +50,16 @@ import { defineDriver } from 'unstorage'
 const customDriver = defineDriver((_opts) => {
   let cache = {}
   return {
-    hasItem (key: string) {
+    hasItem(key: string) {
       return !!cache[key]
     },
-    getItem (key: string) {
+    getItem(key: string) {
       return cache[key]
     },
     setItem(key, value) {
-      return cache[key] = value
+      return (cache[key] = value)
     },
-    removeItem (key) {
+    removeItem(key) {
       cache[key] = undefined
     },
     getKeys() {
@@ -71,9 +75,10 @@ const customDriver = defineDriver((_opts) => {
 export default defineMultiCacheOptions({
   component: {
     storage: {
-      driver: customDriver()
-    }
-  }
+      driver: customDriver(),
+    },
+  },
 })
 ```
+
 :::

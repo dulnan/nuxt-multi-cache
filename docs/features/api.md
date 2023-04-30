@@ -1,8 +1,8 @@
 # Cache Management API
 
 This feature provides several API endpoints to manage the caches. You can get a
-list of cache items, inspect cache items, delete items by key or delete items
-by cache tags.
+list of cache items, inspect cache items, delete items by key or delete items by
+cache tags.
 
 ## Configuration
 
@@ -35,9 +35,10 @@ export default defineMultiCacheOptions({
     authorization: async function (event) {
       return await isAuthenticated(event)
     },
-  }
+  },
 })
 ```
+
 :::
 
 ### Authorization
@@ -55,10 +56,11 @@ header:
 ```typescript [fetch]
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/component', {
   method: 'POST',
-  headers: { // [!code focus]
-    'x-nuxt-multi-cache-token': 'hunter2' // [!code focus]
+  headers: {
+    // [!code focus]
+    'x-nuxt-multi-cache-token': 'hunter2', // [!code focus]
   }, // [!code focus]
-  body: JSON.stringify(['Navbar::de--chf'])
+  body: JSON.stringify(['Navbar::de--chf']),
 })
 ```
 
@@ -69,18 +71,18 @@ curl -X POST -i \
   --data '["Navbar::de--chf"]' \
   http://localhost:3000/__nuxt_multi_cache/purge/component
 ```
+
 :::
 
 #### Custom Callback
 
-You can also implement your own [authorization check via the server options](/overview/server-options#custom-api-authorization).
-
+You can also implement your own
+[authorization check via the server options](/overview/server-options#custom-api-authorization).
 
 #### Disabled
 
 You can disable authorization by setting the value of `api.authorization` to
 `false`. **Only do this if the endpoints are not accessible publicly!**
-
 
 ## Purge Everything
 
@@ -92,7 +94,7 @@ Purges everything from all caches.
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/all', {
   method: 'POST',
   headers: {
-    'x-nuxt-multi-cache-token': 'hunter2'
+    'x-nuxt-multi-cache-token': 'hunter2',
   },
 })
 ```
@@ -106,11 +108,13 @@ curl -X POST -i \
 :::
 
 ::: details Response
+
 ```json
 {
   "status": "OK"
 }
 ```
+
 :::
 
 ## Purge Item
@@ -125,9 +129,9 @@ Purge one or more cache items by key.
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/component', {
   method: 'POST',
   headers: {
-    'x-nuxt-multi-cache-token': 'hunter2'
+    'x-nuxt-multi-cache-token': 'hunter2',
   },
-  body: JSON.stringify(['Navbar::de--chf'])
+  body: JSON.stringify(['Navbar::de--chf']),
 })
 ```
 
@@ -138,17 +142,18 @@ curl -X POST -i \
   --data '["Navbar::de--chf"]' \
   http://localhost:3000/__nuxt_multi_cache/purge/component
 ```
+
 :::
 
 ::: details Response
+
 ```json
 {
   "status": "OK",
-  "affectedKeys": [
-    "Navbar::de--chf"
-  ]
+  "affectedKeys": ["Navbar::de--chf"]
 }
 ```
+
 :::
 
 ### Example: Purge two specific pages
@@ -159,9 +164,9 @@ curl -X POST -i \
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/route', {
   method: 'POST',
   headers: {
-    'x-nuxt-multi-cache-token': 'hunter2'
+    'x-nuxt-multi-cache-token': 'hunter2',
   },
-  body: JSON.stringify(['/about', '/product/123'])
+  body: JSON.stringify(['/about', '/product/123']),
 })
 ```
 
@@ -172,18 +177,18 @@ curl -X POST -i \
   --data '["/about", "/product/123"]' \
   http://localhost:3000/__nuxt_multi_cache/purge/route
 ```
+
 :::
 
 ::: details Response
+
 ```json
 {
   "status": "OK",
-  "affectedKeys": [
-    "/about",
-    "/product/123"
-  ]
+  "affectedKeys": ["/about", "/product/123"]
 }
 ```
+
 :::
 
 ## Purge Tags
@@ -191,13 +196,13 @@ curl -X POST -i \
 Purge cache items by cache tags.
 
 ::: info
-All tags are collected for some time (default: 1min), after which
-the cache items are purged. This is because cache tags are stored together with
-the items. This means that every item needs to be loaded from the cache and its
-tags checked.
 
-The delay is configurable via the `api.cacheTagInvalidationDelay` option.
-:::
+All tags are collected for some time (default: 1min), after which the cache
+items are purged. This is because cache tags are stored together with the items.
+This means that every item needs to be loaded from the cache and its tags
+checked.
+
+The delay is configurable via the `api.cacheTagInvalidationDelay` option. :::
 
 ### Example Purge all cache items with cache tag `language:de`
 
@@ -207,9 +212,9 @@ The delay is configurable via the `api.cacheTagInvalidationDelay` option.
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/tags', {
   method: 'POST',
   headers: {
-    'x-nuxt-multi-cache-token': 'hunter2'
+    'x-nuxt-multi-cache-token': 'hunter2',
   },
-  body: JSON.stringify(['language:de'])
+  body: JSON.stringify(['language:de']),
 })
 ```
 
@@ -224,14 +229,14 @@ curl -X POST -i \
 :::
 
 ::: details Response
+
 ```json
 {
   "status": "OK",
-  "tags": [
-    "language:de"
-  ]
+  "tags": ["language:de"]
 }
 ```
+
 :::
 
 ## Get Stats
@@ -245,7 +250,7 @@ Get a list of all items in a cache.
 ```typescript [fetch]
 fetch('http://localhost:3000/__nuxt_multi_cache/stats/component', {
   headers: {
-    'x-nuxt-multi-cache-token': 'hunter2'
+    'x-nuxt-multi-cache-token': 'hunter2',
   },
 })
 ```
@@ -259,6 +264,7 @@ curl -i \
 :::
 
 ::: details Response
+
 ```json
 {
   "status": "OK",
@@ -292,6 +298,7 @@ curl -i \
   "total": 2
 }
 ```
+
 :::
 
 ## Inspect
@@ -303,11 +310,14 @@ Inspect a cache item. The key should be provided as a query param `key`.
 ::: code-group
 
 ```typescript [fetch]
-fetch('http://localhost:3000/__nuxt_multi_cache/inspect/component?key=RandomNumber', {
-  headers: {
-    'x-nuxt-multi-cache-token': 'hunter2'
+fetch(
+  'http://localhost:3000/__nuxt_multi_cache/inspect/component?key=RandomNumber',
+  {
+    headers: {
+      'x-nuxt-multi-cache-token': 'hunter2',
+    },
   },
-})
+)
 ```
 
 ```bash [curl]
@@ -319,9 +329,14 @@ curl -i \
 :::
 
 ::: details Response
+
 ```html
-<div><h3>Component with random number</h3><div>RANDOM_NUMBER__837458809__</div></div>
+<div>
+  <h3>Component with random number</h3>
+  <div>RANDOM_NUMBER__837458809__</div>
+</div>
 ```
+
 :::
 
 ### Example: Get the details of a cached route
@@ -331,7 +346,7 @@ curl -i \
 ```typescript [fetch]
 fetch('http://localhost:3000/__nuxt_multi_cache/inspect/route?key=api:test', {
   headers: {
-    'x-nuxt-multi-cache-token': 'hunter2'
+    'x-nuxt-multi-cache-token': 'hunter2',
   },
 })
 ```
@@ -345,6 +360,7 @@ curl -i \
 :::
 
 ::: details Response
+
 ```json
 {
   "data": "{\n  \"api\": \"This is data from the API.\",\n  \"now\": \"2022-12-31T08:07:43.737Z\",\n  \"cacheTags\": [\n    \"page:1\",\n    \"image:234\",\n    \"user:32\",\n    \"language\",\n    \"translations\"\n  ]\n}",
@@ -363,3 +379,4 @@ curl -i \
   ]
 }
 :::
+```

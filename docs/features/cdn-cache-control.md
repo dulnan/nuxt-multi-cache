@@ -34,19 +34,19 @@ export default defineNuxtConfig({
 
 ### Common Headers
 
-| Service                                                                                   | cacheControlHeader   | cacheTagHeader   |
-|-------------------------------------------------------------------------------------------|----------------------|------------------|
-| [**Fastly**](https://docs.fastly.com/en/guides/controlling-caching)                       | `Surrogate-Control`  | `Surrogate-Key`  |
-| [**Cloudflare**](https://developers.cloudflare.com/cache/about/cdn-cache-control/)        | `CDN-Cache-Control`  | `Cache-Tag`      |
-| [**Akamai**](https://techdocs.akamai.com/property-mgr/docs/know-caching)                  | `Edge-Control`       | `Edge-Cache-Tag` |
-| [**nginx**](https://www.nginx.com/blog/nginx-caching-guide/)                              | `Cache-Control`*     | _unsupported_    |
-| [**varnish**](https://www.varnish-software.com/developers/tutorials/http-caching-basics/) | `Cache-Control`*     | `X-Cache-Tags`   |
+| Service                                                                                   | cacheControlHeader  | cacheTagHeader   |
+| ----------------------------------------------------------------------------------------- | ------------------- | ---------------- |
+| [**Fastly**](https://docs.fastly.com/en/guides/controlling-caching)                       | `Surrogate-Control` | `Surrogate-Key`  |
+| [**Cloudflare**](https://developers.cloudflare.com/cache/about/cdn-cache-control/)        | `CDN-Cache-Control` | `Cache-Tag`      |
+| [**Akamai**](https://techdocs.akamai.com/property-mgr/docs/know-caching)                  | `Edge-Control`      | `Edge-Cache-Tag` |
+| [**nginx**](https://www.nginx.com/blog/nginx-caching-guide/)                              | `Cache-Control`\*   | _unsupported_    |
+| [**varnish**](https://www.varnish-software.com/developers/tutorials/http-caching-basics/) | `Cache-Control`\*   | `X-Cache-Tags`   |
 
-__* This header will clash with the cache control header meant for browsers.
+**\* This header will clash with the cache control header meant for browsers.
 With varnish you could use a custom header like `X-Cache-Control` and then
-handle that in a custom VCL.__
+handle that in a custom VCL.**
 
-## Usage in components
+## Usage in pages / components
 
 Use the `useCDNHeaders` composable in your components to set properties for the
 CDN headers:
@@ -100,7 +100,8 @@ This will override the `maxAge` value to 3600. `setNumeric` is a special method
 that only overrides the value if it is lower than the current value.
 
 Now everytime this component is used on a page it will make sure that the
-response will be cached for a maximum of 1 hour.
+response will be cached for a maximum of 1 hour, even if the page containing the
+component defined a max age of 7 days.
 
 ## Usage in Server Handlers
 
@@ -136,9 +137,9 @@ as you have access to the event you can use the composable anywhere you like.
 ## CDN Helper
 
 The `useCDNHeaders` composable expects a callback which it will call with the
-helper as the first argument. Doing it this way allows Rollup to remove the
-code from client bundles. This even includes the call to `useCDNHeaders`
-itself, so there is 0 impact on client bundle size.
+helper as the first argument. Doing it this way allows Rollup to remove the code
+from client bundles. This even includes the call to `useCDNHeaders` itself, so
+there is 0 impact on client bundle size.
 
 To manage the cache control properties (like maxAge, mustRevalidate, maxStale,
 etc.) the [@tusbar/cache-control](https://github.com/tusbar/cache-control)
@@ -179,4 +180,5 @@ value of `public` will remain `false`.
 
 ### addTags(tags: string[])
 
-Add cache tags for the Cache-Tag header. Duplicates will be automatically removed.
+Add cache tags for the Cache-Tag header. Duplicates will be automatically
+removed.

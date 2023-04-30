@@ -27,13 +27,13 @@ import myCustomDriver from './somehwere'
 export default defineMultiCacheOptions({
   route: {
     storage: {
-      driver: myCustomDriver()
-    }
-  }
+      driver: myCustomDriver(),
+    },
+  },
 })
 ```
-:::
 
+:::
 
 ## Usage in Components
 
@@ -46,10 +46,7 @@ Use the `useRouteCache` composable in a page, layout or any component:
 
 <script lang="ts" setup>
 useRouteCache((helper) => {
-  helper
-    .setMaxAge(3600)
-    .setCacheable()
-    .addTags(['page:1'])
+  helper.setMaxAge(3600).setCacheable().addTags(['page:1'])
 })
 </script>
 ```
@@ -58,6 +55,10 @@ By default a page is not cached, you have to explicitly call `setCacheable()`.
 
 You can use the composable multiple times during a request. The exposed helper
 methods make sure that there are no race conditions.
+
+Note that calling the composable does not return a value. You only have access
+to the `helper` via the callback. The reason is that this allows the compiler to
+completely remove this code from client bundles.
 
 ## Usage in Server Handlers
 
@@ -99,15 +100,15 @@ the current request.
 ### setCacheable()
 
 Calling this will set the response to be cacheable. Note that if
-`setUncacheable()` was called previously then this method does nothing. That
-way we can make sure that for example sensitive information from authenticated
-users is never cached.
+`setUncacheable()` was called previously then this method does nothing. That way
+we can make sure that for example sensitive information from authenticated users
+is never cached.
 
 ### setUncacheable()
 
 Mark the response as uncacheable. This decision is final and can't be reverted.
-Usually this is used to prevent caching sensitive information from
-authenticated users or to prevent caching broken pages.
+Usually this is used to prevent caching sensitive information from authenticated
+users or to prevent caching broken pages.
 
 **Example:** Request to external API fails and the component can't render the
 data. Prevent the page from being cached in this broken state.
@@ -140,9 +141,8 @@ Alternatively you could also just reduce the max age for the page so that after
 
 Set the max age for the cache entry. After that the page is rendered again.
 
-Note that cache entries remain in cache after they expired. When they expire
-the route is rendered again and the response overwrites the stale cache entry.
-
+Note that cache entries remain in cache after they expired. When they expire the
+route is rendered again and the response overwrites the stale cache entry.
 
 ### addTags(tags: string[])
 
@@ -166,7 +166,6 @@ The helper has three properties to keep track of the state:
 - `tags: string[]`
 - `cacheable: boolean|null`
 - `maxAge: number|null`
-
 
 While absolutely not encouraged, you can directly manipulate these values for
 specific edge cases.

@@ -4,8 +4,14 @@ You may have noticed there is no way to provide default options via the
 configuration. This is because by design this module will not allow to cache
 anything without explicitly implementing it.
 
-There are several ways to define default values, depending on the use case.
-They all work per request.
+There are several ways to define default values, depending on the use case. They
+all work per request.
+
+## Using a global cache key prefix
+
+It's possible to prefix all cache keys automatically with a static or dynamic
+key using the
+[cacheKeyPrefix option](/overview/server-options#use-a-global-cache-prefix).
 
 ## Route Cache
 
@@ -15,6 +21,7 @@ If you want to cache all pages by default you can use the `useRouteCache`
 composable in your `app.vue`, which will be executed for every page.
 
 ::: code-group
+
 ```vue [app.vue]
 <template>
   <div class="app">
@@ -30,14 +37,16 @@ useRouteCache((helper) => {
 })
 </script>
 ```
+
 :::
 
 ### For any route
 
-If you want to include custom API routes, you can define a [server
-middleware](https://nuxt.com/docs/guide/directory-structure/server#server-middleware):
+If you want to include custom API routes, you can define a
+[server middleware](https://nuxt.com/docs/guide/directory-structure/server#server-middleware):
 
 ::: code-group
+
 ```typescript [./server/middleware/routeCache.ts]
 import { useRouteCache } from '#nuxt-multi-cache/composables'
 
@@ -48,9 +57,10 @@ export default defineEventHandler((event) => {
   }, event)
 })
 ```
+
 :::
 
-This will be executed for every request.
+This will be executed for every request, including pages and server routes.
 
 ## Data Cache
 
@@ -58,8 +68,9 @@ While you can't directly define a default max age for data cache entries, you
 can easily create your own composable as a wrapper for `useDataCache`:
 
 ::: code-group
+
 ```typescript [./composables/getCachedData.ts]
-export default async function(key: string) {
+export default async function (key: string) {
   const { value, addToCache } = await useDataCache(key)
 
   // Return custom context object with custom addToCache method.
@@ -68,19 +79,21 @@ export default async function(key: string) {
     addToCache: (value: any) => {
       // Add to cache with a fixed max age.
       addToCache(value, [], 3600)
-    }
+    },
   }
 }
 ```
+
 :::
 
 ## Component Cache
 
-The default values for the props of the `<RenderCacheable>` component are
-falsy. If you need to vary the cache key based on global things like current
-language, domain, currency, etc., you can create your own wrapper:
+The default values for the props of the `<RenderCacheable>` component are falsy.
+If you need to vary the cache key based on global things like current language,
+domain, currency, etc., you can create your own wrapper:
 
 ::: code-group
+
 ```vue [ContextAwareCacheable.vue]
 <template>
   <RenderCacheable :cacheKey="cacheKey">
@@ -96,19 +109,22 @@ const cacheKey = computed(() => {
 })
 </script>
 ```
+
 :::
 
 Or, the more clean way would be to create a composable:
 
 ::: code-group
+
 ```typescript [./composables/useGlobalContextKey.ts]
-export default async function(suffix: string) {
+export default async function (suffix: string) {
   const store = useStore()
   return computed(() => {
     return [store.language, store.currency, store.domain, suffix].join('_')
   })
 }
 ```
+
 :::
 
 And then use it like this:
@@ -135,6 +151,7 @@ This works the exact same way as with the route cache, just using the
 ### For pages
 
 ::: code-group
+
 ```vue [app.vue]
 <template>
   <div class="app">
@@ -150,11 +167,13 @@ useCDNHeaders((helper) => {
 })
 </script>
 ```
+
 :::
 
 ### For any route
 
 ::: code-group
+
 ```typescript [./server/middleware/routeCache.ts]
 import { useRouteCache } from '#nuxt-multi-cache/composables'
 
@@ -164,4 +183,5 @@ export default defineEventHandler((event) => {
   }, event)
 })
 ```
+
 :::

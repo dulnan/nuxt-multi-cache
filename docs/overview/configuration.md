@@ -1,11 +1,14 @@
 # Configuration
 
 ::: warning
+
 Not all configuration options are available via nuxt.config.ts! Some have to
 passed via the [server options configuration file](/overview/server-options).
+
 :::
 
 ## Minimal
+
 By default no features are enabled and no functionality is added to your Nuxt
 app.
 
