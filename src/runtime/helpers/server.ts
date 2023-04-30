@@ -41,3 +41,15 @@ export function getCacheKeyWithPrefix(
   const prefix = event.context[MULTI_CACHE_PREFIX_KEY]
   return prefix ? `${prefix}--${cacheKey}` : cacheKey
 }
+
+/**
+ * Unstorage does some magic to the key if it contains / or ?. This method
+ * handles this.
+ */
+export function encodeRouteCacheKey(path: string): string {
+  const questionMarkIndex = path.indexOf('?')
+  if (questionMarkIndex >= 0) {
+    return path.substring(0, questionMarkIndex)
+  }
+  return path
+}

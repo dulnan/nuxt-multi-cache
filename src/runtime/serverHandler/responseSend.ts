@@ -1,11 +1,13 @@
 import type { ServerResponse } from 'http'
 import { defineEventHandler } from 'h3'
 import { format } from '@tusbar/cache-control'
+import serverOptions from '#multi-cache-server-options'
 import {
   getMultiCacheCDNHelper,
   getMultiCacheContext,
   getMultiCacheRouteHelper,
   getCacheKeyWithPrefix,
+  encodeRouteCacheKey,
 } from './../helpers/server'
 import { RouteCacheItem } from './../types'
 
@@ -73,7 +75,10 @@ export default defineEventHandler((event) => {
       if (routeHelper && routeHelper.cacheable) {
         const multiCache = getMultiCacheContext(event)
         if (multiCache?.route && event.path) {
-          const cacheKey = getCacheKeyWithPrefix(event.path, event)
+          const cacheKey = serverOptions?.route?.buildCacheKey
+            ? serverOptions.route.buildCacheKey(event)
+            : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
+
           const response = event.node.res as ServerResponse
           const headers = response.getHeaders()
           const item: RouteCacheItem = {

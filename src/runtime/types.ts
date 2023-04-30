@@ -177,6 +177,11 @@ export type MutliCacheServerOptions = {
   }
   route?: {
     storage?: CreateStorageOptions
+
+    /**
+     * Provide a custom function that builds the cache key for a route.
+     */
+    buildCacheKey?: (event: H3Event) => string
   }
 
   /**

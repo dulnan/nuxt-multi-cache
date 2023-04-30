@@ -1,6 +1,6 @@
 # Route Cache
 
-Cache pages and responses of custom server handlers. It does so by providing a
+Caches pages and responses of custom server handlers. It does so by providing a
 helper via a composable that manages if a response should be cached.
 
 ## Configuration
@@ -34,6 +34,59 @@ export default defineMultiCacheOptions({
 ```
 
 :::
+
+### Cache key for routes
+
+::: warning
+
+By default query strings are **ignored**! This means that a request for
+`/homepage?language=de` and `/homepage` will return the same cached response.
+
+The reason for this decision is that there are basically infinite possibilities
+to alter the query string. This would be an easy way to quickly crash the app by
+putting hundres of thousands of pages into the cache.
+
+:::
+
+The cache key is automatically derived from the route path. e.g.
+`/api/query/products?id=123` is transformed to `api:query:products`. If you want
+to take the query string into account you can provide a function that can return
+the cache key for a given route:
+
+::: code-group
+
+```typescript [multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache'
+import { getQuery } from 'h3'
+
+export default defineMultiCacheOptions({
+  route: {
+    buildCacheKey(event) {
+      const path = event.path
+      // Handle specific routes that need query strings.
+      if (path.startsWith('/api/query/products')) {
+        const { id } = getQuery(event)
+        if (id) {
+          return 'api_query_products_' + id
+        }
+      }
+
+      // Remove query string from path.
+      return path.split('?')[0]
+    },
+  },
+})
+```
+
+:::
+
+With that all the following requests will be only handled initially and then
+served from cache by the cached item `api_query_products_1`:
+
+- /api/query/products?id=123
+- /api/query/products?id=123&foobar=456
+- /api/query/products?foobar=456&id=123
+- /api/query/products?foobar=456&id=123&whatever=string&does=not&matter=at-all
 
 ## Usage in Components
 

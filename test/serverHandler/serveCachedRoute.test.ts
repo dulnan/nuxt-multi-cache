@@ -3,6 +3,12 @@ import serveCachedRoute from './../../src/runtime/serverHandler/serveCachedRoute
 
 const consoleSpy = vi.spyOn(global.console, 'debug')
 
+vi.mock('#multi-cache-server-options', () => {
+  return {
+    default: {},
+  }
+})
+
 describe('serveCachedRoutes server handler', () => {
   test('Returns if event.path is empty.', async () => {
     const event: any = {
