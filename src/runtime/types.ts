@@ -89,20 +89,6 @@ export interface NuxtMultiCacheOptions {
   cdn?: CDNOptions
 
   /**
-   * Define a global cache key prefix.
-   *
-   * Can be a string or a method that returns a promise that resolves to a
-   * string given the H3 request event.
-   *
-   * This is useful if you have multiple Nuxt instances running on the same
-   * code base but with a different global context. For example in a
-   * multi-domain setup you might have one instance per domain, but each
-   * instance uses the same cache backend (e.g. redis). Setting a global prefix
-   * will make sure that each instance is scoped.
-   */
-  cacheKeyPrefix?: string | ((event: H3Event) => Promise<string>)
-
-  /**
    * Settings for the API endpoints.
    */
   api?: {
@@ -163,6 +149,8 @@ export interface NuxtMultiCacheSSRContext {
    * The route cache instance.
    */
   route?: Storage
+
+  cacheKeyPrefix?: string
 }
 
 export interface CacheItem {
@@ -208,6 +196,20 @@ export type MutliCacheServerOptions = {
    * configuration.
    */
   enabledForRequest?: (event: H3Event) => Promise<boolean>
+
+  /**
+   * Define a global cache key prefix.
+   *
+   * Can be a string or a method that returns a promise that resolves to a
+   * string given the H3 request event.
+   *
+   * This is useful if you have multiple Nuxt instances running on the same
+   * code base but with a different global context. For example in a
+   * multi-domain setup you might have one instance per domain, but each
+   * instance uses the same cache backend (e.g. redis). Setting a global prefix
+   * will make sure that each instance is scoped.
+   */
+  cacheKeyPrefix?: string | ((event: H3Event) => Promise<string>)
 
   api?: {
     /**

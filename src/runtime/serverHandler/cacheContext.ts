@@ -33,5 +33,13 @@ export default defineEventHandler(async (event) => {
   const shouldAdd = await serverOptions.enabledForRequest(event)
   if (shouldAdd) {
     addCacheContext(event)
+
+    if (
+      serverOptions.cacheKeyPrefix &&
+      typeof serverOptions.cacheKeyPrefix !== 'string'
+    ) {
+      event.context[MULTI_CACHE_CONTEXT_KEY].cacheKeyPrefix =
+        await serverOptions.cacheKeyPrefix(event)
+    }
   }
 })

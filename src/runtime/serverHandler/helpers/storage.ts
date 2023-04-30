@@ -17,6 +17,14 @@ if (runtimeConfig.multiCache.data) {
 if (runtimeConfig.multiCache.route) {
   cacheContext.route = createStorage(serverOptions.route?.storage)
 }
+if (
+  serverOptions.cacheKeyPrefix &&
+  typeof serverOptions.cacheKeyPrefix === 'string'
+) {
+  // Initialize cacheKeyPrefix only if a constant string, otherwise it must be
+  // set for each request.
+  cacheContext.cacheKeyPrefix = serverOptions.cacheKeyPrefix
+}
 
 /**
  * Method to initialize the caches.

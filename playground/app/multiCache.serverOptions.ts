@@ -1,4 +1,5 @@
 import { defineDriver } from 'unstorage'
+import { H3Event } from 'h3'
 import { defineMultiCacheOptions } from './../../src/module'
 
 const customDriver = defineDriver(() => {
@@ -36,4 +37,9 @@ export default defineMultiCacheOptions({
     },
   },
   component: {},
+  cacheKeyPrefix: (event: H3Event): Promise<string> => {
+    const lang = event?.node?.req?.headers['accept-language']
+    const prefix = lang?.includes('it') ? 'it' : 'en'
+    return Promise.resolve(prefix)
+  },
 })
