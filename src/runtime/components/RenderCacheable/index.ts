@@ -161,8 +161,8 @@ export default defineComponent({
         }
 
         const fullCacheKey = getCacheKeyWithPrefix(
-          multiCache.cacheKeyPrefix,
           cacheKey,
+          multiCache.cacheKeyPrefix,
         )
 
         // Get the cached item from the storage.

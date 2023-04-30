@@ -34,12 +34,8 @@ export function isExpired(item: CacheItem) {
 }
 
 export function getCacheKeyWithPrefix(
-  cachePrefix: string | undefined,
   cacheKey: string,
+  cachePrefix: string | undefined,
 ): string {
-  if (cachePrefix) {
-    return `${cachePrefix}::${cacheKey}`
-  } else {
-    return cacheKey
-  }
+  return cachePrefix ? `${cachePrefix}::${cacheKey}` : cacheKey
 }

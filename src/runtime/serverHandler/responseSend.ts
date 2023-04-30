@@ -88,8 +88,8 @@ export default defineEventHandler((event) => {
           }
 
           const fullKey = getCacheKeyWithPrefix(
-            multiCache.cacheKeyPrefix,
             event.path,
+            multiCache.cacheKeyPrefix,
           )
           multiCache.route.setItem(fullKey, item)
         }
