@@ -3,6 +3,7 @@ import type { H3Event } from 'h3'
 import {
   MULTI_CACHE_CONTEXT_KEY,
   MULTI_CACHE_ROUTE_CONTEXT_KEY,
+  MULTI_CACHE_PREFIX_KEY,
 } from './../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from './../helpers/RouteCacheHelper'
 import { loadCacheContext } from './helpers/storage'
@@ -26,20 +27,20 @@ export function addCacheContext(event: H3Event) {
 }
 
 export default defineEventHandler(async (event) => {
+  if (serverOptions.cacheKeyPrefix) {
+    if (typeof serverOptions.cacheKeyPrefix === 'string') {
+      event.context[MULTI_CACHE_PREFIX_KEY] = serverOptions.cacheKeyPrefix
+    } else {
+      event.context[MULTI_CACHE_PREFIX_KEY] =
+        await serverOptions.cacheKeyPrefix(event)
+    }
+  }
   if (!serverOptions.enabledForRequest) {
     return addCacheContext(event)
   }
 
   const shouldAdd = await serverOptions.enabledForRequest(event)
   if (shouldAdd) {
-    addCacheContext(event)
-
-    if (
-      serverOptions.cacheKeyPrefix &&
-      typeof serverOptions.cacheKeyPrefix !== 'string'
-    ) {
-      event.context[MULTI_CACHE_CONTEXT_KEY].cacheKeyPrefix =
-        await serverOptions.cacheKeyPrefix(event)
-    }
+    await addCacheContext(event)
   }
 })

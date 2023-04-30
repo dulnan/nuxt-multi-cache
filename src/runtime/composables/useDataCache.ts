@@ -61,7 +61,7 @@ export function useDataCache<T>(
     }
 
     // Try to get the item from cache.
-    const fullKey = getCacheKeyWithPrefix(key, multiCache.cacheKeyPrefix)
+    const fullKey = getCacheKeyWithPrefix(key, event)
     return multiCache.data.getItem(fullKey).then((v: any) => {
       const item = v as CacheItem | null
       const addToCache: AddToCacheMethod<T> = (

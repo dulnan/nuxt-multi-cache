@@ -160,10 +160,7 @@ export default defineComponent({
           return
         }
 
-        const fullCacheKey = getCacheKeyWithPrefix(
-          cacheKey,
-          multiCache.cacheKeyPrefix,
-        )
+        const fullCacheKey = getCacheKeyWithPrefix(cacheKey, ssrContext.event)
 
         // Get the cached item from the storage.
         const cached = await getCachedComponent(

@@ -149,8 +149,6 @@ export interface NuxtMultiCacheSSRContext {
    * The route cache instance.
    */
   route?: Storage
-
-  cacheKeyPrefix?: string
 }
 
 export interface CacheItem {

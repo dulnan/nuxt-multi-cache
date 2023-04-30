@@ -1,5 +1,5 @@
 import { defineDriver } from 'unstorage'
-import { H3Event } from 'h3'
+import { H3Event, getQuery, getHeader } from 'h3'
 import { defineMultiCacheOptions } from './../../src/module'
 
 const customDriver = defineDriver(() => {
@@ -9,7 +9,7 @@ const customDriver = defineDriver(() => {
       return !!cache[key]
     },
     getItem(key: string) {
-      if (key === 'static_item_for_test') {
+      if (key.includes('static_item_for_test')) {
         return JSON.stringify({ data: 'just_an_example_value' })
       }
       return cache[key]
@@ -30,6 +30,24 @@ const customDriver = defineDriver(() => {
   }
 })
 
+function getCacheKeyPrefix(event: H3Event): string {
+  const query = getQuery(event)
+  if (query.language && typeof query.language === 'string') {
+    return query.language
+  }
+
+  const acceptLanguage = getHeader(event, 'accept-language') || ''
+
+  if (
+    acceptLanguage &&
+    typeof acceptLanguage === 'string' &&
+    acceptLanguage.includes('de')
+  ) {
+    return 'de'
+  }
+  return 'en'
+}
+
 export default defineMultiCacheOptions({
   data: {
     storage: {
@@ -38,8 +56,6 @@ export default defineMultiCacheOptions({
   },
   component: {},
   cacheKeyPrefix: (event: H3Event): Promise<string> => {
-    const lang = event?.node?.req?.headers['accept-language']
-    const prefix = lang?.includes('it') ? 'it' : 'en'
-    return Promise.resolve(prefix)
+    return Promise.resolve(getCacheKeyPrefix(event))
   },
 })

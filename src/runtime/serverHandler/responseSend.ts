@@ -73,6 +73,7 @@ export default defineEventHandler((event) => {
       if (routeHelper && routeHelper.cacheable) {
         const multiCache = getMultiCacheContext(event)
         if (multiCache?.route && event.path) {
+          const cacheKey = getCacheKeyWithPrefix(event.path, event)
           const response = event.node.res as ServerResponse
           const headers = response.getHeaders()
           const item: RouteCacheItem = {
@@ -87,11 +88,9 @@ export default defineEventHandler((event) => {
             item.cacheTags = routeHelper.tags
           }
 
-          const fullKey = getCacheKeyWithPrefix(
-            event.path,
-            multiCache.cacheKeyPrefix,
-          )
-          multiCache.route.setItem(fullKey, item)
+          return multiCache.route.setItem(cacheKey, item).then(() => {
+            return _end.call(event.node.res, arg1, arg2, arg3)
+          })
         }
       }
     }

@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Check if there is a cache entry for this path.
-    const fullKey = getCacheKeyWithPrefix(event.path, multiCache.cacheKeyPrefix)
+    const fullKey = getCacheKeyWithPrefix(event.path, event)
     const cached = await multiCache.route.getItem(fullKey)
     if (cached && typeof cached === 'object') {
       const { data, headers, statusCode, expires } = cached as RouteCacheItem

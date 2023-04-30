@@ -6,6 +6,7 @@ import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 export const MULTI_CACHE_CONTEXT_KEY = '__MULTI_CACHE'
 export const MULTI_CACHE_ROUTE_CONTEXT_KEY = '__MULTI_CACHE_ROUTE'
 export const MULTI_CACHE_CDN_CONTEXT_KEY = '__MULTI_CACHE_CDN'
+export const MULTI_CACHE_PREFIX_KEY = '__MULTI_CACHE_PREFIX'
 
 export function getMultiCacheContext(
   event: H3Event,
@@ -35,7 +36,8 @@ export function isExpired(item: CacheItem) {
 
 export function getCacheKeyWithPrefix(
   cacheKey: string,
-  cachePrefix: string | undefined,
+  event: H3Event,
 ): string {
-  return cachePrefix ? `${cachePrefix}::${cacheKey}` : cacheKey
+  const prefix = event.context[MULTI_CACHE_PREFIX_KEY]
+  return prefix ? `${prefix}--${cacheKey}` : cacheKey
 }
