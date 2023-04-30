@@ -32,3 +32,14 @@ export function getExpiresValue(maxAge: number) {
 export function isExpired(item: CacheItem) {
   return item.expires ? Date.now() / 1000 > item.expires : false
 }
+
+export function getCacheKeyWithPrefix(
+  cachePrefix: string | undefined,
+  cacheKey: string,
+): string {
+  if (cachePrefix) {
+    return `${cachePrefix}::${cacheKey}`
+  } else {
+    return cacheKey
+  }
+}
