@@ -242,7 +242,6 @@ export default defineComponent({
           return () =>
             h(props.tag, {
               innerHTML: cachedMarkup,
-              'data-cacheable-key': fullCacheKey,
             })
         }
       } catch (e) {

@@ -77,7 +77,7 @@ describe('RenderCacheable', () => {
     const first = await renderToString(app, ssrContext)
 
     expect(first).toMatchInlineSnapshot(
-      '"<div><div>Test App</div><div data-cacheable-key=\\"InnerComponent::foobar\\"><div>Hello world</div></div></div>"',
+      '"<div><div>Test App</div><div><div>Hello world</div></div></div>"',
     )
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
       '"<div>Hello world</div>"',
@@ -93,7 +93,7 @@ describe('RenderCacheable', () => {
     const first = await renderToString(app, ssrContext)
 
     expect(first).toMatchInlineSnapshot(
-      '"<div><div>Test App</div><div data-cacheable-key=\\"InnerComponent::foobar\\"><div>Markup from cache</div></div></div>"',
+      '"<div><div>Test App</div><div><div>Markup from cache</div></div></div>"',
     )
     expect(storage['InnerComponent::foobar']).toEqual(mockedMarkup)
   })
@@ -174,7 +174,7 @@ describe('RenderCacheable', () => {
     )
     const result = await renderToString(app, ssrContext)
     expect(result).toMatchInlineSnapshot(
-      '"<div><div>Test App</div><div data-cacheable-key=\\"InnerComponent::foobar\\"><h1>FROM CACHE</h1></div></div>"',
+      '"<div><div>Test App</div><div><h1>FROM CACHE</h1></div></div>"',
     )
   })
 
