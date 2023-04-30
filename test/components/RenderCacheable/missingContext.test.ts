@@ -29,6 +29,10 @@ describe('RenderCacheable with missing context', () => {
 
     const consoleSpy = vi.spyOn(global.console, 'log')
 
+    const vue = await import('vue')
+    vue.getCurrentInstance = vi.fn().mockReturnValue({ parent: undefined })
+    vue.useSSRContext = vi.fn().mockReturnValue({ event: {} })
+
     // App with storage containing a cached component.
     const { app, ssrContext } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
@@ -47,6 +51,7 @@ describe('RenderCacheable with missing context', () => {
 
     const vue = await import('vue')
     vue.getCurrentInstance = vi.fn().mockReturnValue({ parent: {} })
+    vue.useSSRContext = vi.fn().mockReturnValue(undefined)
 
     // App with storage containing a cached component.
     const { app, ssrContext } = createTestApp(
