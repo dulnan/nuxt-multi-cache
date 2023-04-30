@@ -3,9 +3,8 @@ import { setup, $fetch } from '@nuxt/test-utils'
 import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
-import purgeByKey from './__helpers__/purgeByKey'
 
-describe('The data cache feature', async () => {
+describe('The route cache feature', async () => {
   const multiCache: NuxtMultiCacheOptions = {
     component: {
       enabled: true,
@@ -38,61 +37,35 @@ describe('The data cache feature', async () => {
     nuxtConfig,
   })
 
-  test('Works on a page', async () => {
+  test('caches a page', async () => {
     await purgeAll()
 
     // First call puts it into cache.
-    const first = await $fetch('/dataCache', {
+    const first = await $fetch('/cachedPageWithRandomNumber', {
       method: 'get',
     })
 
     // Second call should get it from cache.
-    const second = await $fetch('/dataCache', {
+    const second = await $fetch('/cachedPageWithRandomNumber', {
       method: 'get',
     })
 
     expect(first).toEqual(second)
   })
 
-  test('Works in a server handler', async () => {
+  test('does not cache a page marked uncacheable', async () => {
     await purgeAll()
 
     // First call puts it into cache.
-    const first = await $fetch('/api/dataCache', {
+    const first = await $fetch('/uncacheablePage', {
       method: 'get',
     })
 
     // Second call should get it from cache.
-    const second = await $fetch('/api/dataCache', {
+    const second = await $fetch('/uncacheablePage', {
       method: 'get',
     })
 
-    expect(first).toEqual(second)
-  })
-
-  test('has its cache entries invalidated correctly', async () => {
-    await purgeAll()
-
-    // First call puts it into cache.
-    const first = await $fetch('/api/dataCache', {
-      method: 'get',
-    })
-
-    // Second call should get it from cache.
-    const second = await $fetch('/api/dataCache', {
-      method: 'get',
-    })
-
-    expect(first).toEqual(second)
-
-    await purgeByKey('data', 'en--apiDataCacheTest')
-
-    // Third call should not use cached entry.
-    const third = await $fetch('/api/dataCache', {
-      method: 'get',
-    })
-
-    expect(third).not.toEqual(first)
-    expect(third).not.toEqual(second)
+    expect(first).not.toEqual(second)
   })
 })

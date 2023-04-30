@@ -43,7 +43,7 @@ describe('With all features disabled', async () => {
   })
 
   test('Routes are not cached', async () => {
-    const rgx = /RANDOM_NUMBER__(\d+)__/gm
+    const rgx = /RANDOM\[(\d*)\]/gm
     // This page is marked as cacheable and renders the value from the query param
     const a: string = await $fetch('/cachedPageWithRandomNumber')
     const randomNumberA = rgx.exec(a)?.[1]
