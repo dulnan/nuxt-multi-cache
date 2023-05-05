@@ -1,6 +1,14 @@
-# Full Configuration Example
+# Configuration
+
+::: warning
+
+Not all configuration options are available via nuxt.config.ts! Some have to
+passed via the [server options configuration file](/overview/server-options).
+
+:::
 
 ## Minimal
+
 By default no features are enabled and no functionality is added to your Nuxt
 app.
 
@@ -18,7 +26,6 @@ This example uses every possible configuration option.
 
 ```typescript
 import { defineNuxtConfig } from 'nuxt'
-import redisDriver from 'unstorage/drivers/redis'
 
 export default defineNuxtConfig({
   modules: ['nuxt-multi-cache'],
@@ -26,12 +33,6 @@ export default defineNuxtConfig({
   // Component cache is enabled.
   component: {
     enabled: true,
-    storage: {
-      // Provide a custom storage driver that uses Redis as the cache backend.
-      driver: redisDriver({
-        base: 'storage:'
-      })
-    }
   },
 
   // Data cache enabled.
@@ -64,31 +65,10 @@ export default defineNuxtConfig({
     // Use a different prefix for the API endpoints.
     prefix: '/api/nuxt-multi-cache',
 
-    // Use a custom method that checks authorization. Can be something like
-    // cookie, basic auth or request IP.
-    authorization: async function (event) {
-      return await isAuthenticated(event)
-    },
-
     // Cache tag invaldiations should be buffered for 5 minutes before the
     // cache items are actually purged.
     cacheTagInvalidationDelay: 300000 // 5 minutes
   },
-
-  // Custom callback that decides if caching should be enabled for the current
-  // request. Returning false here prevents access to the cache for the
-  // duration of the request.
-  enabledForRequest: async function(event) {
-    const user = await getUserFromRequest(event)
-
-    // Disabled all caching for logged in users.
-    if (user.isLoggedIn) {
-      return false
-    }
-
-    // Caches enabled for anonymous users.
-    return true
-  }
 }
 ```
 

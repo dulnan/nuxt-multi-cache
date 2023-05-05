@@ -2,8 +2,10 @@ import { defineEventHandler, setResponseHeaders } from 'h3'
 import {
   getMultiCacheContext,
   getCacheKeyWithPrefix,
+  encodeRouteCacheKey,
 } from './../helpers/server'
 import { RouteCacheItem } from './../types'
+import serverOptions from '#multi-cache-server-options'
 
 /**
  * Route cache event handler. Returns a cached response if available.
@@ -20,7 +22,10 @@ export default defineEventHandler(async (event) => {
 
   try {
     // Check if there is a cache entry for this path.
-    const fullKey = getCacheKeyWithPrefix(multiCache.cacheKeyPrefix, event.path)
+    const fullKey = serverOptions?.route?.buildCacheKey
+      ? serverOptions.route.buildCacheKey(event)
+      : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
+
     const cached = await multiCache.route.getItem(fullKey)
     if (cached && typeof cached === 'object') {
       const { data, headers, statusCode, expires } = cached as RouteCacheItem

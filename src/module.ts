@@ -7,30 +7,62 @@ import {
   defineNuxtModule,
   addComponent,
   addImports,
+  addTemplate,
 } from '@nuxt/kit'
-import { NuxtMultiCacheOptions } from './runtime/types'
+import { MutliCacheServerOptions, NuxtMultiCacheOptions } from './runtime/types'
 import {
   defaultOptions,
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
 } from './runtime/settings'
+import { logger, fileExists } from './utils'
 
 // Nuxt needs this.
 export type ModuleOptions = NuxtMultiCacheOptions
 export type ModuleHooks = {}
 
+/**
+ * Log error message if obsolete configuration options are used.
+ */
+function checkObsoleteOptions(options: any) {
+  const caches = ['component', 'data', 'route']
+  caches.forEach((v) => {
+    if (options[v] && options[v].storage) {
+      logger.error(
+        `The "storage" option on the cache configuration has been moved to the server options file.\n` +
+          'Learn more: https://nuxt-multi-cache.dulnan.net/overview/server-options',
+      )
+    }
+  })
+
+  if (typeof options.api?.authorization === 'function') {
+    logger.error(
+      `The "api.authorization" option to use a custom callback has been moved to the server options file.\n` +
+        'Learn more: https://nuxt-multi-cache.dulnan.net/overview/server-options',
+    )
+  }
+
+  if (options.enabledForRequest) {
+    logger.error(
+      `The "enabledForRequest" option has been moved to the server options file.\n` +
+        'Learn more: https://nuxt-multi-cache.dulnan.net/overview/server-options',
+    )
+  }
+}
+
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'nuxt-multi-cache',
     configKey: 'multiCache',
-    version: '2.0.1',
+    version: '3.0.0',
     compatibility: {
-      nuxt: '^3.0.0',
+      nuxt: '^3.3.0',
     },
   },
   defaults: defaultOptions as any,
   async setup(passedOptions, nuxt) {
     const options = defu({}, passedOptions, {}) as ModuleOptions
+    checkObsoleteOptions(options)
     const { resolve } = createResolver(import.meta.url)
     const rootDir = nuxt.options.rootDir
 
@@ -42,6 +74,20 @@ export default defineNuxtModule<ModuleOptions>({
         cacheControlHeader:
           options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER,
         cacheTagHeader: options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER,
+      },
+      component: !!options.component?.enabled,
+      data: !!options.data?.enabled,
+      route: !!options.data?.enabled,
+      api: {
+        enabled: !!options.api?.enabled,
+        prefix: options.api?.prefix || '',
+        cacheTagInvalidationDelay: options.api
+          ?.cacheTagInvalidationDelay as number,
+        authorizationToken:
+          typeof options.api?.authorization === 'string'
+            ? options.api.authorization
+            : '',
+        authorizationDisabled: options.api?.authorization === false,
       },
     }
 
@@ -120,6 +166,41 @@ export default defineNuxtModule<ModuleOptions>({
       })
     }
 
+    // Shamelessly copied and adapted from:
+    // https://github.com/nuxt-modules/prismic/blob/fd90dc9acaa474f79b8831db5b8f46a9a9f039ca/src/module.ts#L55
+    // Creates the template with runtime server configuration.
+    const extensions = ['js', 'mjs', 'ts']
+    const resolvedPath = '~/app/multiCache.serverOptions'
+      .replace(/^(~~|@@)/, nuxt.options.rootDir)
+      .replace(/^(~|@)/, nuxt.options.srcDir)
+
+    const template = (() => {
+      const resolvedFilename = `multiCache.serverOptions.ts`
+
+      const maybeUserFile = fileExists(resolvedPath, extensions)
+
+      if (maybeUserFile) {
+        return addTemplate({
+          filename: resolvedFilename,
+          write: true,
+          getContents: () => `export { default } from '${resolvedPath}'`,
+        })
+      }
+
+      // Else provide `undefined` fallback
+      return addTemplate({
+        filename: resolvedFilename,
+        write: true,
+        getContents: () => 'export default {}',
+      })
+    })()
+
+    nuxt.options.nitro.externals = nuxt.options.nitro.externals || {}
+    nuxt.options.nitro.externals.inline =
+      nuxt.options.nitro.externals.inline || []
+    nuxt.options.nitro.externals.inline.push(template.dst)
+    nuxt.options.alias['#multi-cache-server-options'] = template.dst
+
     // Add cache management API if enabled.
     if (options.api?.enabled) {
       // Prefix is defined in default config.
@@ -157,3 +238,7 @@ export default defineNuxtModule<ModuleOptions>({
     }
   },
 }) as NuxtModule<ModuleOptions>
+
+export function defineMultiCacheOptions(options: MutliCacheServerOptions) {
+  return options
+}

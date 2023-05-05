@@ -1,24 +1,92 @@
 # Route Cache
 
-Cache pages and responses of custom server handlers. It does so by providing a
+Caches pages and responses of custom server handlers. It does so by providing a
 helper via a composable that manages if a response should be cached.
 
 ## Configuration
 
-```typescript
+::: code-group
+
+```typescript [nuxt.config.ts]
 import { defineNuxtConfig } from 'nuxt'
 
 export default defineNuxtConfig({
   multiCache: {
     route: {
       enabled: true,
-
-      // Provide custom options for unstorage.
-      storage: {}
     }
   }
 }
 ```
+
+```typescript [multiCache.serverOptions.ts]
+// ~/app/multiCache.serverOptions.ts
+import { defineMultiCacheOptions } from 'nuxt-multi-cache'
+import myCustomDriver from './somehwere'
+
+export default defineMultiCacheOptions({
+  route: {
+    storage: {
+      driver: myCustomDriver(),
+    },
+  },
+})
+```
+
+:::
+
+### Cache key for routes
+
+::: warning
+
+By default query strings are **ignored**! This means that a request for
+`/homepage?language=de` and `/homepage` will return the same cached response.
+
+The reason for this decision is that there are basically infinite possibilities
+to alter the query string. This would be an easy way to quickly crash the app by
+putting hundres of thousands of pages into the cache.
+
+:::
+
+The cache key is automatically derived from the route path. e.g.
+`/api/query/products?id=123` is transformed to `api:query:products`. If you want
+to take the query string into account you can provide a function that can return
+the cache key for a given route:
+
+::: code-group
+
+```typescript [multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache'
+import { getQuery } from 'h3'
+
+export default defineMultiCacheOptions({
+  route: {
+    buildCacheKey(event) {
+      const path = event.path
+      // Handle specific routes that need query strings.
+      if (path.startsWith('/api/query/products')) {
+        const { id } = getQuery(event)
+        if (id) {
+          return 'api_query_products_' + id
+        }
+      }
+
+      // Remove query string from path.
+      return path.split('?')[0]
+    },
+  },
+})
+```
+
+:::
+
+With that all the following requests will be only handled initially and then
+served from cache by the cached item `api_query_products_1`:
+
+- /api/query/products?id=123
+- /api/query/products?id=123&foobar=456
+- /api/query/products?foobar=456&id=123
+- /api/query/products?foobar=456&id=123&whatever=string&does=not&matter=at-all
 
 ## Usage in Components
 
@@ -31,10 +99,7 @@ Use the `useRouteCache` composable in a page, layout or any component:
 
 <script lang="ts" setup>
 useRouteCache((helper) => {
-  helper
-    .setMaxAge(3600)
-    .setCacheable()
-    .addTags(['page:1'])
+  helper.setMaxAge(3600).setCacheable().addTags(['page:1'])
 })
 </script>
 ```
@@ -43,6 +108,10 @@ By default a page is not cached, you have to explicitly call `setCacheable()`.
 
 You can use the composable multiple times during a request. The exposed helper
 methods make sure that there are no race conditions.
+
+Note that calling the composable does not return a value. You only have access
+to the `helper` via the callback. The reason is that this allows the compiler to
+completely remove this code from client bundles.
 
 ## Usage in Server Handlers
 
@@ -84,15 +153,15 @@ the current request.
 ### setCacheable()
 
 Calling this will set the response to be cacheable. Note that if
-`setUncacheable()` was called previously then this method does nothing. That
-way we can make sure that for example sensitive information from authenticated
-users is never cached.
+`setUncacheable()` was called previously then this method does nothing. That way
+we can make sure that for example sensitive information from authenticated users
+is never cached.
 
 ### setUncacheable()
 
 Mark the response as uncacheable. This decision is final and can't be reverted.
-Usually this is used to prevent caching sensitive information from
-authenticated users or to prevent caching broken pages.
+Usually this is used to prevent caching sensitive information from authenticated
+users or to prevent caching broken pages.
 
 **Example:** Request to external API fails and the component can't render the
 data. Prevent the page from being cached in this broken state.
@@ -125,9 +194,8 @@ Alternatively you could also just reduce the max age for the page so that after
 
 Set the max age for the cache entry. After that the page is rendered again.
 
-Note that cache entries remain in cache after they expired. When they expire
-the route is rendered again and the response overwrites the stale cache entry.
-
+Note that cache entries remain in cache after they expired. When they expire the
+route is rendered again and the response overwrites the stale cache entry.
 
 ### addTags(tags: string[])
 
@@ -151,7 +219,6 @@ The helper has three properties to keep track of the state:
 - `tags: string[]`
 - `cacheable: boolean|null`
 - `maxAge: number|null`
-
 
 While absolutely not encouraged, you can directly manipulate these values for
 specific edge cases.

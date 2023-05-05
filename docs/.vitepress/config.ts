@@ -2,10 +2,45 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   base: (process.env.BASE_URL as `/${string}/` | undefined) || '/',
-  title: 'Nuxt Multi Cache V2',
+  title: 'Multi Cache for Nuxt 3',
   lang: 'en',
   cleanUrls: 'without-subfolders',
   appearance: 'dark',
+  head: [
+    [
+      'link',
+      {
+        rel: 'apple-touch-icon',
+        sizes: '180x180',
+        href: '/apple-touch-icon.png',
+      },
+    ],
+    [
+      'link',
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        href: '/favicon-32x32.png',
+      },
+    ],
+    [
+      'link',
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '16x16',
+        href: '/favicon-16x16.png',
+      },
+    ],
+    [
+      'meta',
+      {
+        property: 'og:image',
+        content: 'https://nuxt-multi-cache.dulnan.net/banner.jpg',
+      },
+    ],
+  ],
   transformHead: (ctx) => {
     let url =
       '/' + ctx.pageData.relativePath.replace('index.md', '').replace('.md', '')
@@ -20,7 +55,7 @@ export default defineConfig({
       ],
     ])
   },
-  description: '',
+  description: 'Component, route and data cache for Nuxt 3.',
   locales: {
     '/': {
       lang: 'en-US',
@@ -36,6 +71,7 @@ export default defineConfig({
         text: '1.x (for Nuxt 2)',
         link: 'https://nuxt-multi-cache-v1.dulnan.net',
       },
+      { text: 'NPM', link: 'https://www.npmjs.com/package/nuxt-multi-cache' },
       { text: 'GitHub', link: 'https://github.com/dulnan/nuxt-multi-cache' },
     ],
     sidebar: [
@@ -44,6 +80,7 @@ export default defineConfig({
         items: [
           { text: 'Introduction', link: '/overview/introduction' },
           { text: 'Configuration', link: '/overview/configuration' },
+          { text: 'Server Options', link: '/overview/server-options' },
           { text: 'Cache Tags', link: '/overview/cache-tags' },
           { text: 'Migrating from V1', link: '/overview/migrating-from-v1' },
         ],

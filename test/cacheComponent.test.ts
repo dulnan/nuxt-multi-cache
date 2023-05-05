@@ -69,7 +69,7 @@ describe('The component cache feature', async () => {
     // Remove component from cache.
     await $fetch('/__nuxt_multi_cache/purge/component', {
       method: 'post',
-      body: ['QueryValue::one'],
+      body: ['en--QueryValue::one'],
     })
 
     // Third call should render it again with the new value.

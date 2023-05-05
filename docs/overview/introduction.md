@@ -5,13 +5,15 @@ editLink: true
 
 # Introduction
 
-nuxt-multi-cache is the ultimate caching module for Nuxt 3. It greatly improves
-performance for Nuxt apps that have a lot of dynamic content (think of large
-CMS sites or user generted content). But even if you just have a few dozen
-pages you can increase average performance.
+nuxt-multi-cache is the ultimate **server-side** caching module for Nuxt 3. It
+greatly improves performance for Nuxt apps that have a lot of dynamic content
+(think of large CMS sites or user generated content). But even if you just have
+a few dozen pages you can increase average performance.
 
-- Several cache backends (memory, redis, Cloudflare KV) via [unstorage](https://github.com/unjs/unstorage)
-- Fully modular, pick whatever you need
+- Several cache backends (memory, redis, Cloudflare KV) via
+  [unstorage](https://github.com/unjs/unstorage)
+- Fully modular, pick whatever feature you need
+- Cache invalidation API
 - Minimal impact on client side bundle and performance
 - Works in SSR (server-side rendering) and SSG (static site generation)
 - Large test coverage
@@ -42,7 +44,7 @@ define which you'd like to use.
 ## [Component Cache](/features/component-cache)
 
 Cache rendered markup of components on the server. Ideal for complex, deeply
-nested components like menu or footer.
+nested components like menus or footers.
 
 ```vue
 <template>

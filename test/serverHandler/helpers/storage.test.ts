@@ -4,61 +4,37 @@ vi.mock('#imports', () => {
   return {
     useRuntimeConfig: () => {
       return {
-        multiCache: {},
+        multiCache: {
+          component: true,
+          data: true,
+          route: true,
+        },
       }
     },
   }
 })
 
-vi.mock('@nuxt/kit')
+vi.mock('#multi-cache-server-options', () => {
+  return {
+    default: {},
+  }
+})
 
 describe('loadCacheContext helper', () => {
   test('Initializes storage only once', async () => {
     const { loadCacheContext } = await import(
       './../../../src/runtime/serverHandler/helpers/storage'
     )
-    const kit = await import('@nuxt/kit')
-    kit.loadNuxtConfig = vi.fn().mockReturnValueOnce(
-      Promise.resolve({
-        multiCache: {
-          component: {
-            enabled: true,
-          },
-          data: {
-            enabled: true,
-          },
-          route: {
-            enabled: true,
-          },
-        },
-      }),
-    )
-    const promise1 = loadCacheContext()
-    const promise2 = loadCacheContext()
-    expect(promise1).toEqual(promise2)
+    const result1 = loadCacheContext()
+    const result2 = loadCacheContext()
+    expect(result1).toEqual(result2)
   })
 
   test('Initializes storages correctly', async () => {
     const { loadCacheContext } = await import(
       './../../../src/runtime/serverHandler/helpers/storage'
     )
-    const kit = await import('@nuxt/kit')
-    kit.loadNuxtConfig = vi.fn().mockReturnValueOnce(
-      Promise.resolve({
-        multiCache: {
-          component: {
-            enabled: true,
-          },
-          data: {
-            enabled: true,
-          },
-          route: {
-            enabled: true,
-          },
-        },
-      }),
-    )
-    const cacheContext = await loadCacheContext()
+    const cacheContext = loadCacheContext()
 
     expect(cacheContext.component).toBeDefined()
     expect(cacheContext.data).toBeDefined()

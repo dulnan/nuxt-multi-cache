@@ -14,6 +14,12 @@ const useRuntimeConfig = vi.fn(() => ({
 
 vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
 
+vi.mock('#multi-cache-server-options', () => {
+  return {
+    default: {},
+  }
+})
+
 describe('responseSend server handler', () => {
   test('Returns if route cache or CDN helper is not available.', () => {
     const event: any = {

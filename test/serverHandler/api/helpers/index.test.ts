@@ -14,48 +14,29 @@ vi.mock('#imports', () => {
   }
 })
 
-vi.mock('./../../../../src/runtime/serverHandler/helpers/index', () => {
+vi.mock('#multi-cache-server-options', () => {
   return {
-    getModuleConfig: () => {
-      return {
-        api: {
-          authorization: false,
-        },
-      }
-    },
+    default: {},
   }
 })
 
 describe('checkAuth', () => {
   test('Skips auth check if defined in config', async () => {
     expect(
-      await checkAuth({} as any, {
-        api: {
-          authorization: false,
-        },
-      }),
+      await checkAuth(
+        {} as any,
+        {
+          api: { enabled: true, authorizationDisabled: true },
+        } as any,
+      ),
     ).toBeUndefined()
   })
 
-  test('Loads config if not provided.', async () => {
-    expect(await checkAuth({} as any)).toBeUndefined()
-  })
-
-  test('Performs custom auth check provided in config', async () => {
+  test('Performs custom auth check provided in config', () => {
     expect(
-      await checkAuth({} as any, {
+      checkAuth({} as any, { multiCache: {} } as any, {
         api: {
-          authorization: () => {
-            return Promise.resolve(true)
-          },
-        },
-      }),
-    ).toBeUndefined()
-
-    expect(
-      checkAuth({} as any, {
-        api: {
-          authorization: () => {
+          authorization() {
             return Promise.resolve(false)
           },
         },
@@ -77,9 +58,9 @@ describe('checkAuth', () => {
         } as any,
         {
           api: {
-            authorization: 'token',
+            authorizationToken: 'token',
           },
-        },
+        } as any,
       ),
     ).toBeUndefined()
 
@@ -96,9 +77,9 @@ describe('checkAuth', () => {
         } as any,
         {
           api: {
-            authorization: 'token',
+            authorizationToken: 'token',
           },
-        },
+        } as any,
       ),
     ).rejects.toThrowErrorMatchingInlineSnapshot('"Unauthorized"')
 
@@ -115,9 +96,9 @@ describe('checkAuth', () => {
         } as any,
         {
           api: {
-            authorization: 'token',
+            authorizationToken: 'token',
           },
-        },
+        } as any,
       ),
     ).rejects.toThrowErrorMatchingInlineSnapshot('"Unauthorized"')
   })
