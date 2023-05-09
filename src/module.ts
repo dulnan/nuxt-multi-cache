@@ -77,7 +77,7 @@ export default defineNuxtModule<ModuleOptions>({
       },
       component: !!options.component?.enabled,
       data: !!options.data?.enabled,
-      route: !!options.data?.enabled,
+      route: !!options.route?.enabled,
       api: {
         enabled: !!options.api?.enabled,
         prefix: options.api?.prefix || '',
