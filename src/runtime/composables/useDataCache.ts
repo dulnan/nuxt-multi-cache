@@ -1,4 +1,4 @@
-import { useSSRContext } from 'vue'
+import { getCurrentInstance, useSSRContext } from 'vue'
 import type { H3Event } from 'h3'
 import type { CacheItem } from './../types'
 import {
@@ -44,6 +44,11 @@ export function useDataCache<T>(
       // Event provided by user.
       if (providedEvent) {
         return providedEvent
+      }
+
+      // Prevent logging warnings when not in vue context.
+      if (!getCurrentInstance()) {
+        return
       }
 
       // SSR context should exist at this point, but TS doesn't know that.

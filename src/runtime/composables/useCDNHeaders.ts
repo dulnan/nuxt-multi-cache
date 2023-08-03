@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { useSSRContext } from 'vue'
+import { getCurrentInstance, useSSRContext } from 'vue'
 import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
 import { getMultiCacheCDNHelper } from './../helpers/server'
 
@@ -24,6 +24,11 @@ export function useCDNHeaders(
     // Event provided by user.
     if (providedEvent) {
       return providedEvent
+    }
+
+    // Prevent logging warnings when not in vue context.
+    if (!getCurrentInstance()) {
+      return
     }
 
     // SSR context should exist at this point, but TS doesn't know that.
