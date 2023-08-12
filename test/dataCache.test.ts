@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch } from '@nuxt/test-utils'
+import { setup, $fetch, createPage } from '@nuxt/test-utils'
 import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
@@ -42,16 +42,16 @@ describe('The data cache feature', async () => {
     await purgeAll()
 
     // First call puts it into cache.
-    const first = await $fetch('/dataCache', {
-      method: 'get',
-    })
+    const first = await createPage('/dataCache')
+    const firstId = await first.locator('#data-cache-value').getAttribute('id')
 
     // Second call should get it from cache.
-    const second = await $fetch('/dataCache', {
-      method: 'get',
-    })
+    const second = await createPage('/dataCache')
+    const secondId = await second
+      .locator('#data-cache-value')
+      .getAttribute('id')
 
-    expect(first).toEqual(second)
+    expect(firstId).toEqual(secondId)
   })
 
   test('Works in a server handler', async () => {

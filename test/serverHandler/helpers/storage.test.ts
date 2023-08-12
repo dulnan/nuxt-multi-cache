@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import { loadCacheContext } from './../../../src/runtime/serverHandler/helpers/storage'
 
 vi.mock('#imports', () => {
   return {
@@ -21,19 +22,13 @@ vi.mock('#multi-cache-server-options', () => {
 })
 
 describe('loadCacheContext helper', () => {
-  test('Initializes storage only once', async () => {
-    const { loadCacheContext } = await import(
-      './../../../src/runtime/serverHandler/helpers/storage'
-    )
+  test('Initializes storage only once', () => {
     const result1 = loadCacheContext()
     const result2 = loadCacheContext()
     expect(result1).toEqual(result2)
   })
 
-  test('Initializes storages correctly', async () => {
-    const { loadCacheContext } = await import(
-      './../../../src/runtime/serverHandler/helpers/storage'
-    )
+  test('Initializes storages correctly', () => {
     const cacheContext = loadCacheContext()
 
     expect(cacheContext.component).toBeDefined()

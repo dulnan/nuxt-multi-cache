@@ -1,7 +1,7 @@
 <template>
   <div id="home">
     <h1>Data Cache</h1>
-    <p>{{ data }}</p>
+    <p id="data-cache-value">{{ data }}</p>
   </div>
 </template>
 

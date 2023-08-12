@@ -1,5 +1,5 @@
 import { loadNuxt } from 'nuxt'
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import nuxtMultiCache from './../src/module'
 
 async function testServerHandlerAdded(search: string, config: any) {

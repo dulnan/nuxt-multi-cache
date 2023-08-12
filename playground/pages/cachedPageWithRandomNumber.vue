@@ -1,5 +1,5 @@
 <template>
-  <div>RANDOM[{{ random }}]</div>
+  <div id="data-cache-value">RANDOM[{{ random }}]</div>
 </template>
 
 <script lang="ts" setup>

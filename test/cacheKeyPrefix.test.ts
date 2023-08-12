@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch } from '@nuxt/test-utils'
-import { describe, expect, test, vi } from 'vitest'
+import { setup, createPage } from '@nuxt/test-utils'
+import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
 
@@ -37,84 +37,48 @@ describe('The cacheKeyPrefix', async () => {
     nuxtConfig,
   })
 
+  async function getDataValue(path: string, language: string) {
+    const page = await createPage(path, {
+      javaScriptEnabled: false,
+      extraHTTPHeaders: {
+        'accept-language': language,
+      },
+    })
+    return page.locator('#data-cache-value').innerText()
+  }
+
   test('is working for the data cache.', async () => {
     await purgeAll()
 
-    const firstDE = await $fetch('/dataCache', {
-      method: 'get',
-      headers: {
-        'accept-language': 'de',
-      },
-    })
-
-    const secondDE = await $fetch('/dataCache', {
-      method: 'get',
-      headers: {
-        'accept-language': 'de',
-      },
-    })
-
+    const firstDE = await getDataValue('/dataCache', 'de')
+    const secondDE = await getDataValue('/dataCache', 'de')
     expect(firstDE).toEqual(secondDE)
 
-    const thirdEN = await $fetch('/dataCache', {
-      method: 'get',
-      headers: {
-        'accept-language': 'en',
-      },
-    })
-
+    const thirdEN = await getDataValue('/dataCache', 'en')
     expect(firstDE).not.toEqual(thirdEN)
   })
 
   test('is working for the component cache.', async () => {
     await purgeAll()
-    const firstDE = await $fetch('/pageWithCachedComponent', {
-      method: 'get',
-      headers: {
-        'accept-language': 'de',
-      },
-    })
 
-    const secondDE = await $fetch('/pageWithCachedComponent', {
-      method: 'get',
-      headers: {
-        'accept-language': 'de',
-      },
-    })
+    const firstDE = await getDataValue('/pageWithCachedComponent', 'de')
+    const secondDE = await getDataValue('/pageWithCachedComponent', 'de')
 
     // Test that component cache works.
     expect(firstDE).toEqual(secondDE)
 
-    const thirdEN = await $fetch('/pageWithCachedComponent', {
-      method: 'get',
-      headers: {
-        'accept-language': 'en',
-      },
-    })
-
+    const thirdEN = await getDataValue('/pageWithCachedComponent', 'en')
     expect(thirdEN).not.toEqual(firstDE)
   })
 
   test('is working for the route cache', async () => {
     await purgeAll()
 
-    async function performRequest(language: string): Promise<string> {
-      const markup = (await $fetch('/cachedPageWithRandomNumber', {
-        method: 'get',
-        headers: {
-          'accept-language': language,
-        },
-      })) as string
-      return [...markup.matchAll(/RANDOM\[(\d*)\]/gm)][0][1]
-    }
-
-    const firstDE = await performRequest('de')
-    const secondDE = await performRequest('de')
-
+    const firstDE = await getDataValue('/cachedPageWithRandomNumber', 'de')
+    const secondDE = await getDataValue('/cachedPageWithRandomNumber', 'de')
     expect(firstDE).toEqual(secondDE)
 
-    const thirdEN = await performRequest('en')
-
+    const thirdEN = await getDataValue('/cachedPageWithRandomNumber', 'en')
     expect(firstDE).not.toEqual(thirdEN)
   })
 })

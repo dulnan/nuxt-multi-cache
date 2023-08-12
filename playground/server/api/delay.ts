@@ -1,3 +1,4 @@
+import { defineEventHandler } from 'h3'
 import { useRouteCache } from '#nuxt-multi-cache/composables'
 
 const getResult = function () {

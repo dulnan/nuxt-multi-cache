@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch } from '@nuxt/test-utils'
+import { setup, $fetch, createPage } from '@nuxt/test-utils'
 import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
@@ -124,19 +124,20 @@ describe('The component cache feature', async () => {
   test('Caches payload along component if asyncDataKeys provided.', async () => {
     await purgeAll()
 
-    const first = await $fetch('/payloadData')
-    // Component is rendered correctly in first time.
-    expect(first).toContain(
-      '<div id="with-async-data">This is data from the API.</div>',
-    )
-    expect(first).toContain(`withAsyncData:{api:"This is data from the API."`)
+    const first = await createPage('/payloadData')
+    const NUXT_FIRST = await first
+      .evaluateHandle(() => window.__NUXT__)
+      .then((v) => v.jsonValue())
+    const firstValue = NUXT_FIRST?.data.withAsyncData.api
+
+    expect(firstValue).toMatchInlineSnapshot('"This is data from the API."')
 
     // Even after caching the page contains the payload.
-    const second = await $fetch('/payloadData')
-    // Component is rendered correctly.
-    expect(first).toContain(
-      '<div id="with-async-data">This is data from the API.</div>',
-    )
-    expect(first).toContain(`withAsyncData:{api:"This is data from the API."`)
+    const second = await createPage('/payloadData')
+    const NUXT_SECOND = await second
+      .evaluateHandle(() => window.__NUXT__)
+      .then((v: any) => v.jsonValue())
+    const secondValue = NUXT_SECOND?.data.withAsyncData.api
+    expect(secondValue).toMatchInlineSnapshot('"This is data from the API."')
   })
 })

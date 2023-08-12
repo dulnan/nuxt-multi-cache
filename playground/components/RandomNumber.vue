@@ -1,7 +1,7 @@
 <template>
   <div>
     <h3>Component with random number</h3>
-    <div>{{ random }}</div>
+    <div id="data-cache-value">{{ random }}</div>
   </div>
 </template>
 

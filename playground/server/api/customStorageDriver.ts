@@ -1,3 +1,4 @@
+import { defineEventHandler } from 'h3'
 import { useDataCache } from '#nuxt-multi-cache/composables'
 
 export default defineEventHandler(async (event) => {

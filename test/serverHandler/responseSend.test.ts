@@ -148,8 +148,9 @@ describe('responseSend server handler', () => {
     event.node.res.end('<html></html>')
     await sleep(100)
 
-    expect(await storage.getItemRaw('test:route:nested'))
-      .toMatchInlineSnapshot('"{\\"headers\\":{\\"x-test\\":\\"Foobar\\"},\\"cacheTags\\":[]}<CACHE_ITEM><html></html>"')
+    expect(await storage.getItemRaw('test:route:nested')).toMatchInlineSnapshot(
+      '"{\\"headers\\":{\\"x-test\\":\\"Foobar\\"},\\"cacheTags\\":[]}<CACHE_ITEM><html></html>"',
+    )
   })
 
   test('Does not cache an uncacheable route.', async () => {

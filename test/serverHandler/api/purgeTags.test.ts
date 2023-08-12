@@ -5,20 +5,6 @@ import purgeTags, {
   DebouncedInvalidator,
 } from './../../../src/runtime/serverHandler/api/purgeTags'
 
-vi.mock('#imports', () => {
-  return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {
-          api: {
-            cacheTagInvalidationDelay: 1000,
-          },
-        },
-      }
-    },
-  }
-})
-
 vi.mock('h3', async () => {
   const h3: any = await vi.importActual('h3')
   return {
@@ -40,6 +26,20 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
 vi.mock('#multi-cache-server-options', () => {
   return {
     default: {},
+  }
+})
+
+vi.mock('#imports', () => {
+  return {
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          api: {
+            cacheTagInvalidationDelay: 1000,
+          },
+        },
+      }
+    },
   }
 })
 
