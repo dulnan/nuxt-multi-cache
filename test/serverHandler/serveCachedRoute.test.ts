@@ -1,4 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
+import { encodeRouteCacheItem } from '../../src/runtime/helpers/cacheItem'
+import { encodeRouteCacheKey } from '../../src/runtime/helpers/server'
 import serveCachedRoute from './../../src/runtime/serverHandler/serveCachedRoute'
 
 const consoleSpy = vi.spyOn(global.console, 'debug')
@@ -33,8 +35,10 @@ describe('serveCachedRoutes server handler', () => {
       context: {
         __MULTI_CACHE: {
           route: {
-            getItem(_path: string) {
-              return Promise.resolve({ data: '<html></html>' })
+            getItemRaw(_path: string) {
+              return Promise.resolve(
+                encodeRouteCacheItem('<html></html>', {}, 0, undefined, []),
+              )
             },
           },
         },
@@ -49,8 +53,10 @@ describe('serveCachedRoutes server handler', () => {
       context: {
         __MULTI_CACHE: {
           route: {
-            getItem(_path: string) {
-              return Promise.resolve('<html></html>')
+            getItemRaw(_path: string) {
+              return Promise.resolve(
+                encodeRouteCacheItem('<html></html>', {}, 200, undefined, []),
+              )
             },
           },
         },
@@ -65,8 +71,10 @@ describe('serveCachedRoutes server handler', () => {
       context: {
         __MULTI_CACHE: {
           route: {
-            getItem(_path: string) {
-              return Promise.resolve({ data: '<html></html>', expires: 1000 })
+            getItemRaw(_path: string) {
+              return Promise.resolve(
+                encodeRouteCacheItem('<html></html>', {}, 200, 1000, []),
+              )
             },
           },
         },
@@ -89,13 +97,18 @@ describe('serveCachedRoutes server handler', () => {
       context: {
         __MULTI_CACHE: {
           route: {
-            getItem(_path: string) {
-              return Promise.resolve({
-                data: '<html></html>',
-                headers: {
-                  'x-test': 'foobar',
-                },
-              })
+            getItemRaw(_path: string) {
+              return Promise.resolve(
+                encodeRouteCacheItem(
+                  '<html></html>',
+                  {
+                    'x-test': 'foobar',
+                  },
+                  200,
+                  undefined,
+                  [],
+                ),
+              )
             },
           },
         },
@@ -118,8 +131,10 @@ describe('serveCachedRoutes server handler', () => {
       context: {
         __MULTI_CACHE: {
           route: {
-            getItem(_path: string) {
-              return Promise.resolve({ data: '<html></html>', statusCode: 301 })
+            getItemRaw(_path: string) {
+              return Promise.resolve(
+                encodeRouteCacheItem('<html></html>', {}, 301, undefined, []),
+              )
             },
           },
         },
@@ -139,7 +154,7 @@ describe('serveCachedRoutes server handler', () => {
       context: {
         __MULTI_CACHE: {
           route: {
-            getItem(_path: string) {
+            getItemRaw(_path: string) {
               throw new Error('Failed to get item from cache.')
             },
           },

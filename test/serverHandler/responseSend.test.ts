@@ -2,17 +2,25 @@ import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { createStorage } from 'unstorage'
 import { sleep } from '../__helpers__'
 import responseSend from '../../src/runtime/serverHandler/responseSend'
+import { decodeRouteCacheItem } from '../../src/runtime/helpers/cacheItem'
 
-const useRuntimeConfig = vi.fn(() => ({
-  multiCache: {
-    cdn: {
-      cacheTagHeader: 'Cache-Tag',
-      cacheControlHeader: 'Surrogate-Control',
-    },
-  },
-}))
+// vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
+vi.mock('#imports', () => {
+  const useRuntimeConfig = () => {
+    return {
+      multiCache: {
+        cdn: {
+          cacheTagHeader: 'Cache-Tag',
+          cacheControlHeader: 'Surrogate-Control',
+        },
+      },
+    }
+  }
 
-vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
+  return {
+    useRuntimeConfig,
+  }
+})
 
 vi.mock('#multi-cache-server-options', () => {
   return {
@@ -140,14 +148,8 @@ describe('responseSend server handler', () => {
     event.node.res.end('<html></html>')
     await sleep(100)
 
-    expect(await storage.getItem('test:route:nested')).toMatchInlineSnapshot(`
-      {
-        "data": "<html></html>",
-        "headers": {
-          "x-test": "Foobar",
-        },
-      }
-    `)
+    expect(await storage.getItemRaw('test:route:nested'))
+      .toMatchInlineSnapshot('"{\\"headers\\":{\\"x-test\\":\\"Foobar\\"},\\"cacheTags\\":[]}<CACHE_ITEM><html></html>"')
   })
 
   test('Does not cache an uncacheable route.', async () => {
@@ -180,7 +182,7 @@ describe('responseSend server handler', () => {
     event.node.res.end('<html></html>')
     await sleep(100)
 
-    expect(await storage.getItem('test:route:nested')).toBeNull()
+    expect(await storage.getItemRaw('test:route:nested')).toBeNull()
   })
 
   test('Adds cache tags to cached route.', async () => {
@@ -212,8 +214,8 @@ describe('responseSend server handler', () => {
 
     event.node.res.end('<html></html>')
     await sleep(100)
-    const item: any = await storage.getItem('test:route:nested')
-    expect(item.cacheTags).toEqual(['one', 'two'])
+    const item: any = await storage.getItemRaw('test:route:nested')
+    expect(decodeRouteCacheItem(item)?.cacheTags).toEqual(['one', 'two'])
   })
 
   test('Sets the expires property for cache items.', async () => {
@@ -250,10 +252,10 @@ describe('responseSend server handler', () => {
 
     event.node.res.end('<html></html>')
     await sleep(100)
-    const item: any = await storage.getItem('test:route:nested')
-    expect(new Date(item.expires * 1000)).toMatchInlineSnapshot(
-      '2022-12-29T14:00:00.000Z',
-    )
+    const item: any = await storage.getItemRaw('test:route:nested')
+    expect(
+      new Date(decodeRouteCacheItem(item)!.expires! * 1000),
+    ).toMatchInlineSnapshot('2022-12-29T14:00:00.000Z')
   })
 
   test('Sets the CDN headers.', () => {

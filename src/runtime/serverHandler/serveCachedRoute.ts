@@ -1,10 +1,10 @@
 import { defineEventHandler, setResponseHeaders } from 'h3'
+import { decodeRouteCacheItem } from '../helpers/cacheItem'
 import {
   getMultiCacheContext,
   getCacheKeyWithPrefix,
   encodeRouteCacheKey,
 } from './../helpers/server'
-import { RouteCacheItem } from './../types'
 import serverOptions from '#multi-cache-server-options'
 
 /**
@@ -26,25 +26,26 @@ export default defineEventHandler(async (event) => {
       ? serverOptions.route.buildCacheKey(event)
       : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
 
-    const cached = await multiCache.route.getItem(fullKey)
-    if (cached && typeof cached === 'object') {
-      const { data, headers, statusCode, expires } = cached as RouteCacheItem
-
-      // Check if the item is stale.
-      if (expires) {
-        const now = Date.now() / 1000
-        if (now >= expires) {
-          return
+    const cachedRaw = await multiCache.route.getItemRaw(fullKey)
+    if (cachedRaw && typeof cachedRaw === 'string') {
+      const decoded = decodeRouteCacheItem(cachedRaw)
+      if (decoded) {
+        // Check if the item is stale.
+        if (decoded.expires) {
+          const now = Date.now() / 1000
+          if (now >= decoded.expires) {
+            return
+          }
         }
-      }
 
-      if (headers) {
-        setResponseHeaders(event, headers)
+        if (decoded.headers) {
+          setResponseHeaders(event, decoded.headers)
+        }
+        if (decoded.statusCode) {
+          event.node.res.statusCode = decoded.statusCode
+        }
+        return decoded.data
       }
-      if (statusCode) {
-        event.node.res.statusCode = statusCode
-      }
-      return data
     }
   } catch (e) {
     if (e instanceof Error) {

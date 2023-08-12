@@ -30,6 +30,9 @@ vi.mock('vue', () => {
         },
       }
     },
+    getCurrentInstance: () => {
+      return true
+    },
   }
 })
 

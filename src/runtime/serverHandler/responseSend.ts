@@ -11,6 +11,7 @@ import {
 import { RouteCacheItem } from './../types'
 import serverOptions from '#multi-cache-server-options'
 import { useRuntimeConfig } from '#imports'
+import { encodeRouteCacheItem } from '../helpers/cacheItem'
 
 /**
  * Route cache event handler.
@@ -81,20 +82,19 @@ export default defineEventHandler((event) => {
             : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
 
           const response = event.node.res as ServerResponse
-          const headers = response.getHeaders()
-          const item: RouteCacheItem = {
-            data: chunk,
-            headers,
-            statusCode: response.statusCode,
-          }
-          if (routeHelper.maxAge) {
-            item.expires = Math.round(Date.now() / 1000) + routeHelper.maxAge
-          }
-          if (routeHelper.tags.length) {
-            item.cacheTags = routeHelper.tags
-          }
+          const expires = routeHelper.maxAge
+            ? Math.round(Date.now() / 1000) + routeHelper.maxAge
+            : undefined
 
-          return multiCache.route.setItem(cacheKey, item).then(() => {
+          const cacheItem = encodeRouteCacheItem(
+            chunk,
+            response.getHeaders(),
+            response.statusCode,
+            expires,
+            routeHelper.tags,
+          )
+
+          return multiCache.route.setItemRaw(cacheKey, cacheItem).then(() => {
             return _end.call(event.node.res, arg1, arg2, arg3)
           })
         }
