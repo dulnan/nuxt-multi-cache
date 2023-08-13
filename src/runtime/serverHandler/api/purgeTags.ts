@@ -2,9 +2,13 @@ import type { H3Event } from 'h3'
 import { readBody, defineEventHandler, createError } from 'h3'
 import { getMultiCacheContext } from './../../helpers/server'
 import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../settings'
-import type { NuxtMultiCacheSSRContext } from './../../types'
+import type { CacheItem, NuxtMultiCacheSSRContext } from './../../types'
 import { checkAuth } from './helpers'
 import { useRuntimeConfig } from '#imports'
+import {
+  decodeComponentCacheItem,
+  decodeRouteCacheItem,
+} from '../../helpers/cacheItem'
 
 /**
  * Get the tags to be purged from the request.
@@ -87,6 +91,28 @@ export class DebouncedInvalidator {
     }
   }
 
+  async getCacheTags(
+    cacheName: keyof NuxtMultiCacheSSRContext,
+    key: string,
+  ): Promise<string[] | undefined> {
+    if (cacheName === 'data') {
+      const item = await this.cacheContext?.[cacheName]?.getItem(key)
+      if (item && typeof item === 'object' && item !== null) {
+        return (item as any).cacheTags
+      }
+    } else if (cacheName === 'route') {
+      const cached = await this.cacheContext?.[cacheName]?.getItemRaw(key)
+      if (cached) {
+        return decodeRouteCacheItem(cached)?.cacheTags
+      }
+    } else if (cacheName === 'component') {
+      const cached = await this.cacheContext?.[cacheName]?.getItemRaw(key)
+      if (cached) {
+        return decodeComponentCacheItem(cached)?.cacheTags
+      }
+    }
+  }
+
   /**
    * Invalidate the tags in the buffer.
    */
@@ -111,11 +137,8 @@ export class DebouncedInvalidator {
         const cacheItemKeys = await cache.getKeys()
         // Loop over all keys and load the value.
         for (const cacheKey of cacheItemKeys) {
-          const item = await cache.getItem(cacheKey)
-          // We only care about items that are stored as objects.
-          if (item && typeof item === 'object' && 'cacheTags' in item) {
-            const itemCacheTags: string[] = item.cacheTags as string[]
-
+          const itemCacheTags = await this.getCacheTags(key, cacheKey)
+          if (itemCacheTags) {
             // Determine if the cache item should be removed.
             const shouldPurge = itemCacheTags.some((v) => {
               return tags.includes(v)

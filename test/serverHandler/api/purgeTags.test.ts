@@ -4,6 +4,7 @@ import { sleep } from '../../__helpers__'
 import purgeTags, {
   DebouncedInvalidator,
 } from './../../../src/runtime/serverHandler/api/purgeTags'
+import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 
 vi.mock('h3', async () => {
   const h3: any = await vi.importActual('h3')
@@ -53,11 +54,14 @@ describe('purgeTags API handler', () => {
     await storageData.setItem('data2', 'Other data.')
 
     const storageComponent = createStorage()
-    await storageComponent.setItem('component1', 'This is the data.')
-    await storageComponent.setItem('component2', {
-      markup: 'Other data.',
-      cacheTags: ['one'],
-    })
+    await storageComponent.setItemRaw(
+      'component1',
+      encodeComponentCacheItem('This is the data.'),
+    )
+    await storageComponent.setItemRaw(
+      'component2',
+      encodeComponentCacheItem('Other data.', {}, undefined, ['one']),
+    )
 
     const event: any = {
       context: {
