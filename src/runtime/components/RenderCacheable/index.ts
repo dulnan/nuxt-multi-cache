@@ -7,7 +7,7 @@ import {
 } from 'vue'
 import type { PropType } from 'vue'
 import { useNuxtApp } from '#app'
-import type { ComponentCacheItem } from './../../types'
+import { encodeComponentCacheItem } from '../../helpers/cacheItem'
 import {
   getExpiresValue,
   getMultiCacheContext,
@@ -199,27 +199,24 @@ export default defineComponent({
         try {
           // The cache tags for this component.
           const cacheTags = props.cacheTags
-          // We have payload or cache tags.
-          if (props.asyncDataKeys.length || cacheTags.length || props.maxAge) {
-            // Extract the payload relevant to the component.
-            const payload: Record<string, any> = props.asyncDataKeys.reduce<
-              Record<string, string>
-            >((acc, key) => {
-              acc[key] = nuxtApp.payload.data[key]
-              return acc
-            }, {})
 
-            const item: ComponentCacheItem = { payload, data, cacheTags }
-            if (props.maxAge) {
-              item.expires = getExpiresValue(props.maxAge)
-            }
+          // Extract the payload relevant to the component.
+          const payload: Record<string, any> = props.asyncDataKeys.reduce<
+            Record<string, string>
+          >((acc, key) => {
+            acc[key] = nuxtApp.payload.data[key]
+            return acc
+          }, {})
 
-            // Store object in the cache.
-            multiCache.component.setItem(fullCacheKey, item)
-          } else {
-            // Only store the markup in cache.
-            multiCache.component.setItem(fullCacheKey, data)
-          }
+          const expires = props.maxAge
+            ? getExpiresValue(props.maxAge)
+            : undefined
+
+          // Store in cache.
+          multiCache.component.setItemRaw(
+            fullCacheKey,
+            encodeComponentCacheItem(data, payload, expires, cacheTags),
+          )
         } catch (e) {
           if (e instanceof Error) {
             console.error(e.message)

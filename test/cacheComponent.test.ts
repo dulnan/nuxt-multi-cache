@@ -22,7 +22,7 @@ describe('The component cache feature', async () => {
     api: {
       enabled: true,
       authorization: false,
-      cacheTagInvalidationDelay: 5000,
+      cacheTagInvalidationDelay: 2000,
     },
   }
   const nuxtConfig: any = {
@@ -103,7 +103,7 @@ describe('The component cache feature', async () => {
       'The query value is: foobar',
     )
 
-    await sleep(6000)
+    await sleep(7000)
 
     // After the delay, component is rendered again.
     expect(await $fetch('/test?v=refreshed')).toContain(

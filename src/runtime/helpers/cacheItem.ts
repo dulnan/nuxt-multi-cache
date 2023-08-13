@@ -1,4 +1,4 @@
-import { RouteCacheItem } from '../types'
+import { ComponentCacheItem, RouteCacheItem } from '../types'
 
 const DELIMITER = '<CACHE_ITEM>'
 
@@ -44,6 +44,35 @@ export function decodeRouteCacheItem(
 ): RouteCacheItem | undefined {
   try {
     const decoded = decodeCacheItem<Omit<RouteCacheItem, 'data'>>(cacheItem)
+    if (decoded) {
+      return {
+        ...decoded.metadata,
+        data: decoded.data,
+      }
+    }
+  } catch (e) {}
+}
+
+/**
+ * Encode the component cache data.
+ */
+export function encodeComponentCacheItem(
+  data: string,
+  payload?: Record<string, any>,
+  expires?: number | undefined,
+  cacheTags?: string[],
+): string {
+  return encodeCacheItem(data, { payload, expires, cacheTags })
+}
+
+/**
+ * Decode the encoded component cache string item.
+ */
+export function decodeComponentCacheItem(
+  cacheItem: string,
+): ComponentCacheItem | undefined {
+  try {
+    const decoded = decodeCacheItem<Omit<ComponentCacheItem, 'data'>>(cacheItem)
     if (decoded) {
       return {
         ...decoded.metadata,

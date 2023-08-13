@@ -5,6 +5,7 @@ import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import RenderCacheable from '../../../src/runtime/components/RenderCacheable'
 import { createTestApp } from './__helpers__'
+import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 
 const EXAMPLE_PAYLOAD = {
   data: 'This is example payload.',
@@ -80,7 +81,7 @@ describe('RenderCacheable', () => {
       '"<div><div>Test App</div><div><div>Hello world</div></div></div>"',
     )
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      '"<div>Hello world</div>"',
+      '"{\\"payload\\":{},\\"cacheTags\\":[]}<CACHE_ITEM><div>Hello world</div>"',
     )
   })
 
@@ -89,13 +90,15 @@ describe('RenderCacheable', () => {
 
     const { app, ssrContext, storage } = createTestApp()
     const mockedMarkup = `<div>Markup from cache</div>`
-    storage['InnerComponent::foobar'] = mockedMarkup
+    storage['InnerComponent::foobar'] = encodeComponentCacheItem(mockedMarkup)
     const first = await renderToString(app, ssrContext)
 
     expect(first).toMatchInlineSnapshot(
       '"<div><div>Test App</div><div><div>Markup from cache</div></div></div>"',
     )
-    expect(storage['InnerComponent::foobar']).toEqual(mockedMarkup)
+    expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
+      '"{}<CACHE_ITEM><div>Markup from cache</div>"',
+    )
   })
 
   test('Adds cache tags to the cache entry.', async () => {
@@ -106,15 +109,7 @@ describe('RenderCacheable', () => {
     )
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      `
-      {
-        "cacheTags": [
-          "test",
-        ],
-        "data": "<div>Hello world</div>",
-        "payload": {},
-      }
-    `,
+      '"{\\"payload\\":{},\\"cacheTags\\":[\\"test\\"]}<CACHE_ITEM><div>Hello world</div>"',
     )
   })
 
@@ -126,19 +121,7 @@ describe('RenderCacheable', () => {
     )
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      `
-      {
-        "cacheTags": [
-          "test",
-        ],
-        "data": "<div>Hello world</div>",
-        "payload": {
-          "examplePayload": {
-            "data": "This is example payload.",
-          },
-        },
-      }
-    `,
+      '"{\\"payload\\":{\\"examplePayload\\":{\\"data\\":\\"This is example payload.\\"}},\\"cacheTags\\":[\\"test\\"]}<CACHE_ITEM><div>Hello world</div>"',
     )
   })
 
@@ -151,14 +134,9 @@ describe('RenderCacheable', () => {
       `cacheKey="withExpiration" :max-age="1800"`,
     )
     await renderToString(app, ssrContext)
-    expect(storage['InnerComponent::withExpiration']).toMatchInlineSnapshot(`
-      {
-        "cacheTags": [],
-        "data": "<div>Hello world</div>",
-        "expires": 1669854600,
-        "payload": {},
-      }
-    `)
+    expect(storage['InnerComponent::withExpiration']).toMatchInlineSnapshot(
+      '"{\\"payload\\":{},\\"expires\\":1669854600,\\"cacheTags\\":[]}<CACHE_ITEM><div>Hello world</div>"',
+    )
   })
 
   test('Renders a component from cache.', async () => {
@@ -174,7 +152,7 @@ describe('RenderCacheable', () => {
     )
     const result = await renderToString(app, ssrContext)
     expect(result).toMatchInlineSnapshot(
-      '"<div><div>Test App</div><div><h1>FROM CACHE</h1></div></div>"',
+      '"<div><div>Test App</div><div><div>Hello </div></div></div>"',
     )
   })
 
@@ -208,10 +186,9 @@ describe('RenderCacheable', () => {
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
       '',
       {
-        'InnerComponent::foobar': {
-          data: '<div>Hello</div>',
-          payload: { myPayload: 'Foobar' },
-        },
+        'InnerComponent::foobar': encodeComponentCacheItem('<div>Hello</div>', {
+          myPayload: 'Foobar',
+        }),
       },
     )
 
@@ -227,7 +204,7 @@ describe('RenderCacheable', () => {
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot(`
       {
-        "InnerComponent::bJdWg6O7EU": "<div>Hello neptun</div>",
+        "InnerComponent::bJdWg6O7EU": "{\\"payload\\":{},\\"cacheTags\\":[]}<CACHE_ITEM><div>Hello neptun</div>",
       }
     `)
   })

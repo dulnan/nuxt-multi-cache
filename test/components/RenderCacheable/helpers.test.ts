@@ -5,6 +5,7 @@ import {
   getComponentName,
   getCachedComponent,
 } from './../../../src/runtime/components/RenderCacheable/helpers/index'
+import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 
 const consoleSpy = vi.spyOn(global.console, 'debug')
 
@@ -81,14 +82,7 @@ describe('getCachedComponent', () => {
 
   test('Returns cached component.', async () => {
     const storage = createStorage()
-    storage.setItem('foobar', { data: '<div></div>' })
-    const item = await getCachedComponent(storage, 'foobar')
-    expect(item).toEqual({ data: '<div></div>' })
-  })
-
-  test('Returns cached string component.', async () => {
-    const storage = createStorage()
-    storage.setItem('foobar', '<div></div>')
+    storage.setItemRaw('foobar', encodeComponentCacheItem('<div></div>'))
     const item = await getCachedComponent(storage, 'foobar')
     expect(item).toEqual({ data: '<div></div>' })
   })

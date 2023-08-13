@@ -36,13 +36,13 @@ export function createTestApp(
       context: {
         __MULTI_CACHE: {
           component: {
-            setItem: (key: string, data: any) => {
+            setItemRaw: (key: string, data: any) => {
               if (key === 'InnerComponent::set_error') {
                 throw new Error('Failed to set item.')
               }
               storage[key] = data
             },
-            getItem(key: string) {
+            getItemRaw(key: string) {
               if (key === 'InnerComponent::get_error') {
                 throw new Error('Failed to get item.')
               }

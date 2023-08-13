@@ -9,6 +9,7 @@ import type {
   ComponentInternalInstance,
 } from 'vue'
 import type { ComponentCacheEntry, ComponentCacheItem } from './../../../types'
+import { decodeComponentCacheItem } from '../../../helpers/cacheItem'
 
 type RenderCacheableSlotVNode = VNode<
   RendererNode,
@@ -148,19 +149,9 @@ export async function getCachedComponent(
   cacheKey: string,
 ): Promise<ComponentCacheItem | void> {
   // Get the cached item from the storage.
-  const cached: ComponentCacheEntry | null = (await storage.getItem(
-    cacheKey,
-  )) as ComponentCacheEntry
+  const cachedRaw = await storage.getItemRaw<string>(cacheKey)
 
-  if (cached) {
-    // Component cached together with payload. Nitro has already parsed the
-    // JSON for us.
-    if (typeof cached === 'object') {
-      return cached
-    } else if (typeof cached === 'string') {
-      return {
-        data: cached,
-      }
-    }
+  if (cachedRaw && typeof cachedRaw === 'string') {
+    return decodeComponentCacheItem(cachedRaw)
   }
 }
