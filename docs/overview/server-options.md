@@ -51,6 +51,10 @@ export default defineMultiCacheOptions({
 
 :::
 
+## Custom cache key generation for route cache
+
+[See this section](/features/route-cache#cache-key-for-routes)
+
 ## Custom API Authorization
 
 This method will be called for each request to the API. The function receives
@@ -155,5 +159,3 @@ export default defineMultiCacheOptions({
 ```
 
 :::
-
-This is especially useful for the route cache.
