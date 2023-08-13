@@ -132,6 +132,11 @@ export interface NuxtMultiCacheOptions {
      */
     cacheTagInvalidationDelay?: number
   }
+
+  /**
+   * Log detailled messages to the console.
+   */
+  debug?: boolean
 }
 
 export interface NuxtMultiCacheSSRContext {

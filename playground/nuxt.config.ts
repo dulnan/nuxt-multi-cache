@@ -4,6 +4,7 @@ import NuxtMultiCache from './../src/module'
 export default defineNuxtConfig({
   modules: [NuxtMultiCache],
   multiCache: {
+    debug: true,
     component: {
       enabled: true,
     },

@@ -8,12 +8,14 @@ import {
 import type { PropType } from 'vue'
 import { useNuxtApp } from '#app'
 import { encodeComponentCacheItem } from '../../helpers/cacheItem'
+import { logger } from '../../helpers/logger'
 import {
   getExpiresValue,
   getMultiCacheContext,
   getCacheKeyWithPrefix,
 } from './../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
+import { useRuntimeConfig } from '#imports'
 
 /**
  * Wrapper for cacheable components.
@@ -107,6 +109,7 @@ export default defineComponent({
     },
   },
   async setup(props) {
+    const { debug } = useRuntimeConfig().multiCache
     // Extract the contents of the default slot.
     const slots = useSlots()
     if (!slots.default) {
@@ -132,7 +135,9 @@ export default defineComponent({
       const ssrContext = useSSRContext()
       // SSR context should exist at this point, but TS doesn't know that.
       if (!ssrContext) {
-        console.log('Failed to get SSR context.')
+        if (debug) {
+          logger.warn('Failed to get SSR context.', props)
+        }
         return () => h(props.tag, slots.default!())
       }
 
@@ -145,7 +150,12 @@ export default defineComponent({
         // A parent component is required when calling the ssrRenderSlotInner
         // method.
         if (!currentInstance?.parent) {
-          console.log('Failed to get parent component in Cacheable component.')
+          if (debug) {
+            logger.warn(
+              'Failed to get parent component in Cacheable component.',
+              props,
+            )
+          }
           return
         }
 
@@ -156,7 +166,6 @@ export default defineComponent({
         // undefined.
         const multiCache = getMultiCacheContext(ssrContext.event)
         if (!multiCache?.component) {
-          console.log('Component cache is disabled.')
           return
         }
 
@@ -184,6 +193,15 @@ export default defineComponent({
           if (payload) {
             Object.keys(payload).forEach((key) => {
               nuxtApp.payload.data[key] = payload[key]
+            })
+          }
+
+          if (debug) {
+            logger.success('Returning cached component.', {
+              fullCacheKey,
+              payload: payload ? Object.keys(payload) : [],
+              expires,
+              props,
             })
           }
 
@@ -217,7 +235,21 @@ export default defineComponent({
             fullCacheKey,
             encodeComponentCacheItem(data, payload, expires, cacheTags),
           )
+          if (debug) {
+            logger.log('Stored component in cache.', {
+              file: currentInstance.type.__file,
+              fullCacheKey,
+              expires,
+              cacheTags,
+            })
+          }
         } catch (e) {
+          if (debug) {
+            logger.error('Failed to store component in cache.', {
+              fullCacheKey,
+              props,
+            })
+          }
           if (e instanceof Error) {
             console.error(e.message)
           }
@@ -239,6 +271,11 @@ export default defineComponent({
             })
         }
       } catch (e) {
+        if (debug) {
+          logger.error('Failed to get component from cache.', {
+            props,
+          })
+        }
         if (e instanceof Error) {
           console.error(e.message)
         }
