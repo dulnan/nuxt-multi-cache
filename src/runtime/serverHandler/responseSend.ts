@@ -103,9 +103,11 @@ export default defineEventHandler((event) => {
             })
           }
 
-          return multiCache.route.setItemRaw(cacheKey, cacheItem).then(() => {
-            return _end.call(event.node.res, arg1, arg2, arg3)
-          })
+          return multiCache.route
+            .setItemRaw(cacheKey, cacheItem, { ttl: routeHelper.maxAge })
+            .then(() => {
+              return _end.call(event.node.res, arg1, arg2, arg3)
+            })
         }
       }
     }

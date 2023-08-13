@@ -90,7 +90,7 @@ export function useDataCache<T>(
         if (debug) {
           logger.info('Stored item in data cache: ' + fullKey)
         }
-        return multiCache.data!.setItem(fullKey, item)
+        return multiCache.data!.setItem(fullKey, item, { ttl: maxAge })
       }
 
       if (item) {

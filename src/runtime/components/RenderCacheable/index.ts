@@ -234,6 +234,7 @@ export default defineComponent({
           multiCache.component.setItemRaw(
             fullCacheKey,
             encodeComponentCacheItem(data, payload, expires, cacheTags),
+            { ttl: props.maxAge },
           )
           if (debug) {
             logger.log('Stored component in cache.', {
