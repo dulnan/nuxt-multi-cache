@@ -4,7 +4,7 @@ export default defineConfig({
   base: (process.env.BASE_URL as `/${string}/` | undefined) || '/',
   title: 'Multi Cache for Nuxt 3',
   lang: 'en',
-  cleanUrls: 'without-subfolders',
+  cleanUrls: true,
   appearance: 'dark',
   head: [
     [
