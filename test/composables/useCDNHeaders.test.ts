@@ -19,6 +19,18 @@ vi.mock('vue', () => {
   }
 })
 
+vi.mock('#imports', () => {
+  return {
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          component: true,
+        },
+      }
+    },
+  }
+})
+
 describe('useCDNHeaders composable', () => {
   test('Does not call callback in client', () => {
     process.client = true

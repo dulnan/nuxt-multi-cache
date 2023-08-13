@@ -8,8 +8,9 @@ import type {
   Slots,
   ComponentInternalInstance,
 } from 'vue'
-import type { ComponentCacheEntry, ComponentCacheItem } from './../../../types'
 import { decodeComponentCacheItem } from '../../../helpers/cacheItem'
+import { logger } from '../../../helpers/logger'
+import type { ComponentCacheItem } from './../../../types'
 
 type RenderCacheableSlotVNode = VNode<
   RendererNode,
@@ -35,13 +36,18 @@ type RenderCacheableProps = {
 export function getCacheKey(
   props: RenderCacheableProps,
   vnode: RenderCacheableSlotVNode,
+  debug?: boolean,
 ): string | undefined {
   const componentName = getComponentName(vnode)
   const hasProps = Object.keys(vnode.props || {}).length > 0
   const cacheKeyBase = props.cacheKey || (hasProps ? hash(vnode.props) : '')
 
   if (!componentName) {
-    console.debug('Skipped caching component because component has no name.')
+    if (debug) {
+      logger.info('Skipped caching component because component has no name.', {
+        props,
+      })
+    }
     return
   }
 

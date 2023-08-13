@@ -2,6 +2,18 @@ import { describe, expect, test, vi } from 'vitest'
 import { useRouteCache } from './../../src/runtime/composables'
 import { NuxtMultiCacheRouteCacheHelper } from './../../src/runtime/helpers/RouteCacheHelper'
 
+vi.mock('#imports', () => {
+  return {
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          component: true,
+        },
+      }
+    },
+  }
+})
+
 vi.mock('vue', () => {
   const storage: Record<string, any> = {
     foobar: 'Cached data.',

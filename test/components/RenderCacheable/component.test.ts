@@ -7,6 +7,19 @@ import RenderCacheable from '../../../src/runtime/components/RenderCacheable'
 import { createTestApp } from './__helpers__'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 
+vi.mock('#imports', () => {
+  return {
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          component: true,
+          debug: true,
+        },
+      }
+    },
+  }
+})
+
 const EXAMPLE_PAYLOAD = {
   data: 'This is example payload.',
 }

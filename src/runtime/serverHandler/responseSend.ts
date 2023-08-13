@@ -1,6 +1,7 @@
 import type { ServerResponse } from 'http'
 import { defineEventHandler } from 'h3'
 import { format } from '@tusbar/cache-control'
+import { encodeRouteCacheItem } from '../helpers/cacheItem'
 import {
   getMultiCacheCDNHelper,
   getMultiCacheContext,
@@ -8,10 +9,9 @@ import {
   getCacheKeyWithPrefix,
   encodeRouteCacheKey,
 } from './../helpers/server'
-import { RouteCacheItem } from './../types'
 import serverOptions from '#multi-cache-server-options'
 import { useRuntimeConfig } from '#imports'
-import { encodeRouteCacheItem } from '../helpers/cacheItem'
+import { logger } from '../helpers/logger'
 
 /**
  * Route cache event handler.
@@ -22,6 +22,8 @@ import { encodeRouteCacheItem } from '../helpers/cacheItem'
 export default defineEventHandler((event) => {
   const cdnHelper = getMultiCacheCDNHelper(event)
   const multiCache = getMultiCacheContext(event)
+  const runtimeConfig = useRuntimeConfig()
+  const debug = runtimeConfig.multiCache.debug
 
   if (!cdnHelper && !multiCache?.route) {
     return
@@ -51,7 +53,6 @@ export default defineEventHandler((event) => {
 
     // Add CDN headers first if feature is enabled.
     if (cdnHelper) {
-      const runtimeConfig = useRuntimeConfig()
       const cacheTagsValue = cdnHelper._tags.join(' ')
       if (cacheTagsValue) {
         response.setHeader(
@@ -93,6 +94,14 @@ export default defineEventHandler((event) => {
             expires,
             routeHelper.tags,
           )
+
+          if (debug) {
+            logger.info('Storing route in cache: ' + event.path, {
+              expires,
+              cacheTags: routeHelper.tags,
+              statusCode: response.statusCode,
+            })
+          }
 
           return multiCache.route.setItemRaw(cacheKey, cacheItem).then(() => {
             return _end.call(event.node.res, arg1, arg2, arg3)

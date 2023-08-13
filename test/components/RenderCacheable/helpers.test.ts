@@ -7,8 +7,6 @@ import {
 } from './../../../src/runtime/components/RenderCacheable/helpers/index'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 
-const consoleSpy = vi.spyOn(global.console, 'debug')
-
 describe('getCacheKey', () => {
   test('Returns no cache key if component has no name.', () => {
     expect(getCacheKey({}, {} as any)).toBeUndefined()
@@ -32,13 +30,6 @@ describe('getCacheKey', () => {
     expect(
       getCacheKey({ cacheKey: 'foobar' }, { type: { name: 'Foobar' } } as any),
     ).toEqual('Foobar::foobar')
-  })
-
-  test('Logs a warning to the console if no cache key could be derived.', () => {
-    getCacheKey({ cacheKey: 'foobar' }, {} as any)
-    expect(consoleSpy).toHaveBeenCalledWith(
-      'Skipped caching component because component has no name.',
-    )
   })
 
   test('Derives cache key using hashed component props.', () => {

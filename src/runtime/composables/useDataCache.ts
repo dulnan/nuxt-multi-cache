@@ -1,5 +1,6 @@
 import { getCurrentInstance, useSSRContext } from 'vue'
 import type { H3Event } from 'h3'
+import { logger } from '../helpers/logger'
 import type { CacheItem } from './../types'
 import {
   getExpiresValue,
@@ -7,6 +8,7 @@ import {
   getCacheKeyWithPrefix,
   isExpired,
 } from './../helpers/server'
+import { useRuntimeConfig } from '#imports'
 
 type AddToCacheMethod<T> = (
   data: T,
@@ -38,6 +40,7 @@ export function useDataCache<T>(
   if (process.client) {
     return Promise.resolve(dummy)
   }
+  const { debug } = useRuntimeConfig().multiCache
 
   try {
     const event: H3Event = (() => {
@@ -48,6 +51,12 @@ export function useDataCache<T>(
 
       // Prevent logging warnings when not in vue context.
       if (!getCurrentInstance()) {
+        if (debug) {
+          logger.warn(
+            'No H3Event provided while not in vue context when calling useDataCache for key: ' +
+              key,
+          )
+        }
         return
       }
 
@@ -78,17 +87,31 @@ export function useDataCache<T>(
         if (maxAge) {
           item.expires = getExpiresValue(maxAge)
         }
+        if (debug) {
+          logger.info('Stored item in data cache: ' + fullKey)
+        }
         return multiCache.data!.setItem(fullKey, item)
       }
 
-      if (item && !isExpired(item)) {
-        return {
-          addToCache,
-          // Extract the value. If the item was stored along its cache tags, it
-          // will be an object with a cacheTags property.
-          value: item.data as T,
-          cacheTags: item.cacheTags || [],
-          expires: item.expires,
+      if (item) {
+        const itemIsExpired = isExpired(item)
+        if (!itemIsExpired) {
+          if (debug) {
+            logger.info('Returned item from data cache: ' + fullKey)
+          }
+          return {
+            addToCache,
+            // Extract the value. If the item was stored along its cache tags, it
+            // will be an object with a cacheTags property.
+            value: item.data as T,
+            cacheTags: item.cacheTags || [],
+            expires: item.expires,
+          }
+        } else if (debug) {
+          logger.info(
+            'Skipped returning item from data cache because expired: ' +
+              fullKey,
+          )
         }
       }
 

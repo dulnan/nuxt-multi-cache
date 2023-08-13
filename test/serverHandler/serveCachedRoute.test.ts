@@ -1,6 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
 import { encodeRouteCacheItem } from '../../src/runtime/helpers/cacheItem'
-import { encodeRouteCacheKey } from '../../src/runtime/helpers/server'
 import serveCachedRoute from './../../src/runtime/serverHandler/serveCachedRoute'
 
 const consoleSpy = vi.spyOn(global.console, 'debug')
@@ -8,6 +7,18 @@ const consoleSpy = vi.spyOn(global.console, 'debug')
 vi.mock('#multi-cache-server-options', () => {
   return {
     default: {},
+  }
+})
+
+vi.mock('#imports', () => {
+  return {
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          debug: false,
+        },
+      }
+    },
   }
 })
 

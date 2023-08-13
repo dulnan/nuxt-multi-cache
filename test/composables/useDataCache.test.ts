@@ -2,6 +2,18 @@ import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables'
 import { CacheItem } from './../../src/runtime/types'
 
+vi.mock('#imports', () => {
+  return {
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          data: true,
+        },
+      }
+    },
+  }
+})
+
 vi.mock('vue', () => {
   const storage: Record<string, CacheItem> = {
     foobar: { data: 'Cached data.' },

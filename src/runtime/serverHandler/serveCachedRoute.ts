@@ -1,11 +1,15 @@
 import { defineEventHandler, setResponseHeaders } from 'h3'
 import { decodeRouteCacheItem } from '../helpers/cacheItem'
+import { logger } from '../helpers/logger'
 import {
   getMultiCacheContext,
   getCacheKeyWithPrefix,
   encodeRouteCacheKey,
 } from './../helpers/server'
 import serverOptions from '#multi-cache-server-options'
+import { useRuntimeConfig } from '#imports'
+
+const { debug } = useRuntimeConfig().multiCache
 
 /**
  * Route cache event handler. Returns a cached response if available.
@@ -43,6 +47,11 @@ export default defineEventHandler(async (event) => {
         }
         if (decoded.statusCode) {
           event.node.res.statusCode = decoded.statusCode
+        }
+        if (debug) {
+          logger.info('Serving cached route for path: ' + event.path, {
+            fullKey,
+          })
         }
         return decoded.data
       }
