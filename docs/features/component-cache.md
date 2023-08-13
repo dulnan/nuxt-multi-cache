@@ -111,7 +111,7 @@ You can also provide your own cache key:
 ```vue
 <template>
   <div>
-    <RenderCacheable :cache-key="[currentLanguage, currentCurreny].join('--')">
+    <RenderCacheable :cache-key="[currentLanguage, currentCurrenсy].join('--')">
       <Navbar />
     </RenderCacheable>
   </div>
