@@ -121,8 +121,7 @@ export default defineComponent({
     // Wrap all server-side code in an if statement so that it gets properly
     // removed from the client bundles.
     if (process.server && !props.noCache) {
-      const { debug } = useRuntimeConfig().multiCache
-
+      const { debug } = useRuntimeConfig().multiCache || {}
       const cacheKey = getCacheKey(props as any, first, debug)
 
       // Return if no cache key found.

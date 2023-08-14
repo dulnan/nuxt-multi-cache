@@ -40,7 +40,7 @@ export function useDataCache<T>(
   if (process.client) {
     return Promise.resolve(dummy)
   }
-  const { debug } = useRuntimeConfig().multiCache
+  const { debug } = useRuntimeConfig().multiCache || {}
 
   try {
     const event: H3Event = (() => {

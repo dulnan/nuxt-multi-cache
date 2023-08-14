@@ -2,6 +2,11 @@ import { defineNuxtConfig } from 'nuxt/config'
 import NuxtMultiCache from './../src/module'
 
 export default defineNuxtConfig({
+  routeRules: {
+    '/spaPageWithCachedComponent': { ssr: false },
+    '/spaDataCache': { ssr: false },
+    '/spaPageWithException': { ssr: false },
+  },
   modules: [NuxtMultiCache],
   multiCache: {
     debug: false,

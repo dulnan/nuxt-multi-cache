@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { readBody, defineEventHandler, createError } from 'h3'
 import { getMultiCacheContext } from './../../helpers/server'
 import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../settings'
-import type { CacheItem, NuxtMultiCacheSSRContext } from './../../types'
+import type { NuxtMultiCacheSSRContext } from './../../types'
 import { checkAuth } from './helpers'
 import { useRuntimeConfig } from '#imports'
 import {
@@ -174,7 +174,7 @@ export default defineEventHandler(async (event) => {
   if (!invalidator.cacheContext) {
     invalidator.cacheContext = getMultiCacheContext(event)
     const { multiCache } = useRuntimeConfig()
-    invalidator.setDelay(multiCache.api.cacheTagInvalidationDelay)
+    invalidator.setDelay(multiCache?.api?.cacheTagInvalidationDelay)
   }
 
   invalidator.add(tags)

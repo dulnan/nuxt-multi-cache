@@ -9,7 +9,7 @@ import {
 import serverOptions from '#multi-cache-server-options'
 import { useRuntimeConfig } from '#imports'
 
-const { debug } = useRuntimeConfig().multiCache
+const { debug } = useRuntimeConfig().multiCache || {}
 
 /**
  * Route cache event handler. Returns a cached response if available.

@@ -6,6 +6,7 @@ import serverOptions from '#multi-cache-server-options'
 const runtimeConfig = useRuntimeConfig()
 
 const cacheContext: NuxtMultiCacheSSRContext = {}
+
 // Initialize all enabled caches. Explicit initialization because some
 // caches might need additional configuration options and/or checks.
 if (runtimeConfig.multiCache.component) {
