@@ -109,7 +109,6 @@ export default defineComponent({
     },
   },
   async setup(props) {
-    const { debug } = useRuntimeConfig().multiCache
     // Extract the contents of the default slot.
     const slots = useSlots()
     if (!slots.default) {
@@ -122,6 +121,8 @@ export default defineComponent({
     // Wrap all server-side code in an if statement so that it gets properly
     // removed from the client bundles.
     if (process.server && !props.noCache) {
+      const { debug } = useRuntimeConfig().multiCache
+
       const cacheKey = getCacheKey(props as any, first, debug)
 
       // Return if no cache key found.
