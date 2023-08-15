@@ -1,0 +1,1 @@
+export { defineMultiCacheOptions } from './defineMultiCacheOptions'

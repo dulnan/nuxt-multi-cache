@@ -173,7 +173,7 @@ export interface ComponentCacheItem extends CacheItem {
 
 export type ComponentCacheEntry = ComponentCacheItem | string
 
-export type MutliCacheServerOptions = {
+export type MultiCacheServerOptions = {
   component?: {
     storage?: CreateStorageOptions
   }
@@ -228,6 +228,10 @@ export type MutliCacheServerOptions = {
     authorization?: (event: H3Event) => Promise<boolean>
   }
 }
+
+// This typo went unnoticed for quite some time, so we'll also export it with
+// the typo, in case it was imported by module users.
+export type MutliCacheServerOptions = MultiCacheServerOptions
 
 export type MultiCacheRuntimeConfig = {
   cdn: {

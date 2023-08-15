@@ -7,9 +7,11 @@
     ".": {
       "import": "./dist/module.mjs",
       "require": "./dist/module.cjs"
-    }
+    },
+    "./dist/runtime/serverOptions": "./dist/runtime/serverOptions/index.mjs"
   },
   "main": "./dist/module.cjs",
+  "module": "./dist/module.mjs",
   "types": "./dist/types.d.ts",
   "keywords": [
     "nuxt",

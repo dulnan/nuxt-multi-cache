@@ -9,7 +9,7 @@ import {
   addImports,
   addTemplate,
 } from '@nuxt/kit'
-import { MutliCacheServerOptions, NuxtMultiCacheOptions } from './runtime/types'
+import { MultiCacheServerOptions, NuxtMultiCacheOptions } from './runtime/types'
 import {
   defaultOptions,
   DEFAULT_CDN_CONTROL_HEADER,
@@ -240,6 +240,9 @@ export default defineNuxtModule<ModuleOptions>({
   },
 }) as NuxtModule<ModuleOptions>
 
-export function defineMultiCacheOptions(options: MutliCacheServerOptions) {
+export function defineMultiCacheOptions(options: MultiCacheServerOptions) {
+  const warning =
+    'Importing "defineMultiCacheOptions" from "nuxt-multi-cache" is deprecated, as it increases server bundle size significantly. It should now be imported from "nuxt-multi-cache/dist/runtime/serverOptions" instead.'
+  logger.error(['\n\n', warning, '\n\n'].join('!'.repeat(warning.length)))
   return options
 }

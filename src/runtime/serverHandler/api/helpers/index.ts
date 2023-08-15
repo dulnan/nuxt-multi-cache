@@ -3,7 +3,7 @@ import { createError, getHeader } from 'h3'
 import type { Storage } from 'unstorage'
 import type {
   MultiCacheRuntimeConfig,
-  MutliCacheServerOptions,
+  MultiCacheServerOptions,
   NuxtMultiCacheSSRContext,
 } from './../../../types'
 import { getMultiCacheContext } from './../../../helpers/server'
@@ -43,7 +43,7 @@ export function getCacheInstance(event: H3Event): Storage {
 export async function checkAuth(
   event: H3Event,
   providedRuntimeConfig?: MultiCacheRuntimeConfig,
-  providedServerOptions?: MutliCacheServerOptions,
+  providedServerOptions?: MultiCacheServerOptions,
 ) {
   const { authorizationDisabled, authorizationToken } =
     (providedRuntimeConfig || runtimeConfig.multiCache).api || {}

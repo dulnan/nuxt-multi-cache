@@ -21,7 +21,7 @@ export default defineNuxtConfig({
 
 ```typescript [multiCache.serverOptions.ts]
 // ~/app/multiCache.serverOptions.ts
-import { defineMultiCacheOptions } from 'nuxt-multi-cache'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 import myCustomDriver from './somehwere'
 
 export default defineMultiCacheOptions({
@@ -56,7 +56,7 @@ the cache key for a given route:
 ::: code-group
 
 ```typescript [multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 import { getQuery } from 'h3'
 
 export default defineMultiCacheOptions({
