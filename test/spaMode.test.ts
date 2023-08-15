@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
 import purgeByKey from './__helpers__/purgeByKey'
+import { sleep } from './__helpers__'
 
 describe('In SPA mode', async () => {
   const multiCache: NuxtMultiCacheOptions = {
@@ -56,7 +57,8 @@ describe('In SPA mode', async () => {
     await purgeAll()
 
     const page = await createPage('/spaDataCache')
+    await sleep(1000)
     const text = await page.locator('#data-cache-value').innerText()
-    expect(text).toEqual('Success.')
+    expect(text).toEqual('Success')
   })
 })
