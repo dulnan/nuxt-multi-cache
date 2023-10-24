@@ -87,9 +87,16 @@ export default defineEventHandler((event) => {
             ? Math.round(Date.now() / 1000) + routeHelper.maxAge
             : undefined
 
+          if (response.statusCode !== 200) {
+            return _end.call(event.node.res, arg1, arg2, arg3)
+          }
+
+          const headers = response.getHeaders()
+          headers['set-cookie'] = undefined
+
           const cacheItem = encodeRouteCacheItem(
             chunk,
-            response.getHeaders(),
+            headers,
             response.statusCode,
             expires,
             routeHelper.tags,

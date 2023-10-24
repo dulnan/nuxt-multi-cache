@@ -1,12 +1,13 @@
 <template>
   <div class="main-layout">
     <header>
-      <RenderCacheable cache-key="navbar" :async-data-keys="['navbar']">
+<!--      <RenderCacheable cache-key="navbar" :async-data-keys="['navbar']">-->
         <Navbar />
-      </RenderCacheable>
+<!--      </RenderCacheable>-->
     </header>
     <main>
       <slot />
+      <api-playground />
     </main>
   </div>
 </template>
@@ -19,3 +20,6 @@
   padding: 2rem;
 }
 </style>
+<script setup lang="ts">
+import ApiPlayground from "../components/apiPlayground.vue";
+</script>
