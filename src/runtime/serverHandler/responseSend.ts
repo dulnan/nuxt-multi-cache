@@ -92,7 +92,7 @@ export default defineEventHandler((event) => {
           }
 
           const headers = response.getHeaders()
-          headers['Cookie'] = undefined
+          headers['set-cookie'] = undefined
 
           const cacheItem = encodeRouteCacheItem(
             chunk,
