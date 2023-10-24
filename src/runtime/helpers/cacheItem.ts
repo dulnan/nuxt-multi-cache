@@ -33,7 +33,6 @@ export function encodeRouteCacheItem(
   expires: number | undefined,
   cacheTags: string[],
 ): string {
-  console.log('encodeRouteCacheItem', headers);
   return encodeCacheItem(data, { headers, statusCode, expires, cacheTags })
 }
 
