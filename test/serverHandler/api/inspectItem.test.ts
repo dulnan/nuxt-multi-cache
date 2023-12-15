@@ -149,6 +149,8 @@ describe('inspectItem API handler', () => {
         },
         __CACHE_NAME: 'component',
       } as any),
-    ).rejects.toThrowErrorMatchingInlineSnapshot('"Cache item does not exist."')
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Error: Cache item does not exist.]`,
+    )
   })
 })
