@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch, createPage } from '@nuxt/test-utils'
+import { setup, $fetch, createPage } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'

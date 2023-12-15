@@ -1,4 +1,4 @@
-import { $fetch } from '@nuxt/test-utils'
+import { $fetch } from '@nuxt/test-utils/e2e'
 
 export default function purgeByKey(cache: string, keys: string[] | string) {
   const body: string[] = Array.isArray(keys) ? keys : [keys]
