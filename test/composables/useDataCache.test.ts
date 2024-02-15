@@ -1,6 +1,6 @@
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables'
-import { CacheItem } from './../../src/runtime/types'
+import type { CacheItem } from './../../src/runtime/types'
 
 vi.mock('#imports', () => {
   return {

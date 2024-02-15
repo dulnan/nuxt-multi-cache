@@ -4,8 +4,8 @@ import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import RenderCacheable from '../../../src/runtime/components/RenderCacheable'
-import { createTestApp } from './__helpers__'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
+import { createTestApp } from './__helpers__'
 
 vi.mock('#imports', () => {
   return {

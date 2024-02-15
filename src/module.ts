@@ -9,7 +9,10 @@ import {
   addImports,
   addTemplate,
 } from '@nuxt/kit'
-import { MultiCacheServerOptions, NuxtMultiCacheOptions } from './runtime/types'
+import type {
+  MultiCacheServerOptions,
+  NuxtMultiCacheOptions,
+} from './runtime/types'
 import {
   defaultOptions,
   DEFAULT_CDN_CONTROL_HEADER,
@@ -56,7 +59,7 @@ export default defineNuxtModule<ModuleOptions>({
     configKey: 'multiCache',
     version: '3.1.0',
     compatibility: {
-      nuxt: '^3.5.0',
+      nuxt: '^3.11.2',
     },
   },
   defaults: defaultOptions as any,

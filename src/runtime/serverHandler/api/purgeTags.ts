@@ -1,14 +1,14 @@
 import type { H3Event } from 'h3'
 import { readBody, defineEventHandler, createError } from 'h3'
+import {
+  decodeComponentCacheItem,
+  decodeRouteCacheItem,
+} from '../../helpers/cacheItem'
 import { getMultiCacheContext } from './../../helpers/server'
 import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../settings'
 import type { NuxtMultiCacheSSRContext } from './../../types'
 import { checkAuth } from './helpers'
 import { useRuntimeConfig } from '#imports'
-import {
-  decodeComponentCacheItem,
-  decodeRouteCacheItem,
-} from '../../helpers/cacheItem'
 
 /**
  * Get the tags to be purged from the request.

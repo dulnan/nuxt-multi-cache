@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url'
 import { setup, $fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 
 describe('The data cache feature', async () => {
   const multiCache: NuxtMultiCacheOptions = {

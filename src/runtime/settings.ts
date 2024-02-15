@@ -1,4 +1,4 @@
-import { NuxtMultiCacheOptions } from './types'
+import type { NuxtMultiCacheOptions } from './types'
 
 type Subset<K> = {
   [attr in keyof K]?: K[attr] extends object
