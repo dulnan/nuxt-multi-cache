@@ -1,10 +1,10 @@
 import { describe, expect, test, vi } from 'vitest'
 import { createStorage } from 'unstorage'
 import { sleep } from '../../__helpers__'
+import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import purgeTags, {
   DebouncedInvalidator,
 } from './../../../src/runtime/serverHandler/api/purgeTags'
-import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 
 vi.mock('h3', async () => {
   const h3: any = await vi.importActual('h3')

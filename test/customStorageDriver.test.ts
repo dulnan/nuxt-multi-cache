@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch } from '@nuxt/test-utils'
+import { setup, $fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 
 describe('The data cache feature', async () => {
   const multiCache: NuxtMultiCacheOptions = {
@@ -26,13 +26,15 @@ describe('The data cache feature', async () => {
   const nuxtConfig: any = {
     multiCache,
   }
+
+  const baseUrl = import.meta.url
   await setup({
     server: true,
     logLevel: 0,
     runner: 'vitest',
     build: true,
     // browser: true,
-    rootDir: fileURLToPath(new URL('../playground', import.meta.url)),
+    rootDir: fileURLToPath(new URL('../playground', baseUrl)),
     nuxtConfig,
   })
 

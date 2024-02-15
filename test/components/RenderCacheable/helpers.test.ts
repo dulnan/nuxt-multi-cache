@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from 'vitest'
 import { createStorage } from 'unstorage'
+import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import {
   getCacheKey,
   getComponentName,
   getCachedComponent,
 } from './../../../src/runtime/components/RenderCacheable/helpers/index'
-import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 
 describe('getCacheKey', () => {
   test('Returns no cache key if component has no name.', () => {

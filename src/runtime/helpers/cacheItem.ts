@@ -1,4 +1,4 @@
-import { ComponentCacheItem, RouteCacheItem } from '../types'
+import type { ComponentCacheItem, RouteCacheItem } from '../types'
 
 const DELIMITER = '<CACHE_ITEM>'
 

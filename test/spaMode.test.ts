@@ -1,7 +1,7 @@
 import { fileURLToPath } from 'node:url'
-import { setup, $fetch, createPage } from '@nuxt/test-utils'
+import { setup, createPage } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
 import purgeByKey from './__helpers__/purgeByKey'
 import { sleep } from './__helpers__'
@@ -29,13 +29,15 @@ describe('In SPA mode', async () => {
   const nuxtConfig: any = {
     multiCache,
   }
+
+  const baseUrl = import.meta.url
   await setup({
     server: true,
     logLevel: 0,
     runner: 'vitest',
     build: true,
     // browser: true,
-    rootDir: fileURLToPath(new URL('../playground', import.meta.url)),
+    rootDir: fileURLToPath(new URL('../playground', baseUrl)),
     nuxtConfig,
   })
 

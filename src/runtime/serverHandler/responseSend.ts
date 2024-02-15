@@ -2,6 +2,7 @@ import type { ServerResponse } from 'http'
 import { defineEventHandler } from 'h3'
 import { format } from '@tusbar/cache-control'
 import { encodeRouteCacheItem } from '../helpers/cacheItem'
+import { logger } from '../helpers/logger'
 import {
   getMultiCacheCDNHelper,
   getMultiCacheContext,
@@ -11,7 +12,6 @@ import {
 } from './../helpers/server'
 import serverOptions from '#multi-cache-server-options'
 import { useRuntimeConfig } from '#imports'
-import { logger } from '../helpers/logger'
 
 /**
  * Route cache event handler.
