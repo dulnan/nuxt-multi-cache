@@ -71,7 +71,7 @@ describe('purgeItem API handler', () => {
       },
     }
     expect(purgeItem(event)).rejects.toThrowErrorMatchingInlineSnapshot(
-      '"No valid keys provided."',
+      `[Error: No valid keys provided.]`,
     )
   })
 })

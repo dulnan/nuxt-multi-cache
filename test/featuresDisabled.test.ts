@@ -1,5 +1,5 @@
 import { fileURLToPath } from 'node:url'
-import { setup, fetch, $fetch } from '@nuxt/test-utils'
+import { setup, fetch, $fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 
