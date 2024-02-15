@@ -58,19 +58,18 @@ export default defineNuxtModule<ModuleOptions>({
     name: 'nuxt-multi-cache',
     configKey: 'multiCache',
     version: '3.1.0',
-    compatibility: {
-      nuxt: '^3.11.2',
-    },
   },
   defaults: defaultOptions as any,
   async setup(passedOptions, nuxt) {
     const options = defu({}, passedOptions, {}) as ModuleOptions
     checkObsoleteOptions(options)
+
     const { resolve } = createResolver(import.meta.url)
     const rootDir = nuxt.options.rootDir
 
-    const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
-    nuxt.options.build.transpile.push(runtimeDir)
+    // const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
+
+    // nuxt.options.build.transpile.push(runtimeDir)
     nuxt.options.runtimeConfig.multiCache = {
       debug: !!options.debug,
       rootDir,
