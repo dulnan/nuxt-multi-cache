@@ -1,8 +1,9 @@
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { useDataCache } from './../../src/runtime/composables'
 import type { CacheItem } from './../../src/runtime/types'
 
-vi.mock('#imports', () => {
+mockNuxtImport('useRuntimeConfig', () => {
   return {
     useRuntimeConfig: () => {
       return {
