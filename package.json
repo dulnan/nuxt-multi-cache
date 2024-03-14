@@ -8,7 +8,10 @@
       "import": "./dist/module.mjs",
       "require": "./dist/module.cjs"
     },
-    "./dist/runtime/serverOptions": "./dist/runtime/serverOptions/index.mjs"
+    "./dist/runtime/serverOptions": {
+      "import": "./dist/runtime/serverOptions/index.mjs",
+      "types": "./dist/runtime/serverOptions/index.d.ts"
+    }
   },
   "main": "./dist/module.cjs",
   "module": "./dist/module.mjs",
