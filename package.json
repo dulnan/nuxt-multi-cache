@@ -78,6 +78,7 @@
     "nuxt-vitest": "^0.10.2",
     "playwright": "^1.37.0",
     "prettier": "^3.0.1",
-    "vitepress": "^1.0.0-rc.4"
+    "vitepress": "^1.0.0-rc.4",
+    "vue-json-pretty": "^2.2.4"
   }
 }

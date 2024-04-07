@@ -9,7 +9,7 @@ export default defineNuxtConfig({
   },
   modules: [NuxtMultiCache],
   multiCache: {
-    debug: false,
+    debug: true,
     component: {
       enabled: true,
     },
@@ -30,4 +30,8 @@ export default defineNuxtConfig({
       authorization: false,
     },
   },
+
+  css: [
+    'vue-json-pretty/lib/styles.css'
+  ],
 })

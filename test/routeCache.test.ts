@@ -68,4 +68,29 @@ describe('The route cache feature', async () => {
 
     expect(first).not.toEqual(second)
   })
+
+  test('does not cache a pages cookie header', async () => {
+    await purgeAll()
+
+    // First call puts it into cache.
+    const first = await $fetch('/cachedPageWithRandomNumber', {
+      method: 'get',
+    })
+
+    const cache = await $fetch(`/__nuxt_multi_cache/stats/route`, {
+      headers: {
+        'x-nuxt-multi-cache-token': 'hunter2',
+      },
+    })
+
+    const cacheItem = cache.rows[0].data.split('<CACHE_ITEM>')
+    let response = cacheItem[0]
+    try {
+      response = JSON.parse(cacheItem[0])
+    } catch (e) {
+      // ignore
+    }
+
+    expect(response.headers['set-cookie']).toEqual(undefined)
+  })
 })
