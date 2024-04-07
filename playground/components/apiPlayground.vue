@@ -1,12 +1,16 @@
 <template>
   <div class="float-bottom">
-    <h1>Cache API Playground - <a @click="getCache">Refresh</a> -
-      <a @click="purgeAll">Purge All</a></h1>
-    <div>
+    <h1>
+      Cache API Playground - <button @click="getCache()">Refresh</button> -
+      <a @click="purgeAll">Purge All</a>
+    </h1>
+    <div v-if="cache">
       Status: {{ cache.status }}<br />
       Rows: {{ cache.total }} <br />
       <div v-for="row in cache.rows" :key="row.key">
-        <div><b>{{ row.key }}</b></div>
+        <div>
+          <b>{{ row.key }}</b>
+        </div>
         <div class="scroll-area">
           <vue-json-pretty :data="getData(row.data)" />
         </div>
@@ -18,9 +22,16 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const cache = ref('')
+type StatsResponse = {
+  status: string
+  rows: any[]
+  total: number
+}
+
+const cache = ref<StatsResponse | null>(null)
+
 const getCache = (type = 'route') => {
-  $fetch(`http://localhost:3000/__nuxt_multi_cache/stats/${type}`, {
+  $fetch(`/__nuxt_multi_cache/stats/${type}`, {
     headers: {
       'x-nuxt-multi-cache-token': 'hunter2',
     },
@@ -35,7 +46,7 @@ const purgeAll = () => {
     headers: {
       'x-nuxt-multi-cache-token': 'hunter2',
     },
-  }).then(getCache)
+  }).then(() => getCache())
 }
 
 getCache()
