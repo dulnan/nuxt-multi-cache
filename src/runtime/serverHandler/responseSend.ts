@@ -91,8 +91,11 @@ export default defineEventHandler((event) => {
             return _end.call(event.node.res, arg1, arg2, arg3)
           }
 
-          const headers = response.getHeaders()
-          headers['set-cookie'] = undefined
+          let headers = { ...response.getHeaders() }
+
+          if (serverOptions.route?.alterCachedHeaders) {
+            headers = serverOptions.route.alterCachedHeaders(headers)
+          }
 
           const cacheItem = encodeRouteCacheItem(
             chunk,

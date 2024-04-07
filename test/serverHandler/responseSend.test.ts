@@ -1,4 +1,4 @@
-import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { createStorage } from 'unstorage'
 import { sleep } from '../__helpers__'
 import responseSend from '../../src/runtime/serverHandler/responseSend'
@@ -124,6 +124,7 @@ describe('responseSend server handler', () => {
       path: '/test/route/nested',
       node: {
         res: {
+          statusCode: 200,
           end: () => {},
           getHeaders() {
             return {
@@ -149,7 +150,7 @@ describe('responseSend server handler', () => {
     await sleep(100)
 
     expect(await storage.getItemRaw('test:route:nested')).toMatchInlineSnapshot(
-      '"{\\"headers\\":{\\"x-test\\":\\"Foobar\\"},\\"cacheTags\\":[]}<CACHE_ITEM><html></html>"',
+      '"{\\"headers\\":{\\"x-test\\":\\"Foobar\\"},\\"statusCode\\":200,\\"cacheTags\\":[]}<CACHE_ITEM><html></html>"',
     )
   })
 
@@ -159,6 +160,7 @@ describe('responseSend server handler', () => {
       path: '/test/route/nested',
       node: {
         res: {
+          statusCode: 200,
           end: () => {},
           getHeaders() {
             return {
@@ -192,6 +194,7 @@ describe('responseSend server handler', () => {
       path: '/test/route/nested',
       node: {
         res: {
+          statusCode: 200,
           end: () => {},
           getHeaders() {
             return {
@@ -225,6 +228,7 @@ describe('responseSend server handler', () => {
       path: '/test/route/nested',
       node: {
         res: {
+          statusCode: 200,
           end: () => {},
           getHeaders() {
             return {

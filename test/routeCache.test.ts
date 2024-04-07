@@ -3,6 +3,7 @@ import { setup, $fetch } from '@nuxt/test-utils'
 import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
+import { decodeRouteCacheItem } from '../src/runtime/helpers/cacheItem'
 
 describe('The route cache feature', async () => {
   const multiCache: NuxtMultiCacheOptions = {
@@ -69,11 +70,11 @@ describe('The route cache feature', async () => {
     expect(first).not.toEqual(second)
   })
 
-  test('does not cache a pages cookie header', async () => {
+  test('does not cache the set-cookie header if it is a session cookie.', async () => {
     await purgeAll()
 
     // First call puts it into cache.
-    const first = await $fetch('/cachedPageWithRandomNumber', {
+    await $fetch('/cachedPageWithSessionCookie', {
       method: 'get',
     })
 
@@ -83,14 +84,31 @@ describe('The route cache feature', async () => {
       },
     })
 
-    const cacheItem = cache.rows[0].data.split('<CACHE_ITEM>')
-    let response = cacheItem[0]
-    try {
-      response = JSON.parse(cacheItem[0])
-    } catch (e) {
-      // ignore
-    }
+    const cacheItem = decodeRouteCacheItem(cache.rows[0].data)
 
-    expect(response.headers['set-cookie']).toEqual(undefined)
+    expect(cacheItem?.headers['set-cookie']).toEqual(undefined)
+  })
+
+  test('does cache the set-cookie header if it is not a session cookie.', async () => {
+    await purgeAll()
+
+    // First call puts it into cache.
+    await $fetch('/cachedPageWithCountryCookie', {
+      method: 'get',
+    })
+
+    const cache = await $fetch(`/__nuxt_multi_cache/stats/route`, {
+      headers: {
+        'x-nuxt-multi-cache-token': 'hunter2',
+      },
+    })
+
+    const cacheItem = decodeRouteCacheItem(cache.rows[0].data)
+
+    expect(cacheItem?.headers['set-cookie']).toMatchInlineSnapshot(`
+      [
+        "country=us; Path=/",
+      ]
+    `)
   })
 })

@@ -54,6 +54,27 @@ export default defineMultiCacheOptions({
       driver: customDriver(),
     },
   },
+  route: {
+    alterCachedHeaders(headers) {
+      const cookie = headers['set-cookie']
+      // Remove the SESSION cookie.
+      if (cookie) {
+        if (typeof cookie === 'string') {
+          if (cookie.includes('SESSION')) {
+            headers['set-cookie'] = undefined
+          }
+        } else if (Array.isArray(cookie)) {
+          const remaining = cookie.filter((v) => !v.includes('SESSION'))
+          if (!remaining.length) {
+            headers['set-cookie'] = undefined
+          } else {
+            headers['set-cookie'] = remaining
+          }
+        }
+      }
+      return headers
+    },
+  },
   component: {},
   cacheKeyPrefix: (event: H3Event): Promise<string> => {
     return Promise.resolve(getCacheKeyPrefix(event))
