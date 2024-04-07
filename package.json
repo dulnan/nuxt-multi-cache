@@ -57,7 +57,8 @@
   ],
   "dependencies": {
     "@nuxt/kit": "^3.6.5",
-    "@tusbar/cache-control": "^1.0.1"
+    "@tusbar/cache-control": "^1.0.1",
+    "consola": "3.2.3"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.0.2",
