@@ -5,8 +5,14 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/module.mjs",
-      "require": "./dist/module.cjs"
+      "import": {
+        "types": "./dist/types.d.ts",
+        "default": "./dist/module.mjs"
+      },
+      "require": {
+        "types": "./dist/types.d.ts",
+        "default": "./dist/module.cjs"
+      }
     },
     "./dist/runtime/serverOptions": {
       "import": "./dist/runtime/serverOptions/index.mjs",
