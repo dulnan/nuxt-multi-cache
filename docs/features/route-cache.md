@@ -44,7 +44,7 @@ By default query strings are **ignored**! This means that a request for
 
 The reason for this decision is that there are basically infinite possibilities
 to alter the query string. This would be an easy way to quickly crash the app by
-putting hundres of thousands of pages into the cache.
+putting hundreds of thousands of pages into the cache.
 
 :::
 
