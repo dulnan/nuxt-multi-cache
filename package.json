@@ -15,7 +15,7 @@
       }
     },
     "./dist/runtime/serverOptions": {
-      "import": "./dist/runtime/serverOptions/index.mjs",
+      "import": "./dist/runtime/serverOptions/index.js",
       "types": "./dist/runtime/serverOptions/index.d.ts"
     }
   },
