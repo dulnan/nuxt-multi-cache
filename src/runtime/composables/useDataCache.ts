@@ -124,6 +124,7 @@ export function useDataCache<T>(
   } catch (e) {
     if (e instanceof Error) {
       // For some reason cache is not available.
+      // eslint-disable-next-line no-console
       console.debug(e.message)
     }
   }

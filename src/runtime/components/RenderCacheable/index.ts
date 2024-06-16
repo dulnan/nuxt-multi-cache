@@ -6,6 +6,7 @@ import {
   h,
 } from 'vue'
 import type { PropType } from 'vue'
+import { useNuxtApp } from '#app'
 import { encodeComponentCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/logger'
 import {
@@ -14,7 +15,6 @@ import {
   getCacheKeyWithPrefix,
 } from './../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
-import { useNuxtApp } from '#app'
 import { useRuntimeConfig } from '#imports'
 
 /**
@@ -252,6 +252,7 @@ export default defineComponent({
             })
           }
           if (e instanceof Error) {
+            // eslint-disable-next-line no-console
             console.error(e.message)
           }
         }
@@ -278,6 +279,7 @@ export default defineComponent({
           })
         }
         if (e instanceof Error) {
+          // eslint-disable-next-line no-console
           console.error(e.message)
         }
       }

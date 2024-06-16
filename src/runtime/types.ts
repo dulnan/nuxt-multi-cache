@@ -1,6 +1,6 @@
+import type { OutgoingHttpHeaders } from 'node:http'
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
-import { OutgoingHttpHeaders } from 'node:http'
 
 interface CacheConfigOptions {
   /**

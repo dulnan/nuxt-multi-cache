@@ -57,7 +57,7 @@ export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'nuxt-multi-cache',
     configKey: 'multiCache',
-    version: '3.1.0',
+    version: '3.10.0',
   },
   defaults: defaultOptions as any,
   async setup(passedOptions, nuxt) {

@@ -37,7 +37,7 @@
   },
   "license": "MIT",
   "scripts": {
-    "prepack": "nuxt-module-build",
+    "prepack": "nuxt-module-build build",
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:serve": "node playground/.output/server/index.mjs",
@@ -48,6 +48,8 @@
     "docs:serve": "vitepress serve docs --port 5000",
     "prettier": "prettier ./src --check",
     "prettier:fix": "prettier ./src --write",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix",
     "fake-data": "node ./scripts/fakeData.js",
     "test": "TZ=utc vitest",
     "test:debug": "TZ=utc vitest --disable-console-intercept --reporter=json",

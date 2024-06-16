@@ -51,7 +51,7 @@ function getCacheKeyPrefix(event: H3Event): string {
 export default defineMultiCacheOptions({
   data: {
     storage: {
-      driver: customDriver(),
+      driver: customDriver({}),
     },
   },
   route: {

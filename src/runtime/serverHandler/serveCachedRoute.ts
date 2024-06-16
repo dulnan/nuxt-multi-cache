@@ -57,6 +57,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (e) {
     if (e instanceof Error) {
+      // eslint-disable-next-line no-console
       console.debug(e.message)
     }
   }

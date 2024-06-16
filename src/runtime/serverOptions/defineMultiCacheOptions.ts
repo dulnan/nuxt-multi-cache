@@ -1,4 +1,4 @@
-import { MultiCacheServerOptions } from './../types'
+import type { MultiCacheServerOptions } from './../types'
 
 export function defineMultiCacheOptions(
   options: MultiCacheServerOptions,

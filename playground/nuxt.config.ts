@@ -7,7 +7,10 @@ export default defineNuxtConfig({
     '/spaDataCache': { ssr: false },
     '/spaPageWithException': { ssr: false },
   },
-  modules: [NuxtMultiCache, '@nuxt/test-utils/module'],
+  modules: [NuxtMultiCache],
+  imports: {
+    autoImport: false,
+  },
   multiCache: {
     debug: true,
     component: {
