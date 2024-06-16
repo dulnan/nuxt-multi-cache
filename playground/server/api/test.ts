@@ -1,7 +1,13 @@
 import { useCDNHeaders, useRouteCache } from '#nuxt-multi-cache/composables'
 import { defineEventHandler } from 'h3'
 
-export default defineEventHandler((event) => {
+type TestResponse = {
+  api: string
+  now: Date
+  cacheTags: string[]
+}
+
+export default defineEventHandler<TestResponse>((event) => {
   const cacheTags: string[] = [
     'page:1',
     'image:234',

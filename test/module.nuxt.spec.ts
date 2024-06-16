@@ -47,8 +47,8 @@ describe('Module setup', () => {
       },
       nuxt,
     )
-    const apiHandlers = nuxt.options.serverHandlers.filter((v) =>
-      v.route?.includes('__nuxt_multi_cache'),
+    const apiHandlers = nuxt.options.serverHandlers.filter(
+      (v) => v.route?.includes('__nuxt_multi_cache'),
     )
     expect(apiHandlers.length).toEqual(5)
     await nuxt.close()
@@ -89,8 +89,8 @@ describe('Module setup', () => {
       },
       nuxt,
     )
-    const apiHandlers = nuxt.options.serverHandlers.filter((v) =>
-      v.route?.includes('__custom_prefix'),
+    const apiHandlers = nuxt.options.serverHandlers.filter(
+      (v) => v.route?.includes('__custom_prefix'),
     )
     expect(apiHandlers.length).toEqual(5)
     await nuxt.close()

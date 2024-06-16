@@ -1,20 +1,21 @@
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { useDataCache } from './../../src/runtime/composables'
-import { CacheItem } from './../../src/runtime/types'
+import type { CacheItem } from './../../src/runtime/types'
 
-vi.mock('#imports', () => {
-  return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {
-          data: true,
-        },
-      }
-    },
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => {
+    return {
+      multiCache: {
+        data: true,
+      },
+    }
   }
 })
 
-vi.mock('vue', () => {
+vi.mock('vue', async (importOriginal) => {
+  const actual = await importOriginal()
   const storage: Record<string, CacheItem> = {
     foobar: { data: 'Cached data.' },
     expires: {
@@ -23,6 +24,8 @@ vi.mock('vue', () => {
     },
   }
   return {
+    // @ts-ignore
+    ...actual,
     useSSRContext: () => {
       return {
         event: {

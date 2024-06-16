@@ -1,18 +1,17 @@
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi } from 'vitest'
-import { createTestApp } from './__helpers__'
 import { logger } from '../../../src/runtime/helpers/logger'
+import { createTestApp } from './__helpers__'
 
-vi.mock('#imports', () => {
-  return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {
-          component: true,
-          debug: true,
-        },
-      }
-    },
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => {
+    return {
+      multiCache: {
+        component: true,
+        debug: true,
+      },
+    }
   }
 })
 

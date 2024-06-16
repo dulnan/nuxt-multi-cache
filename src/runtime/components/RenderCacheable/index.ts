@@ -252,6 +252,7 @@ export default defineComponent({
             })
           }
           if (e instanceof Error) {
+            // eslint-disable-next-line no-console
             console.error(e.message)
           }
         }
@@ -278,6 +279,7 @@ export default defineComponent({
           })
         }
         if (e instanceof Error) {
+          // eslint-disable-next-line no-console
           console.error(e.message)
         }
       }

@@ -1,5 +1,5 @@
 import { defineDriver } from 'unstorage'
-import { H3Event, getQuery, getHeader } from 'h3'
+import { type H3Event, getQuery, getHeader } from 'h3'
 import { defineMultiCacheOptions } from './../../src/runtime/serverOptions'
 
 const customDriver = defineDriver(() => {
@@ -51,7 +51,7 @@ function getCacheKeyPrefix(event: H3Event): string {
 export default defineMultiCacheOptions({
   data: {
     storage: {
-      driver: customDriver(),
+      driver: customDriver({}),
     },
   },
   route: {

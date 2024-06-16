@@ -4,8 +4,8 @@ import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import RenderCacheable from '../../../src/runtime/components/RenderCacheable'
-import { createTestApp } from './__helpers__'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
+import { createTestApp } from './__helpers__'
 
 vi.mock('#imports', () => {
   return {
@@ -94,7 +94,7 @@ describe('RenderCacheable', () => {
       '"<div><div>Test App</div><div><div>Hello world</div></div></div>"',
     )
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      '"{\\"payload\\":{},\\"cacheTags\\":[]}<CACHE_ITEM><div>Hello world</div>"',
+      `"{"payload":{},"cacheTags":[]}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
@@ -122,7 +122,7 @@ describe('RenderCacheable', () => {
     )
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      '"{\\"payload\\":{},\\"cacheTags\\":[\\"test\\"]}<CACHE_ITEM><div>Hello world</div>"',
+      `"{"payload":{},"cacheTags":["test"]}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
@@ -134,7 +134,7 @@ describe('RenderCacheable', () => {
     )
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      '"{\\"payload\\":{\\"examplePayload\\":{\\"data\\":\\"This is example payload.\\"}},\\"cacheTags\\":[\\"test\\"]}<CACHE_ITEM><div>Hello world</div>"',
+      `"{"payload":{"examplePayload":{"data":"This is example payload."}},"cacheTags":["test"]}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
@@ -148,7 +148,7 @@ describe('RenderCacheable', () => {
     )
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::withExpiration']).toMatchInlineSnapshot(
-      '"{\\"payload\\":{},\\"expires\\":1669854600,\\"cacheTags\\":[]}<CACHE_ITEM><div>Hello world</div>"',
+      `"{"payload":{},"expires":1669854600,"cacheTags":[]}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
@@ -217,7 +217,7 @@ describe('RenderCacheable', () => {
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot(`
       {
-        "InnerComponent::bJdWg6O7EU": "{\\"payload\\":{},\\"cacheTags\\":[]}<CACHE_ITEM><div>Hello neptun</div>",
+        "InnerComponent::bJdWg6O7EU": "{"payload":{},"cacheTags":[]}<CACHE_ITEM><div>Hello neptun</div>",
       }
     `)
   })

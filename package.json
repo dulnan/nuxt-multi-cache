@@ -15,7 +15,7 @@
       }
     },
     "./dist/runtime/serverOptions": {
-      "import": "./dist/runtime/serverOptions/index.mjs",
+      "import": "./dist/runtime/serverOptions/index.js",
       "types": "./dist/runtime/serverOptions/index.d.ts"
     }
   },
@@ -37,20 +37,22 @@
   },
   "license": "MIT",
   "scripts": {
-    "prepack": "nuxt-module-build",
+    "prepack": "nuxt-module-build build",
     "dev": "nuxi dev playground",
     "dev:build": "nuxi build playground",
     "dev:serve": "node playground/.output/server/index.mjs",
-    "dev:prepare": "nuxt-module-build --stub && nuxi prepare playground",
-    "generate": "nuxi generate",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
     "typecheck": "nuxi typecheck",
     "docs:dev": "vitepress dev docs --port 5000",
     "docs:build": "vitepress build docs",
     "docs:serve": "vitepress serve docs --port 5000",
     "prettier": "prettier ./src --check",
     "prettier:fix": "prettier ./src --write",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix",
     "fake-data": "node ./scripts/fakeData.js",
     "test": "TZ=utc vitest",
+    "test:debug": "TZ=utc vitest --disable-console-intercept --reporter=json",
     "test:ci": "TZ=utc vitest run",
     "test:coverage": "TZ=utc vitest run --coverage"
   },
@@ -62,29 +64,27 @@
     "dist"
   ],
   "dependencies": {
-    "@nuxt/kit": "^3.6.5",
-    "@tusbar/cache-control": "^1.0.1",
-    "consola": "3.2.3"
+    "@nuxt/kit": "^3.12.2",
+    "@tusbar/cache-control": "^1.0.2"
   },
   "devDependencies": {
-    "@faker-js/faker": "^8.0.2",
-    "@nuxt/module-builder": "^0.4.0",
-    "@nuxt/schema": "^3.6.5",
-    "@nuxt/test-utils": "^3.6.5",
-    "@nuxtjs/eslint-config-typescript": "^12.0.0",
-    "@types/node": "^20.4.10",
-    "@vitest/coverage-c8": "^0.33.0",
-    "@vue/test-utils": "^2.4.1",
-    "eslint": "^8.47.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "eslint-plugin-vue": "^9.17.0",
-    "happy-dom": "^10.9.0",
-    "nuxt": "^3.6.5",
-    "nuxt-vitest": "^0.10.2",
-    "playwright": "^1.37.0",
-    "prettier": "^3.0.1",
-    "vitepress": "^1.0.0-rc.4",
-    "vue-json-pretty": "^2.2.4"
+    "@faker-js/faker": "^8.4.1",
+    "@nuxt/module-builder": "^0.7.1",
+    "@nuxt/schema": "^3.12.2",
+    "@nuxt/test-utils": "^3.13.1",
+    "@nuxtjs/eslint-config-typescript": "^12.1.0",
+    "@types/node": "^20.14.2",
+    "@vue/test-utils": "^2.4.6",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "eslint-plugin-vue": "^9.26.0",
+    "happy-dom": "^14.12.0",
+    "nuxt": "^3.12.2",
+    "playwright-core": "^1.44.1",
+    "prettier": "^3.3.2",
+    "vitepress": "^1.2.3",
+    "vitest": "^1.6.0",
+    "vue-json-pretty": "^2.4.0"
   }
 }

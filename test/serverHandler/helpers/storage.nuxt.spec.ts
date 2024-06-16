@@ -1,17 +1,16 @@
 import { describe, expect, test, vi } from 'vitest'
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { loadCacheContext } from './../../../src/runtime/serverHandler/helpers/storage'
 
-vi.mock('#imports', () => {
-  return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {
-          component: true,
-          data: true,
-          route: true,
-        },
-      }
-    },
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => {
+    return {
+      multiCache: {
+        component: true,
+        data: true,
+        route: true,
+      },
+    }
   }
 })
 

@@ -1,41 +1,41 @@
-import { fileURLToPath } from 'node:url'
-import { setup, fetch, $fetch } from '@nuxt/test-utils'
+import path from 'path'
+import { setup, fetch, $fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 
-describe('With all features disabled', async () => {
-  const multiCache: NuxtMultiCacheOptions = {
-    component: {
-      enabled: false,
-    },
-    data: {
-      enabled: false,
-    },
-    route: {
-      enabled: false,
-    },
-    cdn: {
-      enabled: false,
-    },
-    api: {
-      enabled: false,
-      authorization: false,
-      cacheTagInvalidationDelay: 5000,
-    },
-  }
-  const nuxtConfig: any = {
-    multiCache,
-  }
-  await setup({
-    server: true,
-    logLevel: 0,
-    runner: 'vitest',
-    build: true,
-    // browser: true,
-    rootDir: fileURLToPath(new URL('../playground', import.meta.url)),
-    nuxtConfig,
-  })
+const multiCache: NuxtMultiCacheOptions = {
+  component: {
+    enabled: false,
+  },
+  data: {
+    enabled: false,
+  },
+  route: {
+    enabled: false,
+  },
+  cdn: {
+    enabled: false,
+  },
+  api: {
+    enabled: false,
+    authorization: false,
+    cacheTagInvalidationDelay: 5000,
+  },
+}
+const nuxtConfig: any = {
+  multiCache,
+}
+await setup({
+  server: true,
+  logLevel: 0,
+  runner: 'vitest',
+  build: true,
+  // browser: true,
+  rootDir: path.resolve(__dirname, './../playground'),
+  nuxtConfig,
+})
 
+describe('With all features disabled', () => {
   test('No CDN headers are present.', async () => {
     const response = await fetch('/api/cdnHeaders')
     expect(response.headers.get('surrogate-control')).toBeNull()

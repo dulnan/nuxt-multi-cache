@@ -1,3 +1,7 @@
 <template>
-  <div>{{ this.does.not.exist }}</div>
+  <div>{{ does.not.exist }}</div>
 </template>
+
+<script>
+/* tslint:disable */
+</script>

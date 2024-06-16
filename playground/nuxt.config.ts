@@ -8,6 +8,9 @@ export default defineNuxtConfig({
     '/spaPageWithException': { ssr: false },
   },
   modules: [NuxtMultiCache],
+  imports: {
+    autoImport: false,
+  },
   multiCache: {
     debug: true,
     component: {
@@ -31,7 +34,5 @@ export default defineNuxtConfig({
     },
   },
 
-  css: [
-    'vue-json-pretty/lib/styles.css'
-  ],
+  css: ['vue-json-pretty/lib/styles.css'],
 })

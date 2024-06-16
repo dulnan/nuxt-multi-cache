@@ -1,10 +1,11 @@
 import { describe, expect, test, vi } from 'vitest'
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { createStorage } from 'unstorage'
 import { sleep } from '../../__helpers__'
+import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import purgeTags, {
   DebouncedInvalidator,
 } from './../../../src/runtime/serverHandler/api/purgeTags'
-import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 
 vi.mock('h3', async () => {
   const h3: any = await vi.importActual('h3')
@@ -30,17 +31,15 @@ vi.mock('#multi-cache-server-options', () => {
   }
 })
 
-vi.mock('#imports', () => {
-  return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {
-          api: {
-            cacheTagInvalidationDelay: 1000,
-          },
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => {
+    return {
+      multiCache: {
+        api: {
+          cacheTagInvalidationDelay: 1000,
         },
-      }
-    },
+      },
+    }
   }
 })
 
@@ -108,7 +107,9 @@ describe('purgeTags API handler', () => {
           },
         },
       } as any),
-    ).rejects.toThrowErrorMatchingInlineSnapshot('"No valid tags provided."')
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Error: No valid tags provided.]`,
+    )
 
     expect(
       purgeTags({
@@ -119,7 +120,9 @@ describe('purgeTags API handler', () => {
         },
         body: 'Invalid body',
       } as any),
-    ).rejects.toThrowErrorMatchingInlineSnapshot('"No valid tags provided."')
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Error: No valid tags provided.]`,
+    )
   })
 })
 

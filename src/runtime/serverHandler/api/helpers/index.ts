@@ -10,8 +10,6 @@ import { getMultiCacheContext } from './../../../helpers/server'
 import { useRuntimeConfig } from '#imports'
 import serverOptions from '#multi-cache-server-options'
 
-const runtimeConfig = useRuntimeConfig()
-
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 
 export function getCacheInstance(event: H3Event): Storage {
@@ -22,17 +20,22 @@ export function getCacheInstance(event: H3Event): Storage {
       statusMessage: 'Failed to load cache context.',
     })
   }
-  const cacheName = event.context.params
-    .cacheName as keyof NuxtMultiCacheSSRContext
-  const cache = cacheContext[cacheName]
-  if (!cache) {
-    throw createError({
-      statusCode: 404,
-      statusMessage: `The given cache "${cacheName}" is not available.`,
-    })
+
+  const cacheName = event.context.params?.cacheName as
+    | keyof NuxtMultiCacheSSRContext
+    | undefined
+
+  if (cacheName) {
+    const cache = cacheContext[cacheName]
+    if (cache) {
+      return cache
+    }
   }
 
-  return cache
+  throw createError({
+    statusCode: 404,
+    statusMessage: `The given cache "${cacheName}" is not available.`,
+  })
 }
 
 /**
@@ -45,6 +48,7 @@ export async function checkAuth(
   providedRuntimeConfig?: MultiCacheRuntimeConfig,
   providedServerOptions?: MultiCacheServerOptions,
 ) {
+  const runtimeConfig = useRuntimeConfig()
   const { authorizationDisabled, authorizationToken } =
     (providedRuntimeConfig || runtimeConfig.multiCache).api || {}
 
