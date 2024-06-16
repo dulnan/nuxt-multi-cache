@@ -6,20 +6,14 @@ import type {
   MultiCacheServerOptions,
   NuxtMultiCacheSSRContext,
 } from './../../../types'
-import { getMultiCacheContext } from './../../../helpers/server'
+import { loadCacheContext } from './../../helpers/storage'
 import { useRuntimeConfig } from '#imports'
 import serverOptions from '#multi-cache-server-options'
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 
 export function getCacheInstance(event: H3Event): Storage {
-  const cacheContext = getMultiCacheContext(event)
-  if (!cacheContext) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to load cache context.',
-    })
-  }
+  const cacheContext = loadCacheContext()
 
   const cacheName = event.context.params?.cacheName as
     | keyof NuxtMultiCacheSSRContext

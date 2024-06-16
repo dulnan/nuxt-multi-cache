@@ -8,7 +8,9 @@ import {
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
     return {
-      multiCache: {},
+      multiCache: {
+        data: true,
+      },
     }
   }
 })
@@ -129,17 +131,7 @@ describe('getCacheInstance', () => {
           },
         },
       } as any),
-    ).toEqual({})
-
-    expect(() =>
-      getCacheInstance({
-        context: {
-          params: {
-            cacheName: 'data',
-          },
-        },
-      } as any),
-    ).toThrowErrorMatchingInlineSnapshot(`[Error: Failed to load cache context.]`)
+    ).toBeTruthy()
 
     expect(() =>
       getCacheInstance({
