@@ -1,5 +1,5 @@
 import { defineEventHandler, setResponseHeaders } from 'h3'
-import { decodeRouteCacheItem } from '../helpers/cacheItem'
+import { decodeRouteCacheItem, handleRawCacheData } from '../helpers/cacheItem'
 import { logger } from '../helpers/logger'
 import {
   getMultiCacheContext,
@@ -29,8 +29,10 @@ export default defineEventHandler(async (event) => {
       ? serverOptions.route.buildCacheKey(event)
       : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
 
-    const cachedRaw = await multiCache.route.getItemRaw(fullKey)
-    if (cachedRaw && typeof cachedRaw === 'string') {
+    const cachedRaw = handleRawCacheData(
+      await multiCache.route.getItemRaw(fullKey),
+    )
+    if (cachedRaw) {
       const decoded = decodeRouteCacheItem(cachedRaw)
       if (decoded) {
         // Check if the item is stale.

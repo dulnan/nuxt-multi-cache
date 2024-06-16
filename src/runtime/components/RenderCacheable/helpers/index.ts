@@ -8,7 +8,10 @@ import type {
   Slots,
   ComponentInternalInstance,
 } from 'vue'
-import { decodeComponentCacheItem } from '../../../helpers/cacheItem'
+import {
+  decodeComponentCacheItem,
+  handleRawCacheData,
+} from '../../../helpers/cacheItem'
 import { logger } from '../../../helpers/logger'
 import type { ComponentCacheItem } from './../../../types'
 
@@ -155,9 +158,11 @@ export async function getCachedComponent(
   cacheKey: string,
 ): Promise<ComponentCacheItem | void> {
   // Get the cached item from the storage.
-  const cachedRaw = await storage.getItemRaw<string>(cacheKey)
+  const cachedRaw = handleRawCacheData(
+    await storage.getItemRaw<string>(cacheKey),
+  )
 
-  if (cachedRaw && typeof cachedRaw === 'string') {
+  if (cachedRaw) {
     return decodeComponentCacheItem(cachedRaw)
   }
 }

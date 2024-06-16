@@ -20,3 +20,5 @@ coverage
 docs/.vitepress/cache
 docs/.vitepress/dist
 docs/.vitepress/.temp
+playground-disk/cache
+__cache__

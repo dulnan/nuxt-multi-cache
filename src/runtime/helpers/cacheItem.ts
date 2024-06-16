@@ -81,3 +81,19 @@ export function decodeComponentCacheItem(
     }
   } catch (e) {}
 }
+
+/**
+ * Handle the return value from cache.getItemRaw().
+ *
+ * Not all drivers return strings, so this method handles the case where a
+ * driver returns other types such as buffers.
+ */
+export function handleRawCacheData(
+  data: string | Buffer | undefined | null,
+): string | undefined {
+  if (typeof data === 'string') {
+    return data
+  } else if (data instanceof Buffer) {
+    return data.toString()
+  }
+}
