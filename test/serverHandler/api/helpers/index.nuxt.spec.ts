@@ -1,16 +1,15 @@
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { describe, expect, test, vi } from 'vitest'
 import {
   checkAuth,
   getCacheInstance,
 } from './../../../../src/runtime/serverHandler/api/helpers/index'
 
-vi.mock('#imports', () => {
-  return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {},
-      }
-    },
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => {
+    return {
+      multiCache: {},
+    }
   }
 })
 
@@ -41,7 +40,7 @@ describe('checkAuth', () => {
           },
         },
       }),
-    ).rejects.toThrowErrorMatchingInlineSnapshot('"Unauthorized"')
+    ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
   })
 
   test('Performs auth check via header token', async () => {
@@ -81,7 +80,7 @@ describe('checkAuth', () => {
           },
         } as any,
       ),
-    ).rejects.toThrowErrorMatchingInlineSnapshot('"Unauthorized"')
+    ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
 
     expect(
       checkAuth(
@@ -100,7 +99,7 @@ describe('checkAuth', () => {
           },
         } as any,
       ),
-    ).rejects.toThrowErrorMatchingInlineSnapshot('"Unauthorized"')
+    ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
   })
 
   test('Throws error if no authorization config is provided.', () => {
@@ -112,7 +111,7 @@ describe('checkAuth', () => {
         } as any,
       ),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
-      '"No authorization configuration option provided."',
+      `[Error: No authorization configuration option provided.]`,
     )
   })
 })
@@ -140,7 +139,7 @@ describe('getCacheInstance', () => {
           },
         },
       } as any),
-    ).toThrowErrorMatchingInlineSnapshot('"Failed to load cache context."')
+    ).toThrowErrorMatchingInlineSnapshot(`[Error: Failed to load cache context.]`)
 
     expect(() =>
       getCacheInstance({
@@ -154,7 +153,7 @@ describe('getCacheInstance', () => {
         },
       } as any),
     ).toThrowErrorMatchingInlineSnapshot(
-      '"The given cache \\"invalid_cache\\" is not available."',
+      `[Error: The given cache "invalid_cache" is not available.]`,
     )
   })
 })

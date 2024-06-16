@@ -1,44 +1,43 @@
-import { fileURLToPath } from 'node:url'
+import path from 'path'
 import { setup, $fetch, createPage } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
 import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
 import purgeByKey from './__helpers__/purgeByKey'
 
-describe('The data cache feature', async () => {
-  const multiCache: NuxtMultiCacheOptions = {
-    component: {
-      enabled: true,
-    },
-    data: {
-      enabled: true,
-    },
-    route: {
-      enabled: true,
-    },
-    cdn: {
-      enabled: true,
-    },
-    api: {
-      enabled: true,
-      authorization: false,
-      cacheTagInvalidationDelay: 5000,
-    },
-  }
-  const nuxtConfig: any = {
-    multiCache,
-  }
-  const baseUrl = import.meta.url
-  await setup({
-    server: true,
-    logLevel: 0,
-    runner: 'vitest',
-    build: true,
-    // browser: true,
-    rootDir: fileURLToPath(new URL('../playground', baseUrl)),
-    nuxtConfig,
-  })
+const multiCache: NuxtMultiCacheOptions = {
+  component: {
+    enabled: true,
+  },
+  data: {
+    enabled: true,
+  },
+  route: {
+    enabled: true,
+  },
+  cdn: {
+    enabled: true,
+  },
+  api: {
+    enabled: true,
+    authorization: false,
+    cacheTagInvalidationDelay: 5000,
+  },
+}
+const nuxtConfig: any = {
+  multiCache,
+}
+await setup({
+  server: true,
+  logLevel: 0,
+  runner: 'vitest',
+  build: true,
+  // browser: true,
+  rootDir: path.resolve(__dirname, './../playground'),
+  nuxtConfig,
+})
 
+describe('The data cache feature', () => {
   test('Works on a page', async () => {
     await purgeAll()
 

@@ -3,10 +3,10 @@ import { createStorage } from 'unstorage'
 import { sleep } from '../__helpers__'
 import responseSend from '../../src/runtime/serverHandler/responseSend'
 import { decodeRouteCacheItem } from '../../src/runtime/helpers/cacheItem'
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
-// vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
-vi.mock('#imports', () => {
-  const useRuntimeConfig = () => {
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => {
     return {
       multiCache: {
         cdn: {
@@ -15,10 +15,6 @@ vi.mock('#imports', () => {
         },
       },
     }
-  }
-
-  return {
-    useRuntimeConfig,
   }
 })
 
@@ -150,7 +146,7 @@ describe('responseSend server handler', () => {
     await sleep(100)
 
     expect(await storage.getItemRaw('test:route:nested')).toMatchInlineSnapshot(
-      '"{\\"headers\\":{\\"x-test\\":\\"Foobar\\"},\\"statusCode\\":200,\\"cacheTags\\":[]}<CACHE_ITEM><html></html>"',
+      `"{"headers":{"x-test":"Foobar"},"statusCode":200,"cacheTags":[]}<CACHE_ITEM><html></html>"`,
     )
   })
 

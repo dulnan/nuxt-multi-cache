@@ -23,7 +23,7 @@ export default defineEventHandler((event) => {
   const cdnHelper = getMultiCacheCDNHelper(event)
   const multiCache = getMultiCacheContext(event)
   const runtimeConfig = useRuntimeConfig()
-  const debug = runtimeConfig.multiCache.debug
+  const debug = runtimeConfig.multiCache?.debug
 
   if (!cdnHelper && !multiCache?.route) {
     return

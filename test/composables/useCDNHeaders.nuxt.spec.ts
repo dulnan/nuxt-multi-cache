@@ -1,40 +1,18 @@
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { describe, expect, test, vi } from 'vitest'
-import { useRouteCache } from './../../src/runtime/composables'
-import { NuxtMultiCacheRouteCacheHelper } from './../../src/runtime/helpers/RouteCacheHelper'
+import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
+import { useCDNHeaders } from './../../src/runtime/composables'
 
-vi.mock('#imports', () => {
+vi.mock('vue', async (importOriginal) => {
+  const actual = await importOriginal()
   return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {
-          component: true,
-        },
-      }
-    },
-  }
-})
-
-vi.mock('vue', () => {
-  const storage: Record<string, any> = {
-    foobar: 'Cached data.',
-  }
-  return {
+    // @ts-ignore
+    ...actual,
     useSSRContext: () => {
       return {
         event: {
           context: {
-            __MULTI_CACHE: {
-              data: {
-                getItem: (key: string) => {
-                  return Promise.resolve(storage[key])
-                },
-                setItem: (key: string, data: any) => {
-                  storage[key] = data
-                  return Promise.resolve()
-                },
-              },
-            },
-            __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
+            __MULTI_CACHE_CDN: new NuxtMultiCacheCDNHelper(),
           },
         },
       }
@@ -45,7 +23,17 @@ vi.mock('vue', () => {
   }
 })
 
-describe('useRouteCache composable', () => {
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => {
+    return {
+      multiCache: {
+        component: true,
+      },
+    }
+  }
+})
+
+describe('useCDNHeaders composable', () => {
   test('Does not call callback in client', () => {
     process.client = true
     const params = {
@@ -53,7 +41,7 @@ describe('useRouteCache composable', () => {
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useRouteCache(spyCallback as any)
+    useCDNHeaders(spyCallback as any)
     expect(spyCallback).not.toHaveBeenCalled()
   })
 
@@ -64,7 +52,7 @@ describe('useRouteCache composable', () => {
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useRouteCache(spyCallback as any)
+    useCDNHeaders(spyCallback as any)
     expect(spyCallback).toHaveBeenCalledOnce()
   })
 
@@ -72,13 +60,13 @@ describe('useRouteCache composable', () => {
     process.client = false
     const dummyHelper = 'dummy helper'
 
-    useRouteCache(
+    useCDNHeaders(
       (helper) => {
         expect(helper).toEqual(dummyHelper)
       },
       {
         context: {
-          __MULTI_CACHE_ROUTE: dummyHelper,
+          __MULTI_CACHE_CDN: dummyHelper,
         },
       } as any,
     )
@@ -87,8 +75,8 @@ describe('useRouteCache composable', () => {
   test('Gets the event from SSR context.', () => {
     process.client = false
 
-    useRouteCache((helper) => {
-      expect(helper).toHaveProperty('tags')
+    useCDNHeaders((helper) => {
+      expect(helper).toHaveProperty('_control')
     })
   })
 
@@ -103,11 +91,11 @@ describe('useRouteCache composable', () => {
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useRouteCache(spyCallback as any)
+    useCDNHeaders(spyCallback as any)
     expect(spyCallback).not.toHaveBeenCalled()
   })
 
-  test('Does not call callback if route helper is missing.', async () => {
+  test('Does not call callback if CDN helper is missing.', async () => {
     process.client = false
 
     const vue = await import('vue')
@@ -120,7 +108,7 @@ describe('useRouteCache composable', () => {
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useRouteCache(spyCallback as any)
+    useCDNHeaders(spyCallback as any)
     expect(spyCallback).not.toHaveBeenCalled()
   })
 })

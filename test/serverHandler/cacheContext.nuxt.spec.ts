@@ -1,5 +1,6 @@
 import { beforeEach, beforeAll, describe, expect, test, vi } from 'vitest'
 import cacheContextHandler from './../../src/runtime/serverHandler/cacheContext'
+import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 
 vi.mock('#multi-cache-server-options', () => {
   return {
@@ -11,15 +12,13 @@ vi.mock('#multi-cache-server-options', () => {
   }
 })
 
-vi.mock('#imports', () => {
-  return {
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {
-          component: true,
-        },
-      }
-    },
+mockNuxtImport('useRuntimeConfig', () => {
+  return () => {
+    return {
+      multiCache: {
+        component: true,
+      },
+    }
   }
 })
 

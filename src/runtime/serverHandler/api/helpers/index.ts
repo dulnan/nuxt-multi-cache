@@ -10,8 +10,6 @@ import { getMultiCacheContext } from './../../../helpers/server'
 import { useRuntimeConfig } from '#imports'
 import serverOptions from '#multi-cache-server-options'
 
-const runtimeConfig = useRuntimeConfig()
-
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 
 export function getCacheInstance(event: H3Event): Storage {
@@ -45,6 +43,7 @@ export async function checkAuth(
   providedRuntimeConfig?: MultiCacheRuntimeConfig,
   providedServerOptions?: MultiCacheServerOptions,
 ) {
+  const runtimeConfig = useRuntimeConfig()
   const { authorizationDisabled, authorizationToken } =
     (providedRuntimeConfig || runtimeConfig.multiCache).api || {}
 

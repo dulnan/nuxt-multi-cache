@@ -63,13 +63,12 @@ export default defineNuxtModule<ModuleOptions>({
   async setup(passedOptions, nuxt) {
     const options = defu({}, passedOptions, {}) as ModuleOptions
     checkObsoleteOptions(options)
-
-    const { resolve } = createResolver(import.meta.url)
+    const metaUrl = import.meta.url
+    const { resolve } = createResolver(metaUrl)
     const rootDir = nuxt.options.rootDir
 
-    // const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
-
-    // nuxt.options.build.transpile.push(runtimeDir)
+    const runtimeDir = fileURLToPath(new URL('./runtime', metaUrl))
+    nuxt.options.build.transpile.push(runtimeDir)
     nuxt.options.runtimeConfig.multiCache = {
       debug: !!options.debug,
       rootDir,
@@ -203,6 +202,11 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt.options.nitro.externals.inline || []
     nuxt.options.nitro.externals.inline.push(template.dst)
     nuxt.options.alias['#multi-cache-server-options'] = template.dst
+
+    nuxt.hook('nitro:config', (nitroConfig) => {
+      nitroConfig.alias = nitroConfig.alias || {}
+      nitroConfig.alias['#multi-cache-server-options'] = template.dst
+    })
 
     // Add cache management API if enabled.
     if (options.api?.enabled) {

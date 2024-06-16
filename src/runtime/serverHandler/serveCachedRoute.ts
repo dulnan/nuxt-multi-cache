@@ -9,8 +9,6 @@ import {
 import serverOptions from '#multi-cache-server-options'
 import { useRuntimeConfig } from '#imports'
 
-const { debug } = useRuntimeConfig().multiCache || {}
-
 /**
  * Route cache event handler. Returns a cached response if available.
  */
@@ -23,6 +21,7 @@ export default defineEventHandler(async (event) => {
   if (!multiCache?.route) {
     return
   }
+  const { debug } = useRuntimeConfig().multiCache || {}
 
   try {
     // Check if there is a cache entry for this path.

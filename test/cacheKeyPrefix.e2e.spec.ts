@@ -1,54 +1,48 @@
-import { fileURLToPath } from 'node:url'
-import { setup, createPage } from '@nuxt/test-utils/e2e'
+import path from 'path'
+import { setup } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
 import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
+import { createPageWithoutHydration } from './__helpers__'
 
-describe('The cacheKeyPrefix', async () => {
-  const multiCache: NuxtMultiCacheOptions = {
-    component: {
-      enabled: true,
-    },
-    data: {
-      enabled: true,
-    },
-    route: {
-      enabled: true,
-    },
-    cdn: {
-      enabled: true,
-    },
-    api: {
-      enabled: true,
-      authorization: false,
-      cacheTagInvalidationDelay: 5000,
-    },
-  }
-  const nuxtConfig: any = {
-    multiCache,
-  }
+const multiCache: NuxtMultiCacheOptions = {
+  component: {
+    enabled: true,
+  },
+  data: {
+    enabled: true,
+  },
+  route: {
+    enabled: true,
+  },
+  cdn: {
+    enabled: true,
+  },
+  api: {
+    enabled: true,
+    authorization: false,
+    cacheTagInvalidationDelay: 5000,
+  },
+}
+const nuxtConfig: any = {
+  multiCache,
+}
+await setup({
+  server: true,
+  logLevel: 0,
+  runner: 'vitest',
+  build: true,
+  // browser: true,
+  rootDir: path.resolve(__dirname, './../playground'),
+  nuxtConfig,
+})
 
-  const baseUrl = import.meta.url
-  await setup({
-    server: true,
-    logLevel: 0,
-    runner: 'vitest',
-    build: true,
-    // browser: true,
-    rootDir: fileURLToPath(new URL('../playground', baseUrl)),
-    nuxtConfig,
-  })
+async function getDataValue(targetUrl: string, language: string) {
+  const page = await createPageWithoutHydration(targetUrl, language)
+  return page.locator('#data-cache-value').innerText()
+}
 
-  async function getDataValue(path: string, language: string) {
-    const page = await createPage(path, {
-      javaScriptEnabled: false,
-      extraHTTPHeaders: {
-        'accept-language': language,
-      },
-    })
-    return page.locator('#data-cache-value').innerText()
-  }
-
+describe('The cacheKeyPrefix', () => {
   test('is working for the data cache.', async () => {
     await purgeAll()
 
