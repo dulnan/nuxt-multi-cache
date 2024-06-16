@@ -1,6 +1,6 @@
 import { defineDriver } from 'unstorage'
 import { H3Event, getQuery, getHeader } from 'h3'
-import { defineMultiCacheOptions } from './../../dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from './../../src/runtime/serverOptions'
 
 const customDriver = defineDriver(() => {
   let cache: Record<string, string> = {}
@@ -52,6 +52,27 @@ export default defineMultiCacheOptions({
   data: {
     storage: {
       driver: customDriver(),
+    },
+  },
+  route: {
+    alterCachedHeaders(headers) {
+      const cookie = headers['set-cookie']
+      // Remove the SESSION cookie.
+      if (cookie) {
+        if (typeof cookie === 'string') {
+          if (cookie.includes('SESSION')) {
+            headers['set-cookie'] = undefined
+          }
+        } else if (Array.isArray(cookie)) {
+          const remaining = cookie.filter((v) => !v.includes('SESSION'))
+          if (!remaining.length) {
+            headers['set-cookie'] = undefined
+          } else {
+            headers['set-cookie'] = remaining
+          }
+        }
+      }
+      return headers
     },
   },
   component: {},

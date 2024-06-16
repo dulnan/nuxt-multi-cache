@@ -44,7 +44,7 @@ By default query strings are **ignored**! This means that a request for
 
 The reason for this decision is that there are basically infinite possibilities
 to alter the query string. This would be an easy way to quickly crash the app by
-putting hundres of thousands of pages into the cache.
+putting hundreds of thousands of pages into the cache.
 
 :::
 
@@ -87,6 +87,41 @@ served from cache by the cached item `api_query_products_1`:
 - /api/query/products?id=123&foobar=456
 - /api/query/products?foobar=456&id=123
 - /api/query/products?foobar=456&id=123&whatever=string&does=not&matter=at-all
+
+### Alter which headers that are cached
+
+You can define a method that receives the headers of the response and returns
+the altered headers. The method is called right before the response is written
+to cache.
+
+::: warning
+
+By default all headers are stored in the cache, because it is assumed that your
+app already makes sure to not mark a response as cacheable during rendering. You
+can however alter the headers that are stored in the cache. Keep in mind that
+this might introduce side effects: If you use `useCookie()` to set a cookie and
+then remove the `Set-Cookie` header using this approach, only the first request
+will actually receive the `Set-Cookie` header. All subsequent requests that are
+served from cache won't have this header.
+
+:::
+
+::: code-group
+
+```typescript [multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+
+export default defineMultiCacheOptions({
+  route: {
+    alterCachedHeaders(headers) {
+      headers['set-cookie'] = undefined
+      return headers
+    },
+  },
+})
+```
+
+:::
 
 ## Usage in Components
 

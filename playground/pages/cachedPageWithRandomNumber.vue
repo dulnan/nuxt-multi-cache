@@ -3,7 +3,6 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
 import { useAsyncData } from 'nuxt/app'
 import { useRouteCache } from '#imports'
 

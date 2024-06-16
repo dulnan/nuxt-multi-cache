@@ -1,5 +1,6 @@
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
+import { OutgoingHttpHeaders } from 'node:http'
 
 interface CacheConfigOptions {
   /**
@@ -187,6 +188,16 @@ export type MultiCacheServerOptions = {
      * Provide a custom function that builds the cache key for a route.
      */
     buildCacheKey?: (event: H3Event) => string
+
+    /**
+     * Alter the headers that are stored in the cache.
+     *
+     * You can use this to prevent certain headers from ever being cached,
+     * such as Set-Cookie.
+     */
+    alterCachedHeaders?: (
+      headers: OutgoingHttpHeaders,
+    ) => OutgoingHttpHeaders | Record<string, any>
   }
 
   /**
