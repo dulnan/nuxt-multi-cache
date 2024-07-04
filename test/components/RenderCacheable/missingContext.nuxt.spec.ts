@@ -38,7 +38,7 @@ vi.mock('vue', async () => {
 
 describe('RenderCacheable with missing context', () => {
   test('Bails if current instance could not be found.', async () => {
-    process.server = true
+    import.meta.server = true
 
     const loggerSpy = vi.spyOn(logger, 'warn')
 
@@ -66,7 +66,7 @@ describe('RenderCacheable with missing context', () => {
   })
 
   test('Bails if SSR context could not be found', async () => {
-    process.server = true
+    import.meta.server = true
 
     const loggerSpy = vi.spyOn(logger, 'warn')
     const vue = await import('vue')

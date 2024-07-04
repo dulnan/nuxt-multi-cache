@@ -30,14 +30,17 @@ export function useDataCache<T>(
   // Dummy argument for the callback used when something goes wrong accessing
   // the cache or on client side.
   const dummy: CallbackContext<T> = {
-    addToCache: (v: T) => {
+    addToCache: (_v: T) => {
       return Promise.resolve()
     },
     cacheTags: [] as string[],
   }
 
+  const isServer =
+    import.meta.env.VITEST_SERVER === 'true' || import.meta.server
+
   // Code only available on server side.
-  if (process.client) {
+  if (!isServer) {
     return Promise.resolve(dummy)
   }
   const { debug } = useRuntimeConfig().multiCache || {}

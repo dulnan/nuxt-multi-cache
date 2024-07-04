@@ -16,7 +16,7 @@ export function getMultiCacheContext(
 
 export function getMultiCacheRouteHelper(
   event: H3Event,
-): NuxtMultiCacheRouteCacheHelper {
+): NuxtMultiCacheRouteCacheHelper | undefined {
   return event?.context?.[MULTI_CACHE_ROUTE_CONTEXT_KEY]
 }
 

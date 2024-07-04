@@ -1,13 +1,16 @@
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { describe, expect, test, vi } from 'vitest'
 import { createStorage } from 'unstorage'
-import purgeItem from './../../../src/runtime/serverHandler/api/purgeItem'
+import purgeItem from './../../../src/runtime/server/api/purgeItem'
 
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {},
-    }
+const mocks = vi.hoisted(() => {
+  return {
+    useNitroApp: vi.fn(),
+  }
+})
+
+vi.mock('nitropack/runtime', () => {
+  return {
+    useNitroApp: mocks.useNitroApp,
   }
 })
 
@@ -36,10 +39,28 @@ describe('purgeItem API handler', () => {
   test('Purges a single item', async () => {
     const storageData = createStorage()
 
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: {
+          data: storageData,
+        },
+        serverOptions: {
+          api: {
+            authorization: () => {
+              return Promise.resolve(true)
+            },
+          },
+        },
+        config: {
+          api: {},
+        },
+      },
+    })
+
     const event: any = {
       context: {
-        __MULTI_CACHE: {
-          data: storageData,
+        params: {
+          cacheName: 'data',
         },
       },
       body: ['my_key', 'another_key'],

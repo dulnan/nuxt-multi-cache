@@ -1,13 +1,16 @@
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { describe, expect, test, vi } from 'vitest'
 import { createStorage } from 'unstorage'
-import inspectItem from './../../../src/runtime/serverHandler/api/inspectItem'
+import inspectItem from './../../../src/runtime/server/api/inspectItem'
 
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {},
-    }
+const mocks = vi.hoisted(() => {
+  return {
+    useNitroApp: vi.fn(),
+  }
+})
+
+vi.mock('nitropack/runtime', () => {
+  return {
+    useNitroApp: mocks.useNitroApp,
   }
 })
 
@@ -33,12 +36,26 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
   }
 })
 
-function doInspect(storage: any, cache: string, key: string) {
-  return inspectItem({
-    context: {
-      __MULTI_CACHE: {
+async function doInspect(storage: any, cache: string, key: string) {
+  mocks.useNitroApp.mockReturnValue({
+    multiCache: {
+      cache: {
         [cache]: storage,
       },
+      serverOptions: {
+        api: {
+          authorization: () => {
+            return Promise.resolve(true)
+          },
+        },
+      },
+      config: {
+        api: {},
+      },
+    },
+  })
+  const result = await inspectItem({
+    context: {
       params: {
         cacheName: cache,
       },
@@ -51,6 +68,10 @@ function doInspect(storage: any, cache: string, key: string) {
     },
     __CACHE_NAME: cache,
   } as any)
+
+  mocks.useNitroApp.mockRestore()
+
+  return result
 }
 
 describe('inspectItem API handler', () => {

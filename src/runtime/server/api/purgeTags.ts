@@ -8,7 +8,7 @@ import { getMultiCacheContext } from './../../helpers/server'
 import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../settings'
 import type { NuxtMultiCacheSSRContext } from './../../types'
 import { checkAuth } from './helpers'
-import { useRuntimeConfig } from '#imports'
+import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 
 /**
  * Get the tags to be purged from the request.
@@ -172,9 +172,10 @@ export default defineEventHandler(async (event) => {
   const tags = await getTagsToPurge(event)
 
   if (!invalidator.cacheContext) {
-    invalidator.cacheContext = getMultiCacheContext(event)
-    const { multiCache } = useRuntimeConfig()
-    invalidator.setDelay(multiCache?.api?.cacheTagInvalidationDelay)
+    const app = useMultiCacheApp()
+    invalidator.cacheContext = app.cache
+    const delay = app.config.api.cacheTagInvalidationDelay
+    invalidator.setDelay(delay)
   }
 
   invalidator.add(tags)

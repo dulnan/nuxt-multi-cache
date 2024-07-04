@@ -1,6 +1,7 @@
 import { fileURLToPath } from 'url'
 import type { NuxtModule } from '@nuxt/schema'
 import { defu } from 'defu'
+import { relative } from 'pathe'
 import {
   addServerHandler,
   createResolver,
@@ -8,8 +9,11 @@ import {
   addComponent,
   addImports,
   addTemplate,
+  addServerPlugin,
+  addServerImports,
 } from '@nuxt/kit'
 import type {
+  MultiCacheApp,
   MultiCacheServerOptions,
   NuxtMultiCacheOptions,
 } from './runtime/types'
@@ -66,6 +70,8 @@ export default defineNuxtModule<ModuleOptions>({
     const metaUrl = import.meta.url
     const { resolve } = createResolver(metaUrl)
     const rootDir = nuxt.options.rootDir
+    const srcDir = nuxt.options.srcDir
+    const srcResolver = createResolver(srcDir).resolve
 
     const runtimeDir = fileURLToPath(new URL('./runtime', metaUrl))
     nuxt.options.build.transpile.push(runtimeDir)
@@ -73,6 +79,7 @@ export default defineNuxtModule<ModuleOptions>({
       debug: !!options.debug,
       rootDir,
       cdn: {
+        enabled: !!options.cdn?.enabled,
         cacheControlHeader:
           options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER,
         cacheTagHeader: options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER,
@@ -104,19 +111,19 @@ export default defineNuxtModule<ModuleOptions>({
     })
 
     // Add composables.
-    if (options.data) {
+    if (options.data || nuxt.options._prepare) {
       addImports({
         from: resolve('./runtime/composables/useDataCache'),
         name: 'useDataCache',
       })
     }
-    if (options.route) {
+    if (options.route || nuxt.options._prepare) {
       addImports({
         from: resolve('./runtime/composables/useRouteCache'),
         name: 'useRouteCache',
       })
     }
-    if (options.cdn) {
+    if (options.cdn || nuxt.options._prepare) {
       addImports({
         from: resolve('./runtime/composables/useCDNHeaders'),
         name: 'useCDNHeaders',
@@ -128,7 +135,7 @@ export default defineNuxtModule<ModuleOptions>({
     )
 
     // Add RenderCacheable component if feature is enabled.
-    if (options.component) {
+    if (options.component || nuxt.options._prepare) {
       await addComponent({
         filePath: resolve('./runtime/components/RenderCacheable/index'),
         name: 'RenderCacheable',
@@ -136,36 +143,13 @@ export default defineNuxtModule<ModuleOptions>({
       })
     }
 
-    if (options.component || options.route || options.data) {
-      // Add the event handler that attaches the SSR context object to the
-      // request event.
-      addServerHandler({
-        handler: resolve('./runtime/serverHandler/cacheContext'),
-        middleware: true,
-      })
-    }
-
-    // Adds the CDN helper to the event context.
-    if (options.cdn?.enabled) {
-      addServerHandler({
-        handler: resolve('./runtime/serverHandler/cdnHeaders'),
-        middleware: true,
-      })
-    }
-
     // Serves cached routes.
-    if (options.route?.enabled) {
-      addServerHandler({
-        handler: resolve('./runtime/serverHandler/serveCachedRoute'),
-      })
-    }
-
-    // Hooks into sending the response and adds route to cache and adds CDN
-    // headers.
-    if (options.cdn?.enabled || options.route?.enabled) {
-      addServerHandler({
-        handler: resolve('./runtime/serverHandler/responseSend'),
-      })
+    if (
+      options.route?.enabled ||
+      options.cdn?.enabled ||
+      nuxt.options._prepare
+    ) {
+      addServerPlugin(resolve('./runtime/server/plugins/multiCache'))
     }
 
     // Shamelessly copied and adapted from:
@@ -181,19 +165,24 @@ export default defineNuxtModule<ModuleOptions>({
 
       const maybeUserFile = fileExists(resolvedPath, extensions)
 
-      if (maybeUserFile) {
-        return addTemplate({
-          filename: resolvedFilename,
-          write: true,
-          getContents: () => `export { default } from '${resolvedPath}'`,
-        })
-      }
+      const moduleTypesPath = relative(
+        nuxt.options.buildDir,
+        resolve('./runtime/types.ts'),
+      )
 
-      // Else provide `undefined` fallback
+      const serverOptionsLine = maybeUserFile
+        ? `import serverOptions from '${relative(nuxt.options.buildDir, srcResolver(resolvedPath))}'`
+        : `const serverOptions: MultiCacheServerOptions = {}`
+
       return addTemplate({
         filename: resolvedFilename,
         write: true,
-        getContents: () => 'export default {}',
+        getContents: () => `
+import type { MultiCacheServerOptions } from '${moduleTypesPath}'
+${serverOptionsLine}
+
+export { serverOptions }
+`,
       })
     })()
 
@@ -208,6 +197,13 @@ export default defineNuxtModule<ModuleOptions>({
       nitroConfig.alias['#multi-cache-server-options'] = template.dst
     })
 
+    addServerImports([
+      {
+        from: resolve('./runtime/server/utils/useMultiCacheApp'),
+        name: 'useMultiCacheApp',
+      },
+    ])
+
     // Add cache management API if enabled.
     if (options.api?.enabled) {
       // Prefix is defined in default config.
@@ -218,27 +214,27 @@ export default defineNuxtModule<ModuleOptions>({
 
       // Add the server API handlers for cache management.
       addServerHandler({
-        handler: resolve('./runtime/serverHandler/api/purgeAll'),
+        handler: resolve('./runtime/server/api/purgeAll'),
         method: 'post',
         route: prefix('purge/all'),
       })
       addServerHandler({
-        handler: resolve('./runtime/serverHandler/api/purgeTags'),
+        handler: resolve('./runtime/server/api/purgeTags'),
         method: 'post',
         route: prefix('purge/tags'),
       })
       addServerHandler({
-        handler: resolve('./runtime/serverHandler/api/purgeItem'),
+        handler: resolve('./runtime/server/api/purgeItem'),
         method: 'post',
         route: prefix('purge/:cacheName'),
       })
       addServerHandler({
-        handler: resolve('./runtime/serverHandler/api/stats'),
+        handler: resolve('./runtime/server/api/stats'),
         method: 'get',
         route: prefix('stats/:cacheName'),
       })
       addServerHandler({
-        handler: resolve('./runtime/serverHandler/api/inspectItem'),
+        handler: resolve('./runtime/server/api/inspectItem'),
         method: 'get',
         route: prefix('inspect/:cacheName'),
       })

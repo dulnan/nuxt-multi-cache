@@ -1,13 +1,16 @@
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { describe, expect, test, vi } from 'vitest'
 import { createStorage } from 'unstorage'
-import purgeAll from './../../../src/runtime/serverHandler/api/purgeAll'
+import purgeAll from './../../../src/runtime/server/api/purgeAll'
 
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {},
-    }
+const mocks = vi.hoisted(() => {
+  return {
+    useNitroApp: vi.fn(),
+  }
+})
+
+vi.mock('nitropack/runtime', () => {
+  return {
+    useNitroApp: mocks.useNitroApp,
   }
 })
 
@@ -21,29 +24,55 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
 
 describe('/api/purge/all', () => {
   test('Returns if cache context is not available', async () => {
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: null,
+        serverOptions: {
+          api: {
+            authorization: () => {
+              return Promise.resolve(true)
+            },
+          },
+        },
+        config: {
+          api: {},
+        },
+      },
+    })
     const event: any = {
       context: {},
     }
     const result = await purgeAll(event)
 
     expect(result).toBeUndefined()
+    mocks.useNitroApp.mockRestore()
   })
+
   test('Purges all cache entries', async () => {
     const storageComponent = createStorage()
     const storageData = createStorage()
 
-    const event: any = {
-      context: {
-        __MULTI_CACHE: {
-          component: storageComponent,
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: {
           data: storageData,
+          component: storageComponent,
         },
-        __MULTI_CACHE_ROUTE: {
-          tags: [],
-          cacheable: null,
-          control: {},
+        serverOptions: {
+          api: {
+            authorization: () => {
+              return Promise.resolve(true)
+            },
+          },
+        },
+        config: {
+          api: {},
         },
       },
+    })
+
+    const event: any = {
+      context: {},
     }
     const spyClearComponent = vi.spyOn(storageComponent, 'clear')
     const spyClearData = vi.spyOn(storageData, 'clear')

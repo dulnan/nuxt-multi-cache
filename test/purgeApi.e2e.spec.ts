@@ -6,7 +6,7 @@ import purgeAll from './__helpers__/purgeAll'
 
 vi.mock('#multi-cache-server-options', () => {
   return {
-    default: {
+    serverOptions: {
       enabledForRequest: () => {
         // This will not inject the cache context to the event.
         return Promise.resolve(false)

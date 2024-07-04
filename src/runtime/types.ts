@@ -1,6 +1,8 @@
 import type { OutgoingHttpHeaders } from 'node:http'
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
+import type { NuxtMultiCacheRouteCacheHelper } from './helpers/RouteCacheHelper'
+import type { NuxtMultiCacheCDNHelper } from './helpers/CDNHelper'
 
 interface CacheConfigOptions {
   /**
@@ -198,6 +200,14 @@ export type MultiCacheServerOptions = {
     alterCachedHeaders?: (
       headers: OutgoingHttpHeaders,
     ) => OutgoingHttpHeaders | Record<string, any>
+
+    /**
+     * A function to determine whether route caching is potentially possible.
+     *
+     * In order to minimize the number of calls to get routes from the cache,
+     * it makes sense to already exclude certain paths, such as `/_nuxt` or static assets like .css, .js, .png, .jpg, etc.
+     */
+    applies?: (path: string) => boolean
   }
 
   /**
@@ -246,6 +256,7 @@ export type MutliCacheServerOptions = MultiCacheServerOptions
 
 export type MultiCacheRuntimeConfig = {
   cdn: {
+    enabled: boolean
     cacheControlHeader: string
     cacheTagHeader: string
   }
@@ -258,5 +269,52 @@ export type MultiCacheRuntimeConfig = {
     cacheTagInvalidationDelay: number
     authorizationToken: string
     authorizationDisabled: boolean
+  }
+}
+
+export interface MultiCacheApp {
+  /**
+   * The cache singleton.
+   */
+  cache: NuxtMultiCacheSSRContext
+
+  /**
+   * The server options.
+   */
+  serverOptions: MultiCacheServerOptions
+
+  config: MultiCacheRuntimeConfig
+}
+
+declare module 'nitropack' {
+  export interface NitroApp {
+    /**
+     * The nuxt-multi-cache cache context.
+     */
+    multiCache: MultiCacheApp
+  }
+}
+
+declare module 'h3' {
+  export interface H3EventContext {
+    /**
+     * The nuxt-multi-cache cache context.
+     */
+    __MULTI_CACHE?: NuxtMultiCacheSSRContext
+
+    /**
+     * The nuxt-multi-cache route cache helper.
+     */
+    __MULTI_CACHE_ROUTE?: NuxtMultiCacheRouteCacheHelper
+
+    /**
+     * The nuxt-multi-cache CDN helper.
+     */
+    __MULTI_CACHE_CDN?: NuxtMultiCacheCDNHelper
+
+    /**
+     * The nuxt-multi-cache global cache prefix that is applied to all caches.
+     */
+    __MULTI_CACHE_PREFIX?: string
   }
 }
