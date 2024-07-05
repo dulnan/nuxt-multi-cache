@@ -116,6 +116,10 @@ export default defineNuxtModule<ModuleOptions>({
         from: resolve('./runtime/composables/useDataCache'),
         name: 'useDataCache',
       })
+      addImports({
+        from: resolve('./runtime/composables/useCachedAsyncData'),
+        name: 'useCachedAsyncData',
+      })
     }
     if (options.route || nuxt.options._prepare) {
       addImports({
