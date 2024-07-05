@@ -25,10 +25,15 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Vitest
+      - name: Module Builder
         run: |
           npm run dev:prepare
           npm run prepack
+
+      - name: Vitest
+        run: |
+          # For some reason this has to be removed or else the test fails.
+          rm -rf .nuxt
           npm run test:ci
 
       - name: Prettier
@@ -37,4 +42,4 @@ jobs:
 
       - name: nuxi typecheck
         run: |
-          npm run prettier
+          npm run typecheck
