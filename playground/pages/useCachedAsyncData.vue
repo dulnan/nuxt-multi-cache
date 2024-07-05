@@ -14,10 +14,11 @@
 
 <script lang="ts" setup>
 import { useCachedAsyncData } from '#imports'
+import type { UsersWithCacheability } from '~/server/api/getUsersWithCacheability'
 
 const { data } = await useCachedAsyncData(
   'all-users',
-  () => $fetch('/api/getUsersWithCacheability'),
+  () => $fetch<UsersWithCacheability>('/api/getUsersWithCacheability'),
   {
     maxAge: 5,
     cacheTags: function (data) {
