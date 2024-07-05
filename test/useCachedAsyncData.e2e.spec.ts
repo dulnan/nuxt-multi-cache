@@ -37,7 +37,7 @@ await setup({
 })
 
 describe('The useCachedAsyncData composable', () => {
-  test.only('Puts the handler result into the cache', async () => {
+  test('Puts the handler result into the cache', async () => {
     await purgeAll()
 
     // First call puts it into cache.

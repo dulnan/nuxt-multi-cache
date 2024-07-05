@@ -103,9 +103,11 @@ export function useCachedAsyncData<
       // manually and is not called again by Nuxt.
       return data as any as ResT
     },
-    {
-      ...options,
-      transform: undefined,
-    },
+    options && typeof options === 'object'
+      ? {
+          ...options,
+          transform: undefined,
+        }
+      : undefined,
   )
 }
