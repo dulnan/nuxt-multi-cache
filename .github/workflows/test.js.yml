@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci
-          npx playwright install --with-deps
+          npx playwright-core install chromium
 
       - name: Module Builder
         run: |
