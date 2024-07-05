@@ -16,7 +16,9 @@ export function useCDNHeaders(
   cb: (helper: NuxtMultiCacheCDNHelper) => void,
   providedEvent?: H3Event,
 ): void {
-  if (process.client) {
+  const isServer =
+    import.meta.env.VITEST_SERVER === 'true' || import.meta.server
+  if (!isServer) {
     return
   }
 

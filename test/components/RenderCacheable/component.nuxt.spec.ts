@@ -85,8 +85,6 @@ describe('RenderCacheable', () => {
   })
 
   test('Puts markup in cache', async () => {
-    process.server = true
-
     const { app, ssrContext, storage } = createTestApp()
     const first = await renderToString(app, ssrContext)
 
@@ -99,15 +97,13 @@ describe('RenderCacheable', () => {
   })
 
   test('Returns cached markup if available.', async () => {
-    process.server = true
-
     const { app, ssrContext, storage } = createTestApp()
     const mockedMarkup = `<div>Markup from cache</div>`
     storage['InnerComponent::foobar'] = encodeComponentCacheItem(mockedMarkup)
     const first = await renderToString(app, ssrContext)
 
     expect(first).toMatchInlineSnapshot(
-      '"<div><div>Test App</div><div><div>Markup from cache</div></div></div>"',
+      `"<div><div>Test App</div><div><div>Markup from cache</div></div></div>"`,
     )
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
       '"{}<CACHE_ITEM><div>Markup from cache</div>"',
@@ -115,8 +111,6 @@ describe('RenderCacheable', () => {
   })
 
   test('Adds cache tags to the cache entry.', async () => {
-    process.server = true
-
     const { app, ssrContext, storage } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']"`,
     )
@@ -127,8 +121,6 @@ describe('RenderCacheable', () => {
   })
 
   test('Caches payload alongside component if asyncDataKeys is provided.', async () => {
-    process.server = true
-
     const { app, ssrContext, storage } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
     )
@@ -139,7 +131,6 @@ describe('RenderCacheable', () => {
   })
 
   test('Calculates expires value when maxAge is provided.', async () => {
-    process.server = true
     const date = new Date(2022, 11, 1)
     vi.setSystemTime(date)
 
@@ -153,8 +144,6 @@ describe('RenderCacheable', () => {
   })
 
   test('Renders a component from cache.', async () => {
-    process.server = true
-
     // App with storage containing a cached component.
     const { app, ssrContext } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
@@ -170,8 +159,6 @@ describe('RenderCacheable', () => {
   })
 
   test('Does not render a component which is expired', async () => {
-    process.server = true
-
     const { app, ssrContext } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
       '',
@@ -188,8 +175,6 @@ describe('RenderCacheable', () => {
   })
 
   test('Adds payload to nuxt app from a cached component', async () => {
-    process.server = true
-
     const appImport = await import('#app')
     const localNuxtApp = { payload: { data: {} } }
     appImport.useNuxtApp = vi.fn().mockReturnValueOnce(localNuxtApp)
@@ -211,8 +196,6 @@ describe('RenderCacheable', () => {
   })
 
   test('Uses props to infer cache key.', async () => {
-    process.server = true
-
     const { app, ssrContext, storage } = createTestApp('', 'neptun')
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot(`
@@ -223,17 +206,13 @@ describe('RenderCacheable', () => {
   })
 
   test('Bails if no cache key could be generated.', async () => {
-    process.server = true
-
     const { app, ssrContext, storage } = createTestApp('', 'neptun', {}, '')
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot('{}')
   })
 
   test('Handles errors when getting cache item.', async () => {
-    process.server = true
     const consoleSpy = vi.spyOn(global.console, 'error')
-
     const appImport = await import('#app')
     const localNuxtApp = { payload: { data: {} } }
     appImport.useNuxtApp = vi.fn().mockReturnValueOnce(localNuxtApp)
@@ -247,10 +226,10 @@ describe('RenderCacheable', () => {
   })
 
   test('Handles errors when setting cache item.', async () => {
-    process.server = true
     const consoleSpy = vi.spyOn(global.console, 'error')
 
     const appImport = await import('#app')
+
     const localNuxtApp = { payload: { data: {} } }
     appImport.useNuxtApp = vi.fn().mockReturnValueOnce(localNuxtApp)
 

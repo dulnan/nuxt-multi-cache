@@ -49,7 +49,6 @@ vi.mock('vue', async (importOriginal) => {
 
 describe('useRouteCache composable', () => {
   test('Does not call callback in client', () => {
-    process.client = true
     const params = {
       cb() {},
     }
@@ -60,7 +59,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Calls callback on server', () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
     const params = {
       cb() {},
     }
@@ -71,7 +70,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Uses the provided event.', () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
     const dummyHelper = 'dummy helper'
 
     useRouteCache(
@@ -87,7 +86,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Gets the event from SSR context.', () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
 
     useRouteCache((helper) => {
       expect(helper).toHaveProperty('tags')
@@ -95,7 +94,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Does not call callback if event is missing.', async () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
 
     const vue = await import('vue')
     vue.useSSRContext = vi.fn().mockReturnValueOnce({})
@@ -110,7 +109,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Does not call callback if route helper is missing.', async () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
 
     const vue = await import('vue')
     vue.useSSRContext = vi.fn().mockReturnValueOnce({

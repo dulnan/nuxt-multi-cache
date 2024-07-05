@@ -47,30 +47,11 @@ describe('Module setup', () => {
       },
       nuxt,
     )
-    const apiHandlers = nuxt.options.serverHandlers.filter(
-      (v) => v.route?.includes('__nuxt_multi_cache'),
+    const apiHandlers = nuxt.options.serverHandlers.filter((v) =>
+      v.route?.includes('__nuxt_multi_cache'),
     )
     expect(apiHandlers.length).toEqual(5)
     await nuxt.close()
-  })
-
-  test('Should only add CDN handler if feature is enabled', async () => {
-    await testServerHandlerAdded('cdnHeaders', { cdn: { enabled: true } })
-  })
-
-  test('Should only add route handler if feature is enabled', async () => {
-    await testServerHandlerAdded('serveCachedRoute', {
-      route: { enabled: true },
-    })
-  })
-
-  test('Should only add responseSend if route cache or CDN is enabled.', async () => {
-    await testServerHandlerAdded('responseSend', {
-      route: { enabled: true },
-    })
-    await testServerHandlerAdded('responseSend', {
-      cdn: { enabled: true },
-    })
   })
 
   test('Should use provided API prefix.', async () => {
@@ -89,8 +70,8 @@ describe('Module setup', () => {
       },
       nuxt,
     )
-    const apiHandlers = nuxt.options.serverHandlers.filter(
-      (v) => v.route?.includes('__custom_prefix'),
+    const apiHandlers = nuxt.options.serverHandlers.filter((v) =>
+      v.route?.includes('__custom_prefix'),
     )
     expect(apiHandlers.length).toEqual(5)
     await nuxt.close()

@@ -1,26 +1,20 @@
 import type { H3Event } from 'h3'
 import { createError, getHeader } from 'h3'
 import type { Storage } from 'unstorage'
-import type {
-  MultiCacheRuntimeConfig,
-  MultiCacheServerOptions,
-  NuxtMultiCacheSSRContext,
-} from './../../../types'
-import { loadCacheContext } from './../../helpers/storage'
-import { useRuntimeConfig } from '#imports'
-import serverOptions from '#multi-cache-server-options'
+import type { NuxtMultiCacheSSRContext } from './../../../types'
+import { useMultiCacheApp } from '../../utils/useMultiCacheApp'
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 
 export function getCacheInstance(event: H3Event): Storage {
-  const cacheContext = loadCacheContext()
+  const multiCache = useMultiCacheApp()
 
   const cacheName = event.context.params?.cacheName as
     | keyof NuxtMultiCacheSSRContext
     | undefined
 
   if (cacheName) {
-    const cache = cacheContext[cacheName]
+    const cache = multiCache.cache[cacheName]
     if (cache) {
       return cache
     }
@@ -37,14 +31,9 @@ export function getCacheInstance(event: H3Event): Storage {
  *
  * Throws an error if authorization failed.
  */
-export async function checkAuth(
-  event: H3Event,
-  providedRuntimeConfig?: MultiCacheRuntimeConfig,
-  providedServerOptions?: MultiCacheServerOptions,
-) {
-  const runtimeConfig = useRuntimeConfig()
-  const { authorizationDisabled, authorizationToken } =
-    (providedRuntimeConfig || runtimeConfig.multiCache).api || {}
+export async function checkAuth(event: H3Event) {
+  const { serverOptions, config } = useMultiCacheApp()
+  const { authorizationDisabled, authorizationToken } = config.api || {}
 
   // Allow if authorization is explicitly disabled.
   if (authorizationDisabled) {
@@ -64,8 +53,7 @@ export async function checkAuth(
     })
   }
 
-  const authorization = (providedServerOptions || serverOptions).api
-    ?.authorization
+  const authorization = serverOptions.api?.authorization
 
   // At this stage if this method is missing, we throw an error to indicate
   // that the module is not configured properly.

@@ -35,7 +35,6 @@ mockNuxtImport('useRuntimeConfig', () => {
 
 describe('useCDNHeaders composable', () => {
   test('Does not call callback in client', () => {
-    process.client = true
     const params = {
       cb() {},
     }
@@ -46,7 +45,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Calls callback on server', () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
     const params = {
       cb() {},
     }
@@ -57,7 +56,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Uses the provided event.', () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
     const dummyHelper = 'dummy helper'
 
     useCDNHeaders(
@@ -73,7 +72,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Gets the event from SSR context.', () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
 
     useCDNHeaders((helper) => {
       expect(helper).toHaveProperty('_control')
@@ -81,7 +80,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Does not call callback if event is missing.', async () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
 
     const vue = await import('vue')
     vue.useSSRContext = vi.fn().mockReturnValueOnce({})
@@ -96,7 +95,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Does not call callback if CDN helper is missing.', async () => {
-    process.client = false
+    import.meta.env.VITEST_SERVER = 'true'
 
     const vue = await import('vue')
     vue.useSSRContext = vi.fn().mockReturnValueOnce({

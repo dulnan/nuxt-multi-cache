@@ -5,7 +5,19 @@ import { sleep } from '../../__helpers__'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import purgeTags, {
   DebouncedInvalidator,
-} from './../../../src/runtime/serverHandler/api/purgeTags'
+} from './../../../src/runtime/server/api/purgeTags'
+
+const mocks = vi.hoisted(() => {
+  return {
+    useNitroApp: vi.fn(),
+  }
+})
+
+vi.mock('nitropack/runtime', () => {
+  return {
+    useNitroApp: mocks.useNitroApp,
+  }
+})
 
 vi.mock('h3', async () => {
   const h3: any = await vi.importActual('h3')
@@ -27,7 +39,7 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
 
 vi.mock('#multi-cache-server-options', () => {
   return {
-    default: {},
+    serverOptions: {},
   }
 })
 
@@ -62,13 +74,28 @@ describe('purgeTags API handler', () => {
       encodeComponentCacheItem('Other data.', {}, undefined, ['one']),
     )
 
-    const event: any = {
-      context: {
-        __MULTI_CACHE: {
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: {
           data: storageData,
           component: storageComponent,
         },
+        serverOptions: {
+          api: {
+            authorization: () => {
+              return Promise.resolve(true)
+            },
+          },
+        },
+        config: {
+          api: {
+            cacheTagInvalidationDelay: 800,
+          },
+        },
       },
+    })
+
+    const event: any = {
       body: ['one'],
     }
 
