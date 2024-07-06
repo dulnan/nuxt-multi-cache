@@ -78,8 +78,9 @@ const { data: weather } = await useAsyncData('weather', async () => {
 
 ## Using `useCachedAsyncData`
 
-The example above can be simplified by using the `useCachedAsyncData`
-composable, which is a wrapper around Nuxt's
+The example above can be simplified by using the
+[`useCachedAsyncData`](/composables/useCachedAsyncData) composable, which is a
+wrapper around Nuxt's
 [useAsyncData](https://nuxt.com/docs/api/composables/use-async-data) composable.
 It automatically caches the result of your handler function using the first
 argument (`'weather'`) as the key:

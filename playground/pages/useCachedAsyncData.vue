@@ -3,6 +3,7 @@
     <h1>useCachedAsyncData</h1>
     <div v-if="data">
       <h2 id="time">{{ data.cachedTime }}</h2>
+      <button @click="onClick">Refresh</button>
       <ul>
         <li v-for="user in data.transformedUserList" :key="user.userId">
           {{ user.email }}
@@ -16,12 +17,13 @@
 import { useCachedAsyncData } from '#imports'
 import type { UsersWithCacheability } from '~/server/api/getUsersWithCacheability'
 
-const { data } = await useCachedAsyncData(
+const { data, refresh } = await useCachedAsyncData(
   'all-users',
   () => $fetch<UsersWithCacheability>('/api/getUsersWithCacheability'),
   {
-    maxAge: 5,
-    cacheTags: function (data) {
+    serverMaxAge: 5,
+    clientMaxAge: 5,
+    serverCacheTags: function (data) {
       return data.cacheTags
     },
     transform: function (data) {
@@ -32,4 +34,8 @@ const { data } = await useCachedAsyncData(
     },
   },
 )
+
+function onClick() {
+  refresh()
+}
 </script>
