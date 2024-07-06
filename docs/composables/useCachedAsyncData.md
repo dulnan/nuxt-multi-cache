@@ -5,7 +5,7 @@ Helper composable to use
 with [useDataCache](/composables/useDataCache).
 
 ```typescript
-const { data: weather } = await useCachedAsyncData('users', () =>
+const { data: users } = await useCachedAsyncData('all-users', () =>
   $fetch('/api/users'),
 )
 ```
@@ -18,9 +18,7 @@ const { data: users } = await useCachedAsyncData(
   () => $fetch('/api/users'),
   {
     maxAge: 60 * 60,
-    cacheTags: function (data) {
-      return data.cacheTags
-    },
+    cacheTags: ['users-list'],
     transform: function (data) {
       return data.users
     },
