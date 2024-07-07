@@ -11,7 +11,7 @@
       </button>
     </div>
 
-    <div>{{ data }}</div>
+    <div>{{ counter }}: {{ data }}</div>
   </div>
 </template>
 
@@ -19,13 +19,19 @@
 import { ref } from '#imports'
 
 const data = ref('')
+const counter = ref(0)
 
 async function doRequest(throwError?: boolean) {
-  const result = await $fetch('/api/testStaleIfError', {
-    headers: {
-      'x-nuxt-throw-error': throwError,
-    },
-  })
-  console.log(result)
+  counter.value++
+  try {
+    const result = await $fetch('/api/testStaleIfError', {
+      headers: {
+        'x-nuxt-throw-error': throwError ? 'true' : undefined,
+      },
+    })
+    data.value = result.data
+  } catch (e) {
+    data.value = 'Error'
+  }
 }
 </script>

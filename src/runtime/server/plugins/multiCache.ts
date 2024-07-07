@@ -1,5 +1,6 @@
 import { defineNitroPlugin } from 'nitropack/runtime'
 import { createStorage } from 'unstorage'
+import { getResponseStatus } from 'h3'
 import { onBeforeResponse } from '../hooks/beforeResponse'
 import { onRequest } from '../hooks/request'
 import { onAfterResponse } from '../hooks/afterResponse'
@@ -50,6 +51,6 @@ export default defineNitroPlugin((nitroApp) => {
     nitroApp.hooks.hook('afterResponse', onAfterResponse)
 
     // Hook into the error handler of H3 to try and serve stale cached routes.
-    nitroApp.h3App.options.onError = onError
+    nitroApp.hooks.hook('error', onError)
   }
 })

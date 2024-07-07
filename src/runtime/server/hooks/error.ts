@@ -1,8 +1,5 @@
-import { type H3Event, type H3Error } from 'h3'
-import {
-  encodeRouteCacheKey,
-  getCacheKeyWithPrefix,
-} from '../../helpers/server'
+import { type H3Event } from 'h3'
+import type { CapturedErrorContext } from 'nitropack/types'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { MultiCacheApp } from '../../types'
 import {
@@ -63,15 +60,12 @@ async function serveStaleIfError(app: MultiCacheApp, event: H3Event) {
  *
  * This is called after a valid response was built, but before it is sent.
  */
-export async function onError(error: H3Error, event: H3Event) {
-  const app = useMultiCacheApp()
-
-  // We only handle errors in the 5xx range.
-  if (error.statusCode < 500 || error.statusCode > 599) {
-    return
-  }
-
+export async function onError(error: Error, ctx: CapturedErrorContext) {
   try {
-    await serveStaleIfError(app, event)
+    if (!ctx.event) {
+      return
+    }
+    const app = useMultiCacheApp()
+    await serveStaleIfError(app, ctx.event)
   } catch (_e) {}
 }
