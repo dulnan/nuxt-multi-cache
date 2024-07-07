@@ -319,8 +319,8 @@ declare module 'h3' {
     __MULTI_CACHE_PREFIX?: string
 
     /**
-     * The nuxt-multi-cache global cache prefix that is applied to all caches.
+     * Contains the already fetched cached route, if it exists.
      */
-    __MULTI_CACHE_ROUTE_CACHE_KEY?: string
+    __MULTI_CACHE_DECODED_CACHED_ROUTE?: RouteCacheItem
   }
 }

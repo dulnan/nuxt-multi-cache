@@ -147,10 +147,9 @@ export async function onRequest(event: H3Event) {
       return
     }
 
-    // Store the full key in the event context.
-    // It may later be used by the "error" handler that may serve stale routes
-    // if revalidation has failed.
-    event.context.__MULTI_CACHE_ROUTE_CACHE_KEY = fullKey
+    // Store the decoded cache item in the event context.
+    // May be used by the error hook handler to serve a stale route on error.
+    event.context.__MULTI_CACHE_DECODED_CACHED_ROUTE = decoded
 
     // Check if the item is stale.
     if (decoded.expires) {
