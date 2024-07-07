@@ -7,7 +7,15 @@ import {
 describe('cacheItem helpers', () => {
   test('encodeRouteCacheitem', () => {
     expect(
-      encodeRouteCacheItem('<html></html>', {}, 200, undefined, undefined, []),
+      encodeRouteCacheItem(
+        '<html></html>',
+        {},
+        200,
+        undefined,
+        undefined,
+        false,
+        [],
+      ),
     ).toEqual(
       `{"headers":{},"statusCode":200,"cacheTags":[]}<CACHE_ITEM><html></html>`,
     )
@@ -20,6 +28,7 @@ describe('cacheItem helpers', () => {
           'Cache-Control': 'private',
         },
         200,
+        undefined,
         undefined,
         undefined,
         [],
@@ -38,6 +47,7 @@ describe('cacheItem helpers', () => {
         200,
         5000,
         9000,
+        true,
         ['my_tag1', 'my_tag2'],
       ),
     ).toMatchInlineSnapshot(

@@ -5,6 +5,7 @@ import { onRequest } from '../hooks/request'
 import { onAfterResponse } from '../hooks/afterResponse'
 import type { MultiCacheApp, NuxtMultiCacheSSRContext } from '../../types'
 import { onError } from '../hooks/error'
+import { MultiCacheState } from '../../helpers/MultiCacheState'
 import { useRuntimeConfig } from '#imports'
 import { serverOptions } from '#multi-cache-server-options'
 
@@ -29,6 +30,7 @@ function createMultiCacheApp(): MultiCacheApp {
     cache: cacheContext,
     serverOptions,
     config: runtimeConfig.multiCache,
+    state: new MultiCacheState(),
   }
 }
 

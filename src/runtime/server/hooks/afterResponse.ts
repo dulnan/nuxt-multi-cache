@@ -68,7 +68,7 @@ export async function onAfterResponse(
     return
   }
 
-  const { serverOptions } = useMultiCacheApp()
+  const { serverOptions, state } = useMultiCacheApp()
 
   let responseHeaders = getResponseHeaders(event)
 
@@ -82,6 +82,7 @@ export async function onAfterResponse(
 
   const expires = routeHelper.getExpires('maxAge')
   const staleIfErrorExpires = routeHelper.getExpires('staleIfError')
+  const staleWhileRevalidate = !!routeHelper.staleWhileRevalidate
 
   const cacheItem = encodeRouteCacheItem(
     responseData,
@@ -89,6 +90,7 @@ export async function onAfterResponse(
     statusCode,
     expires,
     staleIfErrorExpires,
+    staleWhileRevalidate,
     routeHelper.tags,
   )
 
@@ -100,6 +102,7 @@ export async function onAfterResponse(
       expires,
       staleIfErrorExpires,
       cacheTags: routeHelper.tags,
+      staleWhileRevalidate,
       statusCode,
     })
   }
@@ -107,4 +110,10 @@ export async function onAfterResponse(
   await multiCache.route.setItemRaw(cacheKey, cacheItem, {
     ttl: routeHelper.maxAge,
   })
+
+  if (event.context.__MULTI_CACHE_REVALIDATION_KEY) {
+    state.removeKeyBeingRevalidated(
+      event.context.__MULTI_CACHE_REVALIDATION_KEY,
+    )
+  }
 }

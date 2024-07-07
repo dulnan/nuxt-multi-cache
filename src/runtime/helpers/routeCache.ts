@@ -1,7 +1,10 @@
 import { setResponseHeaders, setResponseStatus, type H3Event } from 'h3'
 import { RouteCacheItem } from '../types'
 
-export function serveCachedRoute(event: H3Event, decoded: RouteCacheItem) {
+export async function serveCachedRoute(
+  event: H3Event,
+  decoded: RouteCacheItem,
+) {
   // Set the cached headers. The name suggests otherwise, but this appends
   // headers (e.g. does not override existing headers.)
   if (decoded.headers) {
@@ -20,5 +23,5 @@ export function serveCachedRoute(event: H3Event, decoded: RouteCacheItem) {
   })
 
   // Respond with the cached response.
-  event.respondWith(response)
+  await event.respondWith(response)
 }

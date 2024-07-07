@@ -15,9 +15,14 @@ export class NuxtMultiCacheRouteCacheHelper {
   maxAge: number | null = null
 
   /**
-   * The maximum age.
+   * The stale if error age.
    */
   staleIfError: number | null = null
+
+  /**
+   * Whether a stale response can be served during revalidation.
+   */
+  staleWhileRevalidate: boolean | null = null
 
   /**
    * Add cache tags for this route.
@@ -92,6 +97,14 @@ export class NuxtMultiCacheRouteCacheHelper {
    */
   setStaleIfError(v = 0): NuxtMultiCacheRouteCacheHelper {
     return this.setNumeric('staleIfError', v)
+  }
+
+  /**
+   * Sets whether a stale respones can be returned while a new one is being generated.
+   */
+  allowStaleWhileRevalidate(): NuxtMultiCacheRouteCacheHelper {
+    this.staleWhileRevalidate = true
+    return this
   }
 
   /**

@@ -3,6 +3,7 @@ import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
 import type { NuxtMultiCacheRouteCacheHelper } from './helpers/RouteCacheHelper'
 import type { NuxtMultiCacheCDNHelper } from './helpers/CDNHelper'
+import type { MultiCacheState } from './helpers/MultiCacheState'
 
 interface CacheConfigOptions {
   /**
@@ -168,6 +169,7 @@ export interface CacheItem {
 export interface RouteCacheItem extends CacheItem {
   headers: Record<string, any>
   statusCode: number
+  staleWhileRevalidate: boolean
   staleIfErrorExpires?: number
 }
 
@@ -284,7 +286,15 @@ export interface MultiCacheApp {
    */
   serverOptions: MultiCacheServerOptions
 
+  /**
+   * The runtime configuration.
+   */
   config: MultiCacheRuntimeConfig
+
+  /**
+   * The state.
+   */
+  state: MultiCacheState
 }
 
 declare module 'nitropack' {
@@ -322,5 +332,10 @@ declare module 'h3' {
      * Contains the already fetched cached route, if it exists.
      */
     __MULTI_CACHE_DECODED_CACHED_ROUTE?: RouteCacheItem
+
+    /**
+     * The route cache key that is currently being revalidated.
+     */
+    __MULTI_CACHE_REVALIDATION_KEY?: string
   }
 }

@@ -32,6 +32,7 @@ export function encodeRouteCacheItem(
   statusCode: number,
   expires: number | undefined,
   staleIfErrorExpires: number | undefined,
+  staleWhileRevalidate: boolean | undefined,
   cacheTags: string[],
 ): string {
   return encodeCacheItem(data, {
@@ -40,6 +41,7 @@ export function encodeRouteCacheItem(
     expires,
     cacheTags,
     staleIfErrorExpires,
+    staleWhileRevalidate,
   })
 }
 
