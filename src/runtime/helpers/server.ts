@@ -7,6 +7,7 @@ export const MULTI_CACHE_CONTEXT_KEY = '__MULTI_CACHE'
 export const MULTI_CACHE_ROUTE_CONTEXT_KEY = '__MULTI_CACHE_ROUTE'
 export const MULTI_CACHE_CDN_CONTEXT_KEY = '__MULTI_CACHE_CDN'
 export const MULTI_CACHE_PREFIX_KEY = '__MULTI_CACHE_PREFIX'
+export const MULTI_CACHE_ROUTE_CACHE_KEY = '__MULTI_CACHE_ROUTE_CACHE_KEY'
 
 export function getMultiCacheContext(
   event: H3Event,

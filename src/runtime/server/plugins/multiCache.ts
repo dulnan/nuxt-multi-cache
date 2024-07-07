@@ -6,6 +6,7 @@ import { onAfterResponse } from '../hooks/afterResponse'
 import type { MultiCacheApp, NuxtMultiCacheSSRContext } from '../../types'
 import { useRuntimeConfig } from '#imports'
 import { serverOptions } from '#multi-cache-server-options'
+import { onError } from '../hooks/error'
 
 function createMultiCacheApp(): MultiCacheApp {
   const runtimeConfig = useRuntimeConfig()
@@ -43,8 +44,12 @@ export default defineNitroPlugin((nitroApp) => {
     nitroApp.hooks.hook('beforeResponse', onBeforeResponse)
   }
 
-  // Hook only needed if route caching is enabled.
+  // Only needed if route caching is enabled.
   if (multiCache.config.route) {
+    // Hook into afterResponse to store cacheable responses in cache.
     nitroApp.hooks.hook('afterResponse', onAfterResponse)
+
+    // Hook into the error handler of H3 to try and serve stale cached routes.
+    nitroApp.h3App.options.onError = onError
   }
 })

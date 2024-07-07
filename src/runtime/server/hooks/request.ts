@@ -1,4 +1,4 @@
-import { setResponseHeaders, setResponseStatus, type H3Event } from 'h3'
+import { type H3Event } from 'h3'
 import type { NuxtMultiCacheSSRContext } from '../../types'
 import {
   MULTI_CACHE_CDN_CONTEXT_KEY,
@@ -17,6 +17,7 @@ import { logger } from '../../helpers/logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { useRuntimeConfig } from '#imports'
 import { NuxtMultiCacheCDNHelper } from '../../helpers/CDNHelper'
+import { serveCachedRoute } from '../../helpers/routeCache'
 
 /**
  * Add the cache context singleton to the current request.
@@ -132,7 +133,7 @@ export async function onRequest(event: H3Event) {
       ? serverOptions.route.buildCacheKey(event)
       : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
 
-    // Check if there is a cache entry for this path.
+    // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(
       await multiCache.route.getItemRaw(fullKey),
     )
@@ -146,23 +147,17 @@ export async function onRequest(event: H3Event) {
       return
     }
 
+    // Store the full key in the event context.
+    // It may later be used by the "error" handler that may serve stale routes
+    // if revalidation has failed.
+    event.context.__MULTI_CACHE_ROUTE_CACHE_KEY = fullKey
+
     // Check if the item is stale.
     if (decoded.expires) {
       const now = Date.now() / 1000
       if (now >= decoded.expires) {
         return
       }
-    }
-
-    // Set the cached headers. The name suggests otherwise, but this appends
-    // headers (e.g. does not override existing headers.)
-    if (decoded.headers) {
-      setResponseHeaders(event, decoded.headers)
-    }
-
-    // Set the cached response status.
-    if (decoded.statusCode) {
-      setResponseStatus(event, decoded.statusCode)
     }
 
     const debugEnabled = useRuntimeConfig().multiCache.debug
@@ -173,14 +168,7 @@ export async function onRequest(event: H3Event) {
       })
     }
 
-    const response = new Response(decoded.data)
-
-    Object.entries(decoded.headers).forEach(([name, value]) => {
-      response.headers.set(name, value)
-    })
-
-    // Respond with the cached response.
-    event.respondWith(response)
+    serveCachedRoute(event, decoded)
   } catch (e) {
     if (e instanceof Error) {
       // eslint-disable-next-line no-console

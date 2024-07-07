@@ -3,6 +3,11 @@
 Caches pages and responses of custom server handlers. It does so by providing a
 helper via a composable that manages if a response should be cached.
 
+Unlike built-in Nitro caching, you can decide at runtime whether or not a route
+should be cached, for how long, etc.. Any `routeRules` or
+`defineCachedEventHandler` are ignored by this module (but they still work if
+you wish to use both at the same time).
+
 ## Configuration
 
 ::: code-group
@@ -88,7 +93,7 @@ served from cache by the cached item `api_query_products_1`:
 - /api/query/products?foobar=456&id=123
 - /api/query/products?foobar=456&id=123&whatever=string&does=not&matter=at-all
 
-### Alter which headers that are cached
+### Alter which headers are cached
 
 You can define a method that receives the headers of the response and returns
 the altered headers. The method is called right before the response is written
@@ -97,12 +102,22 @@ to cache.
 ::: warning
 
 By default all headers are stored in the cache, because it is assumed that your
-app already makes sure to not mark a response as cacheable during rendering. You
-can however alter the headers that are stored in the cache. Keep in mind that
-this might introduce side effects: If you use `useCookie()` to set a cookie and
-then remove the `Set-Cookie` header using this approach, only the first request
-will actually receive the `Set-Cookie` header. All subsequent requests that are
+app already makes sure to not mark a response as uncacheable during rendering if
+it contains sensitive headers such as Set-Cookie for authentication. You can
+however alter the headers that are stored in the cache. Keep in mind that this
+might introduce side effects: If you use `useCookie()` to set a cookie and then
+remove the `Set-Cookie` header using this approach, only the first request will
+actually receive the `Set-Cookie` header. All subsequent requests that are
 served from cache won't have this header.
+
+The reason for this behaviour is that for nuxt-multi-cache there is no way to
+know if a header contains sensitive information or not. For example, a
+`Set-Cookie` header might contain a harmless cookie to set the current country,
+which one might actually want to cache.
+
+If you wish to prevent caching a route that contains a `Set-Cookie` in the first
+place, you should make sure to mark the route as uncacheable at this point, for
+example right after calling `useCookie`.
 
 :::
 
@@ -114,7 +129,10 @@ import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOpt
 export default defineMultiCacheOptions({
   route: {
     alterCachedHeaders(headers) {
+      // Remove any set-cookie header from being cached.
       headers['set-cookie'] = undefined
+
+      // Or perform more granular checks, such as checking what kind of cookie it is.
       return headers
     },
   },
@@ -227,10 +245,17 @@ Alternatively you could also just reduce the max age for the page so that after
 
 ### setMaxAge(maxAge: number)
 
-Set the max age for the cache entry. After that the page is rendered again.
+Set the max age in seconds for the cache entry. After that the page is rendered
+again.
 
-Note that cache entries remain in cache after they expired. When they expire the
-route is rendered again and the response overwrites the stale cache entry.
+Note that cache entries may remain in cache after they expired. When they expire
+the route is rendered again and the response overwrites the stale cache entry.
+
+### setStaleIfError(maxAge: number)
+
+Set the "stale if error" in seconds for the cache entry. When set, a stale
+cached route (in other words, a cache entry that would normally not be served
+because it is expired) will be served if during rendering a 5xx error is thrown.
 
 ### addTags(tags: string[])
 
@@ -254,6 +279,63 @@ The helper has three properties to keep track of the state:
 - `tags: string[]`
 - `cacheable: boolean|null`
 - `maxAge: number|null`
+- `staleIfError: number|null`
 
 While absolutely not encouraged, you can directly manipulate these values for
 specific edge cases.
+
+## Difference to Nitro Cache
+
+Nitro (and by proxy also Nuxt) already ships with a route cache feature using
+either [`routeRules`](https://nitro.unjs.io/config#routerules) or
+[`defineCachedEventHandler`](https://nitro.unjs.io/guide/cache#cached-event-handlers).
+However, it is more targeted towards simple use cases.
+
+### Missing features
+
+#### No runtime cacheability
+
+It's only possible to define the cacheability at build time. Meaning: At runtime
+you can not decide whether a route should be cached or not. A common use case is
+to disable caching for logged in users, which is not possible using just Nitro.
+
+When using nuxt-multi-cache route cache, you can decide at any given moment
+during the duration of your request whether or not the response should be
+cached, for how long, what its cache tags are, etc. You can also implement
+what's called a "kill switch", for example if a backend request fails during
+SSR, you can mark the response as uncacheable, after which it's impossible to
+mark it as cacheable again.
+
+#### No cache purging
+
+While it supports a max age / TTL, there is no built-in way to purge individual
+cache items using keys or cache tags.
+
+#### No cache tags
+
+There is no concept of cache tags, so purging has to be done either by purging
+everything or based on key (e.g. wildcard matching, `/products/*`).
+
+#### Global overrides
+
+There is no easy way to define global overrides, such as a global cache key
+prefix, disabling caching completely for the duration of the request, etc.
+
+### Should you use nuxt-multi-cache?
+
+If your needs are covered by the built-in Nitro caching, then you should
+probably not use nuxt-multi-cache route cache, because it introduces an
+additional layer of complexity that is only warranted if you actually need the
+additional features.
+
+### Using both caches together
+
+It is technically possible to use both Nitro cache and nuxt-multi-cache route
+cache at the same time, because they work quite differently:
+
+- Nitro decides on a per event handler basis whether or not it can be cached
+  when using `defineCachedEventHandler` or by checking the `routeRules`.
+- This module instead hooks into the request lifecycle: When the `request` hook
+  is called (before any event handler is executed), it already tries to serve
+  from cache. And similarly, when the `afterResponse` hook is called, it puts
+  the response in cache.

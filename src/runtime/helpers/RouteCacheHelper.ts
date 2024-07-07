@@ -2,23 +2,22 @@ export class NuxtMultiCacheRouteCacheHelper {
   /**
    * The collected cache tags.
    */
-  tags: string[]
+  tags: string[] = []
 
   /**
    * Indicates if the route should be cacheable.
    */
-  cacheable: boolean | null
+  cacheable: boolean | null = null
 
   /**
    * The maximum age.
    */
-  maxAge: number | null
+  maxAge: number | null = null
 
-  constructor() {
-    this.tags = []
-    this.cacheable = null
-    this.maxAge = null
-  }
+  /**
+   * The maximum age.
+   */
+  staleIfError: number | null = null
 
   /**
    * Add cache tags for this route.
@@ -55,6 +54,26 @@ export class NuxtMultiCacheRouteCacheHelper {
   }
 
   /**
+   * Set a numeric value only if its smaller than the existing value.
+   */
+  setNumeric(
+    property: keyof Pick<
+      NuxtMultiCacheRouteCacheHelper,
+      'maxAge' | 'staleIfError'
+    >,
+    value: number,
+  ): NuxtMultiCacheRouteCacheHelper {
+    const current = this[property]
+
+    // Only set the value if the value is smaller than the current.
+    if (current === null || value < current) {
+      this[property] = value
+    }
+
+    return this
+  }
+
+  /**
    * Set the max age in seconds.
    *
    * The value is only set if it's smaller than the current max age or if it
@@ -62,11 +81,34 @@ export class NuxtMultiCacheRouteCacheHelper {
    *
    * You can always directly set the maxAge property on this object.
    */
-  setMaxAge(maxAge = 0): NuxtMultiCacheRouteCacheHelper {
-    // Only set the maxAge if the value is smaller than the current.
-    if (!this.maxAge || maxAge < this.maxAge) {
-      this.maxAge = maxAge
+  setMaxAge(v = 0): NuxtMultiCacheRouteCacheHelper {
+    return this.setNumeric('maxAge', v)
+  }
+
+  /**
+   * Set the staleIfError in seconds.
+   *
+   * If set, then a stale route will be served if that refreshed route throws an error.
+   */
+  setStaleIfError(v = 0): NuxtMultiCacheRouteCacheHelper {
+    return this.setNumeric('staleIfError', v)
+  }
+
+  /**
+   * Get the expire timestamp as unix epoch (seconds).
+   */
+  getExpires(
+    property: keyof Pick<
+      NuxtMultiCacheRouteCacheHelper,
+      'maxAge' | 'staleIfError'
+    >,
+  ): number | undefined {
+    const value = this[property]
+
+    if (value === null) {
+      return
     }
-    return this
+
+    return Math.floor(Date.now() / 1000) + value
   }
 }

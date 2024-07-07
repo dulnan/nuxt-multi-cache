@@ -31,9 +31,16 @@ export function encodeRouteCacheItem(
   headers: Record<string, any>,
   statusCode: number,
   expires: number | undefined,
+  staleIfErrorExpires: number | undefined,
   cacheTags: string[],
 ): string {
-  return encodeCacheItem(data, { headers, statusCode, expires, cacheTags })
+  return encodeCacheItem(data, {
+    headers,
+    statusCode,
+    expires,
+    cacheTags,
+    staleIfErrorExpires,
+  })
 }
 
 /**

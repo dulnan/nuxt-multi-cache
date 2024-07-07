@@ -2,6 +2,28 @@ import { format } from '@tusbar/cache-control'
 import { setResponseHeader, type H3Event } from 'h3'
 import { getMultiCacheCDNHelper } from '../../helpers/server'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { MultiCacheApp } from '../../types'
+
+function handleCDN(app: MultiCacheApp, event: H3Event) {
+  const cdnHelper = getMultiCacheCDNHelper(event)
+  if (!cdnHelper) {
+    return
+  }
+
+  const cacheTagsValue = cdnHelper._tags.join(' ')
+  if (cacheTagsValue) {
+    setResponseHeader(event, app.config.cdn.cacheTagHeader, cacheTagsValue)
+  }
+
+  const cacheControlValue = format(cdnHelper._control)
+  if (cacheControlValue) {
+    setResponseHeader(
+      event,
+      app.config.cdn.cacheControlHeader,
+      cacheControlValue,
+    )
+  }
+}
 
 /**
  * Callback for the 'beforeResponse' nitro hook.
@@ -9,28 +31,7 @@ import { useMultiCacheApp } from '../utils/useMultiCacheApp'
  * This is called after a valid response was built, but before it is sent.
  */
 export function onBeforeResponse(event: H3Event) {
-  const cdnHelper = getMultiCacheCDNHelper(event)
-  const multiCache = useMultiCacheApp()
+  const app = useMultiCacheApp()
 
-  if (!cdnHelper) {
-    return
-  }
-
-  const cacheTagsValue = cdnHelper._tags.join(' ')
-  if (cacheTagsValue) {
-    setResponseHeader(
-      event,
-      multiCache.config.cdn.cacheTagHeader,
-      cacheTagsValue,
-    )
-  }
-
-  const cacheControlValue = format(cdnHelper._control)
-  if (cacheControlValue) {
-    setResponseHeader(
-      event,
-      multiCache.config.cdn.cacheControlHeader,
-      cacheControlValue,
-    )
-  }
+  handleCDN(app, event)
 }

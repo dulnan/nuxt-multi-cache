@@ -168,6 +168,7 @@ export interface CacheItem {
 export interface RouteCacheItem extends CacheItem {
   headers: Record<string, any>
   statusCode: number
+  staleIfErrorExpires?: number
 }
 
 export interface ComponentCacheItem extends CacheItem {
@@ -316,5 +317,10 @@ declare module 'h3' {
      * The nuxt-multi-cache global cache prefix that is applied to all caches.
      */
     __MULTI_CACHE_PREFIX?: string
+
+    /**
+     * The nuxt-multi-cache global cache prefix that is applied to all caches.
+     */
+    __MULTI_CACHE_ROUTE_CACHE_KEY?: string
   }
 }

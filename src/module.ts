@@ -13,7 +13,6 @@ import {
   addServerImports,
 } from '@nuxt/kit'
 import type {
-  MultiCacheApp,
   MultiCacheServerOptions,
   NuxtMultiCacheOptions,
 } from './runtime/types'
