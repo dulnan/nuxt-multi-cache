@@ -3,22 +3,26 @@
     <h1>Test staleIfError</h1>
 
     <div class="buttons">
-      <button @click.prevent="doRequest(false)" class="button">
+      <button
+        id="button-success"
+        @click.prevent="doRequest(false)"
+        class="button"
+      >
         Make success request
       </button>
-      <button @click.prevent="doRequest(true)" class="button">
+      <button id="button-fail" @click.prevent="doRequest(true)" class="button">
         Make error request
       </button>
     </div>
 
-    <div>{{ counter }}: {{ data }}</div>
+    <div id="api-result">{{ data }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from '#imports'
 
-const data = ref('')
+const data = ref('0:')
 const counter = ref(0)
 
 async function doRequest(throwError?: boolean) {
@@ -26,12 +30,12 @@ async function doRequest(throwError?: boolean) {
   try {
     const result = await $fetch('/api/testStaleIfError', {
       headers: {
-        'x-nuxt-throw-error': throwError ? 'true' : undefined,
+        'x-nuxt-throw-error': throwError ? 'true' : '',
       },
     })
-    data.value = result.data
+    data.value = `${counter.value}: ${result.data}`
   } catch (e) {
-    data.value = 'Error'
+    data.value = `${counter.value}: Error`
   }
 }
 </script>

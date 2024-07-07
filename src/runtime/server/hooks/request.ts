@@ -15,9 +15,9 @@ import {
 } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-import { useRuntimeConfig } from '#imports'
 import { NuxtMultiCacheCDNHelper } from '../../helpers/CDNHelper'
 import { serveCachedRoute } from '../../helpers/routeCache'
+import { useRuntimeConfig } from '#imports'
 
 /**
  * Add the cache context singleton to the current request.

@@ -1,13 +1,12 @@
 import { defineNitroPlugin } from 'nitropack/runtime'
 import { createStorage } from 'unstorage'
-import { getResponseStatus } from 'h3'
 import { onBeforeResponse } from '../hooks/beforeResponse'
 import { onRequest } from '../hooks/request'
 import { onAfterResponse } from '../hooks/afterResponse'
 import type { MultiCacheApp, NuxtMultiCacheSSRContext } from '../../types'
+import { onError } from '../hooks/error'
 import { useRuntimeConfig } from '#imports'
 import { serverOptions } from '#multi-cache-server-options'
-import { onError } from '../hooks/error'
 
 function createMultiCacheApp(): MultiCacheApp {
   const runtimeConfig = useRuntimeConfig()

@@ -1,7 +1,7 @@
 import { defineEventHandler } from 'h3'
+import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import type { NuxtMultiCacheSSRContext } from './../../types'
 import { checkAuth } from './helpers'
-import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 
 export default defineEventHandler(async (event) => {
   await checkAuth(event)

@@ -7,7 +7,7 @@ import {
 describe('cacheItem helpers', () => {
   test('encodeRouteCacheitem', () => {
     expect(
-      encodeRouteCacheItem('<html></html>', {}, 200, undefined, []),
+      encodeRouteCacheItem('<html></html>', {}, 200, undefined, undefined, []),
     ).toEqual(
       `{"headers":{},"statusCode":200,"cacheTags":[]}<CACHE_ITEM><html></html>`,
     )
@@ -20,6 +20,7 @@ describe('cacheItem helpers', () => {
           'Cache-Control': 'private',
         },
         200,
+        undefined,
         undefined,
         [],
       ),
@@ -36,10 +37,11 @@ describe('cacheItem helpers', () => {
         },
         200,
         5000,
+        9000,
         ['my_tag1', 'my_tag2'],
       ),
-    ).toEqual(
-      `{"headers":{"Accept-Language":"de, en","Cache-Control":"private"},"statusCode":200,"expires":5000,"cacheTags":["my_tag1","my_tag2"]}<CACHE_ITEM><html></html>`,
+    ).toMatchInlineSnapshot(
+      `"{"headers":{"Accept-Language":"de, en","Cache-Control":"private"},"statusCode":200,"expires":5000,"cacheTags":["my_tag1","my_tag2"],"staleIfErrorExpires":9000}<CACHE_ITEM><html></html>"`,
     )
   })
 
