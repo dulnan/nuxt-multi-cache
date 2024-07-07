@@ -257,6 +257,19 @@ Set the "stale if error" in seconds for the cache entry. When set, a stale
 cached route (in other words, a cache entry that would normally not be served
 because it is expired) will be served if during rendering a 5xx error is thrown.
 
+### allowStaleWhileRevalidate()
+
+Allow a stale cached response to be served while a new one is being
+"revalidated" (generated/rendered).
+
+For example, if you have a page that does some external API call that takes a
+lot of time, you can prevent "bombarding" that API by only doing one request at
+a time. If that page becomes stale and if 10 people would request that page at
+the same time, you would trigger 10 API calls. By setting
+`allowStaleWhileRevalidate`, only the first request would trigger the API call
+and the other 9 would receive a the stale response. Once the first request is
+finished, every subsequent request would then receive the new, fresh response.
+
 ### addTags(tags: string[])
 
 Add cache tags for the cache entry. They can be later used to purge specific

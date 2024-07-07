@@ -29,6 +29,7 @@ describe('The RouteCacheHelper', () => {
         "setNumeric",
         "setMaxAge",
         "setStaleIfError",
+        "allowStaleWhileRevalidate",
         "getExpires",
       ]
     `)
