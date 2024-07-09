@@ -29,17 +29,18 @@ import myCustomDriver from './somehwere'
 export default defineMultiCacheOptions({
   data: {
     storage: {
-      driver: myCustomDriver()
-    }
-  }
+      driver: myCustomDriver(),
+    },
+  },
 })
 ```
-:::
 
+:::
 
 ## Usage in Components
 
-Use the `useDataCache` composable in a page, layout or any component:
+Use the [`useDataCache`](/composables/useDataCache) composable in a page, layout
+or any component:
 
 ```vue
 <template>
@@ -69,10 +70,26 @@ const { data: weather } = await useAsyncData('weather', async () => {
 
   // Fetch data and add it to cache.
   const response = await $fetch<WeatherResponse>('/api/getWeather')
-  addToCache(response)
+  await addToCache(response)
   return response
 })
 </script>
+```
+
+## Using `useCachedAsyncData`
+
+The example above can be simplified by using the
+[`useCachedAsyncData`](/composables/useCachedAsyncData) composable, which is a
+wrapper around Nuxt's
+[useAsyncData](https://nuxt.com/docs/api/composables/use-async-data) composable.
+It automatically caches the result of your handler function using the first
+argument (`'weather'`) as the key:
+
+```typescript
+const { data: weather } = await useCachedAsyncData<WeatherResponse>(
+  'weather',
+  () => $fetch('/api/getWeather'),
+)
 ```
 
 ## Usage in Server Handlers
@@ -94,28 +111,3 @@ export default defineEventHandler(async (event) => {
   return response
 })
 ```
-
-## Composable
-
-The composable takes a required key as the first argument and an optional
-`H3Event` as the second. It returns a Promise that resolves to an object with
-the following properties:
-
-### value: T|undefined
-
-The value from cache if found. The type is generic, you can provide it when
-calling `useDataCache`:
-
-```typescript
-const { value } = await useDataCache<WeatherResponse>('weather')
-```
-
-### addToCache(data: any, tags?: string[], maxAge?: number)
-
-Use this method to add data to the cache for the given key. The data should be
-a string or an object that can be stringified to JSON.
-
-The optional second argument allows you to define cache tags which can be later
-used to invalidate a cache item.
-
-With the optional third argument you can define a max age for the cache item.
