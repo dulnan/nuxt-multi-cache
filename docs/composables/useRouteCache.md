@@ -56,10 +56,30 @@ Alternatively you could also just reduce the max age for the page so that after
 
 ### setMaxAge(maxAge: number)
 
-Set the max age for the cache entry. After that the page is rendered again.
+Set the max age in seconds for the cache entry. After that the page is rendered
+again.
 
 Note that cache entries remain in cache after they expired. When they expire the
 route is rendered again and the response overwrites the stale cache entry.
+
+### setStaleIfError(maxAge: number)
+
+Set the "stale if error" in seconds for the cache entry. When set, a stale
+cached route (in other words, a cache entry that would normally not be served
+because it is expired) will be served if during rendering a 5xx error is thrown.
+
+### allowStaleWhileRevalidate()
+
+Allow a stale cached response to be served while a new one is being
+"revalidated" (generated/rendered).
+
+For example, if you have a page that does some external API call that takes a
+lot of time, you can prevent "bombarding" that API by only doing one request at
+a time. If that page becomes stale and if 10 people would request that page at
+the same time, you would trigger 10 API calls. By setting
+`allowStaleWhileRevalidate`, only the first request would trigger the API call
+and the other 9 would receive a the stale response. Once the first request is
+finished, every subsequent request would then receive the new, fresh response.
 
 ### addTags(tags: string[])
 
@@ -83,6 +103,7 @@ The helper has three properties to keep track of the state:
 - `tags: string[]`
 - `cacheable: boolean|null`
 - `maxAge: number|null`
+- `staleIfError: number|null`
 
 While absolutely not encouraged, you can directly manipulate these values for
 specific edge cases.

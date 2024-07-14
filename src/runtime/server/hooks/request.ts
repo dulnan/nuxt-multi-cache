@@ -1,5 +1,5 @@
-import { setResponseHeaders, setResponseStatus, type H3Event } from 'h3'
-import type { NuxtMultiCacheSSRContext } from '../../types'
+import { type H3Event } from 'h3'
+import type { NuxtMultiCacheSSRContext, RouteCacheItem } from '../../types'
 import {
   MULTI_CACHE_CDN_CONTEXT_KEY,
   MULTI_CACHE_CONTEXT_KEY,
@@ -15,8 +15,10 @@ import {
 } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-import { useRuntimeConfig } from '#imports'
 import { NuxtMultiCacheCDNHelper } from '../../helpers/CDNHelper'
+import { serveCachedRoute } from '../../helpers/routeCache'
+import { useRuntimeConfig } from '#imports'
+import type { MultiCacheState } from '../../helpers/MultiCacheState'
 
 /**
  * Add the cache context singleton to the current request.
@@ -92,6 +94,29 @@ function applies(path: string): boolean {
   return !/.\.(ico|png|jpg|js|css|html|woff|woff2|ttf|otf|eot|svg)$/.test(path)
 }
 
+function canBeServedFromCache(
+  key: string,
+  decoded: RouteCacheItem,
+  state: MultiCacheState,
+): boolean {
+  const now = Date.now() / 1000
+  const isExpired = decoded.expires ? now >= decoded.expires : false
+
+  // Item is not expired, so we can serve it.
+  if (!isExpired) {
+    return true
+  }
+
+  // The route may be served stale while revalidating and it is not currently
+  // being revalidated.
+  if (decoded.staleWhileRevalidate && state.isBeingRevalidated(key)) {
+    return true
+  }
+
+  // Is both expired and not eligible to be served stale while revalidating.
+  return false
+}
+
 /**
  * Callback for the 'request' nitro hook.
  *
@@ -110,9 +135,9 @@ export async function onRequest(event: H3Event) {
 
   // Users may provide a custom method to determine whether caching is enabled
   // for a given request or not.
-  const shouldAdd = await enabledForRequest(event)
+  const cachingEnabled = await enabledForRequest(event)
 
-  if (!shouldAdd) {
+  if (!cachingEnabled) {
     return
   }
 
@@ -125,44 +150,47 @@ export async function onRequest(event: H3Event) {
   }
 
   try {
-    const { serverOptions } = useMultiCacheApp()
+    const { serverOptions, state } = useMultiCacheApp()
 
     // Build the cache key.
     const fullKey = serverOptions?.route?.buildCacheKey
       ? serverOptions.route.buildCacheKey(event)
       : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
 
-    // Check if there is a cache entry for this path.
+    // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(
       await multiCache.route.getItemRaw(fullKey),
     )
 
+    // No cache entry.
     if (!cachedRaw) {
       return
     }
 
     const decoded = decodeRouteCacheItem(cachedRaw)
+
+    // Decoding failed. May happen if the format is wrong, possibly after a
+    // deployment with a newer version.
     if (!decoded) {
       return
     }
 
-    // Check if the item is stale.
-    if (decoded.expires) {
-      const now = Date.now() / 1000
-      if (now >= decoded.expires) {
-        return
+    // Check if item can be served from cache.
+    if (!canBeServedFromCache(fullKey, decoded, state)) {
+      // Mark the key as being revalidated.
+      if (decoded.staleWhileRevalidate) {
+        state.addKeyBeingRevalidated(fullKey)
+        event.context.__MULTI_CACHE_REVALIDATION_KEY = fullKey
       }
-    }
 
-    // Set the cached headers. The name suggests otherwise, but this appends
-    // headers (e.g. does not override existing headers.)
-    if (decoded.headers) {
-      setResponseHeaders(event, decoded.headers)
-    }
+      if (decoded.staleIfErrorExpires) {
+        // Store the decoded cache item in the event context.
+        // May be used by the error hook handler to serve a stale route on error.
+        event.context.__MULTI_CACHE_DECODED_CACHED_ROUTE = decoded
+      }
 
-    // Set the cached response status.
-    if (decoded.statusCode) {
-      setResponseStatus(event, decoded.statusCode)
+      // Returning, so the route is revalidated.
+      return
     }
 
     const debugEnabled = useRuntimeConfig().multiCache.debug
@@ -173,14 +201,7 @@ export async function onRequest(event: H3Event) {
       })
     }
 
-    const response = new Response(decoded.data)
-
-    Object.entries(decoded.headers).forEach(([name, value]) => {
-      response.headers.set(name, value)
-    })
-
-    // Respond with the cached response.
-    event.respondWith(response)
+    await serveCachedRoute(event, decoded)
   } catch (e) {
     if (e instanceof Error) {
       // eslint-disable-next-line no-console

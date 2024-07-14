@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import { createError, getHeader } from 'h3'
 import type { Storage } from 'unstorage'
-import type { NuxtMultiCacheSSRContext } from './../../../types'
 import { useMultiCacheApp } from '../../utils/useMultiCacheApp'
+import type { NuxtMultiCacheSSRContext } from './../../../types'
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 

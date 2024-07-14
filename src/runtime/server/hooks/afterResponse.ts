@@ -10,6 +10,31 @@ import { logger } from '../../helpers/logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { useRuntimeConfig } from '#imports'
 
+function isPureObject(value: any) {
+  const proto = Object.getPrototypeOf(value)
+  // eslint-disable-next-line no-prototype-builtins
+  return !proto || proto.isPrototypeOf(Object)
+}
+
+/**
+ * Try to stringify the response.
+ */
+function stringify(value: any): string | undefined {
+  if (typeof value === 'string') {
+    return value
+  }
+
+  try {
+    if (isPureObject(value) || Array.isArray(value)) {
+      return JSON.stringify(value)
+    }
+
+    if (typeof value.toJSON === 'function') {
+      return stringify(value.toJSON())
+    }
+  } catch (_e) {}
+}
+
 /**
  * Callback for the 'afterResponse' nitro hook.
  */
@@ -17,7 +42,13 @@ export async function onAfterResponse(
   event: H3Event,
   response: { body?: unknown } | undefined,
 ) {
-  if (!response?.body || typeof response.body !== 'string') {
+  if (!response?.body) {
+    return
+  }
+
+  const responseData = stringify(response.body)
+
+  if (!responseData) {
     return
   }
 
@@ -37,7 +68,7 @@ export async function onAfterResponse(
     return
   }
 
-  const { serverOptions } = useMultiCacheApp()
+  const { serverOptions, state } = useMultiCacheApp()
 
   let responseHeaders = getResponseHeaders(event)
 
@@ -49,15 +80,17 @@ export async function onAfterResponse(
     ? serverOptions.route.buildCacheKey(event)
     : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
 
-  const expires = routeHelper.maxAge
-    ? Math.round(Date.now() / 1000) + routeHelper.maxAge
-    : undefined
+  const expires = routeHelper.getExpires('maxAge')
+  const staleIfErrorExpires = routeHelper.getExpires('staleIfError')
+  const staleWhileRevalidate = !!routeHelper.staleWhileRevalidate
 
   const cacheItem = encodeRouteCacheItem(
-    response.body,
+    responseData,
     responseHeaders,
     statusCode,
     expires,
+    staleIfErrorExpires,
+    staleWhileRevalidate,
     routeHelper.tags,
   )
 
@@ -67,7 +100,9 @@ export async function onAfterResponse(
     logger.info('Storing route in cache: ' + event.path, {
       cacheKey,
       expires,
+      staleIfErrorExpires,
       cacheTags: routeHelper.tags,
+      staleWhileRevalidate,
       statusCode,
     })
   }
@@ -75,4 +110,10 @@ export async function onAfterResponse(
   await multiCache.route.setItemRaw(cacheKey, cacheItem, {
     ttl: routeHelper.maxAge,
   })
+
+  if (event.context.__MULTI_CACHE_REVALIDATION_KEY) {
+    state.removeKeyBeingRevalidated(
+      event.context.__MULTI_CACHE_REVALIDATION_KEY,
+    )
+  }
 }

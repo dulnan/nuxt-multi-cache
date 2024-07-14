@@ -7,9 +7,17 @@ import {
 describe('cacheItem helpers', () => {
   test('encodeRouteCacheitem', () => {
     expect(
-      encodeRouteCacheItem('<html></html>', {}, 200, undefined, []),
-    ).toEqual(
-      `{"headers":{},"statusCode":200,"cacheTags":[]}<CACHE_ITEM><html></html>`,
+      encodeRouteCacheItem(
+        '<html></html>',
+        {},
+        200,
+        undefined,
+        undefined,
+        false,
+        [],
+      ),
+    ).toMatchInlineSnapshot(
+      `"{"headers":{},"statusCode":200,"cacheTags":[],"staleWhileRevalidate":false}<CACHE_ITEM><html></html>"`,
     )
 
     expect(
@@ -20,6 +28,8 @@ describe('cacheItem helpers', () => {
           'Cache-Control': 'private',
         },
         200,
+        undefined,
+        undefined,
         undefined,
         [],
       ),
@@ -36,10 +46,12 @@ describe('cacheItem helpers', () => {
         },
         200,
         5000,
+        9000,
+        true,
         ['my_tag1', 'my_tag2'],
       ),
-    ).toEqual(
-      `{"headers":{"Accept-Language":"de, en","Cache-Control":"private"},"statusCode":200,"expires":5000,"cacheTags":["my_tag1","my_tag2"]}<CACHE_ITEM><html></html>`,
+    ).toMatchInlineSnapshot(
+      `"{"headers":{"Accept-Language":"de, en","Cache-Control":"private"},"statusCode":200,"expires":5000,"cacheTags":["my_tag1","my_tag2"],"staleIfErrorExpires":9000,"staleWhileRevalidate":true}<CACHE_ITEM><html></html>"`,
     )
   })
 
