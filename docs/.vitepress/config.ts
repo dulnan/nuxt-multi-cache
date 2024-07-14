@@ -96,6 +96,18 @@ export default defineConfig({
         ],
       },
       {
+        text: 'Composables',
+        items: [
+          { text: 'useDataCache', link: '/composables/useDataCache' },
+          {
+            text: 'useCachedAsyncData',
+            link: '/composables/useCachedAsyncData',
+          },
+          { text: 'useRouteCache', link: '/composables/useRouteCache' },
+          { text: 'useCDNHeaders', link: '/composables/useCDNHeaders' },
+        ],
+      },
+      {
         text: 'Use Cases',
         items: [
           {
