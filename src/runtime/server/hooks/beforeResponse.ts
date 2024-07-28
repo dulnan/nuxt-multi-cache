@@ -1,6 +1,6 @@
 import { format } from '@tusbar/cache-control'
 import { setResponseHeader, type H3Event } from 'h3'
-import { getMultiCacheCDNHelper } from '../../helpers/server'
+import { getMultiCacheCDNHelper, onlyUnique } from '../../helpers/server'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { MultiCacheApp } from '../../types'
 
@@ -10,7 +10,7 @@ function handleCDN(app: MultiCacheApp, event: H3Event) {
     return
   }
 
-  const cacheTagsValue = cdnHelper._tags.join(' ')
+  const cacheTagsValue = cdnHelper._tags.filter(onlyUnique).join(' ')
   if (cacheTagsValue) {
     setResponseHeader(event, app.config.cdn.cacheTagHeader, cacheTagsValue)
   }

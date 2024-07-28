@@ -8,6 +8,7 @@ import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../settings'
 import type { NuxtMultiCacheSSRContext } from './../../types'
 import { checkAuth } from './helpers'
+import { onlyUnique } from '../../helpers/server'
 
 /**
  * Get the tags to be purged from the request.
@@ -25,13 +26,6 @@ async function getTagsToPurge(event: H3Event): Promise<string[]> {
     statusCode: 400,
     statusMessage: 'No valid tags provided.',
   })
-}
-
-/**
- * Filter out duplicate array items.
- */
-function onlyUnique(value: string, index: number, self: Array<string>) {
-  return self.indexOf(value) === index
 }
 
 /**

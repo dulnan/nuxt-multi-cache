@@ -53,3 +53,10 @@ export function encodeRouteCacheKey(path: string): string {
   }
   return path
 }
+
+/**
+ * Filter out duplicate array items.
+ */
+export function onlyUnique(value: string, index: number, self: Array<string>) {
+  return self.indexOf(value) === index
+}
