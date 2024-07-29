@@ -128,10 +128,8 @@ describe('purgeTags API handler', () => {
 
     expect(
       purgeTags({
-        context: {
-          __MULTI_CACHE: {
-            data: storageData,
-          },
+        __MULTI_CACHE: {
+          data: storageData,
         },
       } as any),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
@@ -140,10 +138,8 @@ describe('purgeTags API handler', () => {
 
     expect(
       purgeTags({
-        context: {
-          __MULTI_CACHE: {
-            data: storageData,
-          },
+        __MULTI_CACHE: {
+          data: storageData,
         },
         body: 'Invalid body',
       } as any),

@@ -111,9 +111,7 @@ export async function onAfterResponse(
     ttl: routeHelper.maxAge,
   })
 
-  if (event.context.__MULTI_CACHE_REVALIDATION_KEY) {
-    state.removeKeyBeingRevalidated(
-      event.context.__MULTI_CACHE_REVALIDATION_KEY,
-    )
+  if (event.__MULTI_CACHE_REVALIDATION_KEY) {
+    state.removeKeyBeingRevalidated(event.__MULTI_CACHE_REVALIDATION_KEY)
   }
 }

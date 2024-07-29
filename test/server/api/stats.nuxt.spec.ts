@@ -27,7 +27,7 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
       return Promise.resolve()
     },
     getCacheInstance: (event: any) => {
-      return event.context.__MULTI_CACHE.data
+      return event.__MULTI_CACHE.data
     },
   }
 })

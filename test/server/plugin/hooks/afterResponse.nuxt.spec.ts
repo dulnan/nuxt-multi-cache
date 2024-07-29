@@ -59,13 +59,11 @@ describe('afterResponse nitro hook handler', () => {
     expect(
       await onAfterResponse(
         {
-          context: {
-            [MULTI_CACHE_CONTEXT_KEY]: {
-              route: {},
-            },
-            [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-              new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
+          [MULTI_CACHE_CONTEXT_KEY]: {
+            route: {},
           },
+          [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
+            new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
         } as any,
         { body: '<html></html>' } as any,
       ),
@@ -76,13 +74,11 @@ describe('afterResponse nitro hook handler', () => {
     expect(
       await onAfterResponse(
         {
-          context: {
-            [MULTI_CACHE_CONTEXT_KEY]: {
-              route: {},
-            },
-            [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-              new NuxtMultiCacheRouteCacheHelper().setCacheable(),
+          [MULTI_CACHE_CONTEXT_KEY]: {
+            route: {},
           },
+          [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
+            new NuxtMultiCacheRouteCacheHelper().setCacheable(),
 
           node: {
             res: {
@@ -121,19 +117,17 @@ describe('afterResponse nitro hook handler', () => {
 
     const event = {
       path: '/foobar',
-      context: {
-        [MULTI_CACHE_CONTEXT_KEY]: {
-          route: {
-            setItemRaw(key, item, options) {
-              storedItems.push({ key, item, options })
-              return Promise.resolve()
-            },
+      [MULTI_CACHE_CONTEXT_KEY]: {
+        route: {
+          setItemRaw(key, item, options) {
+            storedItems.push({ key, item, options })
+            return Promise.resolve()
           },
         },
-        [MULTI_CACHE_ROUTE_CONTEXT_KEY]: new NuxtMultiCacheRouteCacheHelper()
-          .setCacheable()
-          .setMaxAge(1200),
       },
+      [MULTI_CACHE_ROUTE_CONTEXT_KEY]: new NuxtMultiCacheRouteCacheHelper()
+        .setCacheable()
+        .setMaxAge(1200),
 
       node: {
         res: {

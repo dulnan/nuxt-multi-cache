@@ -11,19 +11,19 @@ export const MULTI_CACHE_PREFIX_KEY = '__MULTI_CACHE_PREFIX'
 export function getMultiCacheContext(
   event: H3Event,
 ): NuxtMultiCacheSSRContext | undefined {
-  return event?.context?.[MULTI_CACHE_CONTEXT_KEY]
+  return event?.[MULTI_CACHE_CONTEXT_KEY]
 }
 
 export function getMultiCacheRouteHelper(
   event: H3Event,
 ): NuxtMultiCacheRouteCacheHelper | undefined {
-  return event?.context?.[MULTI_CACHE_ROUTE_CONTEXT_KEY]
+  return event?.[MULTI_CACHE_ROUTE_CONTEXT_KEY]
 }
 
 export function getMultiCacheCDNHelper(
   event: H3Event,
 ): NuxtMultiCacheCDNHelper | undefined {
-  return event?.context?.[MULTI_CACHE_CDN_CONTEXT_KEY]
+  return event?.[MULTI_CACHE_CDN_CONTEXT_KEY]
 }
 
 export function getExpiresValue(maxAge: number) {
@@ -38,7 +38,7 @@ export function getCacheKeyWithPrefix(
   cacheKey: string,
   event: H3Event,
 ): string {
-  const prefix = event.context[MULTI_CACHE_PREFIX_KEY]
+  const prefix = event[MULTI_CACHE_PREFIX_KEY]
   return prefix ? `${prefix}--${cacheKey}` : cacheKey
 }
 

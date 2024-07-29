@@ -31,7 +31,7 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
     },
     getCacheInstance: (event: any) => {
       const cache = event.__CACHE_NAME
-      return event.context.__MULTI_CACHE[cache]
+      return event.__MULTI_CACHE[cache]
     },
   }
 })

@@ -24,20 +24,18 @@ vi.mock('vue', async (importOriginal) => {
     useSSRContext: () => {
       return {
         event: {
-          context: {
-            __MULTI_CACHE: {
-              data: {
-                getItem: (key: string) => {
-                  return Promise.resolve(storage[key])
-                },
-                setItem: (key: string, data: any) => {
-                  storage[key] = data
-                  return Promise.resolve()
-                },
+          __MULTI_CACHE: {
+            data: {
+              getItem: (key: string) => {
+                return Promise.resolve(storage[key])
+              },
+              setItem: (key: string, data: any) => {
+                storage[key] = data
+                return Promise.resolve()
               },
             },
-            __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
           },
+          __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
         },
       }
     },
@@ -78,9 +76,7 @@ describe('useRouteCache composable', () => {
         expect(helper).toEqual(dummyHelper)
       },
       {
-        context: {
-          __MULTI_CACHE_ROUTE: dummyHelper,
-        },
+        __MULTI_CACHE_ROUTE: dummyHelper,
       } as any,
     )
   })
