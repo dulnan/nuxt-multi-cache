@@ -17,8 +17,8 @@ import { logger } from '../../helpers/logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { NuxtMultiCacheCDNHelper } from '../../helpers/CDNHelper'
 import { serveCachedRoute } from '../../helpers/routeCache'
-import { useRuntimeConfig } from '#imports'
 import type { MultiCacheState } from '../../helpers/MultiCacheState'
+import { useRuntimeConfig } from '#imports'
 
 /**
  * Add the cache context singleton to the current request.
@@ -33,27 +33,25 @@ async function addCacheContext(
   // for example based on cookie or request headers.
   if (serverOptions.cacheKeyPrefix) {
     if (typeof serverOptions.cacheKeyPrefix === 'string') {
-      event.context[MULTI_CACHE_PREFIX_KEY] = serverOptions.cacheKeyPrefix
+      event[MULTI_CACHE_PREFIX_KEY] = serverOptions.cacheKeyPrefix
     } else {
-      event.context[MULTI_CACHE_PREFIX_KEY] =
-        await serverOptions.cacheKeyPrefix(event)
+      event[MULTI_CACHE_PREFIX_KEY] = await serverOptions.cacheKeyPrefix(event)
     }
   }
 
   // Add the cache context object to the SSR context object.
-  event.context[MULTI_CACHE_CONTEXT_KEY] = cache
+  event[MULTI_CACHE_CONTEXT_KEY] = cache
 
   if (cache.route) {
     // Add the route cache helper.
-    event.context[MULTI_CACHE_ROUTE_CONTEXT_KEY] =
-      new NuxtMultiCacheRouteCacheHelper()
+    event[MULTI_CACHE_ROUTE_CONTEXT_KEY] = new NuxtMultiCacheRouteCacheHelper()
   }
 
   if (config.cdn.enabled) {
     const helper = new NuxtMultiCacheCDNHelper()
 
     // Add the instances to the H3 event context.
-    event.context[MULTI_CACHE_CDN_CONTEXT_KEY] = helper
+    event[MULTI_CACHE_CDN_CONTEXT_KEY] = helper
   }
 
   return cache
@@ -180,13 +178,13 @@ export async function onRequest(event: H3Event) {
       // Mark the key as being revalidated.
       if (decoded.staleWhileRevalidate) {
         state.addKeyBeingRevalidated(fullKey)
-        event.context.__MULTI_CACHE_REVALIDATION_KEY = fullKey
+        event.__MULTI_CACHE_REVALIDATION_KEY = fullKey
       }
 
       if (decoded.staleIfErrorExpires) {
         // Store the decoded cache item in the event context.
         // May be used by the error hook handler to serve a stale route on error.
-        event.context.__MULTI_CACHE_DECODED_CACHED_ROUTE = decoded
+        event.__MULTI_CACHE_DECODED_CACHED_ROUTE = decoded
       }
 
       // Returning, so the route is revalidated.

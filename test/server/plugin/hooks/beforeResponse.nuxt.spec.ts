@@ -1,12 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onBeforeResponse } from '../../../../dist/runtime/server/hooks/beforeResponse'
-import {
-  MULTI_CACHE_CDN_CONTEXT_KEY,
-  MULTI_CACHE_CONTEXT_KEY,
-  MULTI_CACHE_ROUTE_CONTEXT_KEY,
-} from '../../../../dist/runtime/helpers/server'
-import { NuxtMultiCacheRouteCacheHelper } from '../../../../dist/runtime/helpers/RouteCacheHelper'
+import { MULTI_CACHE_CDN_CONTEXT_KEY } from '../../../../dist/runtime/helpers/server'
 import { NuxtMultiCacheCDNHelper } from '../../../../dist/runtime/helpers/CDNHelper'
 
 mockNuxtImport('useRuntimeConfig', () => {
@@ -70,9 +65,7 @@ describe('beforeResponse nitro hook handler', () => {
 
     const event = {
       path: '/foobar',
-      context: {
-        [MULTI_CACHE_CDN_CONTEXT_KEY]: cdnHelper,
-      },
+      [MULTI_CACHE_CDN_CONTEXT_KEY]: cdnHelper,
 
       node: {
         res: {

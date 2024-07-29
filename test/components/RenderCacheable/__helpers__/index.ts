@@ -33,21 +33,19 @@ export function createTestApp(
 
   const ssrContext = {
     event: {
-      context: {
-        __MULTI_CACHE: {
-          component: {
-            setItemRaw: (key: string, data: any) => {
-              if (key === 'InnerComponent::set_error') {
-                throw new Error('Failed to set item.')
-              }
-              storage[key] = data
-            },
-            getItemRaw(key: string) {
-              if (key === 'InnerComponent::get_error') {
-                throw new Error('Failed to get item.')
-              }
-              return storage[key]
-            },
+      __MULTI_CACHE: {
+        component: {
+          setItemRaw: (key: string, data: any) => {
+            if (key === 'InnerComponent::set_error') {
+              throw new Error('Failed to set item.')
+            }
+            storage[key] = data
+          },
+          getItemRaw(key: string) {
+            if (key === 'InnerComponent::get_error') {
+              throw new Error('Failed to get item.')
+            }
+            return storage[key]
           },
         },
       },

@@ -6,26 +6,22 @@ import {
 } from './../../src/runtime/helpers/server'
 
 const EVENT: any = {
-  context: {
-    __MULTI_CACHE: {
-      component: {
-        getItem: () => {},
-      },
+  __MULTI_CACHE: {
+    component: {
+      getItem: () => {},
     },
-    __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
   },
+  __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
 }
 
 describe('Server helpers', () => {
   test('getMultiCacheContext', () => {
     expect(getMultiCacheContext({} as any)).toBeUndefined()
-    expect(getMultiCacheContext(EVENT)).toEqual(EVENT.context.__MULTI_CACHE)
+    expect(getMultiCacheContext(EVENT)).toEqual(EVENT.__MULTI_CACHE)
   })
 
   test('getMultiCacheRouteContext', () => {
     expect(getMultiCacheRouteHelper({} as any)).toBeUndefined()
-    expect(getMultiCacheRouteHelper(EVENT)).toEqual(
-      EVENT.context.__MULTI_CACHE_ROUTE,
-    )
+    expect(getMultiCacheRouteHelper(EVENT)).toEqual(EVENT.__MULTI_CACHE_ROUTE)
   })
 })

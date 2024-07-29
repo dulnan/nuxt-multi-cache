@@ -11,9 +11,7 @@ vi.mock('vue', async (importOriginal) => {
     useSSRContext: () => {
       return {
         event: {
-          context: {
-            __MULTI_CACHE_CDN: new NuxtMultiCacheCDNHelper(),
-          },
+          __MULTI_CACHE_CDN: new NuxtMultiCacheCDNHelper(),
         },
       }
     },
@@ -64,9 +62,7 @@ describe('useCDNHeaders composable', () => {
         expect(helper).toEqual(dummyHelper)
       },
       {
-        context: {
-          __MULTI_CACHE_CDN: dummyHelper,
-        },
+        __MULTI_CACHE_CDN: dummyHelper,
       } as any,
     )
   })

@@ -5,10 +5,10 @@ import {
   decodeRouteCacheItem,
 } from '../../helpers/cacheItem'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { onlyUnique } from '../../helpers/server'
 import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../settings'
 import type { NuxtMultiCacheSSRContext } from './../../types'
 import { checkAuth } from './helpers'
-import { onlyUnique } from '../../helpers/server'
 
 /**
  * Get the tags to be purged from the request.

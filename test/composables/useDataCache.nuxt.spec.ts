@@ -28,16 +28,14 @@ vi.mock('vue', async (importOriginal) => {
     useSSRContext: () => {
       return {
         event: {
-          context: {
-            __MULTI_CACHE: {
-              data: {
-                getItem: (key: string) => {
-                  return Promise.resolve(storage[key])
-                },
-                setItem: (key: string, data: any) => {
-                  storage[key] = data
-                  return Promise.resolve()
-                },
+          __MULTI_CACHE: {
+            data: {
+              getItem: (key: string) => {
+                return Promise.resolve(storage[key])
+              },
+              setItem: (key: string, data: any) => {
+                storage[key] = data
+                return Promise.resolve()
               },
             },
           },
@@ -156,16 +154,14 @@ describe('useDataCache composable', () => {
       foobar: { data: 'More cached data.' },
     }
     const event = {
-      context: {
-        __MULTI_CACHE: {
-          data: {
-            getItem: (key: string) => {
-              return Promise.resolve(storage[key])
-            },
-            setItem: (key: string, data: any) => {
-              storage[key] = data
-              return Promise.resolve()
-            },
+      __MULTI_CACHE: {
+        data: {
+          getItem: (key: string) => {
+            return Promise.resolve(storage[key])
+          },
+          setItem: (key: string, data: any) => {
+            storage[key] = data
+            return Promise.resolve()
           },
         },
       },
@@ -180,12 +176,10 @@ describe('useDataCache composable', () => {
     const consoleSpy = vi.spyOn(global.console, 'debug')
 
     const event = {
-      context: {
-        __MULTI_CACHE: {
-          data: {
-            getItem: () => {
-              throw new Error('Failed to get item from cache.')
-            },
+      __MULTI_CACHE: {
+        data: {
+          getItem: () => {
+            throw new Error('Failed to get item from cache.')
           },
         },
       },
