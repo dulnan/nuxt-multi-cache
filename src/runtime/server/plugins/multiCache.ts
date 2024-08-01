@@ -46,6 +46,26 @@ export default defineNitroPlugin((nitroApp) => {
     nitroApp.hooks.hook('beforeResponse', onBeforeResponse)
   }
 
+  // We have to add a "fake" event handler as the very first handler in the
+  // stack. Since we serve from cache inside the "request" hook (which runs
+  // before any event handlers), the response has already been sent at that
+  // point. However, H3 will still continue to execute the event handlers
+  // and one of them is the "route-rules" handler from Nitro which may set
+  // response headers, which will throw an "Cannot set headers after they are
+  // sent to the client" error.
+  nitroApp.h3App.stack.unshift({
+    route: '/',
+    handler: function (event) {
+      // This is set by our serveCachedRoute method.
+      if (event.__MULTI_CACHE_SERVED_FROM_CACHE) {
+        // This is never actually sent to the client. It's just a workaround
+        // (or more a hack) to tell H3 to stop executing any other event
+        // handlers.
+        return 'NOOP'
+      }
+    },
+  })
+
   // Only needed if route caching is enabled.
   if (multiCache.config.route) {
     // Hook into afterResponse to store cacheable responses in cache.

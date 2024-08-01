@@ -22,6 +22,12 @@ export async function serveCachedRoute(
     response.headers.set(name, value)
   })
 
-  // Respond with the cached response.
+  // We use this to tell our "fake" event handler that runs as the very first
+  // one in the stack to return a fake response (which is not actually returned
+  // to the client). It just tells H3 to stop executing any other event
+  // handlers.
+  event.__MULTI_CACHE_SERVED_FROM_CACHE = true
+  event._handled = true
+
   await event.respondWith(response)
 }

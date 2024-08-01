@@ -6,6 +6,16 @@ export default defineNuxtConfig({
     '/spaPageWithCachedComponent': { ssr: false },
     '/spaDataCache': { ssr: false },
     '/spaPageWithException': { ssr: false },
+    '/api/routeCacheWithRouteRules': {
+      headers: {
+        'x-route-rules-header': 'Set via routeRules',
+      },
+    },
+    '/api/testStaleIfError': {
+      headers: {
+        'x-route-rules-header': 'Set via routeRules',
+      },
+    },
   },
   modules: [NuxtMultiCache],
   imports: {
