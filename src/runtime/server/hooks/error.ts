@@ -6,7 +6,7 @@ import { serveCachedRoute } from '../../helpers/routeCache'
  *
  * This is called after a valid response was built, but before it is sent.
  */
-export function onError(_error: Error, ctx: CapturedErrorContext) {
+export async function onError(_error: Error, ctx: CapturedErrorContext) {
   try {
     if (!ctx.event) {
       return
@@ -28,6 +28,6 @@ export function onError(_error: Error, ctx: CapturedErrorContext) {
       return
     }
 
-    serveCachedRoute(ctx.event, decoded)
+    await serveCachedRoute(ctx.event, decoded)
   } catch (_e) {}
 }

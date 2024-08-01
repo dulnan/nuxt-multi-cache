@@ -43,6 +43,7 @@
     "dev:build": "nuxi build playground",
     "dev:serve": "node playground/.output/server/index.mjs",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground && nuxi prepare playground-disk",
+    "dev:inspect": "nuxi dev playground --inspect",
     "typecheck": "nuxi typecheck",
     "docs:dev": "vitepress dev docs --port 5000",
     "docs:build": "vitepress build docs",
