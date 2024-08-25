@@ -1,5 +1,9 @@
-import type { NuxtApp, AsyncDataOptions } from 'nuxt/app'
-import type { DefaultAsyncDataValue } from '#app/defaults'
+import type { NuxtApp, AsyncDataOptions, AsyncData, NuxtError } from 'nuxt/app'
+import type {
+  DefaultAsyncDataErrorValue,
+  DefaultAsyncDataValue,
+} from '#app/defaults'
+import type { PickFrom } from '#app/composables/asyncData'
 import { useAsyncData, useDataCache, useNuxtApp } from '#imports'
 
 type KeysOf<T> = Array<
@@ -100,6 +104,7 @@ function isValidMaxAge(v?: unknown): v is number {
  */
 export function useCachedAsyncData<
   ResT,
+  NuxtErrorDataT = unknown,
   DataT = ResT,
   PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
   DefaultT = null,
@@ -107,7 +112,13 @@ export function useCachedAsyncData<
   key: string,
   handler: (app?: NuxtApp) => Promise<ResT>,
   providedOptions?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
-) {
+): AsyncData<
+  PickFrom<DataT, PickKeys> | DefaultT,
+  | (NuxtErrorDataT extends Error | NuxtError
+      ? NuxtErrorDataT
+      : NuxtError<NuxtErrorDataT>)
+  | DefaultAsyncDataErrorValue
+> {
   const options: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT> =
     providedOptions && typeof providedOptions === 'object'
       ? providedOptions
@@ -123,7 +134,7 @@ export function useCachedAsyncData<
       app.static.data.__firstHydrationTime = Date.now()
     }
 
-    return useAsyncData<ResT, unknown, DataT, PickKeys, DefaultT>(
+    return useAsyncData<ResT, NuxtErrorDataT, DataT, PickKeys, DefaultT>(
       key,
       async () => {
         const result = await handler(app)
@@ -203,7 +214,7 @@ export function useCachedAsyncData<
   }
 
   // Code for server-side caching.
-  return useAsyncData<ResT, unknown, DataT, PickKeys, DefaultT>(
+  return useAsyncData<ResT, NuxtErrorDataT, DataT, PickKeys, DefaultT>(
     key,
     async (app) => {
       const { value, addToCache } = await useDataCache<DataT>(
