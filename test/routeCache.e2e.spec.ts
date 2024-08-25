@@ -7,16 +7,16 @@ import purgeAll from './__helpers__/purgeAll'
 
 const multiCache: NuxtMultiCacheOptions = {
   component: {
-    enabled: true,
+    enabled: false,
   },
   data: {
-    enabled: true,
+    enabled: false,
   },
   route: {
     enabled: true,
   },
   cdn: {
-    enabled: true,
+    enabled: false,
   },
   api: {
     enabled: true,
