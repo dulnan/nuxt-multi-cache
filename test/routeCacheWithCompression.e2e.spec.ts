@@ -71,7 +71,7 @@ async function testResponse(path: string) {
   expect(secondEncoding).toEqual(firstEncoding)
 }
 
-describe.only('The route cache with compression enabled', () => {
+describe('The route cache with compression enabled', () => {
   test('caches a page', async () => {
     await purgeAll()
     await testResponse('/testCompression')
