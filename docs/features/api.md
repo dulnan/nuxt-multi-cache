@@ -202,7 +202,9 @@ items are purged. This is because cache tags are stored together with the items.
 This means that every item needs to be loaded from the cache and its tags
 checked.
 
-The delay is configurable via the `api.cacheTagInvalidationDelay` option. :::
+The delay is configurable via the `api.cacheTagInvalidationDelay` option.
+
+:::
 
 ### Example Purge all cache items with cache tag `language:de`
 

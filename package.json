@@ -81,6 +81,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "eslint-plugin-vue": "^9.26.0",
+    "h3-compression": "^0.3.2",
     "happy-dom": "^14.12.0",
     "nuxt": "^3.12.2",
     "playwright-core": "^1.44.1",

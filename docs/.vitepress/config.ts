@@ -136,6 +136,10 @@ export default defineConfig({
             link: '/advanced/storage-instance',
           },
           {
+            text: 'Route Cache with Compression',
+            link: '/advanced/route-cache-with-compression',
+          },
+          {
             text: 'Using Route Cache + CDN',
             link: '/advanced/route-and-cdn',
           },

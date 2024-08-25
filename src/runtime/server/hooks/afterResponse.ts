@@ -42,6 +42,11 @@ export async function onAfterResponse(
   event: H3Event,
   response: { body?: unknown } | undefined,
 ) {
+  // Has already been served from cache, so there is nothing to do here.
+  if (event.__MULTI_CACHE_SERVED_FROM_CACHE) {
+    return
+  }
+
   if (!response?.body) {
     return
   }
@@ -71,6 +76,13 @@ export async function onAfterResponse(
   const { serverOptions, state } = useMultiCacheApp()
 
   let responseHeaders = getResponseHeaders(event)
+
+  // We have to remove this header, because what we store in the cache is not
+  // encoded. Apps may implement custom encoding that is applied in the
+  // beforeResponse hook. However, it is not guaranteed that when serving a
+  // cached route the same compression is also being applied again. If we were
+  // to always send this header, then the response might be invalid.
+  responseHeaders['content-encoding'] = undefined
 
   if (serverOptions.route?.alterCachedHeaders) {
     responseHeaders = serverOptions.route.alterCachedHeaders(responseHeaders)
