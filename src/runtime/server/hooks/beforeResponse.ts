@@ -30,7 +30,7 @@ function handleCDN(app: MultiCacheApp, event: H3Event) {
  *
  * This is called after a valid response was built, but before it is sent.
  */
-export function onBeforeResponse(event: H3Event) {
+export function onBeforeResponse(event: H3Event, response: { body?: unknown }) {
   const app = useMultiCacheApp()
 
   handleCDN(app, event)

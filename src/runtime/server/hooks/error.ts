@@ -1,17 +1,26 @@
-import type { CapturedErrorContext } from 'nitropack/types'
-import { serveCachedRoute } from '../../helpers/routeCache'
+import type { CapturedErrorContext } from 'nitropack'
+import { setCachedResponse } from '../../helpers/routeCache'
+import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 
 /**
- * Callback for the 'beforeResponse' nitro hook.
+ * Callback for the 'error' nitro hook.
  *
- * This is called after a valid response was built, but before it is sent.
+ * This is called during any error that happens in an event handler.
  */
-export async function onError(_error: Error, ctx: CapturedErrorContext) {
+export function onError(_error: Error, ctx: CapturedErrorContext) {
   try {
     if (!ctx.event) {
       return
     }
-    // Get the decoded route cache item. The "request" handler may have already fetched this, so we can reuse it.
+
+    const { state } = useMultiCacheApp()
+
+    if (ctx.event.__MULTI_CACHE_REVALIDATION_KEY) {
+      state.removeKeyBeingRevalidated(ctx.event.__MULTI_CACHE_REVALIDATION_KEY)
+    }
+
+    // Get the decoded route cache item. The "request" handler may have already
+    // fetched this, so we can reuse it.
     const decoded = ctx.event.__MULTI_CACHE_DECODED_CACHED_ROUTE
 
     if (!decoded) {
@@ -23,11 +32,21 @@ export async function onError(_error: Error, ctx: CapturedErrorContext) {
       return
     }
 
+    // If we reached the expiry date, return.
     const now = Date.now() / 1000
     if (now >= decoded.staleIfErrorExpires) {
       return
     }
 
-    await serveCachedRoute(ctx.event, decoded)
+    setCachedResponse(ctx.event, decoded)
+
+    const response = new Response(decoded.data, {
+      headers: decoded.headers,
+    })
+
+    // Directly respond with our response.
+    // This might potentially lead to other hooks (such as beforeResponse) not
+    // being called here that would for example compress the response.
+    return ctx.event.respondWith(response)
   } catch (_e) {}
 }
