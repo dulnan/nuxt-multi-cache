@@ -337,5 +337,10 @@ declare module 'h3' {
      * The route cache key that is currently being revalidated.
      */
     __MULTI_CACHE_REVALIDATION_KEY?: string
+
+    /**
+     * Whether the current request has already been served from cache.
+     */
+    __MULTI_CACHE_SERVED_FROM_CACHE?: boolean
   }
 }
