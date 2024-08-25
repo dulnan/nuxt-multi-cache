@@ -7,16 +7,16 @@ import purgeByKey from './__helpers__/purgeByKey'
 
 const multiCache: NuxtMultiCacheOptions = {
   component: {
-    enabled: true,
+    enabled: false,
   },
   data: {
     enabled: true,
   },
   route: {
-    enabled: true,
+    enabled: false,
   },
   cdn: {
-    enabled: true,
+    enabled: false,
   },
   api: {
     enabled: true,

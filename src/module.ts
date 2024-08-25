@@ -146,10 +146,15 @@ export default defineNuxtModule<ModuleOptions>({
       })
     }
 
-    // Serves cached routes.
+    // Add the server plugin if any of the features is enabled.
+    // During local development these might all be disabled, so it's not
+    // necessary to add the plugin.
     if (
       options.route?.enabled ||
       options.cdn?.enabled ||
+      options.data?.enabled ||
+      options.component?.enabled ||
+      options.api?.enabled ||
       nuxt.options._prepare
     ) {
       addServerPlugin(resolve('./runtime/server/plugins/multiCache'))

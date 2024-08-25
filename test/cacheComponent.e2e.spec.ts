@@ -10,13 +10,13 @@ const multiCache: NuxtMultiCacheOptions = {
     enabled: true,
   },
   data: {
-    enabled: true,
+    enabled: false,
   },
   route: {
-    enabled: true,
+    enabled: false,
   },
   cdn: {
-    enabled: true,
+    enabled: false,
   },
   api: {
     enabled: true,

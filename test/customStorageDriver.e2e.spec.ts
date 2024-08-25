@@ -5,19 +5,19 @@ import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 
 const multiCache: NuxtMultiCacheOptions = {
   component: {
-    enabled: true,
+    enabled: false,
   },
   data: {
     enabled: true,
   },
   route: {
-    enabled: true,
+    enabled: false,
   },
   cdn: {
-    enabled: true,
+    enabled: false,
   },
   api: {
-    enabled: true,
+    enabled: false,
     authorization: false,
     cacheTagInvalidationDelay: 5000,
   },
