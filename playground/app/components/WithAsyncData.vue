@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useAsyncData } from 'nuxt/app'
+import { useAsyncData } from '#imports'
 
 const { data } = await useAsyncData<any>('withAsyncData', () => {
   return $fetch('/api/test').then((v) => {

@@ -5,8 +5,8 @@
 </template>
 
 <script lang="ts" setup>
-import { useRoute } from 'nuxt/app'
-import { computed } from 'vue'
+import { useRoute, computed } from '#imports'
+
 const route = useRoute()
 
 const queryValue = computed(() => {

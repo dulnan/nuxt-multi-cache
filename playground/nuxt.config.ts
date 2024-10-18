@@ -17,10 +17,13 @@ export default defineNuxtConfig({
       },
     },
   },
+
   modules: [NuxtMultiCache],
+
   imports: {
     autoImport: false,
   },
+
   multiCache: {
     debug: true,
     component: {
@@ -44,5 +47,10 @@ export default defineNuxtConfig({
     },
   },
 
+  future: {
+    compatibilityVersion: 4,
+  },
+
   css: ['vue-json-pretty/lib/styles.css'],
+  compatibilityDate: '2024-10-18',
 })

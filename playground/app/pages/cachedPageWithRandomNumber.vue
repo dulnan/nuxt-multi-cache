@@ -3,8 +3,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useAsyncData } from 'nuxt/app'
-import { useCDNHeaders, useRouteCache } from '#imports'
+import { useCDNHeaders, useRouteCache, useAsyncData } from '#imports'
 
 const { data: random } = await useAsyncData(() => {
   return Promise.resolve(Math.round(Math.random() * 1000000000).toString())

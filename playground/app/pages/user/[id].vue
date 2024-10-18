@@ -5,9 +5,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useAsyncData } from 'nuxt/app'
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useAsyncData, computed, useRoute } from '#imports'
 
 const route = useRoute()
 const userId = computed(() => {
