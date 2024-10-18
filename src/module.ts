@@ -11,6 +11,7 @@ import {
   addTemplate,
   addServerPlugin,
   addServerImports,
+  addTypeTemplate,
 } from '@nuxt/kit'
 import type {
   MultiCacheServerOptions,
@@ -168,31 +169,38 @@ export default defineNuxtModule<ModuleOptions>({
       .replace(/^(~~|@@)/, nuxt.options.rootDir)
       .replace(/^(~|@)/, nuxt.options.srcDir)
 
+    const moduleTypesPath = relative(
+      nuxt.options.buildDir,
+      resolve('./runtime/types.ts'),
+    )
+
     const template = (() => {
-      const resolvedFilename = `multiCache.serverOptions.ts`
-
       const maybeUserFile = fileExists(resolvedPath, extensions)
-
-      const moduleTypesPath = relative(
-        nuxt.options.buildDir,
-        resolve('./runtime/types.ts'),
-      )
 
       const serverOptionsLine = maybeUserFile
         ? `import serverOptions from '${relative(nuxt.options.buildDir, srcResolver(resolvedPath))}'`
-        : `const serverOptions: MultiCacheServerOptions = {}`
+        : `const serverOptions = {}`
 
       return addTemplate({
-        filename: resolvedFilename,
+        filename: 'multiCache.serverOptions.mjs',
         write: true,
         getContents: () => `
-import type { MultiCacheServerOptions } from '${moduleTypesPath}'
 ${serverOptionsLine}
-
 export { serverOptions }
 `,
       })
     })()
+
+    addTemplate({
+      filename: 'multiCache.serverOptions.d.ts',
+      write: true,
+      getContents: () => {
+        return `
+import type { MultiCacheServerOptions } from '${moduleTypesPath}'
+export const serverOptions: MultiCacheServerOptions
+`
+      },
+    })
 
     nuxt.options.nitro.externals = nuxt.options.nitro.externals || {}
     nuxt.options.nitro.externals.inline =
