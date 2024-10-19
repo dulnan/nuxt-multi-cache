@@ -41,4 +41,5 @@ jobs:
 
       - name: nuxi typecheck
         run: |
+          npm run dev:prepare
           npm run typecheck
