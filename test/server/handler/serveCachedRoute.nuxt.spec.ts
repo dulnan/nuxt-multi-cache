@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-import { encodeRouteCacheItem } from '../../../dist/runtime/helpers/cacheItem'
+import { encodeRouteCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { serveCachedHandler } from '../../../src/runtime/server/handler/serveCachedRoute'
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
 

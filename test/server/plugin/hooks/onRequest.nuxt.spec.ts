@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-import { onRequest } from '../../../../dist/runtime/server/hooks/request'
+import { onRequest } from '../../../../src/runtime/server/hooks/request'
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {

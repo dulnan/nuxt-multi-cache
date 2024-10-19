@@ -21,7 +21,7 @@ export default defineNuxtConfig({
   modules: [NuxtMultiCache],
 
   imports: {
-    autoImport: false,
+    autoImport: true,
   },
 
   multiCache: {

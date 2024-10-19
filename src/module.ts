@@ -11,7 +11,6 @@ import {
   addTemplate,
   addServerPlugin,
   addServerImports,
-  addTypeTemplate,
 } from '@nuxt/kit'
 import type {
   MultiCacheServerOptions,
@@ -61,7 +60,7 @@ export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'nuxt-multi-cache',
     configKey: 'multiCache',
-    version: '3.10.0',
+    version: '3.3.3',
   },
   defaults: defaultOptions as any,
   async setup(passedOptions, nuxt) {
@@ -165,9 +164,17 @@ export default defineNuxtModule<ModuleOptions>({
     // https://github.com/nuxt-modules/prismic/blob/fd90dc9acaa474f79b8831db5b8f46a9a9f039ca/src/module.ts#L55
     // Creates the template with runtime server configuration.
     const extensions = ['js', 'mjs', 'ts']
-    const resolvedPath = '~/app/multiCache.serverOptions'
-      .replace(/^(~~|@@)/, nuxt.options.rootDir)
-      .replace(/^(~|@)/, nuxt.options.srcDir)
+
+    const resolvedPath = [
+      '~/multiCache.serverOptions',
+      '~/app/multiCache.serverOptions',
+    ]
+      .map((aliasPath) => {
+        return aliasPath
+          .replace(/^(~~|@@)/, nuxt.options.rootDir)
+          .replace(/^(~|@)/, nuxt.options.srcDir)
+      })
+      .map((fullPath) => fileExists(fullPath))[0]
 
     const moduleTypesPath = relative(
       nuxt.options.buildDir,
@@ -175,7 +182,7 @@ export default defineNuxtModule<ModuleOptions>({
     )
 
     const template = (() => {
-      const maybeUserFile = fileExists(resolvedPath, extensions)
+      const maybeUserFile = resolvedPath && fileExists(resolvedPath, extensions)
 
       const serverOptionsLine = maybeUserFile
         ? `import serverOptions from '${relative(nuxt.options.buildDir, srcResolver(resolvedPath))}'`

@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-import { onAfterResponse } from '../../../../dist/runtime/server/hooks/afterResponse'
+import { onAfterResponse } from '../../../../src/runtime/server/hooks/afterResponse'
 import {
   MULTI_CACHE_CONTEXT_KEY,
   MULTI_CACHE_ROUTE_CONTEXT_KEY,
-} from '../../../../dist/runtime/helpers/server'
-import { NuxtMultiCacheRouteCacheHelper } from '../../../../dist/runtime/helpers/RouteCacheHelper'
+} from '../../../../src/runtime/helpers/server'
+import { NuxtMultiCacheRouteCacheHelper } from '../../../../src/runtime/helpers/RouteCacheHelper'
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {

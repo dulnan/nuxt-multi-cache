@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
 import purgeByKey from './__helpers__/purgeByKey'
+import { sleep } from './__helpers__'
 
 const multiCache: NuxtMultiCacheOptions = {
   component: {
@@ -27,17 +28,17 @@ const multiCache: NuxtMultiCacheOptions = {
 const nuxtConfig: any = {
   multiCache,
 }
-await setup({
-  server: true,
-  logLevel: 0,
-  runner: 'vitest',
-  build: true,
-  // browser: true,
-  rootDir: path.resolve(__dirname, './../playground'),
-  nuxtConfig,
-})
 
-describe('The data cache feature', () => {
+describe('The data cache feature', async () => {
+  await setup({
+    server: true,
+    logLevel: 0,
+    runner: 'vitest',
+    build: true,
+    // browser: true,
+    rootDir: path.resolve(__dirname, './../playground'),
+    nuxtConfig,
+  })
   test('Works on a page', async () => {
     await purgeAll()
 
