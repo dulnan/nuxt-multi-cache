@@ -21,7 +21,7 @@ import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
 } from './runtime/settings'
-import { logger, fileExists } from './utils'
+import { logger, fileExists, nonNullable } from './utils'
 
 // Nuxt needs this.
 export type ModuleOptions = NuxtMultiCacheOptions
@@ -175,7 +175,7 @@ export default defineNuxtModule<ModuleOptions>({
           .replace(/^(~|@)/, nuxt.options.srcDir)
       })
       .map((fullPath) => fileExists(fullPath))
-      .filter(Boolean)
+      .filter(nonNullable)
 
     const resolvedPath = candidates[0] as string | undefined
 

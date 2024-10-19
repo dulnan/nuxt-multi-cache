@@ -9,7 +9,7 @@ import {
   decodeRouteCacheItem,
   handleRawCacheData,
 } from '../../helpers/cacheItem'
-import { RouteCacheItem } from '../../types'
+import type { RouteCacheItem } from '../../types'
 import { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/logger'
 import { setCachedResponse } from '../../helpers/routeCache'

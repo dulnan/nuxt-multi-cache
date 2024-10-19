@@ -45,7 +45,7 @@
     "dev:serve": "node playground/.output/server/index.mjs",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground-disk && nuxi prepare playground-nuxt3 && nuxi prepare playground",
     "dev:inspect": "nuxi dev playground --inspect",
-    "typecheck": "nuxi typecheck",
+    "typecheck": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
     "docs:dev": "vitepress dev docs --port 5000",
     "docs:build": "vitepress build docs",
     "docs:serve": "vitepress serve docs --port 5000",
@@ -89,6 +89,7 @@
     "prettier": "^3.3.2",
     "vitepress": "^1.2.3",
     "vitest": "^1.6.0",
-    "vue-json-pretty": "^2.4.0"
+    "vue-json-pretty": "^2.4.0",
+    "vue-tsc": "^2.1.6"
   }
 }
