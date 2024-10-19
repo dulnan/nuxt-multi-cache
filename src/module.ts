@@ -165,7 +165,7 @@ export default defineNuxtModule<ModuleOptions>({
     // Creates the template with runtime server configuration.
     const extensions = ['js', 'mjs', 'ts']
 
-    const resolvedPath = [
+    const candidates: string[] = [
       '~/multiCache.serverOptions',
       '~/app/multiCache.serverOptions',
     ]
@@ -174,7 +174,10 @@ export default defineNuxtModule<ModuleOptions>({
           .replace(/^(~~|@@)/, nuxt.options.rootDir)
           .replace(/^(~|@)/, nuxt.options.srcDir)
       })
-      .map((fullPath) => fileExists(fullPath))[0]
+      .map((fullPath) => fileExists(fullPath))
+      .filter(Boolean)
+
+    const resolvedPath = candidates[0] as string | undefined
 
     const moduleTypesPath = relative(
       nuxt.options.buildDir,
@@ -183,6 +186,10 @@ export default defineNuxtModule<ModuleOptions>({
 
     const template = (() => {
       const maybeUserFile = resolvedPath && fileExists(resolvedPath, extensions)
+
+      if (!maybeUserFile) {
+        logger.warn('No multiCache.serverOptions file found.')
+      }
 
       const serverOptionsLine = maybeUserFile
         ? `import serverOptions from '${relative(nuxt.options.buildDir, srcResolver(resolvedPath))}'`
