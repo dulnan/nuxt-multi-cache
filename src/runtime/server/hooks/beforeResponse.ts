@@ -2,7 +2,7 @@ import { format } from '@tusbar/cache-control'
 import { setResponseHeader, type H3Event } from 'h3'
 import { getMultiCacheCDNHelper, onlyUnique } from '../../helpers/server'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-import { MultiCacheApp } from '../../types'
+import type { MultiCacheApp } from '../../types'
 
 function handleCDN(app: MultiCacheApp, event: H3Event) {
   const cdnHelper = getMultiCacheCDNHelper(event)

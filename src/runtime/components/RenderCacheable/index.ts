@@ -124,7 +124,7 @@ export default defineComponent({
     // removed from the client bundles.
     if (isServer && !props.noCache) {
       const { debug } = useRuntimeConfig().multiCache || {}
-      const cacheKey = getCacheKey(props as any, first, debug)
+      const cacheKey = getCacheKey(props as any, first as any, debug)
 
       // Return if no cache key found.
       if (!cacheKey) {

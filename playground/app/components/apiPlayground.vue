@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from '#imports'
 
 type StatsResponse = {
   status: string
@@ -54,6 +54,9 @@ getCache()
 const getData = (data: string) => {
   const cacheItem = data.split('<CACHE_ITEM>')
   const headers = cacheItem[0]
+  if (!headers) {
+    return
+  }
   try {
     return JSON.parse(headers)
   } catch (e) {

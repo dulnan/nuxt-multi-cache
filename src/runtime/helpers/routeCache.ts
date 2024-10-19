@@ -1,5 +1,5 @@
 import { setResponseHeaders, setResponseStatus, type H3Event } from 'h3'
-import { RouteCacheItem } from '../types'
+import type { RouteCacheItem } from '../types'
 
 export function setCachedResponse(event: H3Event, decoded: RouteCacheItem) {
   // Set the cached headers. The name suggests otherwise, but this appends

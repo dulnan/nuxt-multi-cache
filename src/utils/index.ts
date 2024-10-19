@@ -20,3 +20,7 @@ export const fileExists = (
 
   return extension ? `${path}.${extension}` : null
 }
+
+export function nonNullable<T>(value: T): value is NonNullable<T> {
+  return value !== null && value !== undefined
+}

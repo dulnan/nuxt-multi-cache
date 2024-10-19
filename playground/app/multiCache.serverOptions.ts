@@ -12,7 +12,7 @@ const customDriver = defineDriver(() => {
       if (key.includes('static_item_for_test')) {
         return JSON.stringify({ data: 'just_an_example_value' })
       }
-      return cache[key]
+      return cache[key] || null
     },
     setItem(key, value) {
       cache[key] = value

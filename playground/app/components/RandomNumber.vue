@@ -6,7 +6,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed } from '#imports'
 
 const random = computed(() => {
   return 'RANDOM_NUMBER__' + Math.round(Math.random() * 1000000000) + '__'

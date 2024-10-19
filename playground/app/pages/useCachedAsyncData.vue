@@ -15,7 +15,7 @@
 
 <script lang="ts" setup>
 import { useCachedAsyncData } from '#imports'
-import type { UsersWithCacheability } from '~/server/api/getUsersWithCacheability'
+import type { UsersWithCacheability } from '~~/server/api/getUsersWithCacheability'
 
 const { data, refresh } = await useCachedAsyncData(
   'all-users',

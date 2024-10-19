@@ -1,8 +1,8 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-import { onBeforeResponse } from '../../../../dist/runtime/server/hooks/beforeResponse'
-import { MULTI_CACHE_CDN_CONTEXT_KEY } from '../../../../dist/runtime/helpers/server'
-import { NuxtMultiCacheCDNHelper } from '../../../../dist/runtime/helpers/CDNHelper'
+import { onBeforeResponse } from '../../../../src/runtime/server/hooks/beforeResponse'
+import { MULTI_CACHE_CDN_CONTEXT_KEY } from '../../../../src/runtime/helpers/server'
+import { NuxtMultiCacheCDNHelper } from '../../../../src/runtime/helpers/CDNHelper'
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {

@@ -10,7 +10,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useAsyncData } from 'nuxt/app'
+import { useAsyncData } from '#imports'
 
 const { data: users } = await useAsyncData('navbar', () => {
   return $fetch('/api/getUsers').then((v) => {

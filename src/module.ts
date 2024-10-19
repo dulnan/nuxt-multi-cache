@@ -21,7 +21,7 @@ import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
 } from './runtime/settings'
-import { logger, fileExists } from './utils'
+import { logger, fileExists, nonNullable } from './utils'
 
 // Nuxt needs this.
 export type ModuleOptions = NuxtMultiCacheOptions
@@ -60,7 +60,7 @@ export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: 'nuxt-multi-cache',
     configKey: 'multiCache',
-    version: '3.10.0',
+    version: '3.3.3',
   },
   defaults: defaultOptions as any,
   async setup(passedOptions, nuxt) {
@@ -164,35 +164,57 @@ export default defineNuxtModule<ModuleOptions>({
     // https://github.com/nuxt-modules/prismic/blob/fd90dc9acaa474f79b8831db5b8f46a9a9f039ca/src/module.ts#L55
     // Creates the template with runtime server configuration.
     const extensions = ['js', 'mjs', 'ts']
-    const resolvedPath = '~/app/multiCache.serverOptions'
-      .replace(/^(~~|@@)/, nuxt.options.rootDir)
-      .replace(/^(~|@)/, nuxt.options.srcDir)
+
+    const candidates: string[] = [
+      '~/multiCache.serverOptions',
+      '~/app/multiCache.serverOptions',
+    ]
+      .map((aliasPath) => {
+        return aliasPath
+          .replace(/^(~~|@@)/, nuxt.options.rootDir)
+          .replace(/^(~|@)/, nuxt.options.srcDir)
+      })
+      .map((fullPath) => fileExists(fullPath))
+      .filter(nonNullable)
+
+    const resolvedPath = candidates[0] as string | undefined
+
+    const moduleTypesPath = relative(
+      nuxt.options.buildDir,
+      resolve('./runtime/types.ts'),
+    )
 
     const template = (() => {
-      const resolvedFilename = `multiCache.serverOptions.ts`
+      const maybeUserFile = resolvedPath && fileExists(resolvedPath, extensions)
 
-      const maybeUserFile = fileExists(resolvedPath, extensions)
-
-      const moduleTypesPath = relative(
-        nuxt.options.buildDir,
-        resolve('./runtime/types.ts'),
-      )
+      if (!maybeUserFile) {
+        logger.warn('No multiCache.serverOptions file found.')
+      }
 
       const serverOptionsLine = maybeUserFile
         ? `import serverOptions from '${relative(nuxt.options.buildDir, srcResolver(resolvedPath))}'`
-        : `const serverOptions: MultiCacheServerOptions = {}`
+        : `const serverOptions = {}`
 
       return addTemplate({
-        filename: resolvedFilename,
+        filename: 'multiCache.serverOptions.mjs',
         write: true,
         getContents: () => `
-import type { MultiCacheServerOptions } from '${moduleTypesPath}'
 ${serverOptionsLine}
-
 export { serverOptions }
 `,
       })
     })()
+
+    addTemplate({
+      filename: 'multiCache.serverOptions.d.ts',
+      write: true,
+      getContents: () => {
+        return `
+import type { MultiCacheServerOptions } from '${moduleTypesPath}'
+export const serverOptions: MultiCacheServerOptions
+`
+      },
+    })
 
     nuxt.options.nitro.externals = nuxt.options.nitro.externals || {}
     nuxt.options.nitro.externals.inline =

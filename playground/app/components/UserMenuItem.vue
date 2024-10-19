@@ -1,18 +1,15 @@
 <template>
-  <nuxt-link class="teaser" :to="to">
-    <h3>{{ username }}</h3>
-    <p>{{ userId }}</p>
-    <p>{{ email }}</p>
+  <nuxt-link :to="to">
+    <div>{{ username }}</div>
   </nuxt-link>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue'
+import { computed } from '#imports'
 
 const props = defineProps({
   userId: String,
   username: String,
-  email: String,
 })
 
 const to = computed(() => {

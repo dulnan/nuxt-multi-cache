@@ -2,22 +2,6 @@ import { defineNuxtConfig } from 'nuxt/config'
 import NuxtMultiCache from './../src/module'
 
 export default defineNuxtConfig({
-  routeRules: {
-    '/spaPageWithCachedComponent': { ssr: false },
-    '/spaDataCache': { ssr: false },
-    '/spaPageWithException': { ssr: false },
-    '/api/routeCacheWithRouteRules': {
-      headers: {
-        'x-route-rules-header': 'Set via routeRules',
-      },
-    },
-    '/api/testStaleIfError': {
-      headers: {
-        'x-route-rules-header': 'Set via routeRules',
-      },
-    },
-  },
-
   modules: [NuxtMultiCache],
 
   imports: {
@@ -47,10 +31,9 @@ export default defineNuxtConfig({
     },
   },
 
-  future: {
-    compatibilityVersion: 4,
-  },
+  compatibilityDate: '2024-10-19',
 
-  css: ['vue-json-pretty/lib/styles.css'],
-  compatibilityDate: '2024-10-18',
+  future: {
+    compatibilityVersion: 3,
+  },
 })
