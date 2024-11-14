@@ -10,6 +10,6 @@ const random = useState('random_data', () => {
 })
 
 useRouteCache((helper) => {
-  helper.setCacheable()
+  helper.setCacheable().addTags(['test_tag'])
 })
 </script>

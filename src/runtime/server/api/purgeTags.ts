@@ -3,6 +3,7 @@ import { readBody, defineEventHandler, createError } from 'h3'
 import {
   decodeComponentCacheItem,
   decodeRouteCacheItem,
+  handleRawCacheData,
 } from '../../helpers/cacheItem'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { onlyUnique } from '../../helpers/server'
@@ -94,12 +95,16 @@ export class DebouncedInvalidator {
         return (item as any).cacheTags
       }
     } else if (cacheName === 'route') {
-      const cached = await this.cacheContext?.[cacheName]?.getItemRaw(key)
+      const cached = handleRawCacheData(
+        await this.cacheContext?.[cacheName]?.getItemRaw(key),
+      )
       if (cached) {
         return decodeRouteCacheItem(cached)?.cacheTags
       }
     } else if (cacheName === 'component') {
-      const cached = await this.cacheContext?.[cacheName]?.getItemRaw(key)
+      const cached = handleRawCacheData(
+        await this.cacheContext?.[cacheName]?.getItemRaw(key),
+      )
       if (cached) {
         return decodeComponentCacheItem(cached)?.cacheTags
       }
