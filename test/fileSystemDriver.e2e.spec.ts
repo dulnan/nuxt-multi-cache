@@ -2,8 +2,12 @@ import path from 'path'
 import { setup } from '@nuxt/test-utils/e2e'
 import { describe, test, expect } from 'vitest'
 import type { NuxtMultiCacheOptions } from '../src/runtime/types'
-import { createPageWithoutHydration } from './__helpers__'
+import { createPageWithoutHydration, sleep } from './__helpers__'
 import purgeAll from './__helpers__/purgeAll'
+import getRouteCacheItems from './__helpers__/getRouteCacheItems'
+import purgeByKey from './__helpers__/purgeByKey'
+import purgeTags from './__helpers__/purgeTags'
+import exp from 'constants'
 
 const multiCache: NuxtMultiCacheOptions = {
   route: {
@@ -15,7 +19,7 @@ const multiCache: NuxtMultiCacheOptions = {
   api: {
     enabled: true,
     authorization: false,
-    cacheTagInvalidationDelay: 5000,
+    cacheTagInvalidationDelay: 10,
   },
 }
 
@@ -65,5 +69,17 @@ describe('Caching with the file system driver', () => {
     const page3 = await createPageWithoutHydration('/cachedComponent', 'en')
     const text3 = await page3.locator('#cached-component-number').innerText()
     expect(text3).to.not.equal(text1)
+  })
+
+  test('correctly invalidates by tag for FS cache items', async () => {
+    await purgeAll()
+    await createPageWithoutHydration('/cachedPageFromDisk', 'en')
+    const data1 = await getRouteCacheItems()
+    expect(data1?.rows).toHaveLength(1)
+    await purgeTags('test_tag')
+    await sleep(1000)
+
+    const data2 = await getRouteCacheItems()
+    expect(data2?.rows).toHaveLength(0)
   })
 })
