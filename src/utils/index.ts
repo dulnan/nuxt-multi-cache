@@ -5,7 +5,7 @@ export const logger = useLogger('nuxt-multi-cache')
 
 export const fileExists = (
   path?: string,
-  extensions = ['js', 'ts'],
+  extensions = ['js', 'ts', 'mts'],
 ): string | null => {
   if (!path) {
     return null

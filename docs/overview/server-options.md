@@ -1,15 +1,25 @@
 # Server Options
 
 All dynamic configuration is located in a special runtime file located at
-`~/app/multiCache.serverOptions.ts`. This file is bundled together with the
+`~/server/multiCache.serverOptions.ts`. This file is bundled together with the
 nitro build in the .output folder.
 
-Create a file called `multiCache.serverOptions.ts` (or js/mjs) inside the `app`
-folder in your Nuxt root.
+Create a file called `multiCache.serverOptions.ts` (or js/mjs) inside the
+`server` folder in your Nuxt root.
+
+::: info
+
+In previous versions the file was located in
+`~/app/multiCache.serverOptions.ts`. For future compatibility with Nuxt 4 the
+path has been changed to the _server dir_, which defaults to `<root>/server`.
+The legacy file location is still supported but will be removed in the next
+major release.
+
+:::
 
 ::: code-group
 
-```typescript [~/app/multiCache.serverOptions.ts]
+```typescript [~/server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 
 export default defineMultiCacheOptions({
@@ -26,7 +36,7 @@ example a custom cache driver.
 
 ::: code-group
 
-```typescript [~/app/multiCache.serverOptions.ts]
+```typescript [~/server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 import redisDriver from 'unstorage/drivers/redis'
 
@@ -63,7 +73,7 @@ granted by returning a Promise that resolves to `true` or `false`.
 
 ::: code-group
 
-```typescript [~/app/multiCache.serverOptions.ts]
+```typescript [~/server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 import { isAuthenticated } from './somewhere'
 
@@ -84,7 +94,7 @@ export default defineMultiCacheOptions({
 
 ::: code-group
 
-```typescript [~/app/multiCache.serverOptions.ts]
+```typescript [~/server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 
 export default defineMultiCacheOptions({
@@ -120,7 +130,7 @@ redis).
 
 ::: code-group
 
-```typescript [~/app/multiCache.serverOptions.ts]
+```typescript [~/server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 
 export default defineMultiCacheOptions({
@@ -138,7 +148,7 @@ is if your app responds differently based on the request headers, e.g.
 
 ::: code-group
 
-```typescript [~/app/multiCache.serverOptions.ts]
+```typescript [~/server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 import { H3Event, getHeader } from 'h3'
 

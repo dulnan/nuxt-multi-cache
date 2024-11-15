@@ -22,7 +22,7 @@ export default defineNuxtConfig({
 ```
 
 ```typescript [multiCache.serverOptions.ts]
-// ~/app/multiCache.serverOptions.ts
+// ~/server/multiCache.serverOptions.ts
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
 import myCustomDriver from './somehwere'
 
