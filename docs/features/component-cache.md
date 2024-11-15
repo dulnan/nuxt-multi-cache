@@ -16,6 +16,14 @@ that, rendering is skipped and the markup is directly rendered.
 Note that the slot can only have a single child. If you need to include multiple
 children, you have to create a separate component for that.
 
+::: warning
+
+Due to a [bug in Vue](https://github.com/vuejs/core/issues/6207) it's currently
+not possible to use `<Teleport>` together with `<RenderCacheable>` (or any other
+async component).
+
+:::
+
 ## Configuration
 
 ::: code-group
