@@ -10,6 +10,11 @@
         </li>
       </ul>
     </div>
+
+    <NuxtLink to="/" id="go-to-home">Go to Home</NuxtLink>
+
+    <div id="not-cached-data">{{ notCachedData }}</div>
+    <div id="no-max-age">{{ noMaxAge }}</div>
   </div>
 </template>
 
@@ -32,6 +37,24 @@ const { data, refresh } = await useCachedAsyncData(
         cachedTime: data.currentTime,
       }
     },
+  },
+)
+
+const { data: notCachedData } = await useCachedAsyncData(
+  'not-cached-data',
+  () => Promise.resolve(Date.now().toString()),
+  {
+    serverMaxAge: 0,
+    clientMaxAge: 0,
+  },
+)
+
+const { data: noMaxAge } = await useCachedAsyncData(
+  'no-max-age',
+  () => Promise.resolve(Date.now().toString()),
+  {
+    serverMaxAge: undefined,
+    clientMaxAge: undefined,
   },
 )
 

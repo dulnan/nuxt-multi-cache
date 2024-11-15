@@ -58,4 +58,73 @@ describe('The useCachedAsyncData composable', () => {
     `)
     expect(item.data.expires).toBeTruthy()
   })
+
+  test('treats a max age of 5 as cacheable on the client', async () => {
+    await purgeAll()
+
+    const page = await createPage('/useCachedAsyncData')
+    const number1 = await page.locator('#time').innerText()
+
+    await page.locator('#go-to-home').click()
+    await page.locator('#route-useCachedAsyncData').click()
+    const number2 = await page.locator('#time').innerText()
+
+    expect(number1).toEqual(number2)
+  })
+
+  test('treats a max age of 0 as uncacheable on the server', async () => {
+    await purgeAll()
+
+    const page1 = await createPage('/useCachedAsyncData')
+
+    const data: any = await getDataCacheItems()
+    expect(data.rows).toHaveLength(1)
+
+    const number1 = await page1.locator('#not-cached-data').innerText()
+
+    const page2 = await createPage('/useCachedAsyncData')
+    const number2 = await page2.locator('#not-cached-data').innerText()
+    expect(number1).not.toEqual(number2)
+  })
+
+  test('treats a max age of 0 as uncacheable on the client', async () => {
+    await purgeAll()
+
+    const page = await createPage('/useCachedAsyncData')
+    const number1 = await page.locator('#not-cached-data').innerText()
+
+    await page.locator('#go-to-home').click()
+    await page.locator('#route-useCachedAsyncData').click()
+    const number2 = await page.locator('#not-cached-data').innerText()
+
+    expect(number1).not.toEqual(number2)
+  })
+
+  test('treats no max age as uncacheable on the server', async () => {
+    await purgeAll()
+
+    const page1 = await createPage('/useCachedAsyncData')
+
+    const data: any = await getDataCacheItems()
+    expect(data.rows).toHaveLength(1)
+
+    const number1 = await page1.locator('#no-max-age').innerText()
+
+    const page2 = await createPage('/useCachedAsyncData')
+    const number2 = await page2.locator('#no-max-age').innerText()
+    expect(number1).not.toEqual(number2)
+  })
+
+  test('treats no max age as uncacheable on the client', async () => {
+    await purgeAll()
+
+    const page = await createPage('/useCachedAsyncData')
+    const number1 = await page.locator('#no-max-age').innerText()
+
+    await page.locator('#go-to-home').click()
+    await page.locator('#route-useCachedAsyncData').click()
+    const number2 = await page.locator('#no-max-age').innerText()
+
+    expect(number1).not.toEqual(number2)
+  })
 })
