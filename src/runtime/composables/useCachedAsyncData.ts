@@ -244,8 +244,11 @@ export function useCachedAsyncData<
         ? await options.transform(result)
         : (result as DataT)
 
-      // Add the item to the cache.
-      await addToCache(data, cacheTags, maxAge)
+      // <= 0 means should not cache.
+      if (isValidMaxAge(maxAge)) {
+        // Add the item to the cache.
+        await addToCache(data, cacheTags, maxAge)
+      }
 
       // Again, we have to cast it here because the transform method was called
       // manually and is not called again by Nuxt.
