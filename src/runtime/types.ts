@@ -192,7 +192,7 @@ export type MultiCacheServerOptions = {
     /**
      * Provide a custom function that builds the cache key for a route.
      */
-    buildCacheKey?: (event: H3Event) => string
+    buildCacheKey?: (event: H3Event) => string | Promise<string>
 
     /**
      * Alter the headers that are stored in the cache.

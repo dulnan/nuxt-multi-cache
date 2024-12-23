@@ -49,7 +49,7 @@ export async function serveCachedHandler(event: H3Event) {
 
     // Build the cache key.
     const fullKey = serverOptions?.route?.buildCacheKey
-      ? serverOptions.route.buildCacheKey(event)
+      ? await serverOptions.route.buildCacheKey(event)
       : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
 
     // Check if there is a cache entry for this key.
