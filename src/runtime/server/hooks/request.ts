@@ -1,4 +1,4 @@
-import { type H3Event } from 'h3'
+import { type H3Event, getRequestURL } from 'h3'
 import type { NuxtMultiCacheSSRContext } from '../../types'
 import {
   MULTI_CACHE_CDN_CONTEXT_KEY,
@@ -89,12 +89,14 @@ function applies(path: string): boolean {
  * routes.
  */
 export async function onRequest(event: H3Event) {
-  if (!event.path) {
+  const url = getRequestURL(event)
+  const path = url.pathname + url.search
+  if (!path) {
     return
   }
 
   // Path is generally not cacheable, so we can skip it.
-  if (!applies(event.path)) {
+  if (!applies(path)) {
     return
   }
 

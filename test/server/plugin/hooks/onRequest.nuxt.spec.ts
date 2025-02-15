@@ -51,6 +51,10 @@ describe('onRequest nitro hook handler', () => {
       path: '/test.jpg',
       node: {
         res: {},
+        req: {
+          originalUrl: '/test.jpg',
+          headers: {},
+        },
       },
       context: {},
     }
@@ -78,6 +82,10 @@ describe('onRequest nitro hook handler', () => {
       path: '/test',
       node: {
         res: {},
+        req: {
+          originalUrl: '/test',
+          headers: {},
+        },
       },
       context: {},
     }
@@ -106,6 +114,10 @@ describe('onRequest nitro hook handler', () => {
       path: '/test',
       node: {
         res: {},
+        req: {
+          originalUrl: '/test',
+          headers: {},
+        },
       },
       context: {},
     }

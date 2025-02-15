@@ -1,4 +1,4 @@
-import { type H3Event } from 'h3'
+import { type H3Event, getRequestURL } from 'h3'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import {
   encodeRouteCacheKey,
@@ -87,7 +87,8 @@ export async function serveCachedHandler(event: H3Event) {
     const debugEnabled = useRuntimeConfig().multiCache.debug
 
     if (debugEnabled) {
-      logger.info('Serving cached route for path: ' + event.path, {
+      const url = getRequestURL(event)
+      logger.info('Serving cached route for path: ' + url.toString(), {
         fullKey,
       })
     }

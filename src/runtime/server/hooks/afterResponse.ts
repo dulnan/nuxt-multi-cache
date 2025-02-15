@@ -1,4 +1,9 @@
-import { getResponseHeaders, getResponseStatus, type H3Event } from 'h3'
+import {
+  getResponseHeaders,
+  getResponseStatus,
+  type H3Event,
+  getRequestURL,
+} from 'h3'
 import {
   encodeRouteCacheKey,
   getCacheKeyWithPrefix,
@@ -109,7 +114,8 @@ export async function onAfterResponse(
   const debugEnabled = useRuntimeConfig().multiCache.debug
 
   if (debugEnabled) {
-    logger.info('Storing route in cache: ' + event.path, {
+    const url = getRequestURL(event)
+    logger.info('Storing route in cache: ' + url.toString(), {
       cacheKey,
       expires,
       staleIfErrorExpires,
