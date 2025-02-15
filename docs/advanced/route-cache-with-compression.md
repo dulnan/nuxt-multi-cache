@@ -32,12 +32,14 @@ or by setting
 
 ```typescript [./server/plugins/compression.ts]
 import { useCompression } from 'h3-compression'
+import { getRequestURL } from 'h3'
 import { defineNitroPlugin } from 'nitropack/runtime'
 
 export default defineNitroPlugin((nitro) => {
   nitro.hooks.hook('beforeResponse', async (event, response) => {
+    const url = getRequestURL(event)
     // Prevent some paths from being compressed.
-    if (event.path.startsWith('/no-compression')) {
+    if (url.pathname.startsWith('/no-compression')) {
       return
     }
 

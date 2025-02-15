@@ -58,6 +58,10 @@ describe('serveCachedRoute event handler', () => {
           },
           statusCode: null,
         },
+        req: {
+          originalUrl: '/',
+          headers: {},
+        },
       },
       context: {},
 
@@ -119,6 +123,10 @@ describe('serveCachedRoute event handler', () => {
             setHeaders[name] = value
           },
         },
+        req: {
+          originalUrl: '/',
+          headers: {},
+        },
       },
       context: {},
       response: null as Response | null,
@@ -173,7 +181,12 @@ describe('serveCachedRoute event handler', () => {
 
     const event = {
       path: '/',
-      node: {},
+      node: {
+        req: {
+          originalUrl: '/',
+          headers: {},
+        },
+      },
       context: {},
       [MULTI_CACHE_CONTEXT_KEY]: {
         route: {

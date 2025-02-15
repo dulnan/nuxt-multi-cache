@@ -1,4 +1,4 @@
-import type { H3Event } from 'h3'
+import { type H3Event, getRequestURL } from 'h3'
 import type { CacheItem, NuxtMultiCacheSSRContext } from './../types'
 import type { NuxtMultiCacheCDNHelper } from './CDNHelper'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
@@ -46,7 +46,9 @@ export function getCacheKeyWithPrefix(
  * Unstorage does some magic to the key if it contains / or ?. This method
  * handles this.
  */
-export function encodeRouteCacheKey(path: string): string {
+export function encodeRouteCacheKey(event: H3Event): string {
+  const path = getRequestURL(event).pathname
+
   const questionMarkIndex = path.indexOf('?')
   if (questionMarkIndex >= 0) {
     return path.substring(0, questionMarkIndex)

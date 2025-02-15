@@ -62,12 +62,16 @@ the cache key for a given route:
 
 ```typescript [multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
-import { getQuery } from 'h3'
+import { getQuery, getRequestURL } from 'h3'
 
 export default defineMultiCacheOptions({
   route: {
     buildCacheKey(event) {
-      const path = event.path
+      const url = getRequestURL(event)
+
+      // The path (without query string).
+      const path = url.pathname
+
       // Handle specific routes that need query strings.
       if (path.startsWith('/api/query/products')) {
         const { id } = getQuery(event)
@@ -76,8 +80,7 @@ export default defineMultiCacheOptions({
         }
       }
 
-      // Remove query string from path.
-      return path.split('?')[0]
+      return path
     },
   },
 })

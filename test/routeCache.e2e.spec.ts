@@ -54,6 +54,40 @@ describe('The route cache feature', () => {
     expect(first).toEqual(second)
   })
 
+  test('handles the request path correctly', async () => {
+    await purgeAll()
+
+    // Get the "magic" _payload.json response.
+    const payloadResponseFirst = await $fetch(
+      '/cachedPageWithRandomNumber/_payload.json',
+      {
+        method: 'get',
+      },
+    )
+
+    const payloadResponseSecond = await $fetch(
+      '/cachedPageWithRandomNumber/_payload.json',
+      {
+        method: 'get',
+      },
+    )
+    expect(payloadResponseFirst).toEqual(payloadResponseSecond)
+
+    // Get the actual page.
+    const pageResponseFirst = await $fetch('/cachedPageWithRandomNumber', {
+      method: 'get',
+    })
+
+    const pageResponseSecond = await $fetch('/cachedPageWithRandomNumber', {
+      method: 'get',
+    })
+
+    expect(pageResponseFirst).toEqual(pageResponseSecond)
+
+    // The payload and page responses must be different.
+    expect(payloadResponseSecond).not.toEqual(pageResponseSecond)
+  })
+
   test('does not cache a page marked uncacheable', async () => {
     await purgeAll()
 

@@ -1,4 +1,4 @@
-import type { CapturedErrorContext } from 'nitropack'
+import type { CapturedErrorContext } from 'nitropack/types'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 

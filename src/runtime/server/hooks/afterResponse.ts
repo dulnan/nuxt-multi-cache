@@ -1,4 +1,9 @@
-import { getResponseHeaders, getResponseStatus, type H3Event } from 'h3'
+import {
+  getResponseHeaders,
+  getResponseStatus,
+  type H3Event,
+  getRequestURL,
+} from 'h3'
 import {
   encodeRouteCacheKey,
   getCacheKeyWithPrefix,
@@ -90,7 +95,7 @@ export async function onAfterResponse(
 
   const cacheKey = serverOptions?.route?.buildCacheKey
     ? await serverOptions.route.buildCacheKey(event)
-    : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
+    : getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
 
   const expires = routeHelper.getExpires('maxAge')
   const staleIfErrorExpires = routeHelper.getExpires('staleIfError')
@@ -109,7 +114,8 @@ export async function onAfterResponse(
   const debugEnabled = useRuntimeConfig().multiCache.debug
 
   if (debugEnabled) {
-    logger.info('Storing route in cache: ' + event.path, {
+    const url = getRequestURL(event)
+    logger.info('Storing route in cache: ' + url.toString(), {
       cacheKey,
       expires,
       staleIfErrorExpires,
