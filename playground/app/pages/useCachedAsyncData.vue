@@ -37,6 +37,12 @@ const { data, refresh } = await useCachedAsyncData(
         cachedTime: data.currentTime,
       }
     },
+    default: function () {
+      return {
+        transformedUserList: [],
+        cachedTime: null,
+      }
+    },
   },
 )
 
