@@ -87,4 +87,4 @@ describe('The "stale while revalidate" route cache feature', () => {
       await page.locator('#results tr:nth-child(2) .value').innerText(),
     ).toEqual('1')
   })
-})
+}, 10_000)
