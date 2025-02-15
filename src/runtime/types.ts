@@ -297,7 +297,7 @@ export interface MultiCacheApp {
   state: MultiCacheState
 }
 
-declare module 'nitropack' {
+declare module 'nitropack/types' {
   export interface NitroApp {
     /**
      * The nuxt-multi-cache cache context.
