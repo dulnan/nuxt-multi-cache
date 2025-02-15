@@ -57,7 +57,7 @@ describe('The useCachedAsyncData composable', () => {
       ]
     `)
     expect(item.data.expires).toBeTruthy()
-  }, 10_000)
+  })
 
   test('treats a max age of 5 as cacheable on the client', async () => {
     await purgeAll()
@@ -127,4 +127,4 @@ describe('The useCachedAsyncData composable', () => {
 
     expect(number1).not.toEqual(number2)
   })
-})
+}, 8_000)

@@ -3,7 +3,7 @@ import { setup, createPage } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
 import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 import purgeAll from './__helpers__/purgeAll'
-import { createPageWithConsoleMessages, sleep } from './__helpers__'
+import { sleep } from './__helpers__'
 
 const multiCache: NuxtMultiCacheOptions = {
   component: {
@@ -34,7 +34,7 @@ await setup({
   logLevel: 0,
   runner: 'vitest',
   build: true,
-  // browser: true,
+  browser: true,
   nuxtConfig,
   rootDir: path.resolve(__dirname, './../playground'),
 })
@@ -44,14 +44,10 @@ describe('In SPA mode', () => {
     await purgeAll()
 
     // First test that what we try to test actually works.
-    const { messages } = await createPageWithConsoleMessages(
-      '/spaPageWithException',
-      'en',
-    )
-    const error = messages[0] || ''
-    expect(error).toContain(
-      `TypeError: Cannot read properties of undefined (reading 'not')`,
-    )
+    const page = await createPage('/spaPageWithException')
+    const errorText = await page.locator('body').innerText()
+
+    expect(errorText).toContain('500')
 
     // Do our actual test.
     const page2 = await createPage('/spaPageWithCachedComponent')

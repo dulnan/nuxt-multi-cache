@@ -1,4 +1,4 @@
-import { getBrowser, url, waitForHydration } from '@nuxt/test-utils/e2e'
+import { getBrowser, url } from '@nuxt/test-utils/e2e'
 import type { Page } from 'playwright-core'
 
 export function sleep(delay: number): Promise<void> {
@@ -22,26 +22,4 @@ export async function createPageWithoutHydration(
   })
   await page.goto(url(targetUrl))
   return page
-}
-
-export async function createPageWithConsoleMessages(
-  targetUrl: string,
-  language: string,
-): Promise<{ page: Page; messages: string[] }> {
-  const pageUrl = url(targetUrl)
-  const messages: string[] = []
-  const browser = await getBrowser()
-  const page = await browser.newPage({
-    extraHTTPHeaders: {
-      'accept-language': language,
-    },
-  })
-  const msgPromise = page.waitForEvent('console')
-  page.on('console', (msg) => {
-    messages.push(msg.text())
-  })
-  await page.goto(pageUrl)
-  await waitForHydration(page, pageUrl)
-  await msgPromise
-  return { page, messages }
 }
