@@ -74,7 +74,7 @@ export default defineNuxtConfig({
     // Log detailled debugging messages, e.g. when items are cached or returned from cache.
     debug: true
   }
-}
+})
 ```
 
 ## Reference
