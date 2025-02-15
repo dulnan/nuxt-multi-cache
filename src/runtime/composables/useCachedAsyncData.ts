@@ -87,6 +87,42 @@ function isValidMaxAge(v?: unknown): v is number {
   return typeof v === 'number' && v >= 1
 }
 
+export function useCachedAsyncData<
+  ResT,
+  NuxtErrorDataT = unknown,
+  DataT = ResT,
+  PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
+  DefaultT = undefined,
+>(
+  key: string,
+  handler: (ctx?: NuxtApp) => Promise<ResT>,
+  options?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
+): AsyncData<
+  PickFrom<DataT, PickKeys> | DefaultT,
+  | (NuxtErrorDataT extends Error | NuxtError
+      ? NuxtErrorDataT
+      : NuxtError<NuxtErrorDataT>)
+  | DefaultAsyncDataErrorValue
+>
+
+export function useCachedAsyncData<
+  ResT,
+  NuxtErrorDataT = unknown,
+  DataT = ResT,
+  PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
+  DefaultT = DataT,
+>(
+  key: string,
+  handler: (ctx?: NuxtApp) => Promise<ResT>,
+  options?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
+): AsyncData<
+  PickFrom<DataT, PickKeys> | DefaultT,
+  | (NuxtErrorDataT extends Error | NuxtError
+      ? NuxtErrorDataT
+      : NuxtError<NuxtErrorDataT>)
+  | DefaultAsyncDataErrorValue
+>
+
 /**
  * Wrapper around useAsyncData and useDataCache.
  *
@@ -134,7 +170,7 @@ export function useCachedAsyncData<
       app.static.data.__firstHydrationTime = Date.now()
     }
 
-    return useAsyncData<ResT, NuxtErrorDataT, DataT, PickKeys, DefaultT>(
+    return useAsyncData<ResT, any, DataT, PickKeys, DefaultT>(
       key,
       async () => {
         const result = await handler(app)
@@ -210,11 +246,11 @@ export function useCachedAsyncData<
           return undefined as any
         },
       },
-    ) as any
+    )
   }
 
   // Code for server-side caching.
-  return useAsyncData<ResT, NuxtErrorDataT, DataT, PickKeys, DefaultT>(
+  return useAsyncData<ResT, any, DataT, PickKeys, DefaultT>(
     key,
     async (app) => {
       const { value, addToCache } = await useDataCache<DataT>(
@@ -259,5 +295,5 @@ export function useCachedAsyncData<
       transform: undefined,
       getCachedData: undefined,
     },
-  ) as any
+  )
 }
