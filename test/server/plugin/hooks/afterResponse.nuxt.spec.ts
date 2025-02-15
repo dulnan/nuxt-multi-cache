@@ -84,6 +84,10 @@ describe('afterResponse nitro hook handler', () => {
             res: {
               statusCode: 404,
             },
+            req: {
+              originalUrl: '/',
+              headers: {},
+            },
           },
         } as any,
         {
@@ -135,6 +139,10 @@ describe('afterResponse nitro hook handler', () => {
           getHeaders() {
             return outgoingHeaders
           },
+        },
+        req: {
+          originalUrl: '/foobar',
+          headers: {},
         },
       },
     } as any
