@@ -210,7 +210,7 @@ export function useCachedAsyncData<
           return undefined as any
         },
       },
-    )
+    ) as any
   }
 
   // Code for server-side caching.
@@ -259,5 +259,5 @@ export function useCachedAsyncData<
       transform: undefined,
       getCachedData: undefined,
     },
-  )
+  ) as any
 }
