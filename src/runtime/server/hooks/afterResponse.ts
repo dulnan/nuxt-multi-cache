@@ -89,7 +89,7 @@ export async function onAfterResponse(
   }
 
   const cacheKey = serverOptions?.route?.buildCacheKey
-    ? serverOptions.route.buildCacheKey(event)
+    ? await serverOptions.route.buildCacheKey(event)
     : getCacheKeyWithPrefix(encodeRouteCacheKey(event.path), event)
 
   const expires = routeHelper.getExpires('maxAge')
