@@ -102,7 +102,7 @@ export function useCachedAsyncData<
   | (NuxtErrorDataT extends Error | NuxtError
       ? NuxtErrorDataT
       : NuxtError<NuxtErrorDataT>)
-  | undefined
+  | DefaultAsyncDataErrorValue
 >
 
 export function useCachedAsyncData<
@@ -120,7 +120,7 @@ export function useCachedAsyncData<
   | (NuxtErrorDataT extends Error | NuxtError
       ? NuxtErrorDataT
       : NuxtError<NuxtErrorDataT>)
-  | undefined
+  | DefaultAsyncDataErrorValue
 >
 
 /**
@@ -170,7 +170,7 @@ export function useCachedAsyncData<
       app.static.data.__firstHydrationTime = Date.now()
     }
 
-    return useAsyncData<ResT, NuxtErrorDataT, DataT, PickKeys, DefaultT>(
+    return useAsyncData<ResT, any, DataT, PickKeys, DefaultT>(
       key,
       async () => {
         const result = await handler(app)
@@ -250,7 +250,7 @@ export function useCachedAsyncData<
   }
 
   // Code for server-side caching.
-  return useAsyncData<ResT, NuxtErrorDataT, DataT, PickKeys, DefaultT>(
+  return useAsyncData<ResT, any, DataT, PickKeys, DefaultT>(
     key,
     async (app) => {
       const { value, addToCache } = await useDataCache<DataT>(
