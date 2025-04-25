@@ -43,11 +43,11 @@ describe('The useCachedAsyncData composable', () => {
     // First call puts it into cache.
     await createPage('/useCachedAsyncData')
 
-    const data: any = await getDataCacheItems()
+    const data = await getDataCacheItems()
     const item = data.rows.find((v) => v.key === 'en--all-users')
 
     expect(item).toBeTruthy()
-    expect(item.data.cacheTags).toMatchInlineSnapshot(`
+    expect(item!.data.cacheTags).toMatchInlineSnapshot(`
       [
         "user:39a2cbd1-5355-42ee-b519-a378ac12ecf4",
         "user:21ef84d0-fc1e-44f6-8ba7-038eba022140",
@@ -56,7 +56,7 @@ describe('The useCachedAsyncData composable', () => {
         "user:4aeac8ae-7ddf-4f8d-a015-3b059f00b554",
       ]
     `)
-    expect(item.data.expires).toBeTruthy()
+    expect(item!.data.expires).toBeTruthy()
   })
 
   test('treats a max age of 5 as cacheable on the client', async () => {

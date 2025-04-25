@@ -123,9 +123,11 @@ describe('afterResponse nitro hook handler', () => {
       path: '/foobar',
       [MULTI_CACHE_CONTEXT_KEY]: {
         route: {
-          setItemRaw(key, item, options) {
-            storedItems.push({ key, item, options })
-            return Promise.resolve()
+          storage: {
+            setItemRaw(key: string, item: any, options: any) {
+              storedItems.push({ key, item, options })
+              return Promise.resolve()
+            },
           },
         },
       },

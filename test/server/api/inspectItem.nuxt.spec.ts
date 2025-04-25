@@ -40,7 +40,7 @@ async function doInspect(storage: any, cache: string, key: string) {
   mocks.useNitroApp.mockReturnValue({
     multiCache: {
       cache: {
-        [cache]: storage,
+        [cache]: { storage },
       },
       serverOptions: {
         api: {

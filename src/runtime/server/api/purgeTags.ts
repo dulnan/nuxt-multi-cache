@@ -90,20 +90,20 @@ export class DebouncedInvalidator {
     key: string,
   ): Promise<string[] | undefined> {
     if (cacheName === 'data') {
-      const item = await this.cacheContext?.[cacheName]?.getItem(key)
+      const item = await this.cacheContext?.[cacheName]?.storage.getItem(key)
       if (item && typeof item === 'object' && item !== null) {
         return (item as any).cacheTags
       }
     } else if (cacheName === 'route') {
       const cached = handleRawCacheData(
-        await this.cacheContext?.[cacheName]?.getItemRaw(key),
+        await this.cacheContext?.[cacheName]?.storage.getItemRaw(key),
       )
       if (cached) {
         return decodeRouteCacheItem(cached)?.cacheTags
       }
     } else if (cacheName === 'component') {
       const cached = handleRawCacheData(
-        await this.cacheContext?.[cacheName]?.getItemRaw(key),
+        await this.cacheContext?.[cacheName]?.storage.getItemRaw(key),
       )
       if (cached) {
         return decodeComponentCacheItem(cached)?.cacheTags
@@ -132,7 +132,7 @@ export class DebouncedInvalidator {
       const cache = this.cacheContext[key]
       if (cache) {
         // Get the keys of all cache items.
-        const cacheItemKeys = await cache.getKeys()
+        const cacheItemKeys = await cache.storage.getKeys()
         // Loop over all keys and load the value.
         for (const cacheKey of cacheItemKeys) {
           const itemCacheTags = await this.getCacheTags(key, cacheKey)
@@ -142,7 +142,7 @@ export class DebouncedInvalidator {
               return tags.includes(v)
             })
             if (shouldPurge) {
-              await cache.removeItem(cacheKey)
+              await cache.storage.removeItem(cacheKey)
             }
           }
         }

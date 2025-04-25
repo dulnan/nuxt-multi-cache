@@ -55,8 +55,8 @@ describe('/api/purge/all', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {
-          data: storageData,
-          component: storageComponent,
+          data: { storage: storageData },
+          component: { storage: storageComponent },
         },
         serverOptions: {
           api: {

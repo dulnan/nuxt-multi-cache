@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import type { H3Event } from 'h3'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onBeforeResponse } from '../../../../src/runtime/server/hooks/beforeResponse'
 import { MULTI_CACHE_CDN_CONTEXT_KEY } from '../../../../src/runtime/helpers/server'
@@ -55,7 +56,7 @@ describe('beforeResponse nitro hook handler', () => {
       },
     })
 
-    const setHeaders = {}
+    const setHeaders: Record<string, any> = {}
 
     const cdnHelper = new NuxtMultiCacheCDNHelper()
       .setNumeric('maxAge', 9000)
@@ -70,14 +71,15 @@ describe('beforeResponse nitro hook handler', () => {
       node: {
         res: {
           statusCode: 200,
-          setHeader(name, value) {
+          setHeader(name: string, value: any) {
             setHeaders[name] = value
+            return this
           },
         },
       },
-    } as any
+    }
 
-    onBeforeResponse(event)
+    onBeforeResponse(event as H3Event, {} as any)
 
     expect(setHeaders).toMatchInlineSnapshot(`
       {

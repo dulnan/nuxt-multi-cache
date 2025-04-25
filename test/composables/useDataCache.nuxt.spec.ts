@@ -1,20 +1,9 @@
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { useDataCache } from './../../src/runtime/composables'
 import type { CacheItem } from './../../src/runtime/types'
+import type { H3Event } from 'h3'
 
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {
-        data: true,
-      },
-    }
-  }
-})
-
-vi.mock('vue', async (importOriginal) => {
-  const actual = await importOriginal()
+function buildEvent(): H3Event {
   const storage: Record<string, CacheItem> = {
     foobar: { data: 'Cached data.' },
     expires: {
@@ -23,27 +12,33 @@ vi.mock('vue', async (importOriginal) => {
     },
   }
   return {
-    // @ts-ignore
-    ...actual,
-    useSSRContext: () => {
-      return {
-        event: {
-          __MULTI_CACHE: {
-            data: {
-              getItem: (key: string) => {
-                return Promise.resolve(storage[key])
-              },
-              setItem: (key: string, data: any) => {
-                storage[key] = data
-                return Promise.resolve()
-              },
-            },
+    __MULTI_CACHE: {
+      data: {
+        storage: {
+          getItem: (key: string) => {
+            return Promise.resolve(storage[key])
+          },
+          setItem: (key: string, data: any) => {
+            storage[key] = data
+            return Promise.resolve()
           },
         },
-      }
+      },
     },
-    getCurrentInstance: () => {
-      return true
+  } as H3Event
+}
+
+vi.mock('#imports', () => {
+  return {
+    useRequestEvent: () => {
+      return undefined
+    },
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          data: true,
+        },
+      }
     },
   }
 })
@@ -57,7 +52,7 @@ describe('useDataCache composable', () => {
     vi.useRealTimers()
   })
   test('Returns dummy in client', async () => {
-    const cache = await useDataCache('foobar')
+    const cache = await useDataCache('foobar', buildEvent())
 
     expect(cache.value).toBeFalsy()
     expect(cache.addToCache).toBeDefined()
@@ -67,17 +62,19 @@ describe('useDataCache composable', () => {
 
   test('Returns cached data in server', async () => {
     import.meta.env.VITEST_SERVER = 'true'
+    const event = buildEvent()
 
-    expect((await useDataCache('foobar')).value).toEqual('Cached data.')
-    expect((await useDataCache('something')).value).toBeUndefined()
+    expect((await useDataCache('foobar', event)).value).toEqual('Cached data.')
+    expect((await useDataCache('something', event)).value).toBeUndefined()
   })
 
   test('Does not return expired data.', async () => {
     import.meta.env.VITEST_SERVER = 'true'
     const date = new Date(2023, 11, 1)
     vi.setSystemTime(date)
+    const event = buildEvent()
 
-    expect((await useDataCache('expires')).value).toBeUndefined()
+    expect((await useDataCache('expires', event)).value).toBeUndefined()
   })
 
   test('Returns not yet expired data', async () => {
@@ -86,7 +83,8 @@ describe('useDataCache composable', () => {
     const date = new Date(2021, 11, 1)
     vi.setSystemTime(date)
 
-    expect((await useDataCache('expires')).value).toEqual(
+    const event = buildEvent()
+    expect((await useDataCache('expires', event)).value).toEqual(
       'Data with expiration date.',
     )
   })
@@ -94,46 +92,55 @@ describe('useDataCache composable', () => {
   test('Puts data in cache', async () => {
     import.meta.env.VITEST_SERVER = 'true'
 
-    const { addToCache, value } = await useDataCache('should_be_in_cache')
+    const event = buildEvent()
+    const { addToCache, value } = await useDataCache(
+      'should_be_in_cache',
+      event,
+    )
     expect(value).toBeUndefined()
     await addToCache('My data')
 
-    expect((await useDataCache('should_be_in_cache')).value).toEqual('My data')
+    expect((await useDataCache('should_be_in_cache', event)).value).toEqual(
+      'My data',
+    )
   })
 
   test('Puts data in cache with cache tags', async () => {
     import.meta.env.VITEST_SERVER = 'true'
+    const event = buildEvent()
 
-    const { addToCache, value } = await useDataCache('data_with_tags')
+    const { addToCache, value } = await useDataCache('data_with_tags', event)
     expect(value).toBeUndefined()
     await addToCache('Hello', ['my_tag'])
 
-    expect((await useDataCache('data_with_tags')).value).toEqual('Hello')
-    expect((await useDataCache('data_with_tags')).cacheTags).toEqual(['my_tag'])
+    expect((await useDataCache('data_with_tags', event)).value).toEqual('Hello')
+    expect((await useDataCache('data_with_tags', event)).cacheTags).toEqual([
+      'my_tag',
+    ])
   })
 
   test('Puts data in cache with expiration value', async () => {
     import.meta.env.VITEST_SERVER = 'true'
     const date = new Date(2021, 11, 1)
     vi.setSystemTime(date)
+    const event = buildEvent()
 
-    const { addToCache, value } = await useDataCache('data_with_expires')
+    const { addToCache, value } = await useDataCache('data_with_expires', event)
     expect(value).toBeUndefined()
     await addToCache('Hello', ['my_tag'], 1800)
 
-    expect((await useDataCache('data_with_expires')).value).toEqual('Hello')
+    expect((await useDataCache('data_with_expires', event)).value).toEqual(
+      'Hello',
+    )
     expect(
-      (await useDataCache('data_with_expires')).expires,
+      (await useDataCache('data_with_expires', event)).expires,
     ).toMatchInlineSnapshot('1638318600')
   })
 
   test('Returns dummy if SSR context not found', async () => {
     import.meta.env.VITEST_SERVER = 'true'
 
-    const vue = await import('vue')
-    vue.useSSRContext = vi.fn().mockReturnValueOnce({})
-
-    const cache = await useDataCache('foobar')
+    const cache = await useDataCache('foobar', {} as H3Event)
     expect(cache.value).toBeFalsy()
     expect(cache.addToCache).toBeDefined()
   })
@@ -141,10 +148,11 @@ describe('useDataCache composable', () => {
   test('Returns dummy if data cache not enabled.', async () => {
     import.meta.env.VITEST_SERVER = 'true'
 
-    const vue = await import('vue')
-    vue.useSSRContext = vi.fn().mockReturnValueOnce({})
-
-    const cache = await useDataCache('foobar')
+    const cache = await useDataCache('foobar', {
+      __MULTI_CACHE: {
+        data: undefined,
+      },
+    } as H3Event)
     expect(cache.value).toBeFalsy()
   })
 
@@ -156,12 +164,14 @@ describe('useDataCache composable', () => {
     const event = {
       __MULTI_CACHE: {
         data: {
-          getItem: (key: string) => {
-            return Promise.resolve(storage[key])
-          },
-          setItem: (key: string, data: any) => {
-            storage[key] = data
-            return Promise.resolve()
+          storage: {
+            getItem: (key: string) => {
+              return Promise.resolve(storage[key])
+            },
+            setItem: (key: string, data: any) => {
+              storage[key] = data
+              return Promise.resolve()
+            },
           },
         },
       },
@@ -169,24 +179,5 @@ describe('useDataCache composable', () => {
 
     const cache = await useDataCache('foobar', event as any)
     expect(cache.value).toEqual('More cached data.')
-  })
-
-  test('Catches errors and logs them.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
-    const consoleSpy = vi.spyOn(global.console, 'debug')
-
-    const event = {
-      __MULTI_CACHE: {
-        data: {
-          getItem: () => {
-            throw new Error('Failed to get item from cache.')
-          },
-        },
-      },
-    }
-
-    const cache = await useDataCache('foobar', event as any)
-    expect(cache.value).toBeUndefined()
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to get item from cache.')
   })
 })

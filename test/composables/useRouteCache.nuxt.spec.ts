@@ -26,12 +26,14 @@ vi.mock('vue', async (importOriginal) => {
         event: {
           __MULTI_CACHE: {
             data: {
-              getItem: (key: string) => {
-                return Promise.resolve(storage[key])
-              },
-              setItem: (key: string, data: any) => {
-                storage[key] = data
-                return Promise.resolve()
+              storage: {
+                getItem: (key: string) => {
+                  return Promise.resolve(storage[key])
+                },
+                setItem: (key: string, data: any) => {
+                  storage[key] = data
+                  return Promise.resolve()
+                },
               },
             },
           },

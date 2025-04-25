@@ -125,7 +125,7 @@ export async function onAfterResponse(
     })
   }
 
-  await multiCache.route.setItemRaw(cacheKey, cacheItem, {
+  await multiCache.route.storage.setItemRaw(cacheKey, cacheItem, {
     ttl: routeHelper.maxAge,
   })
 

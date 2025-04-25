@@ -42,7 +42,7 @@ describe('purgeItem API handler', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {
-          data: storageData,
+          data: { storage: storageData },
         },
         serverOptions: {
           api: {
@@ -81,11 +81,11 @@ describe('purgeItem API handler', () => {
   })
 
   test('Throws error if no keys are provided', async () => {
-    const storageData = createStorage()
+    const storage = createStorage()
 
     const event: any = {
       __MULTI_CACHE: {
-        data: storageData,
+        data: { storage },
       },
     }
     await expect(purgeItem(event)).rejects.toThrowErrorMatchingInlineSnapshot(

@@ -16,7 +16,7 @@ export function getCacheInstance(event: H3Event): Storage {
   if (cacheName) {
     const cache = multiCache.cache[cacheName]
     if (cache) {
-      return cache
+      return cache.storage
     }
   }
 

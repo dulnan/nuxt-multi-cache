@@ -54,7 +54,7 @@ export async function serveCachedHandler(event: H3Event) {
 
     // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(
-      await context.route.getItemRaw(fullKey),
+      await context.route.storage.getItemRaw(fullKey),
     )
 
     // No cache entry.

@@ -67,20 +67,22 @@ describe('serveCachedRoute event handler', () => {
 
       [MULTI_CACHE_CONTEXT_KEY]: {
         route: {
-          getItemRaw() {
-            return Promise.resolve(
-              encodeRouteCacheItem(
-                '<html></html>',
-                {
-                  'x-custom-header': 'test',
-                },
-                200,
-                undefined,
-                undefined,
-                undefined,
-                [],
-              ),
-            )
+          storage: {
+            getItemRaw() {
+              return Promise.resolve(
+                encodeRouteCacheItem(
+                  '<html></html>',
+                  {
+                    'x-custom-header': 'test',
+                  },
+                  200,
+                  undefined,
+                  undefined,
+                  undefined,
+                  [],
+                ),
+              )
+            },
           },
         },
       },
@@ -135,20 +137,22 @@ describe('serveCachedRoute event handler', () => {
       },
       [MULTI_CACHE_CONTEXT_KEY]: {
         route: {
-          getItemRaw() {
-            return Promise.resolve(
-              encodeRouteCacheItem(
-                '<html></html>',
-                {
-                  'x-custom-header': 'test',
-                },
-                200,
-                (date.getTime() - 3000) / 1000,
-                undefined,
-                undefined,
-                [],
-              ),
-            )
+          storage: {
+            getItemRaw() {
+              return Promise.resolve(
+                encodeRouteCacheItem(
+                  '<html></html>',
+                  {
+                    'x-custom-header': 'test',
+                  },
+                  200,
+                  (date.getTime() - 3000) / 1000,
+                  undefined,
+                  undefined,
+                  [],
+                ),
+              )
+            },
           },
         },
       },
@@ -190,8 +194,10 @@ describe('serveCachedRoute event handler', () => {
       context: {},
       [MULTI_CACHE_CONTEXT_KEY]: {
         route: {
-          getItemRaw() {
-            throw new Error('Failed to get item from cache.')
+          storage: {
+            getItemRaw() {
+              throw new Error('Failed to get item from cache.')
+            },
           },
         },
       },

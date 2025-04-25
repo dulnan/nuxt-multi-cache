@@ -143,21 +143,26 @@ export interface NuxtMultiCacheOptions {
   debug?: boolean
 }
 
+export type NuxtMultiCacheSSRContextCache = {
+  storage: Storage
+  bubbleError: boolean
+}
+
 export interface NuxtMultiCacheSSRContext {
   /**
    * The component cache instance.
    */
-  component?: Storage
+  component?: NuxtMultiCacheSSRContextCache
 
   /**
    * The data cache instance.
    */
-  data?: Storage
+  data?: NuxtMultiCacheSSRContextCache
 
   /**
    * The route cache instance.
    */
-  route?: Storage
+  route?: NuxtMultiCacheSSRContextCache
 }
 
 export interface CacheItem {
@@ -173,22 +178,21 @@ export interface RouteCacheItem extends CacheItem {
   staleIfErrorExpires?: number
 }
 
+export interface DataCacheItem extends CacheItem {}
+
 export interface ComponentCacheItem extends CacheItem {
   payload?: Record<string, any>
 }
 
 export type ComponentCacheEntry = ComponentCacheItem | string
 
-export type MultiCacheServerOptions = {
-  component?: {
-    storage?: CreateStorageOptions
-  }
-  data?: {
-    storage?: CreateStorageOptions
-  }
-  route?: {
-    storage?: CreateStorageOptions
+export type MultiCacheServerOptionsCacheOptions = {
+  storage?: CreateStorageOptions
+  bubbleError?: boolean
+}
 
+export type MultiCacheServerOptionsRouteCacheOptions =
+  MultiCacheServerOptionsCacheOptions & {
     /**
      * Provide a custom function that builds the cache key for a route.
      */
@@ -212,6 +216,11 @@ export type MultiCacheServerOptions = {
      */
     applies?: (path: string) => boolean
   }
+
+export type MultiCacheServerOptions = {
+  component?: MultiCacheServerOptionsCacheOptions
+  data?: MultiCacheServerOptionsCacheOptions
+  route?: MultiCacheServerOptionsRouteCacheOptions
 
   /**
    * Determine if caching should be used for the given request.

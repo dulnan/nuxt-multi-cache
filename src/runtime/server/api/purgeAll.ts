@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   for (key in app.cache) {
     const cache = app.cache[key]
     if (cache) {
-      await cache.clear()
+      await cache.storage.clear()
     }
   }
 

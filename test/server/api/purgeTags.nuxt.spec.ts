@@ -77,8 +77,8 @@ describe('purgeTags API handler', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {
-          data: storageData,
-          component: storageComponent,
+          data: { storage: storageData },
+          component: { storage: storageComponent },
         },
         serverOptions: {
           api: {
@@ -124,12 +124,12 @@ describe('purgeTags API handler', () => {
   })
 
   test('Throws error if no tags are provided', async () => {
-    const storageData = createStorage()
+    const storage = createStorage()
 
     await expect(
       purgeTags({
         __MULTI_CACHE: {
-          data: storageData,
+          data: { storage },
         },
       } as any),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
@@ -139,7 +139,7 @@ describe('purgeTags API handler', () => {
     await expect(
       purgeTags({
         __MULTI_CACHE: {
-          data: storageData,
+          data: { storage },
         },
         body: 'Invalid body',
       } as any),

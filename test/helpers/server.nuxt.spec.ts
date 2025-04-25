@@ -8,7 +8,9 @@ import {
 const EVENT: any = {
   __MULTI_CACHE: {
     component: {
-      getItem: () => {},
+      storage: {
+        getItem: () => {},
+      },
     },
   },
   __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),

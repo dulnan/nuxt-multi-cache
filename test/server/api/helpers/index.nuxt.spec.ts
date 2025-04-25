@@ -34,7 +34,9 @@ async function mockMultiCacheApp(
   mocks.useNitroApp.mockReturnValue({
     multiCache: {
       cache: {
-        data: {},
+        data: {
+          storage: {},
+        },
       },
       serverOptions,
       config,

@@ -3,12 +3,27 @@ import { createStorage } from 'unstorage'
 import { onBeforeResponse } from '../hooks/beforeResponse'
 import { onRequest } from '../hooks/request'
 import { onAfterResponse } from '../hooks/afterResponse'
-import type { MultiCacheApp, NuxtMultiCacheSSRContext } from '../../types'
+import type {
+  MultiCacheApp,
+  MultiCacheServerOptionsCacheOptions,
+  NuxtMultiCacheSSRContext,
+  NuxtMultiCacheSSRContextCache,
+} from '../../types'
 import { onError } from '../hooks/error'
 import { MultiCacheState } from '../../helpers/MultiCacheState'
 import { serveCachedHandler } from '../handler/serveCachedRoute'
 import { serverOptions } from '#multi-cache-server-options'
 import { useRuntimeConfig } from '#imports'
+
+function createCacheContext(
+  cache: MultiCacheServerOptionsCacheOptions | undefined,
+  defaults: Required<Omit<MultiCacheServerOptionsCacheOptions, 'storage'>>,
+): NuxtMultiCacheSSRContextCache {
+  return {
+    storage: createStorage(cache?.storage),
+    bubbleError: cache?.bubbleError ?? defaults.bubbleError,
+  }
+}
 
 function createMultiCacheApp(): MultiCacheApp {
   const runtimeConfig = useRuntimeConfig()
@@ -18,13 +33,21 @@ function createMultiCacheApp(): MultiCacheApp {
   // Initialize all enabled caches. Explicit initialization because some
   // caches might need additional configuration options and/or checks.
   if (runtimeConfig.multiCache.component) {
-    cacheContext.component = createStorage(serverOptions.component?.storage)
+    cacheContext.component = createCacheContext(serverOptions.component, {
+      bubbleError: false,
+    })
   }
+
   if (runtimeConfig.multiCache.data) {
-    cacheContext.data = createStorage(serverOptions.data?.storage)
+    cacheContext.data = createCacheContext(serverOptions.data, {
+      bubbleError: true,
+    })
   }
+
   if (runtimeConfig.multiCache.route) {
-    cacheContext.route = createStorage(serverOptions.route?.storage)
+    cacheContext.route = createCacheContext(serverOptions.route, {
+      bubbleError: false,
+    })
   }
 
   return {

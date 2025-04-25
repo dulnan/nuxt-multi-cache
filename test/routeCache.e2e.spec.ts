@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import type { NuxtMultiCacheOptions } from '../src/runtime/types'
 import { decodeRouteCacheItem } from '../src/runtime/helpers/cacheItem'
 import purgeAll from './__helpers__/purgeAll'
+import type { CacheStatsResponse } from './../src/runtime/server/types'
 
 const multiCache: NuxtMultiCacheOptions = {
   component: {
@@ -112,11 +113,14 @@ describe('The route cache feature', () => {
       method: 'get',
     })
 
-    const cache = await $fetch(`/__nuxt_multi_cache/stats/route`, {
-      headers: {
-        'x-nuxt-multi-cache-token': 'hunter2',
+    const cache = await $fetch<CacheStatsResponse<string>>(
+      `/__nuxt_multi_cache/stats/route`,
+      {
+        headers: {
+          'x-nuxt-multi-cache-token': 'hunter2',
+        },
       },
-    })
+    )
 
     const cacheItem = decodeRouteCacheItem(cache.rows[0].data)
 
@@ -131,14 +135,19 @@ describe('The route cache feature', () => {
       method: 'get',
     })
 
-    const cache = await $fetch(`/__nuxt_multi_cache/stats/route`, {
-      headers: {
-        'x-nuxt-multi-cache-token': 'hunter2',
+    const cache = await $fetch<CacheStatsResponse<string>>(
+      `/__nuxt_multi_cache/stats/route`,
+      {
+        headers: {
+          'x-nuxt-multi-cache-token': 'hunter2',
+        },
       },
-    })
+    )
 
     const cacheItem = decodeRouteCacheItem(cache.rows[0].data)
 
-    expect(cacheItem?.headers['set-cookie']).toMatchInlineSnapshot(`"country=us; Path=/"`)
+    expect(cacheItem?.headers['set-cookie']).toMatchInlineSnapshot(
+      `"country=us; Path=/"`,
+    )
   })
 })

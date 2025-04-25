@@ -175,7 +175,7 @@ export default defineComponent({
 
         // Get the cached item from the storage.
         const cached = await getCachedComponent(
-          multiCache.component,
+          multiCache.component.storage,
           fullCacheKey,
         )
 
@@ -233,7 +233,7 @@ export default defineComponent({
             : undefined
 
           // Store in cache.
-          multiCache.component.setItemRaw(
+          multiCache.component.storage.setItemRaw(
             fullCacheKey,
             encodeComponentCacheItem(data, payload, expires, cacheTags),
             { ttl: props.maxAge },

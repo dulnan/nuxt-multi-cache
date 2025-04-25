@@ -53,7 +53,7 @@ describe('stats API handler', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {
-          data: storageData,
+          data: { storage: storageData },
         },
         serverOptions: {
           api: {

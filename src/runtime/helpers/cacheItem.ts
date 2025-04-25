@@ -49,8 +49,12 @@ export function encodeRouteCacheItem(
  * Decode the encoded route cache string item.
  */
 export function decodeRouteCacheItem(
-  cacheItem: string,
+  cacheItem?: string,
 ): RouteCacheItem | undefined {
+  if (!cacheItem) {
+    return
+  }
+
   try {
     const decoded = decodeCacheItem<Omit<RouteCacheItem, 'data'>>(cacheItem)
     if (decoded) {
