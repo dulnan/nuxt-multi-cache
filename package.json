@@ -5,23 +5,22 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/types.d.ts",
-        "default": "./dist/module.mjs"
-      },
-      "require": {
-        "types": "./dist/types.d.ts",
-        "default": "./dist/module.cjs"
-      }
+      "types": "./dist/types.d.mts",
+      "import": "./dist/module.mjs"
     },
-    "./dist/runtime/serverOptions": {
-      "import": "./dist/runtime/serverOptions/index.js",
-      "types": "./dist/runtime/serverOptions/index.d.ts"
+    "./dist/runtime/serverOptions": "./dist/runtime/serverOptions/index.js"
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist/types.d.mts"
+      ],
+      "dist/runtime/serverOptions": [
+        "./dist/runtime/serverOptions/index.d.ts"
+      ]
     }
   },
-  "main": "./dist/module.cjs",
-  "module": "./dist/module.mjs",
-  "types": "./dist/types.d.ts",
+  "main": "./dist/module.mjs",
   "keywords": [
     "nuxt",
     "cache",
@@ -72,7 +71,7 @@
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
     "@nuxt/kit": "^3.16.2",
-    "@nuxt/module-builder": "^0.7.1",
+    "@nuxt/module-builder": "^1.0.1",
     "@nuxt/schema": "^3.16.2",
     "@nuxt/test-utils": "^3.17.2",
     "@nuxtjs/eslint-config-typescript": "^12.1.0",
