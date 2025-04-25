@@ -123,10 +123,10 @@ describe('purgeTags API handler', () => {
     expect(await storageComponent.getItem('component2')).toBeNull()
   })
 
-  test('Throws error if no tags are provided', () => {
+  test('Throws error if no tags are provided', async () => {
     const storageData = createStorage()
 
-    expect(
+    await expect(
       purgeTags({
         __MULTI_CACHE: {
           data: storageData,
@@ -136,7 +136,7 @@ describe('purgeTags API handler', () => {
       `[Error: No valid tags provided.]`,
     )
 
-    expect(
+    await expect(
       purgeTags({
         __MULTI_CACHE: {
           data: storageData,

@@ -200,7 +200,7 @@ describe('RenderCacheable', () => {
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot(`
       {
-        "InnerComponent::bJdWg6O7EU": "{"payload":{},"cacheTags":[]}<CACHE_ITEM><div>Hello neptun</div>",
+        "InnerComponent::CKAyMFHC05PW5FiE4G9tlfYrHyHI5577VSf3tQI76Wg": "{"payload":{},"cacheTags":[]}<CACHE_ITEM><div>Hello neptun</div>",
       }
     `)
   })

@@ -140,7 +140,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Add RenderCacheable component if feature is enabled.
     if (options.component || nuxt.options._prepare) {
-      await addComponent({
+      addComponent({
         filePath: resolve('./runtime/components/RenderCacheable/index'),
         name: 'RenderCacheable',
         global: true,

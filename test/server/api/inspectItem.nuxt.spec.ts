@@ -108,9 +108,9 @@ describe('inspectItem API handler', () => {
     `)
   })
 
-  test('Throws 404 if item is not found.', () => {
+  test('Throws 404 if item is not found.', async () => {
     const storage = createStorage()
-    expect(
+    await expect(
       doInspect(storage, 'data', 'foobar'),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `[Error: Cache item does not exist.]`,

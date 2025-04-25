@@ -80,7 +80,7 @@ describe('purgeItem API handler', () => {
     expect(spyClearData).toHaveBeenCalledTimes(2)
   })
 
-  test('Throws error if no keys are provided', () => {
+  test('Throws error if no keys are provided', async () => {
     const storageData = createStorage()
 
     const event: any = {
@@ -88,7 +88,7 @@ describe('purgeItem API handler', () => {
         data: storageData,
       },
     }
-    expect(purgeItem(event)).rejects.toThrowErrorMatchingInlineSnapshot(
+    await expect(purgeItem(event)).rejects.toThrowErrorMatchingInlineSnapshot(
       `[Error: No valid keys provided.]`,
     )
   })

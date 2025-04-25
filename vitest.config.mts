@@ -4,17 +4,26 @@ export default defineVitestConfig({
   test: {
     include: ['./test/**/*.spec.ts'],
     // environment: 'nuxt',
-    // coverage: {
-    //   all: true,
-    //   provider: 'v8',
-    //   reporter: ['text', 'json', 'html'],
-    //   include: ['src/**/*.*'],
-    //   exclude: ['src/runtime/types.ts'],
-    // },
+    environmentOptions: {
+      nuxt: {
+        overrides: {
+          modules: ['nuxt-multi-cache', '@nuxt/devtools'],
+          multiCache: {
+            component: {
+              enabled: true
+            },
+            route: {
+              enabled: true,
+            },
+            data: {
+              enabled: true,
+            },
+            cdn: {
+              enabled: true
+            }
+          }
+        },
+      },
+    },
   },
-  // resolve: {
-  //   alias: {
-  //     '#multi-cache-server-options': path.resolve(__dirname, './playground/.nuxt/multiCache.serverOptions.ts'),
-  //   },
-  // },
 })

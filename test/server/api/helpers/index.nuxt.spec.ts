@@ -30,7 +30,7 @@ async function mockMultiCacheApp(
   cb: () => Promise<any> | any,
   serverOptions: MultiCacheServerOptions = {},
   config: DeepPartial<MultiCacheRuntimeConfig> = {},
-) {
+): Promise<void> {
   mocks.useNitroApp.mockReturnValue({
     multiCache: {
       cache: {
@@ -49,8 +49,8 @@ afterEach(() => {
 })
 
 describe('checkAuth', () => {
-  test('Skips auth check if defined in config', () => {
-    mockMultiCacheApp(
+  test('Skips auth check if defined in config', async () => {
+    await mockMultiCacheApp(
       async () => {
         expect(await checkAuth({} as any)).toBeUndefined()
       },
@@ -63,12 +63,12 @@ describe('checkAuth', () => {
     )
   })
 
-  test('Performs custom auth check provided in config', () => {
-    mockMultiCacheApp(
-      () => {
-        expect(checkAuth({} as any)).rejects.toThrowErrorMatchingInlineSnapshot(
-          `[Error: Unauthorized]`,
-        )
+  test('Performs custom auth check provided in config', async () => {
+    await mockMultiCacheApp(
+      async () => {
+        await expect(
+          checkAuth({} as any),
+        ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
       },
       {
         api: {
@@ -83,8 +83,8 @@ describe('checkAuth', () => {
     )
   })
 
-  test('Performs auth check via header token', () => {
-    mockMultiCacheApp(
+  test('Performs auth check via header token', async () => {
+    await mockMultiCacheApp(
       async () => {
         expect(
           await checkAuth({
@@ -106,9 +106,9 @@ describe('checkAuth', () => {
       },
     )
 
-    mockMultiCacheApp(
-      () => {
-        expect(
+    await mockMultiCacheApp(
+      async () => {
+        await expect(
           checkAuth({
             node: {
               req: {
@@ -128,9 +128,9 @@ describe('checkAuth', () => {
       },
     )
 
-    mockMultiCacheApp(
-      () => {
-        expect(
+    await mockMultiCacheApp(
+      async () => {
+        await expect(
           checkAuth({
             node: {
               req: {
@@ -151,10 +151,10 @@ describe('checkAuth', () => {
     )
   })
 
-  test('Throws error if no authorization config is provided.', () => {
-    mockMultiCacheApp(
-      () => {
-        expect(
+  test('Throws error if no authorization config is provided.', async () => {
+    await mockMultiCacheApp(
+      async () => {
+        await expect(
           checkAuth({
             node: {
               req: {
@@ -177,8 +177,8 @@ describe('checkAuth', () => {
 })
 
 describe('getCacheInstance', () => {
-  test('Returns the cache instance from the event.', () => {
-    mockMultiCacheApp(() => {
+  test('Returns the cache instance from the event.', async () => {
+    await mockMultiCacheApp(() => {
       expect(
         getCacheInstance({
           context: {
@@ -189,9 +189,11 @@ describe('getCacheInstance', () => {
         } as any),
       ).toBeTruthy()
     })
+  })
 
-    mockMultiCacheApp(() => {
-      expect(() =>
+  test('Throws an error if an invalid cache is requested', async () => {
+    await expect(() =>
+      mockMultiCacheApp(() =>
         getCacheInstance({
           context: {
             params: {
@@ -199,9 +201,9 @@ describe('getCacheInstance', () => {
             },
           },
         } as any),
-      ).toThrowErrorMatchingInlineSnapshot(
-        `[Error: The given cache "invalid_cache" is not available.]`,
-      )
-    }, {})
+      ),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Error: The given cache "invalid_cache" is not available.]`,
+    )
   })
 })
