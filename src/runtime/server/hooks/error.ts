@@ -1,6 +1,7 @@
 import type { CapturedErrorContext } from 'nitropack/types'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { sendWebResponse } from 'h3'
 
 /**
  * Callback for the 'error' nitro hook.
@@ -47,6 +48,6 @@ export function onError(_error: Error, ctx: CapturedErrorContext) {
     // Directly respond with our response.
     // This might potentially lead to other hooks (such as beforeResponse) not
     // being called here that would for example compress the response.
-    return ctx.event.respondWith(response)
+    return sendWebResponse(ctx.event, response)
   } catch (_e) {}
 }

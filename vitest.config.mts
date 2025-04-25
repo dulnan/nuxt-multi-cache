@@ -3,7 +3,7 @@ import { defineVitestConfig } from '@nuxt/test-utils/config'
 export default defineVitestConfig({
   test: {
     include: ['./test/**/*.spec.ts'],
-    environment: 'nuxt',
+    // environment: 'nuxt',
     // coverage: {
     //   all: true,
     //   provider: 'v8',

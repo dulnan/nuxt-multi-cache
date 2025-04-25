@@ -67,13 +67,13 @@
     "dist"
   ],
   "dependencies": {
-    "@nuxt/kit": "^3.13.2",
     "@tusbar/cache-control": "^1.0.2"
   },
   "devDependencies": {
     "@faker-js/faker": "^8.4.1",
+    "@nuxt/kit": "^3.16.2",
     "@nuxt/module-builder": "^0.7.1",
-    "@nuxt/schema": "^3.13.2",
+    "@nuxt/schema": "^3.16.2",
     "@nuxt/test-utils": "^3.14.3",
     "@nuxtjs/eslint-config-typescript": "^12.1.0",
     "@types/node": "^20.14.2",
@@ -84,7 +84,7 @@
     "eslint-plugin-vue": "^9.26.0",
     "h3-compression": "^0.3.2",
     "happy-dom": "^14.12.0",
-    "nuxt": "^3.15.4",
+    "nuxt": "^3.16.2",
     "playwright-core": "^1.44.1",
     "prettier": "^3.3.2",
     "vitepress": "^1.4.1",

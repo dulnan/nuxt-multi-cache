@@ -53,4 +53,10 @@ export default defineNuxtConfig({
 
   css: ['vue-json-pretty/lib/styles.css'],
   compatibilityDate: '2024-10-18',
+
+  vite: {
+    build: {
+      minify: false,
+    },
+  },
 })
