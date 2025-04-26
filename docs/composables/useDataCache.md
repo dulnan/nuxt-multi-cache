@@ -1,5 +1,7 @@
 # useDataCache
 
+Available in **Nuxt** and **Nitro**.
+
 This composable is available if the [Data Cache feature](/features/data-cache)
 is enabled. It allows you to store anything in cache.
 
@@ -39,7 +41,7 @@ The key for the cache item.
 The optional `H3Event` event. This is not needed when the composable is called
 in a Nuxt app context (e.g. plugin, other composables, component).
 
-When called in a Nitro server context, the argument must be provided.
+When called in a Nitro server context, the argument is required.
 
 ## Return Value
 

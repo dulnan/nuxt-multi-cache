@@ -1,5 +1,7 @@
 # useCDNHeaders
 
+Available in **Nuxt** and **Nitro**.
+
 The `useCDNHeaders` composable which is included if the
 [CDN feature](/features/cdn-cache-control) is enabled, expects a callback which
 it will call with the helper as the first argument. Doing it this way allows
@@ -27,6 +29,20 @@ useCDNHeaders((helper) => {
     .addTags(['api'])
 })
 ```
+
+## Arguments
+
+### callback?: `(cache: NuxtMultiCacheCDNHelper) => void`
+
+The callback that receives the CDN cache helper. The callback is only called on
+the server.
+
+### event?: `H3Event`
+
+The optional `H3Event` event. This is not needed when the composable is called
+in a Nuxt app context (e.g. plugin, other composables, component).
+
+When called in a Nitro server context, the argument is required.
 
 ## Methods
 

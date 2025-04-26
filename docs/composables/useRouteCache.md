@@ -1,5 +1,7 @@
 # useRouteCache
 
+Available in **Nuxt** and **Nitro**.
+
 This composable is available when the
 [Route Cache feature](/features/route-cache) is enabled. It allows you to
 control if and how the current request should be cached.
@@ -11,6 +13,20 @@ useRouteCache((helper) => {
   helper.setMaxAge(3600).setCacheable().addTags(['page:1'])
 })
 ```
+
+## Arguments
+
+### callback?: `(cache: NuxtMultiCacheRouteCacheHelper) => void`
+
+The callback that receives the route cache helper. The callback is only called
+on the server.
+
+### event?: `H3Event`
+
+The optional `H3Event` event. This is not needed when the composable is called
+in a Nuxt app context (e.g. plugin, other composables, component).
+
+When called in a Nitro server context, the argument is required.
 
 ## Methods
 

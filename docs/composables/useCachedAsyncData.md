@@ -1,5 +1,7 @@
 # useCachedAsyncData
 
+Only available in **Nuxt**.
+
 Helper composable to use
 [useAsyncData](https://nuxt.com/docs/api/composables/use-async-data) together
 with [useDataCache](/composables/useDataCache), with optional client-side
