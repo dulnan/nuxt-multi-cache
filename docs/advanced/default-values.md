@@ -1,11 +1,10 @@
-# Defining Default Values
+# Defining Default Values for Route Cache / CDN
 
-You may have noticed there is no way to provide default options via the
-configuration. This is because by design this module will not allow to cache
-anything without explicitly implementing it.
+You may have noticed that there is no way to provide "default cacheability" via
+configuration. This is because the module does not cache anything by default.
 
-There are several ways to define default values, depending on the use case. They
-all work per request.
+However, there are several ways to define default cacheability, depending on the
+use case. They all work per request.
 
 ## Using a global cache key prefix
 
@@ -15,9 +14,9 @@ key using the
 
 ## Route Cache
 
-### For pages
+### For Nuxt Pages
 
-If you want to cache all pages by default you can use the `useRouteCache`
+If you want to cache all Nuxt pages by default you can use the `useRouteCache`
 composable in your `app.vue`, which will be executed for every page.
 
 ::: code-group
@@ -42,7 +41,7 @@ useRouteCache((helper) => {
 
 ### For any route
 
-If you want to include custom API routes, you can define a
+If you additionally want to include custom API routes, you can define a
 [server middleware](https://nuxt.com/docs/guide/directory-structure/server#server-middleware):
 
 ::: code-group
@@ -60,29 +59,7 @@ export default defineEventHandler((event) => {
 
 :::
 
-This will be executed for every request, including pages and server routes.
-
-## Data Cache
-
-While you can't directly define a default max age for data cache entries, you
-can easily create your own composable as a wrapper for `useDataCache`:
-
-::: code-group
-
-```typescript [./composables/getCachedData.ts]
-export default async function (key: string) {
-  const { value, addToCache } = await useDataCache(key)
-
-  // Return custom context object with custom addToCache method.
-  return {
-    value: data.value,
-    addToCache: (value: any) => {
-      // Add to cache with a fixed max age.
-      addToCache(value, [], 3600)
-    },
-  }
-}
-```
+This will be executed for every request, including Nuxt pages and server routes.
 
 :::
 

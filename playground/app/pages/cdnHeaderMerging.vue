@@ -8,14 +8,10 @@
 <script lang="ts" setup>
 const event = useRequestEvent()
 
-const { data } = await useAsyncData(() => {
-  return $fetch.raw('/api/cdnHeaders').then((response) => {
-    useCDNHeaders((cdn) => {
-      cdn.mergeFromResponse(response)
-    }, event)
-
-    return response.json()
-  })
+const { data } = await useFetch('/api/cdnHeaders', {
+  onResponse({ response }) {
+    useCDNHeaders((cdn) => cdn.mergeFromResponse(response))
+  },
 })
 
 useCDNHeaders((cdn) => {

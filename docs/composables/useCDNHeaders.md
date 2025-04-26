@@ -107,6 +107,20 @@ Note that internally the method will only call setNumeric(), setBoolean() and
 private(), meaning that merging will never set a higher max age than currently
 or mark the response as public.
 
+```typescript
+const event = useRequestEvent()
+
+const { data } = await useAsyncData(() => {
+  return $fetch.raw('/api/load-users').then((response) => {
+    useCDNHeaders((cdn) => {
+      cdn.mergeFromResponse(response)
+    }, event)
+
+    return response.json()
+  })
+})
+```
+
 ### mergeCacheControlHeader(header: string)
 
 Parses and merges the given `Cache-Control` header value.

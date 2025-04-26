@@ -69,7 +69,7 @@ useCDNHeaders((helper) => {
 
 This will set the following headers on the response:
 
-```
+```http
 Cache-Tag: one two
 Surrogate-Control: max-age=21600, public, stale-if-error=43200
 ```
@@ -133,3 +133,49 @@ export default defineEventHandler((event) => {
 
 The state of the CDN header values is stored in the current request, so as long
 as you have access to the event you can use the composable anywhere you like.
+
+## Merging Cacheability
+
+Note that using `useCDNHeaders()` only applies for the **current request
+event**. For example, let's say we have an API route that loads a list of users:
+
+```ts
+import { defineEventHandler } from 'h3'
+import { useCDNHeaders, db } from '#imports'
+
+export default defineEventHandler((event) => {
+  useCDNHeaders((helper) => {
+    helper.public().setNumeric('maxAge', 60)
+  }, event)
+
+  return db.query('users')
+})
+```
+
+And a page that calls this API:
+
+```vue
+<script lang="ts" setup>
+const { data } = useFetch('/api/load-users')
+
+useCDNHeaders((cdn) => {
+  cdn.public().setNumeric('maxAge', 3600)
+})
+</script>
+```
+
+The response of **the page itself** will have a max-age of 3600, even if your
+API has a max-age of 60.
+
+If you want to "bubble up" the cacheability of your API calls to the page, you
+can do so by calling the `mergeFromResponse()` method on the CDN helper:
+
+```typescript
+const event = useRequestEvent()
+
+const { data } = await useFetch('/api/load-users', {
+  onResponse({ response }) {
+    useCDNHeaders((cdn) => cdn.mergeFromResponse(response), event)
+  },
+})
+```

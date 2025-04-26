@@ -47,8 +47,8 @@ By default the endpoints are not accesible without authorization.
 
 #### Token based (x-nuxt-multi-cache-token)
 
-This is the authorization used when the provided `api.authorization` value is a
-string. In this case the token is expected in the `x-nuxt-multi-cache-token`
+This is the default authorization used when the `api.authorization` option is
+provided. In this case the token is expected in the `x-nuxt-multi-cache-token`
 header:
 
 ::: code-group
@@ -73,6 +73,13 @@ curl -X POST -i \
 ```
 
 :::
+
+It's also possible to
+[provide the token using runtime config](/overview/runtime-config#api-authorization-token):
+
+```dotenv
+NUXT_MULTI_CACHE_API_AUTHORIZATION_TOKEN=PtSR0mDATQpNlvNgqRf
+```
 
 #### Custom Callback
 
