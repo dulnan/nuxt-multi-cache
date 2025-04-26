@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
-import { useDataCache } from './../../src/runtime/composables'
+import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { CacheItem } from './../../src/runtime/types'
 
 function buildEvent(bubbleError = false): H3Event {

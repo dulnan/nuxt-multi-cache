@@ -65,7 +65,9 @@ export default defineNuxtModule<ModuleOptions>({
     if (options.data || nuxt.options._prepare) {
       helper.addComposable('useDataCache')
       helper.addComposable('useCachedAsyncData')
+      helper.addComposable('useDataCacheCallback')
       helper.addServerUtil('useDataCache')
+      helper.addServerUtil('useDataCacheCallback')
     }
 
     if (options.route || nuxt.options._prepare) {

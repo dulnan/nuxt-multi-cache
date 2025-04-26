@@ -103,6 +103,10 @@ export default defineConfig({
             text: 'useCachedAsyncData',
             link: '/composables/useCachedAsyncData',
           },
+          {
+            text: 'useDataCacheCallback',
+            link: '/composables/useDataCacheCallback',
+          },
           { text: 'useRouteCache', link: '/composables/useRouteCache' },
           { text: 'useCDNHeaders', link: '/composables/useCDNHeaders' },
         ],

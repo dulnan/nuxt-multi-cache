@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { describe, expect, test, vi } from 'vitest'
 import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
-import { useCDNHeaders } from './../../src/runtime/composables'
+import { useCDNHeaders } from './../../src/runtime/composables/useCDNHeaders'
 
 function buildEvent(): H3Event {
   return {

@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { describe, expect, test, vi } from 'vitest'
-import { useRouteCache } from './../../src/runtime/composables'
+import { useRouteCache } from './../../src/runtime/composables/useRouteCache'
 import { NuxtMultiCacheRouteCacheHelper } from './../../src/runtime/helpers/RouteCacheHelper'
 
 mockNuxtImport('useRuntimeConfig', () => {
