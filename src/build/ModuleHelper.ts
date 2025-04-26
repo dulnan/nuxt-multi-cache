@@ -119,8 +119,6 @@ export class ModuleHelper {
 
     this.options = options as RequiredModuleOptions
 
-    console.log(this.options)
-
     this.isDev = nuxt.options.dev
     this.resolvers = {
       module: createResolver(moduleUrl),

@@ -54,7 +54,7 @@
     "lint:fix": "eslint ./src --fix",
     "fake-data": "node ./scripts/fakeData.js",
     "test": "TZ=utc vitest",
-    "test:debug": "TZ=utc vitest --disable-console-intercept --no-file-parallelism --reporter=json",
+    "test:debug": "TZ=utc vitest --disable-console-intercept --no-file-parallelism",
     "test:ci": "TZ=utc vitest run",
     "test:coverage": "TZ=utc vitest run --coverage"
   },

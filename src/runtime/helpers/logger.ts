@@ -1,3 +1,5 @@
 import { consola } from 'consola'
 
-export const logger = consola.withTag('nuxt-multi-cache')
+export const logger = import.meta.client
+  ? console
+  : consola.withTag('nuxt-multi-cache')

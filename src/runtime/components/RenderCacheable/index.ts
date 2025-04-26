@@ -199,7 +199,7 @@ export default defineComponent({
           }
 
           if (debug) {
-            logger.success('Returning cached component.', {
+            logger.info('Returning cached component.', {
               fullCacheKey,
               payload: payload ? Object.keys(payload) : [],
               expires,
