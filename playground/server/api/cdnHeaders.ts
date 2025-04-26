@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3'
-import { useCDNHeaders } from '#nuxt-multi-cache/composables'
+import { useCDNHeaders } from '#imports'
 
 export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {

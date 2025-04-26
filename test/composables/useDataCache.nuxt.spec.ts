@@ -1,7 +1,7 @@
+import type { H3Event } from 'h3'
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables'
 import type { CacheItem } from './../../src/runtime/types'
-import type { H3Event } from 'h3'
 
 function buildEvent(): H3Event {
   const storage: Record<string, CacheItem> = {

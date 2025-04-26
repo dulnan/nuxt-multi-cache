@@ -48,7 +48,7 @@ If you want to include custom API routes, you can define a
 ::: code-group
 
 ```typescript [./server/middleware/routeCache.ts]
-import { useRouteCache } from '#nuxt-multi-cache/composables'
+import { useRouteCache } from '#imports'
 
 export default defineEventHandler((event) => {
   // Cache all routes for 7 days.
@@ -175,7 +175,7 @@ useCDNHeaders((helper) => {
 ::: code-group
 
 ```typescript [./server/middleware/routeCache.ts]
-import { useRouteCache } from '#nuxt-multi-cache/composables'
+import { useRouteCache } from '#imports'
 
 export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {

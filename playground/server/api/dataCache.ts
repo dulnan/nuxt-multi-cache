@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3'
-import { useDataCache } from '#nuxt-multi-cache/composables'
+import { useDataCache } from '#imports'
 
 function getData() {
   return new Promise((resolve) => {

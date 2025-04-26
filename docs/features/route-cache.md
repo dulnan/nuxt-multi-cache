@@ -175,7 +175,7 @@ The composable is not imported automatically and you have to provide the
 `H3Event` object as the second argument:
 
 ```typescript
-import { useRouteCache } from '#nuxt-multi-cache/composables'
+import { useRouteCache } from '#imports'
 
 const getResult = function () {
   return new Promise((resolve) => {

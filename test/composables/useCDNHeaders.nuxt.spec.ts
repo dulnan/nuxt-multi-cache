@@ -1,33 +1,26 @@
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
+import type { H3Event } from 'h3'
 import { describe, expect, test, vi } from 'vitest'
 import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
 import { useCDNHeaders } from './../../src/runtime/composables'
 
-vi.mock('vue', async (importOriginal) => {
-  const actual = await importOriginal()
+function buildEvent(): H3Event {
   return {
-    // @ts-ignore
-    ...actual,
-    useSSRContext: () => {
+    __MULTI_CACHE_CDN: new NuxtMultiCacheCDNHelper(),
+  } as H3Event
+}
+
+vi.mock('#imports', () => {
+  return {
+    useRequestEvent: () => {
+      return buildEvent()
+    },
+    useRuntimeConfig: () => {
       return {
-        event: {
-          __MULTI_CACHE_CDN: new NuxtMultiCacheCDNHelper(),
+        multiCache: {
+          data: true,
         },
       }
     },
-    getCurrentInstance: () => {
-      return true
-    },
-  }
-})
-
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {
-        component: true,
-      },
-    }
   }
 })
 
@@ -49,7 +42,7 @@ describe('useCDNHeaders composable', () => {
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useCDNHeaders(spyCallback as any)
+    useCDNHeaders(spyCallback as any, buildEvent())
     expect(spyCallback).toHaveBeenCalledOnce()
   })
 
@@ -75,11 +68,8 @@ describe('useCDNHeaders composable', () => {
     })
   })
 
-  test('Does not call callback if event is missing.', async () => {
+  test('Does not call callback if event is missing.', () => {
     import.meta.env.VITEST_SERVER = 'true'
-
-    const vue = await import('vue')
-    vue.useSSRContext = vi.fn().mockReturnValueOnce({})
 
     const params = {
       cb() {},
@@ -90,20 +80,20 @@ describe('useCDNHeaders composable', () => {
     expect(spyCallback).not.toHaveBeenCalled()
   })
 
-  test('Does not call callback if CDN helper is missing.', async () => {
+  test('Does not call callback if CDN helper is missing.', () => {
     import.meta.env.VITEST_SERVER = 'true'
-
-    const vue = await import('vue')
-    vue.useSSRContext = vi.fn().mockReturnValueOnce({
-      event: {},
-    })
 
     const params = {
       cb() {},
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useCDNHeaders(spyCallback as any)
+    useCDNHeaders(
+      spyCallback as any,
+      {
+        __MULTI_CACHE_CDN: null,
+      } as any,
+    )
     expect(spyCallback).not.toHaveBeenCalled()
   })
 })

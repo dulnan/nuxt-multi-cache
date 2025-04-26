@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
-import { getCurrentInstance, useSSRContext } from 'vue'
 import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
 import { getMultiCacheCDNHelper } from './../helpers/server'
+import { useRequestEvent } from '#imports'
 
 /**
  * Return the helper to be used for interacting with the CDN headers feature.
@@ -18,27 +18,12 @@ export function useCDNHeaders(
 ): void {
   const isServer =
     import.meta.env.VITEST_SERVER === 'true' || import.meta.server
+
   if (!isServer) {
     return
   }
 
-  const event: H3Event = (() => {
-    // Event provided by user.
-    if (providedEvent) {
-      return providedEvent
-    }
-
-    // Prevent logging warnings when not in vue context.
-    if (!getCurrentInstance()) {
-      return
-    }
-
-    // SSR context should exist at this point, but TS doesn't know that.
-    const ssrContext = useSSRContext()
-    if (ssrContext) {
-      return ssrContext.event
-    }
-  })()
+  const event = providedEvent || useRequestEvent()
 
   // Event couldn't be found for some reason.
   if (!event) {

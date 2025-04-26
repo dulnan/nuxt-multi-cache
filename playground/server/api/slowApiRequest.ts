@@ -1,5 +1,5 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { useRouteCache } from '#nuxt-multi-cache/composables'
+import { useRouteCache } from '#imports'
 
 let counter = -1
 

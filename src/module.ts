@@ -120,23 +120,37 @@ export default defineNuxtModule<ModuleOptions>({
         from: resolve('./runtime/composables/useCachedAsyncData'),
         name: 'useCachedAsyncData',
       })
+      addServerImports([
+        {
+          from: resolve('./runtime/server/utils/useDataCache'),
+          name: 'useDataCache',
+        },
+      ])
     }
     if (options.route || nuxt.options._prepare) {
       addImports({
         from: resolve('./runtime/composables/useRouteCache'),
         name: 'useRouteCache',
       })
+      addServerImports([
+        {
+          from: resolve('./runtime/server/utils/useRouteCache'),
+          name: 'useRouteCache',
+        },
+      ])
     }
     if (options.cdn || nuxt.options._prepare) {
       addImports({
         from: resolve('./runtime/composables/useCDNHeaders'),
         name: 'useCDNHeaders',
       })
+      addServerImports([
+        {
+          from: resolve('./runtime/server/utils/useCDNHeaders'),
+          name: 'useCDNHeaders',
+        },
+      ])
     }
-
-    nuxt.options.alias['#nuxt-multi-cache/composables'] = resolve(
-      'runtime/composables/index',
-    )
 
     // Add RenderCacheable component if feature is enabled.
     if (options.component || nuxt.options._prepare) {

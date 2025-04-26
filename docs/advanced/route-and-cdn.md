@@ -11,7 +11,7 @@ useRouteCache does not affect the max age of the CDN cache control header. :::
 Decide in a middleware where the page should be cached.
 
 ```typescript
-import { useCDNHeaders } from '#nuxt-multi-cache/composables'
+import { useCDNHeaders } from '#imports'
 import { getRequestURL } from 'h3'
 
 export default defineEventHandler((event) => {
