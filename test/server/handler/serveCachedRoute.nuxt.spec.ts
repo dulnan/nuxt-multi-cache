@@ -3,6 +3,7 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { encodeRouteCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { serveCachedHandler } from '../../../src/runtime/server/handler/serveCachedRoute'
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
+import { logger } from '../../../src/runtime/helpers/logger'
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
@@ -172,7 +173,7 @@ describe('serveCachedRoute event handler', () => {
   })
 
   test('Catches errors happening when loading item from cache.', async () => {
-    const consoleSpy = vi.spyOn(global.console, 'debug')
+    const consoleSpy = vi.spyOn(logger, 'error')
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {},
@@ -205,7 +206,12 @@ describe('serveCachedRoute event handler', () => {
 
     await serveCachedHandler(event as any)
 
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to get item from cache.')
+    expect(consoleSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        "Error while attempting to serve cached route for path "/".",
+        [Error: Failed to get item from cache.],
+      ]
+    `)
     mocks.useNitroApp.mockRestore()
   })
 })

@@ -39,14 +39,14 @@ function canBeServedFromCache(
 }
 
 export async function serveCachedHandler(event: H3Event) {
+  const { serverOptions, state } = useMultiCacheApp()
+  const context = getMultiCacheContext(event)
+
+  if (!context?.route) {
+    return
+  }
+
   try {
-    const { serverOptions, state } = useMultiCacheApp()
-    const context = getMultiCacheContext(event)
-
-    if (!context?.route) {
-      return
-    }
-
     // Build the cache key.
     const fullKey = serverOptions?.route?.buildCacheKey
       ? await serverOptions.route.buildCacheKey(event)
@@ -101,5 +101,9 @@ export async function serveCachedHandler(event: H3Event) {
       `Error while attempting to serve cached route for path "${event.path}".`,
       e,
     )
+
+    if (context.route.bubbleError) {
+      throw e
+    }
   }
 }

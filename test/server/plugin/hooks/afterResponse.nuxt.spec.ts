@@ -41,7 +41,20 @@ vi.mock('nitropack/runtime', () => {
 describe('afterResponse nitro hook handler', () => {
   test('Returns if response.body is not a string', async () => {
     expect(
-      await onAfterResponse({} as any, { body: {} } as any),
+      await onAfterResponse(
+        {
+          node: {
+            res: {
+              statusCode: 200,
+            },
+            req: {
+              originalUrl: '/',
+              headers: {},
+            },
+          },
+        } as any,
+        { body: {} } as any,
+      ),
     ).toBeUndefined()
 
     expect(
@@ -51,7 +64,20 @@ describe('afterResponse nitro hook handler', () => {
 
   test('Returns if route cache is not available', async () => {
     expect(
-      await onAfterResponse({} as any, { body: '<html></html>' } as any),
+      await onAfterResponse(
+        {
+          node: {
+            res: {
+              statusCode: 200,
+            },
+            req: {
+              originalUrl: '/',
+              headers: {},
+            },
+          },
+        } as any,
+        { body: '<html></html>' } as any,
+      ),
     ).toBeUndefined()
   })
 
@@ -64,6 +90,15 @@ describe('afterResponse nitro hook handler', () => {
           },
           [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
             new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
+          node: {
+            res: {
+              statusCode: 200,
+            },
+            req: {
+              originalUrl: '/',
+              headers: {},
+            },
+          },
         } as any,
         { body: '<html></html>' } as any,
       ),

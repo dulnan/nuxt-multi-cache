@@ -61,9 +61,9 @@ export async function onAfterResponse(
     return
   }
 
-  const responseData = stringify(response.body)
+  const statusCode = getResponseStatus(event)
 
-  if (!responseData) {
+  if (statusCode !== 200) {
     return
   }
 
@@ -77,9 +77,9 @@ export async function onAfterResponse(
     return
   }
 
-  const statusCode = getResponseStatus(event)
+  const responseData = stringify(response.body)
 
-  if (statusCode !== 200) {
+  if (!responseData) {
     return
   }
 
@@ -130,9 +130,20 @@ export async function onAfterResponse(
     })
   }
 
-  await multiCache.route.storage.setItemRaw(cacheKey, cacheItem, {
-    ttl: routeHelper.maxAge,
-  })
+  await multiCache.route.storage
+    .setItemRaw(cacheKey, cacheItem, {
+      ttl: routeHelper.maxAge,
+    })
+    .catch((e) => {
+      logger.error(
+        `Failed to store route cache item for path "${event.path}"`,
+        e,
+      )
+
+      if (multiCache.route?.bubbleError) {
+        throw e
+      }
+    })
 
   if (event.__MULTI_CACHE_REVALIDATION_KEY) {
     state.removeKeyBeingRevalidated(event.__MULTI_CACHE_REVALIDATION_KEY)
