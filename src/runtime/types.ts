@@ -37,7 +37,7 @@ export type CDNOptions = {
   cacheTagHeader?: string
 }
 
-export interface NuxtMultiCacheOptions {
+export interface ModuleOptions {
   /**
    * Component cache.
    *

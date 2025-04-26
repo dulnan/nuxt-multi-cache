@@ -1,9 +1,9 @@
 import path from 'path'
 import { setup, fetch, $fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import type { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { ModuleOptions } from '../src/runtime/types'
 
-const multiCache: NuxtMultiCacheOptions = {
+const multiCache: ModuleOptions = {
   component: {
     enabled: false,
   },

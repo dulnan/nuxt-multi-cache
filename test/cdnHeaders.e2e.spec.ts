@@ -1,7 +1,7 @@
 import path from 'path'
 import { setup, fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test, vi } from 'vitest'
-import type { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { ModuleOptions } from '../src/runtime/types'
 
 const useRuntimeConfig = vi.fn(() => ({
   multiCache: {
@@ -14,7 +14,7 @@ const useRuntimeConfig = vi.fn(() => ({
 
 vi.stubGlobal('useRuntimeConfig', useRuntimeConfig)
 
-const multiCache: NuxtMultiCacheOptions = {
+const multiCache: ModuleOptions = {
   component: {
     enabled: true,
   },

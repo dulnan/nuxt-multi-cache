@@ -12,10 +12,7 @@ import {
   addServerPlugin,
   addServerImports,
 } from '@nuxt/kit'
-import type {
-  MultiCacheServerOptions,
-  NuxtMultiCacheOptions,
-} from './runtime/types'
+import type { MultiCacheServerOptions, ModuleOptions } from './runtime/types'
 import {
   defaultOptions,
   DEFAULT_CDN_CONTROL_HEADER,
@@ -24,7 +21,7 @@ import {
 import { logger, fileExists } from './utils'
 
 // Nuxt needs this.
-export type ModuleOptions = NuxtMultiCacheOptions
+export type { ModuleOptions }
 export type ModuleHooks = {}
 
 /**

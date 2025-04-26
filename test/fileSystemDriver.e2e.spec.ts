@@ -1,7 +1,7 @@
 import path from 'path'
 import { setup } from '@nuxt/test-utils/e2e'
 import { describe, test, expect } from 'vitest'
-import type { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { ModuleOptions } from '../src/runtime/types'
 import { createPageWithoutHydration, sleep } from './__helpers__'
 import purgeAll from './__helpers__/purgeAll'
 import getRouteCacheItems from './__helpers__/getRouteCacheItems'
@@ -9,7 +9,7 @@ import purgeByKey from './__helpers__/purgeByKey'
 import purgeTags from './__helpers__/purgeTags'
 import exp from 'constants'
 
-const multiCache: NuxtMultiCacheOptions = {
+const multiCache: ModuleOptions = {
   route: {
     enabled: true,
   },
