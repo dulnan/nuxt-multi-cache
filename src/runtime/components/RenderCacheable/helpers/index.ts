@@ -156,7 +156,7 @@ export function renderSlot(
 export async function getCachedComponent(
   storage: Storage,
   cacheKey: string,
-): Promise<ComponentCacheItem | void> {
+): Promise<ComponentCacheItem | undefined> {
   // Get the cached item from the storage.
   const cachedRaw = handleRawCacheData(
     await storage.getItemRaw<string>(cacheKey),

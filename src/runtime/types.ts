@@ -40,6 +40,7 @@ export interface RouteCacheItem extends CacheItem {
   staleIfErrorExpires?: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DataCacheItem extends CacheItem {}
 
 export interface ComponentCacheItem extends CacheItem {
@@ -168,6 +169,39 @@ export interface MultiCacheApp {
   state: MultiCacheState
 }
 
+export type CacheStatsResponse<T> = {
+  status: 'OK'
+  rows: { key: string; data: T }[]
+  total: number
+}
+
+export type CachePurgeItemResponse = {
+  status: 'OK'
+  affectedKeys: string[]
+}
+
+export type CachePurgeAllResponse = {
+  status: 'OK'
+}
+
+export type CachePurgeTagsResponse = {
+  status: 'OK'
+  tags: string[]
+}
+
+export type DataCacheAddToCacheMethod<T> = (
+  data: T,
+  tags?: string[],
+  maxAge?: number,
+) => Promise<void>
+
+export type DataCacheCallbackContext<T> = {
+  addToCache: DataCacheAddToCacheMethod<T>
+  value?: T
+  cacheTags: string[]
+  expires?: number
+}
+
 declare module 'nitropack/types' {
   export interface NitroApp {
     /**
@@ -214,24 +248,4 @@ declare module 'h3' {
      */
     __MULTI_CACHE_SERVED_FROM_CACHE?: boolean
   }
-}
-
-export type CacheStatsResponse<T> = {
-  status: 'OK'
-  rows: { key: string; data: T }[]
-  total: number
-}
-
-export type CachePurgeItemResponse = {
-  status: 'OK'
-  affectedKeys: string[]
-}
-
-export type CachePurgeAllResponse = {
-  status: 'OK'
-}
-
-export type CachePurgeTagsResponse = {
-  status: 'OK'
-  tags: string[]
 }

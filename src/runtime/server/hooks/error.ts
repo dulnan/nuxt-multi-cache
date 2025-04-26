@@ -2,6 +2,7 @@ import type { CapturedErrorContext } from 'nitropack/types'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { sendWebResponse } from 'h3'
+import { logger } from '../../helpers/logger'
 
 /**
  * Callback for the 'error' nitro hook.
@@ -49,5 +50,7 @@ export function onError(_error: Error, ctx: CapturedErrorContext) {
     // This might potentially lead to other hooks (such as beforeResponse) not
     // being called here that would for example compress the response.
     return sendWebResponse(ctx.event, response)
-  } catch (_e) {}
+  } catch (e) {
+    logger.warn('Unexpected error in nuxt-multi-cache nitro error handler.', e)
+  }
 }

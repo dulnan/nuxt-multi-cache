@@ -37,7 +37,12 @@ function stringify(value: any): string | undefined {
     if (typeof value.toJSON === 'function') {
       return stringify(value.toJSON())
     }
-  } catch (_e) {}
+  } catch (e) {
+    logger.error(
+      'Error while attempting to stringify response for route cache.',
+      e,
+    )
+  }
 }
 
 /**

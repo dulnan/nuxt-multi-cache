@@ -1,25 +1,25 @@
 import type { H3Event } from 'h3'
 import type {
-  AddToCacheMethod,
-  CallbackContext,
-} from '../../types/useDataCache'
+  DataCacheAddToCacheMethod,
+  DataCacheCallbackContext,
+  CacheItem,
+} from '../../types'
 import {
   getCacheKeyWithPrefix,
   getExpiresValue,
   getMultiCacheContext,
   isExpired,
 } from '../../helpers/server'
-import type { CacheItem } from '../../types'
 import { logger } from '../../helpers/logger'
 import { useRuntimeConfig } from '#imports'
 
 export async function useDataCache<T>(
   key: string,
   event: H3Event,
-): Promise<CallbackContext<T>> {
+): Promise<DataCacheCallbackContext<T>> {
   const { debug } = useRuntimeConfig().multiCache || {}
 
-  const dummy: CallbackContext<T> = {
+  const dummy: DataCacheCallbackContext<T> = {
     addToCache: (_v: T) => {
       return Promise.resolve()
     },
@@ -45,7 +45,7 @@ export async function useDataCache<T>(
       }
     })
 
-  const addToCache: AddToCacheMethod<T> = (
+  const addToCache: DataCacheAddToCacheMethod<T> = (
     data: T,
     cacheTags: string[] = [],
     maxAge?: number,

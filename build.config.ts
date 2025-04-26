@@ -5,5 +5,6 @@ export default defineBuildConfig({
   externals: ['unstorage', 'defu', 'h3', 'pathe'],
   replace: {
     'import.meta.env.VITEST_SERVER': 'undefined',
+    'import.meta.env.VITEST': 'undefined',
   },
 })

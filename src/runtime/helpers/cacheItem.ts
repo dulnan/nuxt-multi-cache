@@ -1,4 +1,5 @@
 import type { ComponentCacheItem, RouteCacheItem } from '../types'
+import { logger } from './logger'
 
 const DELIMITER = '<CACHE_ITEM>'
 
@@ -63,7 +64,9 @@ export function decodeRouteCacheItem(
         data: decoded.data,
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    logger.error('Failed to decode route cache item.', e)
+  }
 }
 
 /**
@@ -92,7 +95,9 @@ export function decodeComponentCacheItem(
         data: decoded.data,
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    logger.error('Failed to decode component cache item.', e)
+  }
 }
 
 /**

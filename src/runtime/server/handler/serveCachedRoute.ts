@@ -10,7 +10,7 @@ import {
   handleRawCacheData,
 } from '../../helpers/cacheItem'
 import type { RouteCacheItem } from '../../types'
-import { MultiCacheState } from '../../helpers/MultiCacheState'
+import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/logger'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { useRuntimeConfig } from '#imports'
@@ -97,9 +97,9 @@ export async function serveCachedHandler(event: H3Event) {
 
     return decoded.data
   } catch (e) {
-    if (e instanceof Error) {
-      // eslint-disable-next-line no-console
-      console.debug(e.message)
-    }
+    logger.error(
+      `Error while attempting to serve cached route for path "${event.path}".`,
+      e,
+    )
   }
 }

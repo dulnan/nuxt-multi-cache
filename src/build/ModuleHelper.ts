@@ -13,7 +13,7 @@ import {
 import { relative } from 'pathe'
 import type { RouterMethod } from 'h3'
 import type { Nuxt, ResolvedNuxtTemplate } from 'nuxt/schema'
-import { type ModuleOptions, defaultOptions } from './options'
+import type { ModuleOptions, defaultOptions } from './options'
 import { logger } from './logger'
 import { fileExists } from './helpers'
 import type { ModuleTemplate } from './templates/defineTemplate'
@@ -108,9 +108,6 @@ export class ModuleHelper {
     moduleUrl: string,
     options: ModuleOptions,
   ) {
-    const isModuleBuild =
-      process.env.PLAYGROUND_MODULE_BUILD === 'true' && nuxt.options._prepare
-
     // Resolver for the root directory.
     const srcResolver = createResolver(nuxt.options.srcDir)
     const rootResolver = createResolver(nuxt.options.rootDir)
@@ -299,7 +296,7 @@ export class ModuleHelper {
     )
   }
 
-  private processTemplate(path: string, contents: string): string {
+  private processTemplate(_path: string, contents: string): string {
     return contents.trim()
   }
 

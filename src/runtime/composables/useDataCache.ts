@@ -1,14 +1,14 @@
 import type { H3Event } from 'h3'
 import { logger } from '../helpers/logger'
-import type { CallbackContext } from '../types/useDataCache'
+import type { DataCacheCallbackContext } from '../types'
 import { useDataCache as serverUseDataCache } from './../server/utils/useDataCache'
 import { useRuntimeConfig, useNuxtApp } from '#imports'
 
 export function useDataCache<T>(
   key: string,
   providedEvent?: H3Event,
-): Promise<CallbackContext<T>> {
-  const dummy: CallbackContext<T> = {
+): Promise<DataCacheCallbackContext<T>> {
+  const dummy: DataCacheCallbackContext<T> = {
     addToCache: (_v: T) => {
       return Promise.resolve()
     },

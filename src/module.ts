@@ -11,7 +11,6 @@ import { TEMPLATES } from './build/templates'
 
 // Nuxt needs this.
 export type { ModuleOptions }
-export type ModuleHooks = {}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
