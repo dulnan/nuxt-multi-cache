@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import type { ModuleOptions } from '../src/build/options'
 import { decodeRouteCacheItem } from '../src/runtime/helpers/cacheItem'
 import purgeAll from './__helpers__/purgeAll'
-import type { CacheStatsResponse } from './../src/runtime/server/types'
+import type { CacheStatsResponse } from './../src/runtime/types'
 
 const multiCache: ModuleOptions = {
   component: {

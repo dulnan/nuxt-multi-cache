@@ -1,7 +1,7 @@
 import { defineEventHandler, createError, getQuery } from 'h3'
 import { checkAuth, getCacheInstance } from './helpers'
 
-export default defineEventHandler(async (event) => {
+export default defineEventHandler<Promise<unknown>>(async (event) => {
   await checkAuth(event)
   const cache = getCacheInstance(event)
   const query = getQuery(event)

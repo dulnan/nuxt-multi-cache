@@ -8,7 +8,10 @@ import {
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { onlyUnique } from '../../helpers/server'
 import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../../build/options'
-import type { NuxtMultiCacheSSRContext } from './../../types'
+import type {
+  CachePurgeTagsResponse,
+  NuxtMultiCacheSSRContext,
+} from './../../types'
 import { checkAuth } from './helpers'
 
 /**
@@ -165,21 +168,23 @@ const invalidator = new DebouncedInvalidator()
  * Should be refactored so that a separate lookup table is managed that keeps
  * track of all cache tags and the cache items that use them.
  */
-export default defineEventHandler(async (event) => {
-  await checkAuth(event)
-  const tags = await getTagsToPurge(event)
+export default defineEventHandler<Promise<CachePurgeTagsResponse>>(
+  async (event) => {
+    await checkAuth(event)
+    const tags = await getTagsToPurge(event)
 
-  if (!invalidator.cacheContext) {
-    const app = useMultiCacheApp()
-    invalidator.cacheContext = app.cache
-    const delay = app.config.api.cacheTagInvalidationDelay
-    invalidator.setDelay(delay)
-  }
+    if (!invalidator.cacheContext) {
+      const app = useMultiCacheApp()
+      invalidator.cacheContext = app.cache
+      const delay = app.config.api.cacheTagInvalidationDelay
+      invalidator.setDelay(delay)
+    }
 
-  invalidator.add(tags)
+    invalidator.add(tags)
 
-  return {
-    status: 'OK',
-    tags,
-  }
-})
+    return {
+      status: 'OK',
+      tags,
+    }
+  },
+)

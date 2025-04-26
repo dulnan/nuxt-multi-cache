@@ -215,3 +215,23 @@ declare module 'h3' {
     __MULTI_CACHE_SERVED_FROM_CACHE?: boolean
   }
 }
+
+export type CacheStatsResponse<T> = {
+  status: 'OK'
+  rows: { key: string; data: T }[]
+  total: number
+}
+
+export type CachePurgeItemResponse = {
+  status: 'OK'
+  affectedKeys: string[]
+}
+
+export type CachePurgeAllResponse = {
+  status: 'OK'
+}
+
+export type CachePurgeTagsResponse = {
+  status: 'OK'
+  tags: string[]
+}

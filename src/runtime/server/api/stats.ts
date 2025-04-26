@@ -1,7 +1,6 @@
 import { defineEventHandler } from 'h3'
+import type { CacheStatsResponse, CacheItem } from '../../types'
 import { checkAuth, getCacheInstance } from './helpers'
-import type { CacheStatsResponse } from '../types'
-import type { CacheItem } from '../../types'
 
 export default defineEventHandler<Promise<CacheStatsResponse<unknown>>>(
   async (event) => {
