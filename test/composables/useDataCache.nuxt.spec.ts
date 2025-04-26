@@ -3,7 +3,7 @@ import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables'
 import type { CacheItem } from './../../src/runtime/types'
 
-function buildEvent(): H3Event {
+function buildEvent(bubbleError = false): H3Event {
   const storage: Record<string, CacheItem> = {
     foobar: { data: 'Cached data.' },
     expires: {
@@ -14,8 +14,12 @@ function buildEvent(): H3Event {
   return {
     __MULTI_CACHE: {
       data: {
+        bubbleError,
         storage: {
           getItem: (key: string) => {
+            if (key === 'force_get_error') {
+              throw new Error('Failed to get data cache item.')
+            }
             return Promise.resolve(storage[key])
           },
           setItem: (key: string, data: any) => {
@@ -179,5 +183,21 @@ describe('useDataCache composable', () => {
 
     const cache = await useDataCache('foobar', event as any)
     expect(cache.value).toEqual('More cached data.')
+  })
+
+  test('Bubbles errors when bubbleError === true', async () => {
+    import.meta.env.VITEST_SERVER = 'true'
+    const event = buildEvent(true)
+
+    await expect(() =>
+      useDataCache('force_get_error', event),
+    ).rejects.toMatchInlineSnapshot(`[Error: Failed to get data cache item.]`)
+  })
+
+  test('Does not bubble errors when bubbleError === false', async () => {
+    import.meta.env.VITEST_SERVER = 'true'
+    expect(
+      (await useDataCache('force_get_error', buildEvent(false))).value,
+    ).toBeUndefined()
   })
 })

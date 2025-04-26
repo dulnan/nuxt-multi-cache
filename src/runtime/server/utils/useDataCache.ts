@@ -37,14 +37,6 @@ export async function useDataCache<T>(
   // Try to get the item from cache.
   const fullKey = getCacheKeyWithPrefix(key, event)
 
-  const item = await multiCache.data.storage
-    .getItem<CacheItem>(fullKey)
-    .catch((e) => {
-      if (bubbleError) {
-        throw e
-      }
-    })
-
   const addToCache: DataCacheAddToCacheMethod<T> = (
     data: T,
     cacheTags: string[] = [],
@@ -54,43 +46,58 @@ export async function useDataCache<T>(
     if (maxAge) {
       item.expires = getExpiresValue(maxAge)
     }
+
     if (debug) {
       logger.info('Stored item in data cache: ' + fullKey)
     }
 
-    return multiCache
-      .data!.storage.setItem(fullKey, item, { ttl: maxAge })
-      .catch((e) => {
-        if (bubbleError) {
-          throw e
-        }
-      })
+    try {
+      return multiCache.data!.storage.setItem(fullKey, item, { ttl: maxAge })
+    } catch (e) {
+      logger.error('Failed to store data cache item.', e)
+      if (bubbleError) {
+        throw e
+      }
+    }
+
+    return Promise.resolve()
   }
 
-  if (item) {
-    const itemIsExpired = isExpired(item)
-    if (!itemIsExpired) {
-      if (debug) {
-        logger.info('Returned item from data cache: ' + fullKey)
-      }
+  try {
+    const item = await multiCache.data.storage.getItem<CacheItem>(fullKey)
 
-      return {
-        addToCache,
-        // Extract the value. If the item was stored along its cache tags, it
-        // will be an object with a cacheTags property.
-        value: item.data as T,
-        cacheTags: item.cacheTags || [],
-        expires: item.expires,
+    if (item) {
+      const itemIsExpired = isExpired(item)
+      if (!itemIsExpired) {
+        if (debug) {
+          logger.info('Returned item from data cache: ' + fullKey)
+        }
+
+        return {
+          addToCache,
+          // Extract the value. If the item was stored along its cache tags, it
+          // will be an object with a cacheTags property.
+          value: item.data as T,
+          cacheTags: item.cacheTags || [],
+          expires: item.expires,
+        }
+      } else if (debug) {
+        logger.info(
+          'Skipped returning item from data cache because expired: ' + fullKey,
+        )
       }
-    } else if (debug) {
-      logger.info(
-        'Skipped returning item from data cache because expired: ' + fullKey,
-      )
+    }
+
+    return {
+      addToCache,
+      cacheTags: [],
+    }
+  } catch (e) {
+    logger.error('Failed to load data cache item,', e)
+    if (bubbleError) {
+      throw e
     }
   }
 
-  return {
-    addToCache,
-    cacheTags: [],
-  }
+  return dummy
 }
