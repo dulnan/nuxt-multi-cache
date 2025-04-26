@@ -9,7 +9,7 @@ import {
   getMultiCacheContext,
   isExpired,
 } from '../../helpers/server'
-import { CacheItem } from '../../types'
+import type { CacheItem } from '../../types'
 import { logger } from '../../helpers/logger'
 import { useRuntimeConfig } from '#imports'
 

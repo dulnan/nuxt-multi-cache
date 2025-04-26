@@ -1,13 +1,11 @@
 import path from 'path'
 import { setup } from '@nuxt/test-utils/e2e'
 import { describe, test, expect } from 'vitest'
-import type { ModuleOptions } from '../src/runtime/types'
+import type { ModuleOptions } from '../src/build/options'
 import { createPageWithoutHydration, sleep } from './__helpers__'
 import purgeAll from './__helpers__/purgeAll'
 import getRouteCacheItems from './__helpers__/getRouteCacheItems'
-import purgeByKey from './__helpers__/purgeByKey'
 import purgeTags from './__helpers__/purgeTags'
-import exp from 'constants'
 
 const multiCache: ModuleOptions = {
   route: {

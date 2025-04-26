@@ -18,7 +18,7 @@ mockNuxtImport('useRuntimeConfig', () => {
   }
 })
 
-vi.mock('#multi-cache-server-options', () => {
+vi.mock('#nuxt-multi-cache/server-options', () => {
   return {
     serverOptions: {},
   }

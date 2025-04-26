@@ -1,8 +1,4 @@
 import { existsSync } from 'node:fs'
-import { useLogger } from '@nuxt/kit'
-import type { ConsolaInstance } from 'consola'
-
-export const logger: ConsolaInstance = useLogger('nuxt-multi-cache')
 
 export const fileExists = (
   path?: string,
@@ -11,7 +7,7 @@ export const fileExists = (
   if (!path) {
     return null
   } else if (existsSync(path)) {
-    // If path already contains/forces the extension
+    // If path already contains/forces the extension.
     return path
   }
 

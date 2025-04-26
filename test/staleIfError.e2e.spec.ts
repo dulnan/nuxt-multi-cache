@@ -1,8 +1,7 @@
 import path from 'node:path'
-import { setup, $fetch, createPage } from '@nuxt/test-utils/e2e'
+import { setup, createPage } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import type { ModuleOptions } from '../src/runtime/types'
-import { decodeRouteCacheItem } from '../src/runtime/helpers/cacheItem'
+import type { ModuleOptions } from '../src/build/options'
 import purgeAll from './__helpers__/purgeAll'
 import { sleep } from './__helpers__'
 

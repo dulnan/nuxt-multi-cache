@@ -3,7 +3,7 @@ import {
   defaultOptions,
   DEFAULT_API_PREFIX,
   DEFAULT_CACHE_TAG_INVALIDATION_DELAY,
-} from './../../src/runtime/settings'
+} from './../../src/build/options'
 
 describe('Default options', () => {
   test('Define an API prefix', () => {

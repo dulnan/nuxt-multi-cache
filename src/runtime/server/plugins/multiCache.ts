@@ -12,7 +12,7 @@ import type {
 import { onError } from '../hooks/error'
 import { MultiCacheState } from '../../helpers/MultiCacheState'
 import { serveCachedHandler } from '../handler/serveCachedRoute'
-import { serverOptions } from '#multi-cache-server-options'
+import { serverOptions } from '#nuxt-multi-cache/server-options'
 import { useRuntimeConfig } from '#imports'
 
 function createCacheContext(

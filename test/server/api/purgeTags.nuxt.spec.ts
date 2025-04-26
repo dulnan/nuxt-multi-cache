@@ -37,7 +37,7 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
   }
 })
 
-vi.mock('#multi-cache-server-options', () => {
+vi.mock('#nuxt-multi-cache/server-options', () => {
   return {
     serverOptions: {},
   }

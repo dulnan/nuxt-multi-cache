@@ -1,7 +1,7 @@
 import path from 'path'
 import { setup, fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import type { ModuleOptions } from '../src/runtime/types'
+import type { ModuleOptions } from '../src/build/options'
 import { decodeRouteCacheItem } from '../src/runtime/helpers/cacheItem'
 
 const multiCache: ModuleOptions = {
