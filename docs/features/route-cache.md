@@ -26,7 +26,7 @@ export default defineNuxtConfig({
 
 ```typescript [multiCache.serverOptions.ts]
 // ~/server/multiCache.serverOptions.ts
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
 export default defineMultiCacheOptions({
@@ -61,7 +61,7 @@ the cache key for a given route:
 ::: code-group
 
 ```typescript [multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { getQuery, getRequestURL } from 'h3'
 
 export default defineMultiCacheOptions({
@@ -127,7 +127,7 @@ example right after calling `useCookie`.
 ::: code-group
 
 ```typescript [multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
 export default defineMultiCacheOptions({
   route: {

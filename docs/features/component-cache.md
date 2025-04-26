@@ -44,7 +44,7 @@ export default defineNuxtConfig({
 ```
 
 ```typescript [multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
 export default defineMultiCacheOptions({

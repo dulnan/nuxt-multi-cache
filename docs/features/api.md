@@ -25,7 +25,7 @@ export default defineNuxtConfig({
 
 ```typescript [multiCache.serverOptions.ts]
 // ~/server/multiCache.serverOptions.ts
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { isAuthenticated } from './somewhere'
 
 export default defineMultiCacheOptions({
