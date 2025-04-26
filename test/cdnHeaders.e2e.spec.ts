@@ -60,4 +60,16 @@ describe('The CDN headers feature', () => {
     expect(response.headers.get('surrogate-control')).toBeNull()
     expect(response.headers.get('cache-tag')).toBeNull()
   })
+
+  test('Merges CDN headers correctly.', async () => {
+    const response = await fetch('/cdnHeaderMerging')
+    expect(response.headers.get('surrogate-control')).toMatchInlineSnapshot(
+      `"max-age=60, must-revalidate, stale-while-revalidate=60000, stale-if-error=24000"`,
+      'Uses the lowest max age, set by the page itself.',
+    )
+    expect(response.headers.get('cache-tag')).toMatchInlineSnapshot(
+      `"api page:1 foobar"`,
+      'contains both the cache tags from the page and the API call.',
+    )
+  })
 })

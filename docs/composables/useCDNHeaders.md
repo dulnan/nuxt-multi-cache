@@ -64,6 +64,21 @@ This method works for the following numeric properties:
 
 The method will only set the value **if it is lower than the current value**.
 
+### setBoolean(key: string)
+
+This method works for the following boolean properties:
+
+- immutable
+- maxStale
+- mustRevalidate
+- noCache
+- noStore
+- noTransform
+- onlyIfCached
+- proxyRevalidate
+
+The method will always set the boolean value to `true`.
+
 ### private()
 
 Sets `private` to `true` and sets the value of `public` to `false`. Use this if
@@ -83,3 +98,15 @@ value of `public` will remain `false`.
 
 Add cache tags for the Cache-Tag header. Duplicates will be automatically
 removed.
+
+### mergeFromResponse(response: FetchResponse)
+
+Merges the cache tags and cache control from the given fetch response.
+
+Note that internally the method will only call setNumeric(), setBoolean() and
+private(), meaning that merging will never set a higher max age than currently
+or mark the response as public.
+
+### mergeCacheControlHeader(header: string)
+
+Parses and merges the given `Cache-Control` header value.

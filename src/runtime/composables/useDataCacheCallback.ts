@@ -16,7 +16,6 @@ export async function useDataCacheCallback<T>(
     const event = providedEvent || useNuxtApp().ssrContext?.event
 
     if (!event) {
-      console.log('NO EVENT')
       const { debug } = useRuntimeConfig().multiCache || {}
       if (debug) {
         logger.warn(

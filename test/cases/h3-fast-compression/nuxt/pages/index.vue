@@ -5,6 +5,8 @@
 </template>
 
 <script setup lang="ts">
+import { useAsyncData, useRouteCache } from '#imports'
+
 const { data } = await useAsyncData(() => {
   return Promise.resolve(Date.now().toString())
 })

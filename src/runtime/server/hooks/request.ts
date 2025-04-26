@@ -38,7 +38,10 @@ async function addCacheContext(
   }
 
   if (config.cdn.enabled) {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(
+      config.cdn.cacheControlHeader,
+      config.cdn.cacheTagHeader,
+    )
 
     // Add the instances to the H3 event context.
     event[MULTI_CACHE_CDN_CONTEXT_KEY] = helper
