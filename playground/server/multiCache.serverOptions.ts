@@ -1,6 +1,6 @@
 import { defineDriver } from 'unstorage'
 import { type H3Event, getQuery, getHeader } from 'h3'
-import { defineMultiCacheOptions } from './../../src/runtime/serverOptions'
+import { defineMultiCacheOptions } from './../../src/server-options'
 
 const customDriver = defineDriver(() => {
   let cache: Record<string, string> = {}

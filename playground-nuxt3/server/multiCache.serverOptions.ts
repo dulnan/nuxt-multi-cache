@@ -1,4 +1,4 @@
-import { defineMultiCacheOptions } from './../../src/runtime/serverOptions/defineMultiCacheOptions'
+import { defineMultiCacheOptions } from './../../src/server-options'
 
 export default defineMultiCacheOptions({
   cacheKeyPrefix: (): Promise<string> => {

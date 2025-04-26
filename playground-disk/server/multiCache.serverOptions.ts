@@ -1,6 +1,6 @@
 import { type H3Event, getQuery, getHeader } from 'h3'
 import fsDriver from 'unstorage/drivers/fs'
-import { defineMultiCacheOptions } from './../../src/runtime/serverOptions/defineMultiCacheOptions'
+import { defineMultiCacheOptions } from './../../src/server-options'
 
 function getCacheKeyPrefix(event: H3Event): string {
   const query = getQuery(event)

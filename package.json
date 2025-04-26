@@ -1,6 +1,6 @@
 {
   "name": "nuxt-multi-cache",
-  "version": "3.4.0",
+  "version": "4.0.0-alpha.1",
   "description": "SSR route, component and data cache for Nuxt.js",
   "type": "module",
   "exports": {
@@ -8,15 +8,15 @@
       "types": "./dist/types.d.mts",
       "import": "./dist/module.mjs"
     },
-    "./dist/runtime/serverOptions": "./dist/runtime/serverOptions/index.js"
+    "./server-options": "./dist/server-options.mjs"
   },
   "typesVersions": {
     "*": {
       ".": [
         "./dist/types.d.mts"
       ],
-      "dist/runtime/serverOptions": [
-        "./dist/runtime/serverOptions/index.d.ts"
+      "server-options": [
+        "./dist/server-options.d.mts"
       ]
     }
   },
