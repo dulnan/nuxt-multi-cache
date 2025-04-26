@@ -171,13 +171,22 @@ export default defineComponent({
           return
         }
 
+        const bubbleError = multiCache.component.bubbleError
+
         const fullCacheKey = getCacheKeyWithPrefix(cacheKey, ssrContext.event)
 
         // Get the cached item from the storage.
         const cached = await getCachedComponent(
           multiCache.component.storage,
           fullCacheKey,
-        )
+        ).catch((e) => {
+          logger.error('Failed to get component cache item.', {
+            fullCacheKey,
+          })
+          if (bubbleError) {
+            throw e
+          }
+        })
 
         if (cached) {
           const { data, payload, expires } = cached
@@ -247,14 +256,16 @@ export default defineComponent({
             })
           }
         } catch (e) {
-          if (debug) {
-            logger.error('Failed to store component in cache.', {
+          logger.error(
+            'Failed to store component in cache.',
+            {
               fullCacheKey,
               props,
-            })
-          }
-          if (e instanceof Error) {
-            logger.error(e.message)
+            },
+            e,
+          )
+          if (bubbleError) {
+            throw e
           }
         }
 
@@ -265,23 +276,12 @@ export default defineComponent({
       // Try to get a cached version of the child.
       // We wrap it in a try/catch so that in case something goes wrong (e.g.
       // storage driver backend [redis] down) we fall back to render it again.
-      try {
-        const cachedMarkup = await getOrCreateCachedComponent()
-        if (cachedMarkup) {
-          return () =>
-            h(props.tag, {
-              innerHTML: cachedMarkup,
-            })
-        }
-      } catch (e) {
-        if (debug) {
-          logger.error('Failed to get component from cache.', {
-            props,
+      const cachedMarkup = await getOrCreateCachedComponent()
+      if (cachedMarkup) {
+        return () =>
+          h(props.tag, {
+            innerHTML: cachedMarkup,
           })
-        }
-        if (e instanceof Error) {
-          logger.error(e.message)
-        }
       }
     }
 

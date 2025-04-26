@@ -222,7 +222,14 @@ describe('RenderCacheable', () => {
 
     expect(localNuxtApp.payload.data).toEqual({})
     await renderToString(app, ssrContext)
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to get item.')
+    expect(consoleSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        "Failed to get component cache item.",
+        {
+          "fullCacheKey": "InnerComponent::get_error",
+        },
+      ]
+    `)
   })
 
   test('Handles errors when setting cache item.', async () => {
@@ -238,6 +245,97 @@ describe('RenderCacheable', () => {
 
     expect(localNuxtApp.payload.data).toEqual({})
     await renderToString(app, ssrContext)
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to set item.')
+    expect(consoleSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        "Failed to store component in cache.",
+        {
+          "fullCacheKey": "InnerComponent::set_error",
+          "props": {
+            "asyncDataKeys": [],
+            "cacheKey": "set_error",
+            "cacheTags": [],
+            "maxAge": 0,
+            "noCache": false,
+            "tag": "div",
+          },
+        },
+        [Error: Failed to set item.],
+      ]
+    `)
+  })
+
+  test('Bubbles errors when getting cache item.', async () => {
+    const appImport = await import('#app')
+    const localNuxtApp = { payload: { data: {} } }
+    appImport.useNuxtApp = vi.fn().mockReturnValueOnce(localNuxtApp)
+
+    // App with storage containing a cached component.
+    const { app, ssrContext } = createTestApp(
+      `cacheKey="get_error"`,
+      'world',
+      {},
+      'InnerComponent',
+      true,
+    )
+    const errorHandlerSpy = vi.fn()
+    app.config.errorHandler = errorHandlerSpy
+    const result = await renderToString(app, ssrContext)
+
+    expect(errorHandlerSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        [Error: Failed to get item.],
+        {
+          "asyncDataKeys": [],
+          "cacheKey": "get_error",
+          "cacheTags": [],
+          "maxAge": 0,
+          "noCache": false,
+          "tag": "div",
+        },
+        "setup function",
+      ]
+    `)
+
+    expect(result).toMatchInlineSnapshot(
+      `"<div><div>Test App</div><!----></div>"`,
+    )
+  })
+
+  test('Bubbles errors when setting cache item.', async () => {
+    const appImport = await import('#app')
+    const localNuxtApp = { payload: { data: {} } }
+    appImport.useNuxtApp = vi.fn().mockReturnValueOnce(localNuxtApp)
+
+    // App with storage containing a cached component.
+    const { app, ssrContext } = createTestApp(
+      `cacheKey="set_error"`,
+      'world',
+      {},
+      'InnerComponent',
+      true,
+    )
+
+    const errorHandlerSpy = vi.fn()
+    app.config.errorHandler = errorHandlerSpy
+    const result = await renderToString(app, ssrContext)
+
+    expect(errorHandlerSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        [Error: Failed to set item.],
+        {
+          "asyncDataKeys": [],
+          "cacheKey": "set_error",
+          "cacheTags": [],
+          "maxAge": 0,
+          "noCache": false,
+          "tag": "div",
+        },
+        "setup function",
+      ]
+    `)
+
+    expect(result).toMatchInlineSnapshot(
+      `"<div><div>Test App</div><!----></div>"`,
+    )
   })
 })

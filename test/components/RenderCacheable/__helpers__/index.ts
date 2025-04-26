@@ -7,6 +7,7 @@ export function createTestApp(
   what = 'world',
   providedStorage: any = {},
   name = 'InnerComponent',
+  bubbleError = false,
 ) {
   const InnerComponent = defineComponent({
     name,
@@ -35,6 +36,7 @@ export function createTestApp(
     event: {
       __MULTI_CACHE: {
         component: {
+          bubbleError,
           storage: {
             setItemRaw: (key: string, data: any) => {
               if (key === 'InnerComponent::set_error') {
