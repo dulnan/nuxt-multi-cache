@@ -130,6 +130,7 @@ export type MultiCacheServerOptions = {
 export type MutliCacheServerOptions = MultiCacheServerOptions
 
 export type MultiCacheRuntimeConfig = {
+  debug: boolean
   cdn: {
     enabled: boolean
     cacheControlHeader: string
@@ -140,7 +141,6 @@ export type MultiCacheRuntimeConfig = {
   route: boolean
   api: {
     enabled: boolean
-    prefix: string
     cacheTagInvalidationDelay: number
     authorizationToken: string
     authorizationDisabled: boolean

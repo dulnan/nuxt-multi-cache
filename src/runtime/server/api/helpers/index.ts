@@ -32,18 +32,17 @@ export function getCacheInstance(event: H3Event): Storage {
  * Throws an error if authorization failed.
  */
 export async function checkAuth(event: H3Event) {
-  const { serverOptions, config } = useMultiCacheApp()
-  const { authorizationDisabled, authorizationToken } = config.api || {}
+  const app = useMultiCacheApp()
 
   // Allow if authorization is explicitly disabled.
-  if (authorizationDisabled) {
+  if (app.config.api.authorizationDisabled) {
     return
   }
 
   // Check authorization using token.
-  if (authorizationToken) {
+  if (app.config.api.authorizationToken) {
     const headerToken = getHeader(event, AUTH_HEADER)
-    if (headerToken === authorizationToken) {
+    if (headerToken === app.config.api.authorizationToken) {
       return
     }
     // Unauthorized.
@@ -53,7 +52,7 @@ export async function checkAuth(event: H3Event) {
     })
   }
 
-  const authorization = serverOptions.api?.authorization
+  const authorization = app.serverOptions.api?.authorization
 
   // At this stage if this method is missing, we throw an error to indicate
   // that the module is not configured properly.

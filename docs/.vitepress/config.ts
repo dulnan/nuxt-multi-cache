@@ -80,6 +80,7 @@ export default defineConfig({
         items: [
           { text: 'Introduction', link: '/overview/introduction' },
           { text: 'Configuration', link: '/overview/configuration' },
+          { text: 'Runtime Config', link: '/overview/runtime-config' },
           { text: 'Server Options', link: '/overview/server-options' },
           { text: 'Cache Tags', link: '/overview/cache-tags' },
           { text: 'Migrating from V1', link: '/overview/migrating-from-v1' },

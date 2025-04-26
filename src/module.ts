@@ -1,27 +1,25 @@
 import { defu } from 'defu'
+import { name, version } from '../package.json'
 import { defineNuxtModule } from '@nuxt/kit'
 import {
   type ModuleOptions,
-  defaultOptions,
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
 } from './build/options'
 import { ModuleHelper } from './build/ModuleHelper'
 import { TEMPLATES } from './build/templates'
 
-// Nuxt needs this.
 export type { ModuleOptions }
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: 'nuxt-multi-cache',
+    name,
+    version,
     configKey: 'multiCache',
-    version: '3.3.3',
     compatibility: {
       nuxt: '>=3.15.0',
     },
   },
-  defaults: defaultOptions as any,
   setup(passedOptions, nuxt) {
     const helper = new ModuleHelper(nuxt, import.meta.url, passedOptions)
 
@@ -30,7 +28,6 @@ export default defineNuxtModule<ModuleOptions>({
     })
 
     const options = defu({}, passedOptions, {}) as ModuleOptions
-    const rootDir = nuxt.options.rootDir
 
     helper.transpile(helper.resolvers.module.resolve('./runtime'))
     helper.inlineNitroExternals(helper.resolvers.module.resolve('./runtime'))
@@ -38,7 +35,6 @@ export default defineNuxtModule<ModuleOptions>({
 
     nuxt.options.runtimeConfig.multiCache = {
       debug: !!options.debug,
-      rootDir,
       cdn: {
         enabled: !!options.cdn?.enabled,
         cacheControlHeader:
@@ -50,7 +46,6 @@ export default defineNuxtModule<ModuleOptions>({
       route: !!options.route?.enabled,
       api: {
         enabled: !!options.api?.enabled,
-        prefix: options.api?.prefix || '',
         cacheTagInvalidationDelay: options.api
           ?.cacheTagInvalidationDelay as number,
         authorizationToken:
