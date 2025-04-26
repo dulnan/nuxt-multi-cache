@@ -7,7 +7,7 @@ export default defineVitestConfig({
     environmentOptions: {
       nuxt: {
         overrides: {
-          modules: ['nuxt-multi-cache', '@nuxt/devtools'],
+          modules: ['nuxt-multi-cache'],
           multiCache: {
             component: {
               enabled: true
