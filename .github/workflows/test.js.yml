@@ -24,6 +24,10 @@ jobs:
           npm ci
           npx playwright-core install chromium
 
+      - name: Prettier
+        run: |
+          npm run prettier
+
       - name: Module Builder
         run: |
           npm run dev:prepare
@@ -31,13 +35,8 @@ jobs:
 
       - name: Vitest
         run: |
-          # For some reason this has to be removed or else the test fails.
-          rm -rf .nuxt
+          npm run dev:prepare
           npm run test:ci
-
-      - name: Prettier
-        run: |
-          npm run prettier
 
       - name: nuxi typecheck
         run: |
