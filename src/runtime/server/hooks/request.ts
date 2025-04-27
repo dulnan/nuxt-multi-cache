@@ -2,7 +2,6 @@ import { type H3Event, getRequestURL } from 'h3'
 import type { NuxtMultiCacheSSRContext } from '../../types'
 import {
   MULTI_CACHE_CONTEXT_KEY,
-  MULTI_CACHE_PREFIX_KEY,
   MULTI_CACHE_ROUTE_CONTEXT_KEY,
 } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
@@ -14,19 +13,7 @@ import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 async function addCacheContext(
   event: H3Event,
 ): Promise<NuxtMultiCacheSSRContext> {
-  const { cache, serverOptions } = useMultiCacheApp()
-
-  // Set the global cache key prefix that applies for all caches.
-  // This can either be a static string or a method that determines the prefix,
-  // for example based on cookie or request headers.
-  if (serverOptions.cacheKeyPrefix) {
-    if (typeof serverOptions.cacheKeyPrefix === 'string') {
-      event.context[MULTI_CACHE_PREFIX_KEY] = serverOptions.cacheKeyPrefix
-    } else {
-      event.context[MULTI_CACHE_PREFIX_KEY] =
-        await serverOptions.cacheKeyPrefix(event)
-    }
-  }
+  const { cache } = useMultiCacheApp()
 
   // Add the cache context object to the SSR context object.
   event.context[MULTI_CACHE_CONTEXT_KEY] = cache

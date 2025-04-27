@@ -50,7 +50,7 @@ export async function serveCachedHandler(event: H3Event) {
     // Build the cache key.
     const fullKey = serverOptions?.route?.buildCacheKey
       ? await serverOptions.route.buildCacheKey(event)
-      : getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
+      : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
 
     // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(

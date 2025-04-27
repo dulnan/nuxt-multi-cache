@@ -172,7 +172,10 @@ export default defineComponent({
 
         const bubbleError = multiCache.component.bubbleError
 
-        const fullCacheKey = getCacheKeyWithPrefix(cacheKey, ssrContext.event)
+        const fullCacheKey = await getCacheKeyWithPrefix(
+          cacheKey,
+          ssrContext.event,
+        )
 
         // Get the cached item from the storage.
         const cached = await getCachedComponent(

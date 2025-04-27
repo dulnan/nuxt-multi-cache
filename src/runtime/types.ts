@@ -215,6 +215,10 @@ export type DataCacheCallbackContext<T> = {
   expires?: number
 }
 
+export type MultiCacheEventContext = {
+  cachePrefix?: string | null
+}
+
 declare module 'nitropack/types' {
   export interface NitroApp {
     /**
@@ -226,6 +230,8 @@ declare module 'nitropack/types' {
 
 declare module 'h3' {
   export interface H3EventContext {
+    multiCache?: MultiCacheEventContext
+
     /**
      * The nuxt-multi-cache cache context.
      */
@@ -240,11 +246,6 @@ declare module 'h3' {
      * The nuxt-multi-cache CDN helper.
      */
     __MULTI_CACHE_CDN?: NuxtMultiCacheCDNHelper
-
-    /**
-     * The nuxt-multi-cache global cache prefix that is applied to all caches.
-     */
-    __MULTI_CACHE_PREFIX?: string
 
     /**
      * Contains the already fetched cached route, if it exists.

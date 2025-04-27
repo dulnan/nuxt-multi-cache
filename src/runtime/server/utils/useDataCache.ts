@@ -32,8 +32,7 @@ export async function useDataCache<T>(
 
   const bubbleError = multiCache.data.bubbleError
 
-  // Try to get the item from cache.
-  const fullKey = getCacheKeyWithPrefix(key, event)
+  const fullKey = await getCacheKeyWithPrefix(key, event)
 
   const addToCache: DataCacheAddToCacheMethod<T> = (
     data: T,
