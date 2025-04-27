@@ -59,5 +59,10 @@ export default defineNuxtConfig({
     build: {
       minify: false,
     },
+    server: {
+      watch: {
+        usePolling: true,
+      },
+    },
   },
 })

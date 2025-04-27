@@ -9,9 +9,14 @@ mockNuxtImport('useRuntimeConfig', () => {
     return {
       multiCache: {
         component: true,
-        debug: true,
       },
     }
+  }
+})
+
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    debug: true,
   }
 })
 

@@ -154,6 +154,5 @@ export const DEFAULT_CDN_TAG_HEADER = 'Cache-Tag'
 export const defaultOptions: Subset<ModuleOptions> = {
   api: {
     prefix: DEFAULT_API_PREFIX,
-    cacheTagInvalidationDelay: DEFAULT_CACHE_TAG_INVALIDATION_DELAY,
   },
 }

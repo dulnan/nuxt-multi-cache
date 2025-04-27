@@ -1,6 +1,5 @@
 import type { H3Event } from 'h3'
 import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
-import { getMultiCacheCDNHelper } from './../helpers/server'
 import { useCDNHeaders as serverUseCdnHeaders } from './../server/utils/useCDNHeaders'
 import { useRequestEvent } from '#imports'
 
@@ -26,7 +25,6 @@ export function useCDNHeaders(
 
   const event = providedEvent || useRequestEvent()
 
-  // Event couldn't be found for some reason.
   if (!event) {
     return
   }

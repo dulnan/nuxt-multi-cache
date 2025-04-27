@@ -1,14 +1,28 @@
 import type { H3Event } from 'h3'
-import type { NuxtMultiCacheCDNHelper } from './../../helpers/CDNHelper'
-import { getMultiCacheCDNHelper } from '../../helpers/server'
+import { NuxtMultiCacheCDNHelper } from './../../helpers/CDNHelper'
+import { MULTI_CACHE_CDN_CONTEXT_KEY } from '../../helpers/server'
+import {
+  cdnCacheControlHeader,
+  cdnCacheTagHeader,
+  cdnEnabled,
+} from '#nuxt-multi-cache/config'
 
 export function useCDNHeaders(
   cb: (helper: NuxtMultiCacheCDNHelper) => void,
   event: H3Event,
 ): void {
-  const helper = getMultiCacheCDNHelper(event)
-  if (!helper) {
+  if (!cdnEnabled) {
     return
+  }
+
+  let helper = event.context[MULTI_CACHE_CDN_CONTEXT_KEY]
+
+  if (!helper) {
+    helper = new NuxtMultiCacheCDNHelper(
+      cdnCacheControlHeader,
+      cdnCacheTagHeader,
+    )
+    event.context[MULTI_CACHE_CDN_CONTEXT_KEY] = helper
   }
 
   cb(helper)

@@ -24,26 +24,10 @@ If `true` the module will log debug message to the console.
 ## Toggle CDN Headers
 
 ```dotenv
-NUXT_MULTI_CACHE_CDN_ENABLED=true
+NUXT_MULTI_CACHE_CDN=true
 ```
 
 Either `true` or `false` to enable or disable the CDN headers.
-
-## CDN Cache-Control Header
-
-```dotenv
-NUXT_MULTI_CACHE_CDN_CACHE_CONTROL_HEADER=Surrogate-Control
-```
-
-The name of the header to use for the CDN cache control.
-
-## CDN Cache-Tag Header
-
-```dotenv
-NUXT_MULTI_CACHE_CDN_CACHE_TAG_HEADER=Surrogate-Keys
-```
-
-The name of the header to use for the CDN cache tags.
 
 ## Toggle Component Caching
 
@@ -76,14 +60,6 @@ NUXT_MULTI_CACHE_API_ENABLED=true
 ```
 
 Set to `true` to enable the purge/stats API endpoints, `false` to disable them.
-
-## API Cache Tag Invalidation Delay
-
-```dotenv
-NUXT_MULTI_CACHE_API_CACHE_TAG_INVALIDATION_DELAY=120
-```
-
-Set the delay for purging cache tags.
 
 ## API Authorization Token
 

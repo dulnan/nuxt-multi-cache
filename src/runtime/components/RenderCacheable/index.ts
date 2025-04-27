@@ -15,7 +15,7 @@ import {
   getCacheKeyWithPrefix,
 } from './../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
-import { useRuntimeConfig } from '#imports'
+import { debug } from '#nuxt-multi-cache/config'
 
 /**
  * Wrapper for cacheable components.
@@ -123,8 +123,7 @@ export default defineComponent({
     // Wrap all server-side code in an if statement so that it gets properly
     // removed from the client bundles.
     if (isServer && !props.noCache) {
-      const { debug } = useRuntimeConfig().multiCache || {}
-      const cacheKey = getCacheKey(props as any, first as any, debug)
+      const cacheKey = getCacheKey(props as any, first as any)
 
       // Return if no cache key found.
       if (!cacheKey) {

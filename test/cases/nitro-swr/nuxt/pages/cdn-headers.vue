@@ -3,6 +3,8 @@
 </template>
 
 <script setup lang="ts">
+import { useCDNHeaders, useRequestEvent } from '#imports'
+
 const event = useRequestEvent()
 
 useCDNHeaders((cdn) => {

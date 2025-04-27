@@ -13,6 +13,7 @@ import type {
   NuxtMultiCacheSSRContext,
 } from './../../types'
 import { checkAuth } from './helpers'
+import { cacheTagInvalidationDelay } from '#nuxt-multi-cache/config'
 
 /**
  * Get the tags to be purged from the request.
@@ -176,8 +177,7 @@ export default defineEventHandler<Promise<CachePurgeTagsResponse>>(
     if (!invalidator.cacheContext) {
       const app = useMultiCacheApp()
       invalidator.cacheContext = app.cache
-      const delay = app.config.api.cacheTagInvalidationDelay
-      invalidator.setDelay(delay)
+      invalidator.setDelay(cacheTagInvalidationDelay)
     }
 
     invalidator.add(tags)

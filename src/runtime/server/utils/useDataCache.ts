@@ -11,14 +11,12 @@ import {
   isExpired,
 } from '../../helpers/server'
 import { logger } from '../../helpers/logger'
-import { useRuntimeConfig } from '#imports'
+import { debug } from '#nuxt-multi-cache/config'
 
 export async function useDataCache<T>(
   key: string,
   event: H3Event,
 ): Promise<DataCacheCallbackContext<T>> {
-  const { debug } = useRuntimeConfig().multiCache || {}
-
   const dummy: DataCacheCallbackContext<T> = {
     addToCache: (_v: T) => {
       return Promise.resolve()

@@ -5,6 +5,8 @@
 </template>
 
 <script setup lang="ts">
+import { useRequestEvent, useAsyncData, useDataCacheCallback } from '#imports'
+
 const event = useRequestEvent()
 
 const { data } = await useAsyncData(() => {

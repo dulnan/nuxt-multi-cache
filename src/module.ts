@@ -1,12 +1,7 @@
 import { defu } from 'defu'
 import { name, version } from '../package.json'
 import { defineNuxtModule } from '@nuxt/kit'
-import {
-  type ModuleOptions,
-  DEFAULT_CDN_CONTROL_HEADER,
-  DEFAULT_CDN_TAG_HEADER,
-  defaultOptions,
-} from './build/options'
+import { type ModuleOptions, defaultOptions } from './build/options'
 import { ModuleHelper } from './build/ModuleHelper'
 import { TEMPLATES } from './build/templates'
 
@@ -34,20 +29,12 @@ export default defineNuxtModule<ModuleOptions>({
     helper.inlineNitroExternals(helper.paths.moduleBuildDir)
 
     nuxt.options.runtimeConfig.multiCache = {
-      debug: !!options.debug,
-      cdn: {
-        enabled: !!options.cdn?.enabled,
-        cacheControlHeader:
-          options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER,
-        cacheTagHeader: options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER,
-      },
+      cdn: !!options.cdn?.enabled,
       component: !!options.component?.enabled,
       data: !!options.data?.enabled,
       route: !!options.route?.enabled,
       api: {
         enabled: !!options.api?.enabled,
-        cacheTagInvalidationDelay: options.api
-          ?.cacheTagInvalidationDelay as number,
         authorizationToken:
           typeof options.api?.authorization === 'string'
             ? options.api.authorization

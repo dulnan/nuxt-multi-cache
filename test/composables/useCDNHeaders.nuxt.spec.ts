@@ -83,23 +83,4 @@ describe('useCDNHeaders composable', () => {
     useCDNHeaders(spyCallback as any)
     expect(spyCallback).not.toHaveBeenCalled()
   })
-
-  test('Does not call callback if CDN helper is missing.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
-
-    const params = {
-      cb() {},
-    }
-
-    const spyCallback = vi.spyOn(params, 'cb')
-    useCDNHeaders(
-      spyCallback as any,
-      {
-        context: {
-          __MULTI_CACHE_CDN: null,
-        },
-      } as any,
-    )
-    expect(spyCallback).not.toHaveBeenCalled()
-  })
 })

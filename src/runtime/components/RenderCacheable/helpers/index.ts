@@ -14,6 +14,7 @@ import {
 } from '../../../helpers/cacheItem'
 import { logger } from '../../../helpers/logger'
 import type { ComponentCacheItem } from './../../../types'
+import { debug } from '#nuxt-multi-cache/config'
 
 type RenderCacheableSlotVNode = VNode<
   RendererNode,
@@ -39,7 +40,6 @@ type RenderCacheableProps = {
 export function getCacheKey(
   props: RenderCacheableProps,
   vnode: RenderCacheableSlotVNode,
-  debug?: boolean,
 ): string | undefined {
   const componentName = getComponentName(vnode)
   const hasProps = Object.keys(vnode.props || {}).length > 0

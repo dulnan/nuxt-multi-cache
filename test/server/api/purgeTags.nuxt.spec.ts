@@ -1,5 +1,4 @@
 import { describe, expect, test, vi } from 'vitest'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { createStorage } from 'unstorage'
 import { sleep } from '../../__helpers__'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
@@ -43,15 +42,9 @@ vi.mock('#nuxt-multi-cache/server-options', () => {
   }
 })
 
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {
-        api: {
-          cacheTagInvalidationDelay: 1000,
-        },
-      },
-    }
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    cacheTagInvalidationDelay: 1000,
   }
 })
 

@@ -13,7 +13,7 @@ import {
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-import { useRuntimeConfig } from '#imports'
+import { debug } from '#nuxt-multi-cache/config'
 
 function isPureObject(value: any) {
   const proto = Object.getPrototypeOf(value)
@@ -116,9 +116,7 @@ export async function onAfterResponse(
     routeHelper.tags,
   )
 
-  const debugEnabled = useRuntimeConfig().multiCache.debug
-
-  if (debugEnabled) {
+  if (debug) {
     const url = getRequestURL(event)
     logger.info('Storing route in cache: ' + url.toString(), {
       cacheKey,

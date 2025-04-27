@@ -13,7 +13,7 @@ import type { RouteCacheItem } from '../../types'
 import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/logger'
 import { setCachedResponse } from '../../helpers/routeCache'
-import { useRuntimeConfig } from '#imports'
+import { debug } from '#nuxt-multi-cache/config'
 
 function canBeServedFromCache(
   key: string,
@@ -84,9 +84,7 @@ export async function serveCachedHandler(event: H3Event) {
       return
     }
 
-    const debugEnabled = useRuntimeConfig().multiCache.debug
-
-    if (debugEnabled) {
+    if (debug) {
       const url = getRequestURL(event)
       logger.info('Serving cached route for path: ' + url.toString(), {
         fullKey,

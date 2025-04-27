@@ -1,8 +1,9 @@
 import type { H3Event } from 'h3'
 import type { UseDataCacheCallbackCallback } from '../server/utils/useDataCacheCallback'
 import { useDataCacheCallback as serverUseDataCacheCallback } from '../server/utils/useDataCacheCallback'
-import { useRuntimeConfig, useNuxtApp } from '#imports'
+import { useNuxtApp } from '#imports'
 import { logger } from '../helpers/logger'
+import { debug } from '#nuxt-multi-cache/config'
 
 export async function useDataCacheCallback<T>(
   key: string,
@@ -16,7 +17,6 @@ export async function useDataCacheCallback<T>(
     const event = providedEvent || useNuxtApp().ssrContext?.event
 
     if (!event) {
-      const { debug } = useRuntimeConfig().multiCache || {}
       if (debug) {
         logger.warn(
           'No H3Event provided while not in Nuxt context when calling useDataCache for key: ' +

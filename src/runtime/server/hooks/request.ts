@@ -1,14 +1,12 @@
 import { type H3Event, getRequestURL } from 'h3'
 import type { NuxtMultiCacheSSRContext } from '../../types'
 import {
-  MULTI_CACHE_CDN_CONTEXT_KEY,
   MULTI_CACHE_CONTEXT_KEY,
   MULTI_CACHE_PREFIX_KEY,
   MULTI_CACHE_ROUTE_CONTEXT_KEY,
 } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-import { NuxtMultiCacheCDNHelper } from '../../helpers/CDNHelper'
 
 /**
  * Add the cache context singleton to the current request.
@@ -16,7 +14,7 @@ import { NuxtMultiCacheCDNHelper } from '../../helpers/CDNHelper'
 async function addCacheContext(
   event: H3Event,
 ): Promise<NuxtMultiCacheSSRContext> {
-  const { cache, serverOptions, config } = useMultiCacheApp()
+  const { cache, serverOptions } = useMultiCacheApp()
 
   // Set the global cache key prefix that applies for all caches.
   // This can either be a static string or a method that determines the prefix,
@@ -37,16 +35,6 @@ async function addCacheContext(
     // Add the route cache helper.
     event.context[MULTI_CACHE_ROUTE_CONTEXT_KEY] =
       new NuxtMultiCacheRouteCacheHelper()
-  }
-
-  if (config.cdn.enabled) {
-    const helper = new NuxtMultiCacheCDNHelper(
-      config.cdn.cacheControlHeader,
-      config.cdn.cacheTagHeader,
-    )
-
-    // Add the instances to the H3 event context.
-    event.context[MULTI_CACHE_CDN_CONTEXT_KEY] = helper
   }
 
   return cache
