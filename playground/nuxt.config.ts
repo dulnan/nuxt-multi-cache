@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     '/spaPageWithCachedComponent': { ssr: false },
     '/spaDataCache': { ssr: false },
     '/spaPageWithException': { ssr: false },
+    '/nitro-swr': { swr: 3 },
     '/api/routeCacheWithRouteRules': {
       headers: {
         'x-route-rules-header': 'Set via routeRules',

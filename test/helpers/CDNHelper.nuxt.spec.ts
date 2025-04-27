@@ -27,6 +27,7 @@ describe('The CDNHelper', () => {
     expect(methods).toMatchInlineSnapshot(`
       [
         "constructor",
+        "applyToEvent",
         "mergeFromResponse",
         "mergeCacheControlHeader",
         "set",

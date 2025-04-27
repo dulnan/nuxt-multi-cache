@@ -1,9 +1,11 @@
 import { CacheControl, parse } from '@tusbar/cache-control'
+import { setResponseHeader, type H3Event } from 'h3'
 import type { FetchResponse } from 'ofetch'
 import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
 } from './../../build/options'
+import { onlyUnique } from './server'
 
 const numericProperties = [
   'maxAge',
@@ -40,11 +42,33 @@ export class NuxtMultiCacheCDNHelper {
   _tags: string[]
   _control: CacheControl
   constructor(
-    private cacheControlHeader = DEFAULT_CDN_CONTROL_HEADER,
-    private cacheTagsHeader = DEFAULT_CDN_TAG_HEADER,
+    public readonly cacheControlHeader = DEFAULT_CDN_CONTROL_HEADER,
+    public readonly cacheTagsHeader = DEFAULT_CDN_TAG_HEADER,
   ) {
     this._tags = []
     this._control = new CacheControl()
+  }
+
+  /**
+   * Add the cache control and cache tags header to the event.
+   *
+   * The method is already called when using useCDNHeaders(), so there is no
+   * need to call it yourself in this case.
+   *
+   * @param event - The event.
+   */
+  public applyToEvent(event: H3Event): NuxtMultiCacheCDNHelper {
+    const cacheTagsValue = this._tags.filter(onlyUnique).join(' ')
+    if (cacheTagsValue) {
+      setResponseHeader(event, this.cacheTagsHeader, cacheTagsValue)
+    }
+
+    const cacheControlValue = this._control.format()
+    if (cacheControlValue) {
+      setResponseHeader(event, this.cacheControlHeader, cacheControlValue)
+    }
+
+    return this
   }
 
   /**

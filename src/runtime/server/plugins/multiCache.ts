@@ -1,6 +1,5 @@
 import { defineNitroPlugin } from 'nitropack/runtime'
 import { createStorage } from 'unstorage'
-import { onBeforeResponse } from '../hooks/beforeResponse'
 import { onRequest } from '../hooks/request'
 import { onAfterResponse } from '../hooks/afterResponse'
 import type {
@@ -64,11 +63,6 @@ export default defineNitroPlugin((nitroApp) => {
 
   // Adds the context to the event and returns cached routes.
   nitroApp.hooks.hook('request', onRequest)
-
-  // Hook only needed if CDN feature is enabled.
-  if (multiCache.config.cdn.enabled) {
-    nitroApp.hooks.hook('beforeResponse', onBeforeResponse)
-  }
 
   // Only needed if route caching is enabled.
   if (multiCache.config.route) {

@@ -7,11 +7,15 @@ export default defineNuxtConfig({
   routeRules: {
     '/': { swr: 60 },
     '/api/handler-with-swr': { swr: 60 },
+    '/cdn-headers': { swr: 60 },
   },
 
   multiCache: {
     debug: true,
     route: {
+      enabled: true,
+    },
+    cdn: {
       enabled: true,
     },
     data: {

@@ -12,4 +12,9 @@ export function useCDNHeaders(
   }
 
   cb(helper)
+
+  // We have to set the headers already here because we could be in a cached
+  // nitro event handler, where the event is being duplicated to run the
+  // cached callback. In this case, no nitro request hooks are called.
+  helper.applyToEvent(event)
 }

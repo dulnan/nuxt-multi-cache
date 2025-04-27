@@ -50,7 +50,7 @@ describe('useCDNHeaders composable', () => {
 
   test('Uses the provided event.', () => {
     import.meta.env.VITEST_SERVER = 'true'
-    const dummyHelper = 'dummy helper'
+    const dummyHelper = new NuxtMultiCacheCDNHelper()
 
     useCDNHeaders(
       (helper) => {
