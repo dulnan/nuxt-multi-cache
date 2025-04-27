@@ -5,7 +5,7 @@ export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {
     helper
       .public()
-      .setNumeric('maxAge', 3600)
+      .setNumeric('maxAge', 60)
       .set('staleIfError', 24000)
       .set('staleWhileRevalidate', 60000)
       .set('mustRevalidate', true)

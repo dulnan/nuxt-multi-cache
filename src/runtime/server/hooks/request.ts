@@ -23,18 +23,20 @@ async function addCacheContext(
   // for example based on cookie or request headers.
   if (serverOptions.cacheKeyPrefix) {
     if (typeof serverOptions.cacheKeyPrefix === 'string') {
-      event[MULTI_CACHE_PREFIX_KEY] = serverOptions.cacheKeyPrefix
+      event.context[MULTI_CACHE_PREFIX_KEY] = serverOptions.cacheKeyPrefix
     } else {
-      event[MULTI_CACHE_PREFIX_KEY] = await serverOptions.cacheKeyPrefix(event)
+      event.context[MULTI_CACHE_PREFIX_KEY] =
+        await serverOptions.cacheKeyPrefix(event)
     }
   }
 
   // Add the cache context object to the SSR context object.
-  event[MULTI_CACHE_CONTEXT_KEY] = cache
+  event.context[MULTI_CACHE_CONTEXT_KEY] = cache
 
   if (cache.route) {
     // Add the route cache helper.
-    event[MULTI_CACHE_ROUTE_CONTEXT_KEY] = new NuxtMultiCacheRouteCacheHelper()
+    event.context[MULTI_CACHE_ROUTE_CONTEXT_KEY] =
+      new NuxtMultiCacheRouteCacheHelper()
   }
 
   if (config.cdn.enabled) {
@@ -44,7 +46,7 @@ async function addCacheContext(
     )
 
     // Add the instances to the H3 event context.
-    event[MULTI_CACHE_CDN_CONTEXT_KEY] = helper
+    event.context[MULTI_CACHE_CDN_CONTEXT_KEY] = helper
   }
 
   return cache

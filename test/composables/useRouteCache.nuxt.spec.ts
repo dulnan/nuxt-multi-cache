@@ -19,20 +19,22 @@ function buildEvent(): H3Event {
     foobar: 'Cached data.',
   }
   return {
-    __MULTI_CACHE: {
-      data: {
-        storage: {
-          getItem: (key: string) => {
-            return Promise.resolve(storage[key])
-          },
-          setItem: (key: string, data: any) => {
-            storage[key] = data
-            return Promise.resolve()
+    context: {
+      __MULTI_CACHE: {
+        data: {
+          storage: {
+            getItem: (key: string) => {
+              return Promise.resolve(storage[key])
+            },
+            setItem: (key: string, data: any) => {
+              storage[key] = data
+              return Promise.resolve()
+            },
           },
         },
       },
+      __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
     },
-    __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
   } as H3Event
 }
 
@@ -82,7 +84,9 @@ describe('useRouteCache composable', () => {
         expect(helper).toEqual(dummyHelper)
       },
       {
-        __MULTI_CACHE_ROUTE: dummyHelper,
+        context: {
+          __MULTI_CACHE_ROUTE: dummyHelper,
+        },
       } as any,
     )
   })
@@ -118,7 +122,9 @@ describe('useRouteCache composable', () => {
     useRouteCache(
       spyCallback as any,
       {
-        __MULTI_CACHE_ROUTE: null,
+        context: {
+          __MULTI_CACHE_ROUTE: null,
+        },
       } as any,
     )
     expect(spyCallback).not.toHaveBeenCalled()

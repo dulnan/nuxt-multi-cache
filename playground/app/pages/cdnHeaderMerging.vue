@@ -10,11 +10,11 @@ const event = useRequestEvent()
 
 const { data } = await useFetch('/api/cdnHeaders', {
   onResponse({ response }) {
-    useCDNHeaders((cdn) => cdn.mergeFromResponse(response))
+    useCDNHeaders((cdn) => cdn.mergeFromResponse(response), event)
   },
 })
 
 useCDNHeaders((cdn) => {
-  cdn.addTags(['page:1', 'foobar']).setNumeric('maxAge', 60)
+  cdn.addTags(['page:1', 'foobar']).setNumeric('maxAge', 3600)
 }, event)
 </script>

@@ -64,25 +64,25 @@ describe('serveCachedRoute event handler', () => {
           headers: {},
         },
       },
-      context: {},
-
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        route: {
-          storage: {
-            getItemRaw() {
-              return Promise.resolve(
-                encodeRouteCacheItem(
-                  '<html></html>',
-                  {
-                    'x-custom-header': 'test',
-                  },
-                  200,
-                  undefined,
-                  undefined,
-                  undefined,
-                  [],
-                ),
-              )
+      context: {
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          route: {
+            storage: {
+              getItemRaw() {
+                return Promise.resolve(
+                  encodeRouteCacheItem(
+                    '<html></html>',
+                    {
+                      'x-custom-header': 'test',
+                    },
+                    200,
+                    undefined,
+                    undefined,
+                    undefined,
+                    [],
+                  ),
+                )
+              },
             },
           },
         },
@@ -131,28 +131,29 @@ describe('serveCachedRoute event handler', () => {
           headers: {},
         },
       },
-      context: {},
       response: null as Response | null,
       respondWith: function (res: any) {
         this.response = res
       },
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        route: {
-          storage: {
-            getItemRaw() {
-              return Promise.resolve(
-                encodeRouteCacheItem(
-                  '<html></html>',
-                  {
-                    'x-custom-header': 'test',
-                  },
-                  200,
-                  (date.getTime() - 3000) / 1000,
-                  undefined,
-                  undefined,
-                  [],
-                ),
-              )
+      context: {
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          route: {
+            storage: {
+              getItemRaw() {
+                return Promise.resolve(
+                  encodeRouteCacheItem(
+                    '<html></html>',
+                    {
+                      'x-custom-header': 'test',
+                    },
+                    200,
+                    (date.getTime() - 3000) / 1000,
+                    undefined,
+                    undefined,
+                    [],
+                  ),
+                )
+              },
             },
           },
         },
@@ -192,12 +193,13 @@ describe('serveCachedRoute event handler', () => {
           headers: {},
         },
       },
-      context: {},
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        route: {
-          storage: {
-            getItemRaw() {
-              throw new Error('Failed to get item from cache.')
+      context: {
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          route: {
+            storage: {
+              getItemRaw() {
+                throw new Error('Failed to get item from cache.')
+              },
             },
           },
         },

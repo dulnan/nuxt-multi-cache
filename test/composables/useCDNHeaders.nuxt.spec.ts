@@ -5,7 +5,9 @@ import { useCDNHeaders } from './../../src/runtime/composables/useCDNHeaders'
 
 function buildEvent(): H3Event {
   return {
-    __MULTI_CACHE_CDN: new NuxtMultiCacheCDNHelper(),
+    context: {
+      __MULTI_CACHE_CDN: new NuxtMultiCacheCDNHelper(),
+    },
   } as H3Event
 }
 
@@ -55,7 +57,9 @@ describe('useCDNHeaders composable', () => {
         expect(helper).toEqual(dummyHelper)
       },
       {
-        __MULTI_CACHE_CDN: dummyHelper,
+        context: {
+          __MULTI_CACHE_CDN: dummyHelper,
+        },
       } as any,
     )
   })
@@ -91,7 +95,9 @@ describe('useCDNHeaders composable', () => {
     useCDNHeaders(
       spyCallback as any,
       {
-        __MULTI_CACHE_CDN: null,
+        context: {
+          __MULTI_CACHE_CDN: null,
+        },
       } as any,
     )
     expect(spyCallback).not.toHaveBeenCalled()

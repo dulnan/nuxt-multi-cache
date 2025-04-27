@@ -5,6 +5,7 @@ import {
   type ModuleOptions,
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
+  defaultOptions,
 } from './build/options'
 import { ModuleHelper } from './build/ModuleHelper'
 import { TEMPLATES } from './build/templates'
@@ -21,13 +22,12 @@ export default defineNuxtModule<ModuleOptions>({
     },
   },
   setup(passedOptions, nuxt) {
-    const helper = new ModuleHelper(nuxt, import.meta.url, passedOptions)
+    const options = defu({}, passedOptions, defaultOptions) as ModuleOptions
+    const helper = new ModuleHelper(nuxt, import.meta.url, options)
 
     TEMPLATES.forEach((template) => {
       helper.addTemplate(template)
     })
-
-    const options = defu({}, passedOptions, {}) as ModuleOptions
 
     helper.transpile(helper.resolvers.module.resolve('./runtime'))
     helper.inlineNitroExternals(helper.resolvers.module.resolve('./runtime'))

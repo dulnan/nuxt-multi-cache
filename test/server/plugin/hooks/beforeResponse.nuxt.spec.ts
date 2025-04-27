@@ -66,7 +66,9 @@ describe('beforeResponse nitro hook handler', () => {
 
     const event = {
       path: '/foobar',
-      [MULTI_CACHE_CDN_CONTEXT_KEY]: cdnHelper,
+      context: {
+        [MULTI_CACHE_CDN_CONTEXT_KEY]: cdnHelper,
+      },
 
       node: {
         res: {

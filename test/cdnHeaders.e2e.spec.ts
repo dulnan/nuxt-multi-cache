@@ -50,7 +50,7 @@ describe('The CDN headers feature', () => {
   test('Sets the correct CDN headers', async () => {
     const response = await fetch('/api/cdnHeaders')
     expect(response.headers.get('surrogate-control')).toMatchInlineSnapshot(
-      '"max-age=3600, must-revalidate, public, stale-while-revalidate=60000, stale-if-error=24000"',
+      `"max-age=60, must-revalidate, public, stale-while-revalidate=60000, stale-if-error=24000"`,
     )
     expect(response.headers.get('cache-tag')).toMatchInlineSnapshot('"api"')
   })

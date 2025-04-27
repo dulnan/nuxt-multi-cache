@@ -38,7 +38,9 @@ describe('getCacheKey', () => {
         type: { name: 'MyComponent' },
         props: { hello: 'one' },
       } as any),
-    ).toMatchInlineSnapshot(`"MyComponent::AKu9ti69MYahEcv8PwEZFe0Ycb8YyUY_-RWGnNH8zws"`)
+    ).toMatchInlineSnapshot(
+      `"MyComponent::AKu9ti69MYahEcv8PwEZFe0Ycb8YyUY_-RWGnNH8zws"`,
+    )
   })
 })
 

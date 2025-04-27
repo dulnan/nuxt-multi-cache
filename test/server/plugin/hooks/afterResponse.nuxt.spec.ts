@@ -85,11 +85,13 @@ describe('afterResponse nitro hook handler', () => {
     expect(
       await onAfterResponse(
         {
-          [MULTI_CACHE_CONTEXT_KEY]: {
-            route: {},
+          context: {
+            [MULTI_CACHE_CONTEXT_KEY]: {
+              route: {},
+            },
+            [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
+              new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
           },
-          [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-            new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
           node: {
             res: {
               statusCode: 200,
@@ -109,11 +111,13 @@ describe('afterResponse nitro hook handler', () => {
     expect(
       await onAfterResponse(
         {
-          [MULTI_CACHE_CONTEXT_KEY]: {
-            route: {},
+          context: {
+            [MULTI_CACHE_CONTEXT_KEY]: {
+              route: {},
+            },
+            [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
+              new NuxtMultiCacheRouteCacheHelper().setCacheable(),
           },
-          [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-            new NuxtMultiCacheRouteCacheHelper().setCacheable(),
 
           node: {
             res: {
@@ -156,19 +160,21 @@ describe('afterResponse nitro hook handler', () => {
 
     const event = {
       path: '/foobar',
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        route: {
-          storage: {
-            setItemRaw(key: string, item: any, options: any) {
-              storedItems.push({ key, item, options })
-              return Promise.resolve()
+      context: {
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          route: {
+            storage: {
+              setItemRaw(key: string, item: any, options: any) {
+                storedItems.push({ key, item, options })
+                return Promise.resolve()
+              },
             },
           },
         },
+        [MULTI_CACHE_ROUTE_CONTEXT_KEY]: new NuxtMultiCacheRouteCacheHelper()
+          .setCacheable()
+          .setMaxAge(1200),
       },
-      [MULTI_CACHE_ROUTE_CONTEXT_KEY]: new NuxtMultiCacheRouteCacheHelper()
-        .setCacheable()
-        .setMaxAge(1200),
 
       node: {
         res: {

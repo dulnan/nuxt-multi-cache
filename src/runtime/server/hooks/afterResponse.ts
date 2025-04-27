@@ -53,7 +53,7 @@ export async function onAfterResponse(
   response: { body?: unknown } | undefined,
 ) {
   // Has already been served from cache, so there is nothing to do here.
-  if (event.__MULTI_CACHE_SERVED_FROM_CACHE) {
+  if (event.context?.__MULTI_CACHE_SERVED_FROM_CACHE) {
     return
   }
 
@@ -145,7 +145,9 @@ export async function onAfterResponse(
       }
     })
 
-  if (event.__MULTI_CACHE_REVALIDATION_KEY) {
-    state.removeKeyBeingRevalidated(event.__MULTI_CACHE_REVALIDATION_KEY)
+  if (event.context?.__MULTI_CACHE_REVALIDATION_KEY) {
+    state.removeKeyBeingRevalidated(
+      event.context?.__MULTI_CACHE_REVALIDATION_KEY,
+    )
   }
 }

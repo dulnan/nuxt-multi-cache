@@ -13,19 +13,21 @@ function buildEvent(bubbleError = false): H3Event {
     },
   }
   return {
-    __MULTI_CACHE: {
-      data: {
-        bubbleError,
-        storage: {
-          getItem: (key: string) => {
-            if (key === 'force_get_error') {
-              throw new Error('Failed to get data cache item.')
-            }
-            return Promise.resolve(storage[key])
-          },
-          setItem: (key: string, data: any) => {
-            storage[key] = data
-            return Promise.resolve()
+    context: {
+      __MULTI_CACHE: {
+        data: {
+          bubbleError,
+          storage: {
+            getItem: (key: string) => {
+              if (key === 'force_get_error') {
+                throw new Error('Failed to get data cache item.')
+              }
+              return Promise.resolve(storage[key])
+            },
+            setItem: (key: string, data: any) => {
+              storage[key] = data
+              return Promise.resolve()
+            },
           },
         },
       },

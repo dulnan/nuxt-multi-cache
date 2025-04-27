@@ -212,7 +212,7 @@ declare module 'nitropack/types' {
 }
 
 declare module 'h3' {
-  export interface H3Event {
+  export interface H3EventContext {
     /**
      * The nuxt-multi-cache cache context.
      */
