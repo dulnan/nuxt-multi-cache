@@ -3,6 +3,28 @@ import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { CacheItem } from './../../src/runtime/types'
 
+const { getIsServer, setIsServer } = vi.hoisted(() => {
+  let serverValue = false
+
+  return {
+    getIsServer: vi.fn(() => serverValue),
+    setIsServer: (value: boolean) => {
+      serverValue = value
+    },
+  }
+})
+
+// Use the hoisted function in the mock
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    get isServer() {
+      return getIsServer()
+    },
+    debug: false,
+    cdnEnabled: true,
+  }
+})
+
 function buildEvent(bubbleError = false): H3Event {
   const storage: Record<string, CacheItem> = {
     foobar: { data: 'Cached data.' },
@@ -58,6 +80,7 @@ describe('useDataCache composable', () => {
     vi.useRealTimers()
   })
   test('Returns dummy in client', async () => {
+    setIsServer(false)
     const cache = await useDataCache('foobar', buildEvent())
 
     expect(cache.value).toBeFalsy()
@@ -67,7 +90,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Returns cached data in server', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
     const event = buildEvent()
 
     expect((await useDataCache('foobar', event)).value).toEqual('Cached data.')
@@ -75,7 +98,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Does not return expired data.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
     const date = new Date(2023, 11, 1)
     vi.setSystemTime(date)
     const event = buildEvent()
@@ -84,7 +107,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Returns not yet expired data', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
 
     const date = new Date(2021, 11, 1)
     vi.setSystemTime(date)
@@ -96,7 +119,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Puts data in cache', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
 
     const event = buildEvent()
     const { addToCache, value } = await useDataCache(
@@ -112,7 +135,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Puts data in cache with cache tags', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
     const event = buildEvent()
 
     const { addToCache, value } = await useDataCache('data_with_tags', event)
@@ -126,7 +149,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Puts data in cache with expiration value', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
     const date = new Date(2021, 11, 1)
     vi.setSystemTime(date)
     const event = buildEvent()
@@ -144,7 +167,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Returns dummy if SSR context not found', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
 
     const cache = await useDataCache('foobar', {} as H3Event)
     expect(cache.value).toBeFalsy()
@@ -152,7 +175,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Returns dummy if data cache not enabled.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
 
     const cache = await useDataCache('foobar', {
       context: {
@@ -165,7 +188,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Uses provided event to get data cache.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
     const storage: Record<string, CacheItem> = {
       foobar: { data: 'More cached data.' },
     }
@@ -192,7 +215,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Bubbles errors when bubbleError === true', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
     const event = buildEvent(true)
 
     await expect(() =>
@@ -201,7 +224,7 @@ describe('useDataCache composable', () => {
   })
 
   test('Does not bubble errors when bubbleError === false', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    setIsServer(true)
     expect(
       (await useDataCache('force_get_error', buildEvent(false))).value,
     ).toBeUndefined()

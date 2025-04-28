@@ -47,12 +47,14 @@ export default defineNuxtConfig({
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
-export default defineMultiCacheOptions({
-  component: {
-    storage: {
-      driver: myCustomDriver(),
+export default defineMultiCacheOptions(() => {
+  return {
+    component: {
+      storage: {
+        driver: myCustomDriver(),
+      },
     },
-  },
+  }
 })
 ```
 

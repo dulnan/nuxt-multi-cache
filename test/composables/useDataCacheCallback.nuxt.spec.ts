@@ -4,6 +4,17 @@ import { useDataCacheCallback } from './../../src/runtime/composables/useDataCac
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { CacheItem } from './../../src/runtime/types'
 
+let isServerValue = false
+
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    get isServer() {
+      return isServerValue
+    },
+    debug: false,
+  }
+})
+
 function buildEvent(bubbleError = false): H3Event {
   const storage: Record<string, CacheItem> = {
     foobar: { data: 'Cached data.' },
@@ -52,6 +63,7 @@ vi.mock('#imports', () => {
 
 describe('useDataCacheCallback composable', () => {
   beforeEach(() => {
+    isServerValue = false
     vi.useFakeTimers()
   })
 
@@ -59,7 +71,6 @@ describe('useDataCacheCallback composable', () => {
     vi.useRealTimers()
   })
   test('always executes callback on client', async () => {
-    import.meta.env.VITEST_SERVER = 'false'
     async function getValue() {
       return await useDataCacheCallback(
         'foobar',
@@ -79,7 +90,7 @@ describe('useDataCacheCallback composable', () => {
   })
 
   test('Returns cached data in server', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     async function getValue() {
       return await useDataCacheCallback(
         'foobar',
@@ -99,7 +110,7 @@ describe('useDataCacheCallback composable', () => {
   })
 
   test('Returns data not yet expired', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const date = new Date(2010, 11, 1)
     vi.setSystemTime(date)
 
@@ -117,7 +128,7 @@ describe('useDataCacheCallback composable', () => {
   })
 
   test('Does not return expired data.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const date = new Date(2023, 11, 1)
     vi.setSystemTime(date)
 
@@ -135,7 +146,7 @@ describe('useDataCacheCallback composable', () => {
   })
 
   test('Puts data in cache with cache tags', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const event = buildEvent()
 
     await useDataCacheCallback(
@@ -155,7 +166,7 @@ describe('useDataCacheCallback composable', () => {
   })
 
   test('Puts data in cache with expiration value', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const date = new Date(2021, 11, 1)
     vi.setSystemTime(date)
     const event = buildEvent()

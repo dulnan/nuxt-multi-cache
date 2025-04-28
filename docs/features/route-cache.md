@@ -29,12 +29,14 @@ export default defineNuxtConfig({
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
-export default defineMultiCacheOptions({
-  route: {
-    storage: {
-      driver: myCustomDriver(),
+export default defineMultiCacheOptions(() => {
+  return {
+    route: {
+      storage: {
+        driver: myCustomDriver(),
+      },
     },
-  },
+  }
 })
 ```
 
@@ -64,25 +66,27 @@ the cache key for a given route:
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { getQuery, getRequestURL } from 'h3'
 
-export default defineMultiCacheOptions({
-  route: {
-    buildCacheKey(event) {
-      const url = getRequestURL(event)
+export default defineMultiCacheOptions(() => {
+  return {
+    route: {
+      buildCacheKey(event) {
+        const url = getRequestURL(event)
 
-      // The path (without query string).
-      const path = url.pathname
+        // The path (without query string).
+        const path = url.pathname
 
-      // Handle specific routes that need query strings.
-      if (path.startsWith('/api/query/products')) {
-        const { id } = getQuery(event)
-        if (id) {
-          return 'api_query_products_' + id
+        // Handle specific routes that need query strings.
+        if (path.startsWith('/api/query/products')) {
+          const { id } = getQuery(event)
+          if (id) {
+            return 'api_query_products_' + id
+          }
         }
-      }
 
-      return path
+        return path
+      },
     },
-  },
+  }
 })
 ```
 
@@ -129,16 +133,18 @@ example right after calling `useCookie`.
 ```typescript [multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
-export default defineMultiCacheOptions({
-  route: {
-    alterCachedHeaders(headers) {
-      // Remove any set-cookie header from being cached.
-      headers['set-cookie'] = undefined
+export default defineMultiCacheOptions(() => {
+  return {
+    route: {
+      alterCachedHeaders(headers) {
+        // Remove any set-cookie header from being cached.
+        headers['set-cookie'] = undefined
 
-      // Or perform more granular checks, such as checking what kind of cookie it is.
-      return headers
+        // Or perform more granular checks, such as checking what kind of cookie it is.
+        return headers
+      },
     },
-  },
+  }
 })
 ```
 

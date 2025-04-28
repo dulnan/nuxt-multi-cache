@@ -3,25 +3,22 @@ import { logger } from '../helpers/logger'
 import type { DataCacheCallbackContext } from '../types'
 import { useDataCache as serverUseDataCache } from './../server/utils/useDataCache'
 import { useNuxtApp } from '#imports'
-import { debug } from '#nuxt-multi-cache/config'
+import { debug, isServer } from '#nuxt-multi-cache/config'
 
-export function useDataCache<T>(
+export async function useDataCache<T>(
   key: string,
   providedEvent?: H3Event,
 ): Promise<DataCacheCallbackContext<T>> {
   const dummy: DataCacheCallbackContext<T> = {
-    addToCache: (_v: T) => {
+    addToCache: function () {
       return Promise.resolve()
     },
     cacheTags: [] as string[],
   }
 
-  const isServer =
-    import.meta.env.VITEST_SERVER === 'true' || import.meta.server
-
   // Code only available on server side.
   if (!isServer) {
-    return Promise.resolve(dummy)
+    return dummy
   }
 
   const event = providedEvent || useNuxtApp().ssrContext?.event

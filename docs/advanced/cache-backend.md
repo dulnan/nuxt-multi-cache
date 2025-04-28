@@ -20,14 +20,16 @@ provided by unstorage.
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import redisDriver from 'unstorage/drivers/redis'
 
-export default defineMultiCacheOptions({
-  component: {
-    storage: {
-      driver: redisDriver({
-        base: 'component:',
-      }),
+export default defineMultiCacheOptions(() => {
+  return {
+    component: {
+      storage: {
+        driver: redisDriver({
+          base: 'component:',
+        }),
+      },
     },
-  },
+  }
 })
 ```
 
@@ -72,12 +74,14 @@ const customDriver = defineDriver((_opts) => {
   }
 })
 
-export default defineMultiCacheOptions({
-  component: {
-    storage: {
-      driver: customDriver(),
+export default defineMultiCacheOptions(() => {
+  return {
+    component: {
+      storage: {
+        driver: customDriver(),
+      },
     },
-  },
+  }
 })
 ```
 

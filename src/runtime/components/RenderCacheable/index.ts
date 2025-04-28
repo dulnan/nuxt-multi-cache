@@ -15,7 +15,7 @@ import {
   getCacheKeyWithPrefix,
 } from './../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
-import { debug } from '#nuxt-multi-cache/config'
+import { debug, isServer } from '#nuxt-multi-cache/config'
 
 /**
  * Wrapper for cacheable components.
@@ -117,8 +117,6 @@ export default defineComponent({
 
     const defaultSlot = slots.default()
     const first = defaultSlot[0]
-
-    const isServer = import.meta.server || import.meta.env.VITEST
 
     // Wrap all server-side code in an if statement so that it gets properly
     // removed from the client bundles.

@@ -36,11 +36,11 @@
   },
   "license": "MIT",
   "scripts": {
-    "prepack": "npm run build:module && npm run build:process",
+    "prepack": "npm run build:module",
     "build:module": "nuxt-module-build build",
-    "build:process": "./scripts/processBuild.sh",
     "dev": "nuxi dev playground",
     "dev:playground-disk": "nuxi dev playground-disk",
+    "dev:playground-disk:build": "nuxi build playground-disk",
     "dev:playground-nuxt3": "nuxi dev playground-nuxt3",
     "dev:build": "nuxi build playground",
     "dev:serve": "node playground/.output/server/index.mjs",

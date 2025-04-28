@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
 import { useCDNHeaders as serverUseCdnHeaders } from './../server/utils/useCDNHeaders'
 import { useRequestEvent } from '#imports'
+import { isServer } from '#nuxt-multi-cache/config'
 
 /**
  * Return the helper to be used for interacting with the CDN headers feature.
@@ -16,9 +17,6 @@ export function useCDNHeaders(
   cb: (helper: NuxtMultiCacheCDNHelper) => void,
   providedEvent?: H3Event,
 ): void {
-  const isServer =
-    import.meta.env.VITEST_SERVER === 'true' || import.meta.server
-
   if (!isServer) {
     return
   }

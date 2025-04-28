@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { useRouteCache } from './../../src/runtime/composables/useRouteCache'
 import { NuxtMultiCacheRouteCacheHelper } from './../../src/runtime/helpers/RouteCacheHelper'
 
@@ -11,6 +11,17 @@ mockNuxtImport('useRuntimeConfig', () => {
         component: true,
       },
     }
+  }
+})
+
+let isServerValue = false
+
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    get isServer() {
+      return isServerValue
+    },
+    debug: false,
   }
 })
 
@@ -54,6 +65,9 @@ vi.mock('#imports', () => {
 })
 
 describe('useRouteCache composable', () => {
+  beforeEach(() => {
+    isServerValue = false
+  })
   test('Does not call callback in client', () => {
     const params = {
       cb() {},
@@ -65,7 +79,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Calls callback on server', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const params = {
       cb() {},
     }
@@ -76,7 +90,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Uses the provided event.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const dummyHelper = 'dummy helper'
 
     useRouteCache(
@@ -92,7 +106,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Gets the event from SSR context.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
 
     useRouteCache((helper) => {
       expect(helper).toHaveProperty('tags')
@@ -100,7 +114,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Does not call callback if event is missing.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
 
     const params = {
       cb() {},
@@ -112,7 +126,7 @@ describe('useRouteCache composable', () => {
   })
 
   test('Does not call callback if route helper is missing.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
 
     const params = {
       cb() {},

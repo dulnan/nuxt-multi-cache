@@ -3,9 +3,11 @@ import NuxtMultiCache from './../src/module'
 
 export default defineNuxtConfig({
   modules: [NuxtMultiCache],
+
   imports: {
     autoImport: false,
   },
+
   multiCache: {
     debug: true,
     component: {
@@ -28,4 +30,6 @@ export default defineNuxtConfig({
       authorization: false,
     },
   },
+
+  compatibilityDate: '2025-04-28',
 })

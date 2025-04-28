@@ -28,14 +28,16 @@ export default defineNuxtConfig({
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { isAuthenticated } from './somewhere'
 
-export default defineMultiCacheOptions({
-  api: {
-    // Use a custom method that checks authorization. Can be something like
-    // cookie, basic auth or request IP.
-    authorization: async function (event) {
-      return await isAuthenticated(event)
+export default defineMultiCacheOptions(() => {
+  return {
+    api: {
+      // Use a custom method that checks authorization. Can be something like
+      // cookie, basic auth or request IP.
+      authorization: async function (event) {
+        return await isAuthenticated(event)
+      },
     },
-  },
+  }
 })
 ```
 

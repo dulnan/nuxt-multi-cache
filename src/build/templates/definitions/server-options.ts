@@ -9,7 +9,11 @@ export default defineTemplate(
       ? helper.toModuleBuildRelative(helper.paths.serverOptions)
       : null
     const serverOptionsLine = resolvedPathRelative
-      ? `import serverOptions from '${resolvedPathRelative}'`
+      ? `
+import serverOptionsFactory from '${resolvedPathRelative}'
+
+const serverOptions = serverOptionsFactory()
+`
       : `const serverOptions = {}`
     return `
 ${serverOptionsLine}

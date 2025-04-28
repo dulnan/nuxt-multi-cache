@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import type { NuxtMultiCacheRouteCacheHelper } from './../helpers/RouteCacheHelper'
 import { getMultiCacheRouteHelper } from './../helpers/server'
 import { useRequestEvent } from '#imports'
+import { isServer } from '#nuxt-multi-cache/config'
 
 /**
  * Get the helper to be used for interacting with the route cache.
@@ -17,9 +18,6 @@ export function useRouteCache(
   cb: (helper: NuxtMultiCacheRouteCacheHelper) => void,
   providedEvent?: H3Event,
 ): void {
-  const isServer =
-    import.meta.env.VITEST_SERVER === 'true' || import.meta.server
-
   if (!isServer) {
     return
   }

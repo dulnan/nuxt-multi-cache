@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { describe, expect, test, vi } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
 import { useCDNHeaders } from './../../src/runtime/composables/useCDNHeaders'
 
@@ -26,7 +26,22 @@ vi.mock('#imports', () => {
   }
 })
 
+let isServerValue = false
+
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    get isServer() {
+      return isServerValue
+    },
+    debug: false,
+    cdnEnabled: true,
+  }
+})
+
 describe('useCDNHeaders composable', () => {
+  beforeEach(() => {
+    isServerValue = false
+  })
   test('Does not call callback in client', () => {
     const params = {
       cb() {},
@@ -38,7 +53,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Calls callback on server', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const params = {
       cb() {},
     }
@@ -49,7 +64,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Uses the provided event.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const dummyHelper = new NuxtMultiCacheCDNHelper()
 
     useCDNHeaders(
@@ -65,7 +80,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Gets the event from SSR context.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
 
     useCDNHeaders((helper) => {
       expect(helper).toHaveProperty('_control')
@@ -73,7 +88,7 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Does not call callback if event is missing.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
 
     const params = {
       cb() {},

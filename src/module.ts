@@ -1,6 +1,7 @@
 import { defu } from 'defu'
+import { createUnplugin } from 'unplugin'
 import { name, version } from '../package.json'
-import { defineNuxtModule } from '@nuxt/kit'
+import { addBuildPlugin, defineNuxtModule } from '@nuxt/kit'
 import { type ModuleOptions, defaultOptions } from './build/options'
 import { ModuleHelper } from './build/ModuleHelper'
 import { TEMPLATES } from './build/templates'
@@ -94,5 +95,26 @@ export default defineNuxtModule<ModuleOptions>({
     }
 
     helper.applyBuildConfig()
+
+    // Add a build plugin to make sure we don't ever include the server
+    // options in a client build.
+    addBuildPlugin(
+      createUnplugin(() => {
+        return {
+          name: 'nuxt-multi-cache:server-only',
+          enforce: 'pre',
+          transformInclude(id) {
+            return id.includes('nuxt-multi-cache/server-options')
+          },
+          transform() {
+            return `export const serverOptions = {}`
+          },
+        }
+      }),
+      {
+        client: true,
+        server: false,
+      },
+    )
   },
 })
