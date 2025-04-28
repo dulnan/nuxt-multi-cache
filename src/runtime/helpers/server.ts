@@ -7,6 +7,33 @@ export const MULTI_CACHE_CONTEXT_KEY = '__MULTI_CACHE'
 export const MULTI_CACHE_ROUTE_CONTEXT_KEY = '__MULTI_CACHE_ROUTE'
 export const MULTI_CACHE_CDN_CONTEXT_KEY = '__MULTI_CACHE_CDN'
 
+/**
+ * Granular check whether caching is enabled for a given request.
+ *
+ * That way it's possible to exclude some requests from getting or setting
+ * something from cache.
+ */
+export async function enabledForRequest(event: H3Event): Promise<boolean> {
+  if (!event.context) {
+    event.context = {}
+  }
+
+  if (!event.context.multiCache) {
+    event.context.multiCache = {}
+  }
+
+  if (event.context.multiCache.enabledForRequest === undefined) {
+    if (serverOptions.enabledForRequest) {
+      const isEnabled = await serverOptions.enabledForRequest(event)
+      event.context.multiCache.enabledForRequest = !!isEnabled
+    } else {
+      event.context.multiCache.enabledForRequest = true
+    }
+  }
+
+  return event.context.multiCache.enabledForRequest
+}
+
 export function getMultiCacheContext(
   event: H3Event,
 ): NuxtMultiCacheSSRContext | undefined {

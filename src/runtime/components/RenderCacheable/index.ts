@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3'
 import {
   defineComponent,
   useSSRContext,
@@ -13,6 +14,7 @@ import {
   getExpiresValue,
   getMultiCacheContext,
   getCacheKeyWithPrefix,
+  enabledForRequest,
 } from './../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
 import { debug, isServer } from '#nuxt-multi-cache/config'
@@ -132,11 +134,20 @@ export default defineComponent({
       const currentInstance = getCurrentInstance()
 
       const ssrContext = useSSRContext()
+      const event: H3Event | undefined = ssrContext?.event
       // SSR context should exist at this point, but TS doesn't know that.
-      if (!ssrContext) {
+      if (!event) {
         if (debug) {
           logger.warn('Failed to get SSR context.', props)
         }
+        return () => h(props.tag, slots.default!())
+      }
+
+      // Get Nuxt app.
+      const nuxtApp = useNuxtApp()
+
+      const isEnabled = await enabledForRequest(event)
+      if (!isEnabled) {
         return () => h(props.tag, slots.default!())
       }
 
@@ -158,22 +169,16 @@ export default defineComponent({
           return
         }
 
-        // Get Nuxt app.
-        const nuxtApp = useNuxtApp()
-
         // Get the cache storage. If the module is disabled this will be
         // undefined.
-        const multiCache = getMultiCacheContext(ssrContext.event)
+        const multiCache = getMultiCacheContext(event)
         if (!multiCache?.component) {
           return
         }
 
         const bubbleError = multiCache.component.bubbleError
 
-        const fullCacheKey = await getCacheKeyWithPrefix(
-          cacheKey,
-          ssrContext.event,
-        )
+        const fullCacheKey = await getCacheKeyWithPrefix(cacheKey, event)
 
         // Get the cached item from the storage.
         const cached = await getCachedComponent(

@@ -217,6 +217,7 @@ export type DataCacheCallbackContext<T> = {
 
 export type MultiCacheEventContext = {
   cachePrefix?: string | null
+  enabledForRequest?: boolean
 }
 
 declare module 'nitropack/types' {

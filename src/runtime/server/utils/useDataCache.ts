@@ -5,6 +5,7 @@ import type {
   CacheItem,
 } from '../../types'
 import {
+  enabledForRequest,
   getCacheKeyWithPrefix,
   getExpiresValue,
   getMultiCacheContext,
@@ -22,6 +23,11 @@ export async function useDataCache<T>(
       return Promise.resolve()
     },
     cacheTags: [] as string[],
+  }
+
+  const isEnabled = await enabledForRequest(event)
+  if (!isEnabled) {
+    return dummy
   }
 
   const multiCache = getMultiCacheContext(event)

@@ -28,23 +28,6 @@ async function addCacheContext(
 }
 
 /**
- * Granular check whether caching is enabled for a given request.
- *
- * That way it's possible to exclude some requests from getting or setting
- * something from cache.
- */
-function enabledForRequest(event: H3Event): Promise<boolean> {
-  const { serverOptions } = useMultiCacheApp()
-  // App provided custom check.
-  if (serverOptions.enabledForRequest) {
-    return serverOptions.enabledForRequest(event)
-  }
-
-  // Fallback to true.
-  return Promise.resolve(true)
-}
-
-/**
  * Method to check whether route caching is generally applicable to the given path.
  */
 function applies(path: string): boolean {
@@ -77,14 +60,6 @@ export async function onRequest(event: H3Event) {
 
   // Path is generally not cacheable, so we can skip it.
   if (!applies(path)) {
-    return
-  }
-
-  // Users may provide a custom method to determine whether caching is enabled
-  // for a given request or not.
-  const cachingEnabled = await enabledForRequest(event)
-
-  if (!cachingEnabled) {
     return
   }
 
