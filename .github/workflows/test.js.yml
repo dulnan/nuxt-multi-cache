@@ -23,14 +23,19 @@ jobs:
         run: |
           npm ci
           npx playwright-core install chromium
+          npm run dev:prepare
 
-      - name: Prettier
+      - name: Prettier/ESLint
         run: |
           npm run prettier
+          npm run lint
+
+      - name: TypeScript
+        run: |
+          npm run typecheck
 
       - name: Module Builder
         run: |
-          npm run dev:prepare
           npm run prepack
 
       - name: Vitest
@@ -38,7 +43,4 @@ jobs:
           npm run dev:build
           npm run test:ci
 
-      - name: nuxi typecheck
-        run: |
-          npm run dev:prepare
-          npm run typecheck
+

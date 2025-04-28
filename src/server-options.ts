@@ -17,6 +17,11 @@ export function defineMultiCacheOptions(
   options: MultiCacheServerOptions,
 ): () => MultiCacheServerOptions
 
+export function defineMultiCacheOptions(
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  options: () => MultiCacheServerOptions,
+): () => MultiCacheServerOptions
+
 /**
  * Define nuxt-multi-cache server options.
  */
