@@ -35,48 +35,48 @@ export default defineNuxtConfig({
     component: {
       enabled: true,
     },
-  
+
     // Data cache enabled.
     data: {
       enabled: true,
     },
-  
+
     // Route cache is disabled. But because the `route` property is set the
     // useRouteCache composable is still added to the build, it just doesn't
     // cache.
     route: {
       enabled: false,
     },
-  
+
     // CDN Cache Control Headers feature.
     cdn: {
       enabled: true,
-  
+
       // Set custom cache control for Cloudflare.
       cacheControlHeader: 'CDN-Cache-Control',
-  
+
       // Set custom cache tags header for Cloudflare.
-      cacheTagHeader: 'Cache-Tag'
+      cacheTagHeader: 'Cache-Tag',
     },
-  
+
     // Cache Management API.
     api: {
       enabled: true,
-  
+
       // Use a different prefix for the API endpoints.
       prefix: '/api/nuxt-multi-cache',
-  
+
       // Cache tag invaldiations should be buffered for 5 minutes before the
       // cache items are actually purged.
-      cacheTagInvalidationDelay: 300000 // 5 minutes
+      cacheTagInvalidationDelay: 300000, // 5 minutes
     },
-  
+
     // Log detailled debugging messages, e.g. when items are cached or returned from cache.
-    debug: true
-  }
+    debug: true,
+  },
 })
 ```
 
 ## Reference
 
-<<< @/../src/runtime/types.ts
+<<< @/../src/build/options/index.ts

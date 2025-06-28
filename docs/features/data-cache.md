@@ -103,7 +103,7 @@ object as the second argument.
 import { useDataCache } from '#imports'
 
 export default defineEventHandler(async (event) => {
-  const { value, addToCache } = await useDataCache('weather')
+  const { value, addToCache } = await useDataCache('weather', event)
   if (value) {
     return value
   }

@@ -4,7 +4,7 @@ import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
 import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
-} from './../../src/build/options'
+} from './../../src/build/options/defaults'
 
 describe('The CDNHelper', () => {
   test('can be instanciated correctly', () => {

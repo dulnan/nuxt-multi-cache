@@ -2,7 +2,7 @@ import {
   DEFAULT_CACHE_TAG_INVALIDATION_DELAY,
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
-} from '../../options'
+} from '../../options/defaults'
 import { defineTemplate } from '../defineTemplate'
 
 export default defineTemplate(

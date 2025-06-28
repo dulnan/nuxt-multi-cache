@@ -5,7 +5,7 @@ editLink: true
 
 # Introduction
 
-nuxt-multi-cache is the ultimate **server-side** caching module for Nuxt 3. It
+nuxt-multi-cache is the ultimate **server-side** caching module for Nuxt. It
 greatly improves performance for Nuxt apps that have a lot of dynamic content
 (think of large CMS sites or user generated content). But even if you just have
 a few dozen pages you can increase average performance.

@@ -1,18 +1,27 @@
 # Using the Storage Instance
 
-The cache storage singleton is not exported directly, but you can access it from
-the current request event. The singleton is only attached if the caches are
-enabled.
+The unstorage instances for all caches are available at runtime via the
+`useMultiCacheApp` server util.
+
+::: info
+
+Note that this will always give you access to the storage instances, bypassing
+[enabledForRequest](/overview/server-options#disable-all-caches-per-request).
+
+:::
 
 ```typescript
 export default defineEventHandler(async (event) => {
-  const multiCache = event.__MULTI_CACHE
+  const multiCache = useMultiCacheApp()
 
-  await multiCache.component.clear()
-  await data = multiCache.data.getItem('foobar')
+  // Clear the route cache.
+  await multiCache.cache.route?.storage.clear()
+
+  // Get all data cache item keys.
+  const dataCacheKeys = await app.multiCache.cache.data?.storage.getKeys()
 
   return {
-    success: true
+    success: true,
   }
 })
 ```

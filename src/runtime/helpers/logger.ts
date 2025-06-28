@@ -7,4 +7,5 @@ type Logger = ConsolaInstance | typeof console
 const consola = import.meta.server
   ? createConsola().withTag('nuxt-multi-cache')
   : undefined
+
 export const logger: Logger = (import.meta.server ? consola : console) as Logger

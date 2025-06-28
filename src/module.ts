@@ -2,7 +2,8 @@ import { defu } from 'defu'
 import { createUnplugin } from 'unplugin'
 import { name, version } from '../package.json'
 import { addBuildPlugin, defineNuxtModule } from '@nuxt/kit'
-import { type ModuleOptions, defaultOptions } from './build/options'
+import type { ModuleOptions } from './build/options'
+import { defaultOptions } from './build/options/defaults'
 import { ModuleHelper } from './build/ModuleHelper'
 import { TEMPLATES } from './build/templates'
 
@@ -14,7 +15,7 @@ export default defineNuxtModule<ModuleOptions>({
     version,
     configKey: 'multiCache',
     compatibility: {
-      nuxt: '>=3.15.0',
+      nuxt: '>=3.17.0',
     },
   },
   setup(passedOptions, nuxt) {

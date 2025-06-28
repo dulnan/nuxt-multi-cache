@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   base: (process.env.BASE_URL as `/${string}/` | undefined) || '/',
-  title: 'Multi Cache for Nuxt 3',
+  title: 'Nuxt Multi Cache',
   lang: 'en',
   cleanUrls: true,
   appearance: 'dark',
@@ -97,7 +97,7 @@ export default defineConfig({
         ],
       },
       {
-        text: 'Composables',
+        text: 'Composables / Server Utils',
         items: [
           { text: 'useDataCache', link: '/composables/useDataCache' },
           {

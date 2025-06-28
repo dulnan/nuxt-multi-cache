@@ -4,7 +4,7 @@ import type { FetchResponse } from 'ofetch'
 import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
-} from './../../build/options'
+} from './../../build/options/defaults'
 import { onlyUnique } from './server'
 
 const numericProperties = [

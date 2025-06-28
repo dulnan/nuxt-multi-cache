@@ -1,5 +1,8 @@
 import { describe, expect, test } from 'vitest'
-import { defaultOptions, DEFAULT_API_PREFIX } from './../../src/build/options'
+import {
+  defaultOptions,
+  DEFAULT_API_PREFIX,
+} from './../../src/build/options/defaults'
 
 describe('Default options', () => {
   test('Define an API prefix', () => {

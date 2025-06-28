@@ -7,7 +7,7 @@ import {
 } from '../../helpers/cacheItem'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { onlyUnique } from '../../helpers/server'
-import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../../build/options'
+import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../../build/options/defaults'
 import type {
   CachePurgeTagsResponse,
   NuxtMultiCacheSSRContext,
