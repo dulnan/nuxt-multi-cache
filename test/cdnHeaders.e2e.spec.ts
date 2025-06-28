@@ -72,4 +72,26 @@ describe('The CDN headers feature', () => {
       'contains both the cache tags from the page and the API call.',
     )
   })
+
+  test('sets headers from error.vue', async () => {
+    const response = await fetch('/a-page-that-does-not-exist', {
+      headers: {
+        Accept: 'text/html',
+      },
+    })
+    expect(response.headers.get('surrogate-control')).toEqual(
+      'max-age=60, public',
+    )
+    expect(response.headers.get('cache-tag')).toEqual('error:404')
+  })
+
+  test('sets headers from error.vue, ignoring headers from originating page', async () => {
+    const response = await fetch('/triggerServerError', {
+      headers: {
+        Accept: 'text/html',
+      },
+    })
+    expect(response.headers.get('surrogate-control')).toEqual('private')
+    expect(response.headers.get('cache-tag')).toEqual('error:500')
+  })
 })
