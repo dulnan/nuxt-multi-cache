@@ -77,8 +77,9 @@ export function encodeComponentCacheItem(
   payload?: Record<string, any>,
   expires?: number | undefined,
   cacheTags?: string[],
+  ssrModules?: string[],
 ): string {
-  return encodeCacheItem(data, { payload, expires, cacheTags })
+  return encodeCacheItem(data, { payload, expires, cacheTags, ssrModules })
 }
 
 /**

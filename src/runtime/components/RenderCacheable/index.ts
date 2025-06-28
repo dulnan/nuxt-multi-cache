@@ -1,11 +1,4 @@
-import type { H3Event } from 'h3'
-import {
-  defineComponent,
-  useSSRContext,
-  useSlots,
-  getCurrentInstance,
-  h,
-} from 'vue'
+import { defineComponent, useSlots, getCurrentInstance, h } from 'vue'
 import type { PropType } from 'vue'
 import { useNuxtApp } from '#app'
 import { encodeComponentCacheItem } from '../../helpers/cacheItem'
@@ -111,6 +104,14 @@ export default defineComponent({
     },
   },
   async setup(props) {
+    // Get Nuxt app.
+    const nuxtApp = useNuxtApp()
+
+    const ssrModulesBefore =
+      isServer && nuxtApp.ssrContext && nuxtApp.ssrContext.modules
+        ? [...nuxtApp.ssrContext.modules.values()]
+        : []
+
     // Extract the contents of the default slot.
     const slots = useSlots()
     if (!slots.default) {
@@ -133,18 +134,14 @@ export default defineComponent({
       // Get the current instance.
       const currentInstance = getCurrentInstance()
 
-      const ssrContext = useSSRContext()
-      const event: H3Event | undefined = ssrContext?.event
-      // SSR context should exist at this point, but TS doesn't know that.
-      if (!event) {
+      if (!nuxtApp.ssrContext) {
         if (debug) {
           logger.warn('Failed to get SSR context.', props)
         }
         return () => h(props.tag, slots.default!())
       }
 
-      // Get Nuxt app.
-      const nuxtApp = useNuxtApp()
+      const event = nuxtApp.ssrContext.event
 
       const isEnabled = await enabledForRequest(event)
       if (!isEnabled) {
@@ -194,7 +191,7 @@ export default defineComponent({
         })
 
         if (cached) {
-          const { data, payload, expires } = cached
+          const { data, payload, expires, ssrModules } = cached
 
           // Check if the cache entry is expired.
           if (expires) {
@@ -212,6 +209,11 @@ export default defineComponent({
             })
           }
 
+          if (ssrModules && nuxtApp.ssrContext?.modules) {
+            const modules = nuxtApp.ssrContext.modules
+            ssrModules.forEach((mod) => modules.add(mod))
+          }
+
           if (debug) {
             logger.info('Returning cached component.', {
               fullCacheKey,
@@ -226,6 +228,15 @@ export default defineComponent({
 
         // Render the contents of the slot to string.
         const data = await renderSlot(slots, currentInstance.parent)
+
+        const ssrModulesAfter = nuxtApp.ssrContext!.modules
+          ? [...nuxtApp.ssrContext!.modules.values()]
+          : []
+
+        // Figure out which modules were added to the set while rendering.
+        const ssrModules = ssrModulesAfter.filter(
+          (v) => !ssrModulesBefore.includes(v),
+        )
 
         // Storing the markup in cache is wrapped in a try/catch. That way if
         // the cache backend is down for some reason we can still return the
@@ -249,7 +260,13 @@ export default defineComponent({
           // Store in cache.
           multiCache.component.storage.setItemRaw(
             fullCacheKey,
-            encodeComponentCacheItem(data, payload, expires, cacheTags),
+            encodeComponentCacheItem(
+              data,
+              payload,
+              expires,
+              cacheTags,
+              ssrModules,
+            ),
             { ttl: props.maxAge },
           )
           if (debug) {

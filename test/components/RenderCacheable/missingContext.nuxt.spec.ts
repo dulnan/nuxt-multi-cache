@@ -36,11 +36,15 @@ mockNuxtImport('useRuntimeConfig', () => {
   }
 })
 
+const mocks = vi.hoisted(() => {
+  return {
+    useNuxtApp: vi.fn(),
+  }
+})
+
 vi.mock('#app', () => {
   return {
-    useNuxtApp: () => {
-      return {}
-    },
+    useNuxtApp: mocks.useNuxtApp,
   }
 })
 
@@ -72,6 +76,16 @@ describe('RenderCacheable with missing context', () => {
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
     )
 
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        payload: {
+          data: {},
+        },
+      }
+    })
+
     await renderToString(app, ssrContext)
     expect(loggerSpy).toHaveBeenCalledWith(
       'Failed to get parent component in Cacheable component.',
@@ -91,13 +105,21 @@ describe('RenderCacheable with missing context', () => {
 
     const loggerSpy = vi.spyOn(logger, 'warn')
     const vue = await import('vue')
-    vue.getCurrentInstance = vi.fn().mockReturnValue({ parent: {} })
-    vue.useSSRContext = vi.fn().mockReturnValue(undefined)
+    vue.getCurrentInstance = vi.fn().mockReturnValue({ parent: {}, type: {} })
 
     // App with storage containing a cached component.
     const { app, ssrContext } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
     )
+
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        event: ssrContext.event,
+        payload: {
+          data: {},
+        },
+      }
+    })
 
     await renderToString(app, ssrContext)
     expect(loggerSpy).toHaveBeenCalledWith('Failed to get SSR context.', {

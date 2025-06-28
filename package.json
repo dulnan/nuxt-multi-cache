@@ -88,6 +88,7 @@
     "nuxt": "^3.17.5",
     "playwright-core": "^1.44.1",
     "prettier": "^3.3.2",
+    "vite-plugin-css-injected-by-js": "^3.5.2",
     "vitepress": "^1.4.1",
     "vitest": "^3.1.2",
     "vue-json-pretty": "^2.4.0",

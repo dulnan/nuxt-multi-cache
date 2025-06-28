@@ -45,6 +45,7 @@ export interface DataCacheItem extends CacheItem {}
 
 export interface ComponentCacheItem extends CacheItem {
   payload?: Record<string, any>
+  ssrModules?: string[]
 }
 
 export type ComponentCacheEntry = ComponentCacheItem | string
