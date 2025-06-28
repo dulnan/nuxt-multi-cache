@@ -2,6 +2,15 @@ import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onRequest } from '../../../../src/runtime/server/hooks/request'
 
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    get isServer() {
+      return true
+    },
+    debug: false,
+  }
+})
+
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
     return {

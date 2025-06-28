@@ -1,8 +1,5 @@
 import { type H3Event, getRequestURL } from 'h3'
-import {
-  enabledForRequest,
-  MULTI_CACHE_ROUTE_CONTEXT_KEY,
-} from '../../helpers/server'
+import { enabledForRequest } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
@@ -11,12 +8,12 @@ import { serverOptions } from '#nuxt-multi-cache/server-options'
  * Method to check whether route caching is generally applicable to the given path.
  */
 function applies(path: string): boolean {
-  if (serverOptions.route?.applies) {
-    return serverOptions.route.applies(path)
-  }
-
   if (path.startsWith('/_nuxt') || path.startsWith('/__nuxt_error')) {
     return false
+  }
+
+  if (serverOptions.route?.applies) {
+    return serverOptions.route.applies(path)
   }
 
   // Exclude common files.
@@ -56,6 +53,6 @@ export async function onRequest(event: H3Event) {
   }
 
   // Add the route cache helper.
-  event.context[MULTI_CACHE_ROUTE_CONTEXT_KEY] =
-    new NuxtMultiCacheRouteCacheHelper()
+  event.context.multiCache ||= {}
+  event.context.multiCache.route = new NuxtMultiCacheRouteCacheHelper()
 }

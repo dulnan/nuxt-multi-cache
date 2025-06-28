@@ -15,5 +15,6 @@ export function setCachedResponse(event: H3Event, decoded: RouteCacheItem) {
 
   // Maked sure that code that runs afterwards does not store the same
   // cached response again in the cache.
-  event.context.__MULTI_CACHE_SERVED_FROM_CACHE = true
+  event.context.multiCache ||= {}
+  event.context.multiCache.routeServedFromCache = true
 }

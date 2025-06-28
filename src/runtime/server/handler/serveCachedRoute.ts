@@ -71,14 +71,16 @@ export async function serveCachedHandler(event: H3Event) {
     }
 
     // Store the decoded cache item in the event context.
-    event.context.__MULTI_CACHE_DECODED_CACHED_ROUTE = decoded
+    event.context.multiCache ||= {}
+    event.context.multiCache.routeCachedDecoded = decoded
 
     // Check if item can be served from cache.
     if (!canBeServedFromCache(fullKey, decoded, state)) {
       // Mark the key as being revalidated.
       if (decoded.staleWhileRevalidate) {
         state.addKeyBeingRevalidated(fullKey)
-        event.context.__MULTI_CACHE_REVALIDATION_KEY = fullKey
+        event.context.multiCache ||= {}
+        event.context.multiCache.routeRevalidationkey = fullKey
       }
 
       // Returning, so the route is revalidated.

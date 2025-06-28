@@ -1,11 +1,9 @@
 import { type H3Event, getRequestURL } from 'h3'
 import type { CacheItem, NuxtMultiCacheSSRContext } from './../types'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
-import { serverOptions } from '#nuxt-multi-cache/server-options'
+import { isServer } from '#nuxt-multi-cache/config'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
-export const MULTI_CACHE_ROUTE_CONTEXT_KEY = '__MULTI_CACHE_ROUTE'
-export const MULTI_CACHE_CDN_CONTEXT_KEY = '__MULTI_CACHE_CDN'
 
 /**
  * Granular check whether caching is enabled for a given request.
@@ -14,13 +12,15 @@ export const MULTI_CACHE_CDN_CONTEXT_KEY = '__MULTI_CACHE_CDN'
  * something from cache.
  */
 export async function enabledForRequest(event: H3Event): Promise<boolean> {
-  if (!event.context) {
-    event.context = {}
+  if (!isServer) {
+    return Promise.resolve(false)
   }
+  const serverOptions = await import('#nuxt-multi-cache/server-options').then(
+    (v) => v.serverOptions,
+  )
 
-  if (!event.context.multiCache) {
-    event.context.multiCache = {}
-  }
+  event.context ||= {}
+  event.context.multiCache ||= {}
 
   if (event.context.multiCache.enabledForRequest === undefined) {
     if (serverOptions.enabledForRequest) {
@@ -43,7 +43,7 @@ export function getMultiCacheContext(
 export function getMultiCacheRouteHelper(
   event: H3Event,
 ): NuxtMultiCacheRouteCacheHelper | undefined {
-  return event.context?.[MULTI_CACHE_ROUTE_CONTEXT_KEY]
+  return event.context?.multiCache?.route
 }
 
 export function getExpiresValue(maxAge: number) {
@@ -55,6 +55,12 @@ export function isExpired(item: CacheItem) {
 }
 
 async function determinePrefix(event: H3Event): Promise<string> {
+  if (!isServer) {
+    return Promise.resolve('')
+  }
+  const serverOptions = await import('#nuxt-multi-cache/server-options').then(
+    (v) => v.serverOptions,
+  )
   // Set the global cache key prefix that applies for all caches.
   // This can either be a static string or a method that determines the prefix,
   // for example based on cookie or request headers.

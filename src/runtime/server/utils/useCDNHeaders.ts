@@ -1,6 +1,5 @@
 import type { H3Event } from 'h3'
 import { NuxtMultiCacheCDNHelper } from './../../helpers/CDNHelper'
-import { MULTI_CACHE_CDN_CONTEXT_KEY } from '../../helpers/server'
 import {
   cdnCacheControlHeader,
   cdnCacheTagHeader,
@@ -15,14 +14,15 @@ export function useCDNHeaders(
     return
   }
 
-  let helper = event.context[MULTI_CACHE_CDN_CONTEXT_KEY]
+  let helper = event.context.multiCache?.cdn
 
   if (!helper) {
     helper = new NuxtMultiCacheCDNHelper(
       cdnCacheControlHeader,
       cdnCacheTagHeader,
     )
-    event.context[MULTI_CACHE_CDN_CONTEXT_KEY] = helper
+    event.context.multiCache ||= {}
+    event.context.multiCache.cdn = helper
   }
 
   cb(helper)

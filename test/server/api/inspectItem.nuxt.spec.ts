@@ -29,10 +29,6 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
     checkAuth: () => {
       return Promise.resolve()
     },
-    getCacheInstance: (event: any) => {
-      const cache = event.__CACHE_NAME
-      return event.__MULTI_CACHE[cache]
-    },
   }
 })
 

@@ -122,8 +122,10 @@ describe('purgeTags API handler', () => {
     await expect(
       purgeTags({
         context: {
-          __MULTI_CACHE: {
-            data: { storage },
+          multiCacheApp: {
+            cache: {
+              data: { storage },
+            },
           },
         },
       } as any),
@@ -134,8 +136,10 @@ describe('purgeTags API handler', () => {
     await expect(
       purgeTags({
         context: {
-          __MULTI_CACHE: {
-            data: { storage },
+          multiCacheApp: {
+            cache: {
+              data: { storage },
+            },
           },
         },
         body: 'Invalid body',

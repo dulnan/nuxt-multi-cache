@@ -17,15 +17,15 @@ export function onError(_error: Error, ctx: CapturedErrorContext) {
 
     const { state } = useMultiCacheApp()
 
-    if (ctx.event.context.__MULTI_CACHE_REVALIDATION_KEY) {
+    if (ctx.event.context.multiCache?.routeRevalidationkey) {
       state.removeKeyBeingRevalidated(
-        ctx.event.context.__MULTI_CACHE_REVALIDATION_KEY,
+        ctx.event.context.multiCache.routeRevalidationkey,
       )
     }
 
     // Get the decoded route cache item. The "request" handler may have already
     // fetched this, so we can reuse it.
-    const decoded = ctx.event.context.__MULTI_CACHE_DECODED_CACHED_ROUTE
+    const decoded = ctx.event.context.multiCache?.routeCachedDecoded
 
     if (!decoded) {
       return

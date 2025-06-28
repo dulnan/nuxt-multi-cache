@@ -29,9 +29,6 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
     checkAuth: () => {
       return Promise.resolve()
     },
-    getCacheInstance: (event: any) => {
-      return event.__MULTI_CACHE.data
-    },
   }
 })
 
@@ -84,8 +81,10 @@ describe('purgeItem API handler', () => {
     const storage = createStorage()
 
     const event: any = {
-      __MULTI_CACHE: {
-        data: { storage },
+      multiCacheApp: {
+        cache: {
+          data: { storage },
+        },
       },
     }
     await expect(purgeItem(event)).rejects.toThrowErrorMatchingInlineSnapshot(

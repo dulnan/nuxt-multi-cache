@@ -216,8 +216,40 @@ export type DataCacheCallbackContext<T> = {
 }
 
 export type MultiCacheEventContext = {
+  /**
+   * The global prefix for all caches.
+   */
   cachePrefix?: string | null
+
+  /**
+   * Whether *any* caching is enabled for the current request.
+   */
   enabledForRequest?: boolean
+
+  /**
+   * Whether the current request has already been served from cache.
+   */
+  routeServedFromCache?: boolean
+
+  /**
+   * The route cache key that is currently being revalidated.
+   */
+  routeRevalidationkey?: string
+
+  /**
+   * Contains the already fetched cached route, if it exists.
+   */
+  routeCachedDecoded?: RouteCacheItem
+
+  /**
+   * The nuxt-multi-cache CDN helper.
+   */
+  cdn?: NuxtMultiCacheCDNHelper
+
+  /**
+   * The route cache helper.
+   */
+  route?: NuxtMultiCacheRouteCacheHelper
 }
 
 declare module 'nitropack/types' {
@@ -233,35 +265,5 @@ declare module 'h3' {
   export interface H3EventContext {
     multiCache?: MultiCacheEventContext
     multiCacheApp?: MultiCacheApp
-
-    /**
-     * The nuxt-multi-cache cache context.
-     */
-    __MULTI_CACHE?: NuxtMultiCacheSSRContext
-
-    /**
-     * The nuxt-multi-cache route cache helper.
-     */
-    __MULTI_CACHE_ROUTE?: NuxtMultiCacheRouteCacheHelper
-
-    /**
-     * The nuxt-multi-cache CDN helper.
-     */
-    __MULTI_CACHE_CDN?: NuxtMultiCacheCDNHelper
-
-    /**
-     * Contains the already fetched cached route, if it exists.
-     */
-    __MULTI_CACHE_DECODED_CACHED_ROUTE?: RouteCacheItem
-
-    /**
-     * The route cache key that is currently being revalidated.
-     */
-    __MULTI_CACHE_REVALIDATION_KEY?: string
-
-    /**
-     * Whether the current request has already been served from cache.
-     */
-    __MULTI_CACHE_SERVED_FROM_CACHE?: boolean
   }
 }

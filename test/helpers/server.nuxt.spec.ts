@@ -4,7 +4,6 @@ import {
   getMultiCacheContext,
   getMultiCacheRouteHelper,
   MULTI_CACHE_CONTEXT_KEY,
-  MULTI_CACHE_ROUTE_CONTEXT_KEY,
 } from './../../src/runtime/helpers/server'
 
 const EVENT: any = {
@@ -18,7 +17,9 @@ const EVENT: any = {
         },
       },
     },
-    [MULTI_CACHE_ROUTE_CONTEXT_KEY]: new NuxtMultiCacheRouteCacheHelper(),
+    multiCache: {
+      route: new NuxtMultiCacheRouteCacheHelper(),
+    },
   },
 }
 
@@ -41,7 +42,7 @@ describe('Server helpers', () => {
       } as any),
     ).toBeUndefined()
     expect(getMultiCacheRouteHelper(EVENT)).toEqual(
-      EVENT.context[MULTI_CACHE_ROUTE_CONTEXT_KEY],
+      EVENT.context.multiCache.route,
     )
   })
 })

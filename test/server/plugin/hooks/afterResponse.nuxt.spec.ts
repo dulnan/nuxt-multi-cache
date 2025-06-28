@@ -1,10 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onAfterResponse } from '../../../../src/runtime/server/hooks/afterResponse'
-import {
-  MULTI_CACHE_CONTEXT_KEY,
-  MULTI_CACHE_ROUTE_CONTEXT_KEY,
-} from '../../../../src/runtime/helpers/server'
+import { MULTI_CACHE_CONTEXT_KEY } from '../../../../src/runtime/helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../../../src/runtime/helpers/RouteCacheHelper'
 
 mockNuxtImport('useRuntimeConfig', () => {
@@ -62,10 +59,11 @@ describe('afterResponse nitro hook handler', () => {
                 },
               },
             },
-            [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-              new NuxtMultiCacheRouteCacheHelper()
+            multiCache: {
+              route: new NuxtMultiCacheRouteCacheHelper()
                 .setCacheable()
                 .setMaxAge(1200),
+            },
           },
           node: {
             res: {
@@ -117,8 +115,9 @@ describe('afterResponse nitro hook handler', () => {
             [MULTI_CACHE_CONTEXT_KEY]: {
               route: {},
             },
-            [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-              new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
+            multiCache: {
+              route: new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
+            },
           },
           node: {
             res: {
@@ -143,8 +142,9 @@ describe('afterResponse nitro hook handler', () => {
             [MULTI_CACHE_CONTEXT_KEY]: {
               route: {},
             },
-            [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-              new NuxtMultiCacheRouteCacheHelper().setCacheable(),
+            multiCache: {
+              route: new NuxtMultiCacheRouteCacheHelper().setCacheable(),
+            },
           },
 
           node: {
@@ -201,9 +201,11 @@ describe('afterResponse nitro hook handler', () => {
             },
           },
         },
-        [MULTI_CACHE_ROUTE_CONTEXT_KEY]: new NuxtMultiCacheRouteCacheHelper()
-          .setCacheable()
-          .setMaxAge(1200),
+        multiCache: {
+          route: new NuxtMultiCacheRouteCacheHelper()
+            .setCacheable()
+            .setMaxAge(1200),
+        },
       },
 
       node: {

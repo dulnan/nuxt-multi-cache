@@ -183,8 +183,10 @@ describe('useDataCache composable', () => {
 
     const cache = await useDataCache('foobar', {
       context: {
-        __MULTI_CACHE: {
-          data: undefined,
+        multiCacheApp: {
+          cache: {
+            data: undefined,
+          },
         },
       },
     } as H3Event)
