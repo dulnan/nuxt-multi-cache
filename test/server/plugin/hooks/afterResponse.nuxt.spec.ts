@@ -40,12 +40,39 @@ vi.mock('nitropack/runtime', () => {
 
 describe('afterResponse nitro hook handler', () => {
   test('Returns if response.body is not a string', async () => {
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: {
+          route: {},
+        },
+        serverOptions: {},
+        config: {
+          cdn: {},
+        },
+      },
+    })
     expect(
       await onAfterResponse(
         {
+          context: {
+            multiCacheApp: {
+              cache: {
+                route: {
+                  storage: {},
+                },
+              },
+            },
+            [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
+              new NuxtMultiCacheRouteCacheHelper()
+                .setCacheable()
+                .setMaxAge(1200),
+          },
           node: {
             res: {
               statusCode: 200,
+              getHeaders: () => {
+                return {}
+              },
             },
             req: {
               originalUrl: '/',
@@ -53,7 +80,7 @@ describe('afterResponse nitro hook handler', () => {
             },
           },
         } as any,
-        { body: {} } as any,
+        { body: null } as any,
       ),
     ).toBeUndefined()
 
@@ -66,6 +93,7 @@ describe('afterResponse nitro hook handler', () => {
     expect(
       await onAfterResponse(
         {
+          context: {},
           node: {
             res: {
               statusCode: 200,
@@ -161,12 +189,14 @@ describe('afterResponse nitro hook handler', () => {
     const event = {
       path: '/foobar',
       context: {
-        [MULTI_CACHE_CONTEXT_KEY]: {
-          route: {
-            storage: {
-              setItemRaw(key: string, item: any, options: any) {
-                storedItems.push({ key, item, options })
-                return Promise.resolve()
+        multiCacheApp: {
+          cache: {
+            route: {
+              storage: {
+                setItemRaw(key: string, item: any, options: any) {
+                  storedItems.push({ key, item, options })
+                  return Promise.resolve()
+                },
               },
             },
           },

@@ -3,6 +3,7 @@ import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCacheCallback } from './../../src/runtime/composables/useDataCacheCallback'
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { CacheItem } from './../../src/runtime/types'
+import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
 
 let isServerValue = false
 
@@ -25,19 +26,21 @@ function buildEvent(bubbleError = false): H3Event {
   }
   return {
     context: {
-      __MULTI_CACHE: {
-        data: {
-          bubbleError,
-          storage: {
-            getItem: (key: string) => {
-              if (key === 'force_get_error') {
-                throw new Error('Failed to get data cache item.')
-              }
-              return Promise.resolve(storage[key])
-            },
-            setItem: (key: string, data: any) => {
-              storage[key] = data
-              return Promise.resolve()
+      [MULTI_CACHE_CONTEXT_KEY]: {
+        cache: {
+          data: {
+            bubbleError,
+            storage: {
+              getItem: (key: string) => {
+                if (key === 'force_get_error') {
+                  throw new Error('Failed to get data cache item.')
+                }
+                return Promise.resolve(storage[key])
+              },
+              setItem: (key: string, data: any) => {
+                storage[key] = data
+                return Promise.resolve()
+              },
             },
           },
         },

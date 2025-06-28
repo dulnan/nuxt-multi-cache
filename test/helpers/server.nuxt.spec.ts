@@ -3,31 +3,45 @@ import { NuxtMultiCacheRouteCacheHelper } from '../../src/runtime/helpers/RouteC
 import {
   getMultiCacheContext,
   getMultiCacheRouteHelper,
+  MULTI_CACHE_CONTEXT_KEY,
+  MULTI_CACHE_ROUTE_CONTEXT_KEY,
 } from './../../src/runtime/helpers/server'
 
 const EVENT: any = {
   context: {
-    __MULTI_CACHE: {
-      component: {
-        storage: {
-          getItem: () => {},
+    [MULTI_CACHE_CONTEXT_KEY]: {
+      cache: {
+        component: {
+          storage: {
+            getItem: () => {},
+          },
         },
       },
     },
-    __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
+    [MULTI_CACHE_ROUTE_CONTEXT_KEY]: new NuxtMultiCacheRouteCacheHelper(),
   },
 }
 
 describe('Server helpers', () => {
   test('getMultiCacheContext', () => {
-    expect(getMultiCacheContext({} as any)).toBeUndefined()
-    expect(getMultiCacheContext(EVENT)).toEqual(EVENT.context.__MULTI_CACHE)
+    expect(
+      getMultiCacheContext({
+        context: {},
+      } as any),
+    ).toBeUndefined()
+    expect(getMultiCacheContext(EVENT)).toEqual(
+      EVENT.context[MULTI_CACHE_CONTEXT_KEY].cache,
+    )
   })
 
   test('getMultiCacheRouteContext', () => {
-    expect(getMultiCacheRouteHelper({} as any)).toBeUndefined()
+    expect(
+      getMultiCacheRouteHelper({
+        context: {},
+      } as any),
+    ).toBeUndefined()
     expect(getMultiCacheRouteHelper(EVENT)).toEqual(
-      EVENT.context.__MULTI_CACHE_ROUTE,
+      EVENT.context[MULTI_CACHE_ROUTE_CONTEXT_KEY],
     )
   })
 })

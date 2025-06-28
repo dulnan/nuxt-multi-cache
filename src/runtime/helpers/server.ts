@@ -3,7 +3,7 @@ import type { CacheItem, NuxtMultiCacheSSRContext } from './../types'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
 
-export const MULTI_CACHE_CONTEXT_KEY = '__MULTI_CACHE'
+export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
 export const MULTI_CACHE_ROUTE_CONTEXT_KEY = '__MULTI_CACHE_ROUTE'
 export const MULTI_CACHE_CDN_CONTEXT_KEY = '__MULTI_CACHE_CDN'
 
@@ -37,7 +37,7 @@ export async function enabledForRequest(event: H3Event): Promise<boolean> {
 export function getMultiCacheContext(
   event: H3Event,
 ): NuxtMultiCacheSSRContext | undefined {
-  return event.context?.[MULTI_CACHE_CONTEXT_KEY]
+  return event.context.multiCacheApp?.cache
 }
 
 export function getMultiCacheRouteHelper(

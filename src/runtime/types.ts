@@ -232,6 +232,7 @@ declare module 'nitropack/types' {
 declare module 'h3' {
   export interface H3EventContext {
     multiCache?: MultiCacheEventContext
+    multiCacheApp?: MultiCacheApp
 
     /**
      * The nuxt-multi-cache cache context.

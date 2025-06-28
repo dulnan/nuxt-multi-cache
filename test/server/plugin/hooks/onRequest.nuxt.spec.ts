@@ -15,15 +15,15 @@ mockNuxtImport('useRuntimeConfig', () => {
   }
 })
 
-vi.mock('#nuxt-multi-cache/server-options', () => {
-  return {
-    serverOptions: {},
-  }
-})
-
 const mocks = vi.hoisted(() => {
   return {
     useNitroApp: vi.fn(),
+    serverOptions: {
+      enabledForRequest: vi.fn(),
+      route: {
+        applies: vi.fn(),
+      },
+    },
   }
 })
 
@@ -33,18 +33,17 @@ vi.mock('nitropack/runtime', () => {
   }
 })
 
+vi.mock('#nuxt-multi-cache/server-options', () => {
+  return {
+    serverOptions: mocks.serverOptions,
+  }
+})
+
 describe('onRequest nitro hook handler', () => {
   test('does not apply for common asset file extensions', async () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {},
-        serverOptions: {
-          api: {
-            authorization: () => {
-              return Promise.resolve(true)
-            },
-          },
-        },
       },
     })
     const event: any = {
@@ -64,17 +63,11 @@ describe('onRequest nitro hook handler', () => {
   })
 
   test('Calls a custom applies method', async () => {
-    const routeOptions = {
-      applies: function () {
-        return false
-      },
-    }
-    const spy = vi.spyOn(routeOptions, 'applies')
+    mocks.serverOptions.route.applies.mockResolvedValue(false)
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
-        cache: {},
-        serverOptions: {
-          route: routeOptions,
+        cache: {
+          route: {},
         },
       },
     })
@@ -92,22 +85,19 @@ describe('onRequest nitro hook handler', () => {
 
     await onRequest(event)
 
-    expect(spy).toHaveBeenCalledOnce()
+    expect(mocks.serverOptions.route.applies).toHaveBeenCalledOnce()
 
     mocks.useNitroApp.mockRestore()
+    mocks.serverOptions.route.applies.mockRestore()
   })
 
   test('Calls a custom enabledForRequest method', async () => {
-    const serverOptions = {
-      enabledForRequest: function () {
-        return Promise.resolve(false)
-      },
-    }
-    const spy = vi.spyOn(serverOptions, 'enabledForRequest')
+    mocks.serverOptions.enabledForRequest.mockResolvedValue(false)
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
-        cache: {},
-        serverOptions,
+        cache: {
+          route: {},
+        },
       },
     })
     const event: any = {
@@ -124,8 +114,9 @@ describe('onRequest nitro hook handler', () => {
 
     await onRequest(event)
 
-    expect(spy).toHaveBeenCalledOnce()
+    expect(mocks.serverOptions.enabledForRequest).toHaveBeenCalledOnce()
 
     mocks.useNitroApp.mockRestore()
+    mocks.serverOptions.enabledForRequest.mockRestore()
   })
 })

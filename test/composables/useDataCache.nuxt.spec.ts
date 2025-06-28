@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { CacheItem } from './../../src/runtime/types'
+import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
 
 const { getIsServer, setIsServer } = vi.hoisted(() => {
   let serverValue = false
@@ -33,21 +34,24 @@ function buildEvent(bubbleError = false): H3Event {
       expires: 1669849200,
     },
   }
+
   return {
     context: {
-      __MULTI_CACHE: {
-        data: {
-          bubbleError,
-          storage: {
-            getItem: (key: string) => {
-              if (key === 'force_get_error') {
-                throw new Error('Failed to get data cache item.')
-              }
-              return Promise.resolve(storage[key])
-            },
-            setItem: (key: string, data: any) => {
-              storage[key] = data
-              return Promise.resolve()
+      [MULTI_CACHE_CONTEXT_KEY]: {
+        cache: {
+          data: {
+            bubbleError,
+            storage: {
+              getItem: (key: string) => {
+                if (key === 'force_get_error') {
+                  throw new Error('Failed to get data cache item.')
+                }
+                return Promise.resolve(storage[key])
+              },
+              setItem: (key: string, data: any) => {
+                storage[key] = data
+                return Promise.resolve()
+              },
             },
           },
         },
@@ -194,15 +198,17 @@ describe('useDataCache composable', () => {
     }
     const event = {
       context: {
-        __MULTI_CACHE: {
-          data: {
-            storage: {
-              getItem: (key: string) => {
-                return Promise.resolve(storage[key])
-              },
-              setItem: (key: string, data: any) => {
-                storage[key] = data
-                return Promise.resolve()
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          cache: {
+            data: {
+              storage: {
+                getItem: (key: string) => {
+                  return Promise.resolve(storage[key])
+                },
+                setItem: (key: string, data: any) => {
+                  storage[key] = data
+                  return Promise.resolve()
+                },
               },
             },
           },

@@ -14,6 +14,7 @@ import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/logger'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
+import { serverOptions } from '#nuxt-multi-cache/server-options'
 
 function canBeServedFromCache(
   key: string,
@@ -39,7 +40,7 @@ function canBeServedFromCache(
 }
 
 export async function serveCachedHandler(event: H3Event) {
-  const { serverOptions, state } = useMultiCacheApp()
+  const { state } = useMultiCacheApp()
   const context = getMultiCacheContext(event)
 
   if (!context?.route) {
@@ -48,7 +49,7 @@ export async function serveCachedHandler(event: H3Event) {
 
   try {
     // Build the cache key.
-    const fullKey = serverOptions?.route?.buildCacheKey
+    const fullKey = serverOptions.route?.buildCacheKey
       ? await serverOptions.route.buildCacheKey(event)
       : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
 

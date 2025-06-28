@@ -1,38 +1,16 @@
 import { type H3Event, getRequestURL } from 'h3'
-import type { NuxtMultiCacheSSRContext } from '../../types'
 import {
-  MULTI_CACHE_CONTEXT_KEY,
+  enabledForRequest,
   MULTI_CACHE_ROUTE_CONTEXT_KEY,
 } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-
-/**
- * Add the cache context singleton to the current request.
- */
-async function addCacheContext(
-  event: H3Event,
-): Promise<NuxtMultiCacheSSRContext> {
-  const { cache } = useMultiCacheApp()
-
-  // Add the cache context object to the SSR context object.
-  event.context[MULTI_CACHE_CONTEXT_KEY] = cache
-
-  if (cache.route) {
-    // Add the route cache helper.
-    event.context[MULTI_CACHE_ROUTE_CONTEXT_KEY] =
-      new NuxtMultiCacheRouteCacheHelper()
-  }
-
-  return cache
-}
+import { serverOptions } from '#nuxt-multi-cache/server-options'
 
 /**
  * Method to check whether route caching is generally applicable to the given path.
  */
 function applies(path: string): boolean {
-  const { serverOptions } = useMultiCacheApp()
-
   if (serverOptions.route?.applies) {
     return serverOptions.route.applies(path)
   }
@@ -58,11 +36,26 @@ export async function onRequest(event: H3Event) {
     return
   }
 
+  const app = useMultiCacheApp()
+  event.context.multiCacheApp = app
+
+  // Route cache is disabled.
+  if (!app.cache.route) {
+    return
+  }
+
   // Path is generally not cacheable, so we can skip it.
   if (!applies(path)) {
     return
   }
 
-  // Add the cache context.
-  await addCacheContext(event)
+  const isEnabled = await enabledForRequest(event)
+
+  if (!isEnabled) {
+    return
+  }
+
+  // Add the route cache helper.
+  event.context[MULTI_CACHE_ROUTE_CONTEXT_KEY] =
+    new NuxtMultiCacheRouteCacheHelper()
 }
