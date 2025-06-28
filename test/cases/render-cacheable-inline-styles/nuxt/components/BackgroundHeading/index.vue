@@ -8,6 +8,8 @@
 </template>
 
 <script lang="ts" setup>
+import { useAsyncData } from '#imports'
+
 const { data } = await useAsyncData('timestamp', () => {
   return Promise.resolve(Date.now().toString())
 })

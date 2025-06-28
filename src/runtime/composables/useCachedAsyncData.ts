@@ -5,7 +5,13 @@ import type {
   DefaultAsyncDataValue,
 } from '#app/defaults'
 import type { PickFrom } from '#app/composables/asyncData'
-import { useAsyncData, useDataCache, useNuxtApp, toValue } from '#imports'
+import {
+  useAsyncData,
+  useDataCache,
+  useNuxtApp,
+  toValue,
+  computed,
+} from '#imports'
 
 type KeysOf<T> = Array<
   T extends T ? (keyof T extends string ? keyof T : never) : never
