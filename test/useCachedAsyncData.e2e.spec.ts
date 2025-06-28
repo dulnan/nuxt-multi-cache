@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import type { ModuleOptions } from '../src/build/options'
 import purgeAll from './__helpers__/purgeAll'
 import getDataCacheItems from './__helpers__/getDataCacheItems'
+import { sleep } from './__helpers__'
 
 const multiCache: ModuleOptions = {
   component: {
@@ -126,5 +127,33 @@ describe('The useCachedAsyncData composable', () => {
     const number2 = await page.locator('#no-max-age').innerText()
 
     expect(number1).not.toEqual(number2)
+  })
+
+  test('works using a reactive key', async () => {
+    await purgeAll()
+
+    const page = await createPage('/useCachedAsyncDataReactiveKey')
+    const number1 = await page.locator('#api-value').innerText()
+    const initialTimestamp = await page.locator('#api-timestamp').innerText()
+
+    expect(number1).toEqual('0')
+
+    await page.locator('#increment').click()
+    sleep(500)
+    expect(await page.locator('#api-value').innerText()).toEqual('1')
+    await page.locator('#increment').click()
+    sleep(500)
+    expect(await page.locator('#api-value').innerText()).toEqual('2')
+    await page.locator('#decrement').click()
+    await page.locator('#decrement').click()
+    sleep(500)
+
+    const timestamp = await page.locator('#api-timestamp').innerText()
+    // It should be the same timestamp as initially, because it's still within
+    // the specificed clientMaxAge, so the response from cache is used.
+    expect(initialTimestamp).toEqual(timestamp)
+
+    // And it should again be 0.
+    expect(await page.locator('#api-value').innerText()).toEqual('0')
   })
 }, 8_000)

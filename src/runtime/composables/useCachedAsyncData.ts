@@ -1,10 +1,11 @@
 import type { NuxtApp, AsyncDataOptions, AsyncData, NuxtError } from 'nuxt/app'
+import type { MaybeRefOrGetter } from 'vue'
 import type {
   DefaultAsyncDataErrorValue,
   DefaultAsyncDataValue,
 } from '#app/defaults'
 import type { PickFrom } from '#app/composables/asyncData'
-import { useAsyncData, useDataCache, useNuxtApp } from '#imports'
+import { useAsyncData, useDataCache, useNuxtApp, toValue } from '#imports'
 
 type KeysOf<T> = Array<
   T extends T ? (keyof T extends string ? keyof T : never) : never
@@ -94,7 +95,7 @@ export function useCachedAsyncData<
   PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
   DefaultT = undefined,
 >(
-  key: string,
+  key: MaybeRefOrGetter<string>,
   handler: (ctx?: NuxtApp) => Promise<ResT>,
   options?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
 ): AsyncData<
@@ -112,7 +113,7 @@ export function useCachedAsyncData<
   PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
   DefaultT = DataT,
 >(
-  key: string,
+  key: MaybeRefOrGetter<string>,
   handler: (ctx?: NuxtApp) => Promise<ResT>,
   options?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
 ): AsyncData<
@@ -145,7 +146,7 @@ export function useCachedAsyncData<
   PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
   DefaultT = null,
 >(
-  key: string,
+  _key: MaybeRefOrGetter<string>,
   handler: (app?: NuxtApp) => Promise<ResT>,
   providedOptions?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
 ): AsyncData<
@@ -155,6 +156,7 @@ export function useCachedAsyncData<
       : NuxtError<NuxtErrorDataT>)
   | DefaultAsyncDataErrorValue
 > {
+  const reactiveKey = computed(() => toValue(_key))
   const options: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT> =
     providedOptions && typeof providedOptions === 'object'
       ? providedOptions
@@ -171,7 +173,7 @@ export function useCachedAsyncData<
     }
 
     return useAsyncData<ResT, any, DataT, PickKeys, DefaultT>(
-      key,
+      reactiveKey,
       async () => {
         const result = await handler(app)
 
@@ -187,7 +189,7 @@ export function useCachedAsyncData<
             data,
             expires: Date.now() + options.clientMaxAge * 1000,
           }
-          app.static.data[key] = cacheItem
+          app.static.data[reactiveKey.value] = cacheItem
         }
 
         // Casting is required here because we have already transformed the value
@@ -201,7 +203,16 @@ export function useCachedAsyncData<
 
         // Also override this method because we need it.
         // The custom type for the options omits this property.
-        getCachedData(key, nuxtApp) {
+        getCachedData(key, nuxtApp, context) {
+          const isRefresh =
+            context.cause === 'refresh:manual' ||
+            context.cause === 'refresh:hook'
+
+          // Never return from cache when refreshing.
+          if (isRefresh) {
+            return
+          }
+
           // Get from payload cache.
           const payloadData: DataT | undefined = nuxtApp.payload.data[key]
 
@@ -251,10 +262,10 @@ export function useCachedAsyncData<
 
   // Code for server-side caching.
   return useAsyncData<ResT, any, DataT, PickKeys, DefaultT>(
-    key,
+    reactiveKey,
     async (app) => {
       const { value, addToCache } = await useDataCache<DataT>(
-        key,
+        reactiveKey.value,
         app?.ssrContext?.event,
       )
 
