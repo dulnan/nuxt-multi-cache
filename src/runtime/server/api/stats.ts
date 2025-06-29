@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3'
-import type { CacheStatsResponse, CacheItem } from '../../types'
+import type { CacheStatsResponse } from '../../types'
 import { checkAuth, getCacheInstance } from './helpers'
 
 export default defineEventHandler<Promise<CacheStatsResponse<unknown>>>(
@@ -10,7 +10,7 @@ export default defineEventHandler<Promise<CacheStatsResponse<unknown>>>(
       return Promise.all(
         keys.map((key) => {
           return cache.getItem(key).then((data) => {
-            return { key, data: data as CacheItem }
+            return { key, data: data }
           })
         }),
       )

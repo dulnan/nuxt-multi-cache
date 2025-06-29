@@ -1,5 +1,5 @@
 import { type H3Event, getRequestURL } from 'h3'
-import type { CacheItem, NuxtMultiCacheSSRContext } from './../types'
+import type { CacheItem, MultiCacheInstances } from './../types'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 import { isServer } from '#nuxt-multi-cache/config'
 
@@ -36,7 +36,7 @@ export async function enabledForRequest(event: H3Event): Promise<boolean> {
 
 export function getMultiCacheContext(
   event: H3Event,
-): NuxtMultiCacheSSRContext | undefined {
+): MultiCacheInstances | undefined {
   return event.context.multiCacheApp?.cache
 }
 

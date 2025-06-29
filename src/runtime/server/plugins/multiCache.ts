@@ -5,8 +5,8 @@ import { onAfterResponse } from '../hooks/afterResponse'
 import type {
   MultiCacheApp,
   MultiCacheServerOptionsCacheOptions,
-  NuxtMultiCacheSSRContext,
-  NuxtMultiCacheSSRContextCache,
+  MultiCacheInstances,
+  MultiCacheInstance,
 } from '../../types'
 import { onError } from '../hooks/error'
 import { MultiCacheState } from '../../helpers/MultiCacheState'
@@ -17,7 +17,7 @@ import { useRuntimeConfig } from '#imports'
 function createCacheContext(
   cache: MultiCacheServerOptionsCacheOptions | undefined,
   defaults: Required<Omit<MultiCacheServerOptionsCacheOptions, 'storage'>>,
-): NuxtMultiCacheSSRContextCache {
+): MultiCacheInstance {
   return {
     storage: createStorage(cache?.storage),
     bubbleError: cache?.bubbleError ?? defaults.bubbleError,
@@ -27,7 +27,7 @@ function createCacheContext(
 function createMultiCacheApp(): MultiCacheApp {
   const runtimeConfig = useRuntimeConfig()
 
-  const cacheContext: NuxtMultiCacheSSRContext = {}
+  const cacheContext: MultiCacheInstances = {}
 
   // Initialize all enabled caches. Explicit initialization because some
   // caches might need additional configuration options and/or checks.

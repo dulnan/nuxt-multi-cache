@@ -5,26 +5,26 @@ import type { NuxtMultiCacheRouteCacheHelper } from './helpers/RouteCacheHelper'
 import type { NuxtMultiCacheCDNHelper } from './helpers/CDNHelper'
 import type { MultiCacheState } from './helpers/MultiCacheState'
 
-export type NuxtMultiCacheSSRContextCache = {
+export type MultiCacheInstance = {
   storage: Storage
   bubbleError: boolean
 }
 
-export interface NuxtMultiCacheSSRContext {
+export interface MultiCacheInstances {
   /**
    * The component cache instance.
    */
-  component?: NuxtMultiCacheSSRContextCache
+  component?: MultiCacheInstance
 
   /**
    * The data cache instance.
    */
-  data?: NuxtMultiCacheSSRContextCache
+  data?: MultiCacheInstance
 
   /**
    * The route cache instance.
    */
-  route?: NuxtMultiCacheSSRContextCache
+  route?: MultiCacheInstance
 }
 
 export interface CacheItem {
@@ -165,7 +165,7 @@ export interface MultiCacheApp {
   /**
    * The cache singleton.
    */
-  cache: NuxtMultiCacheSSRContext
+  cache: MultiCacheInstances
 
   /**
    * The server options.

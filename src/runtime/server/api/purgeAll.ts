@@ -1,9 +1,6 @@
 import { defineEventHandler, createError } from 'h3'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-import type {
-  CachePurgeAllResponse,
-  NuxtMultiCacheSSRContext,
-} from './../../types'
+import type { CachePurgeAllResponse, MultiCacheInstances } from './../../types'
 import { checkAuth } from './helpers'
 
 export default defineEventHandler<Promise<CachePurgeAllResponse>>(
@@ -19,7 +16,7 @@ export default defineEventHandler<Promise<CachePurgeAllResponse>>(
       })
     }
 
-    let key: keyof NuxtMultiCacheSSRContext
+    let key: keyof MultiCacheInstances
     for (key in app.cache) {
       const cache = app.cache[key]
       if (cache) {

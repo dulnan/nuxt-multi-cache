@@ -8,10 +8,7 @@ import {
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { onlyUnique } from '../../helpers/server'
 import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../../build/options/defaults'
-import type {
-  CachePurgeTagsResponse,
-  NuxtMultiCacheSSRContext,
-} from './../../types'
+import type { CachePurgeTagsResponse, MultiCacheInstances } from './../../types'
 import { checkAuth } from './helpers'
 import { cacheTagInvalidationDelay } from '#nuxt-multi-cache/config'
 
@@ -59,7 +56,7 @@ export class DebouncedInvalidator {
   /**
    * The cache context instance.
    */
-  cacheContext: NuxtMultiCacheSSRContext | undefined
+  cacheContext: MultiCacheInstances | undefined
 
   constructor() {
     this.tags = []
@@ -90,7 +87,7 @@ export class DebouncedInvalidator {
   }
 
   async getCacheTags(
-    cacheName: keyof NuxtMultiCacheSSRContext,
+    cacheName: keyof MultiCacheInstances,
     key: string,
   ): Promise<string[] | undefined> {
     if (cacheName === 'data') {
@@ -131,7 +128,7 @@ export class DebouncedInvalidator {
     this.timeout = null
 
     // Loop over all enabled caches.
-    let key: keyof NuxtMultiCacheSSRContext
+    let key: keyof MultiCacheInstances
     for (key in this.cacheContext) {
       const cache = this.cacheContext[key]
       if (cache) {

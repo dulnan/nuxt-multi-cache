@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import { createError, getHeader } from 'h3'
 import type { Storage } from 'unstorage'
 import { useMultiCacheApp } from '../../utils/useMultiCacheApp'
-import type { NuxtMultiCacheSSRContext } from './../../../types'
+import type { MultiCacheInstances } from './../../../types'
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 
@@ -10,7 +10,7 @@ export function getCacheInstance(event: H3Event): Storage {
   const multiCache = useMultiCacheApp()
 
   const cacheName = event.context.params?.cacheName as
-    | keyof NuxtMultiCacheSSRContext
+    | keyof MultiCacheInstances
     | undefined
 
   if (cacheName) {
