@@ -105,13 +105,12 @@ component defined a max age of 7 days.
 
 ## Usage in Server Handlers
 
-You can use the same composable in your server handlers, but it is not imported
-automatically. In addition you have to provide the H3Event object as the second
-argument:
+The `useCDNHeaders` helper is also available as a server util in a nitro
+context. It is auto-imported and can be used in event handlers or hooks.
+
+Unlike the composable, it requires passing the event as a second argument.
 
 ```typescript
-import { useCDNHeaders } from '#imports'
-
 export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {
     helper

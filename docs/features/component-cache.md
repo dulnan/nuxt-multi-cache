@@ -24,6 +24,9 @@ async component).
 
 :::
 
+The cacheability of a component can also be set dynamically using the
+[useComponentCache](/composables/useComponentCache) composable.
+
 ## Configuration
 
 ::: code-group
@@ -267,6 +270,16 @@ Provide the async data keys used by the cached component. If provided, the
 payload data will be cached alongside the component. If the component uses
 asyncData and the keys are not provided, you will receive a hydration mismatch
 error in the client.
+
+## Caveats
+
+Keep in mind that the code of components wrapped in `<RenderCacheable>` is only
+executed once - afterwards only its cached markup is used.
+
+This means that you must avoid relying on global state in your components,
+unless you vary the cache key accordingly. You must also not define or alter
+global state from within the component in any way, as this will cause unexpected
+behaviour.
 
 ## Behind the Scenes
 

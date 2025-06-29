@@ -1,5 +1,15 @@
 import { defineConfig } from 'vitepress'
 
+const composables = [
+  'useDataCache',
+  'useCachedAsyncData',
+  'useDataCacheCallback',
+  'useRouteCache',
+  'useCDNHeaders',
+  'useComponentCache',
+  'useMultiCacheApp',
+].sort()
+
 export default defineConfig({
   base: (process.env.BASE_URL as `/${string}/` | undefined) || '/',
   title: 'Nuxt Multi Cache',
@@ -98,19 +108,12 @@ export default defineConfig({
       },
       {
         text: 'Composables / Server Utils',
-        items: [
-          { text: 'useDataCache', link: '/composables/useDataCache' },
-          {
-            text: 'useCachedAsyncData',
-            link: '/composables/useCachedAsyncData',
-          },
-          {
-            text: 'useDataCacheCallback',
-            link: '/composables/useDataCacheCallback',
-          },
-          { text: 'useRouteCache', link: '/composables/useRouteCache' },
-          { text: 'useCDNHeaders', link: '/composables/useCDNHeaders' },
-        ],
+        items: composables.map((name) => {
+          return {
+            text: name,
+            link: '/composables/' + name,
+          }
+        }),
       },
       {
         text: 'Use Cases',
