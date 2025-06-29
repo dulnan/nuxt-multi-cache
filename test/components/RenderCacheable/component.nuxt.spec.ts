@@ -414,12 +414,12 @@ describe('RenderCacheable', () => {
         {
           "fullCacheKey": "InnerComponent::set_error",
           "props": {
-            "asyncDataKeys": [],
+            "asyncDataKeys": undefined,
             "cacheKey": "set_error",
-            "cacheTags": [],
-            "maxAge": -1,
+            "cacheTags": undefined,
+            "maxAge": undefined,
             "noCache": false,
-            "tag": "div",
+            "tag": undefined,
           },
         },
         [Error: Failed to set item.],
@@ -456,12 +456,12 @@ describe('RenderCacheable', () => {
       [
         [Error: Failed to get item.],
         {
-          "asyncDataKeys": [],
+          "asyncDataKeys": undefined,
           "cacheKey": "get_error",
-          "cacheTags": [],
-          "maxAge": -1,
+          "cacheTags": undefined,
+          "maxAge": undefined,
           "noCache": false,
-          "tag": "div",
+          "tag": undefined,
         },
         "setup function",
       ]
@@ -502,12 +502,12 @@ describe('RenderCacheable', () => {
       [
         [Error: Failed to set item.],
         {
-          "asyncDataKeys": [],
+          "asyncDataKeys": undefined,
           "cacheKey": "set_error",
-          "cacheTags": [],
-          "maxAge": -1,
+          "cacheTags": undefined,
+          "maxAge": undefined,
           "noCache": false,
-          "tag": "div",
+          "tag": undefined,
         },
         "setup function",
       ]

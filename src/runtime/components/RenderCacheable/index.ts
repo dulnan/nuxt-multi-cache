@@ -1,5 +1,4 @@
 import { defineComponent, useSlots, getCurrentInstance, h } from 'vue'
-import type { PropType } from 'vue'
 import { useNuxtApp } from '#app'
 import { provide } from '#imports'
 import { encodeComponentCacheItem } from '../../helpers/cacheItem'
@@ -9,16 +8,17 @@ import {
   getCacheKeyWithPrefix,
   enabledForRequest,
 } from './../../helpers/server'
-import { getCacheKey, getCachedComponent, renderSlot } from './helpers'
+import {
+  getCacheKey,
+  getCachedComponent,
+  renderSlot,
+  type Props,
+} from './helpers'
 import { debug, isServer } from '#nuxt-multi-cache/config'
 import {
   ComponentCacheHelper,
   INJECT_COMPONENT_CACHE_CONTEXT,
 } from '../../helpers/ComponentCacheHelper'
-
-function diff(a: string[], b: string[]): string[] {
-  return a.filter((v) => !b.includes(v))
-}
 
 /**
  * Wrapper for cacheable components.
@@ -52,72 +52,40 @@ function diff(a: string[], b: string[]): string[] {
  * though to not fetch any data in cached components but instead pass it in
  * via props and cache this data via a separate cache.
  */
-export default defineComponent({
+export default defineComponent<Props>({
   name: 'RenderCacheable',
 
   props: {
-    /**
-     * The tag to use for the wrapper. It's unfortunately not possible to
-     * implement this without a wrapper.
-     */
     tag: {
       type: String,
-      default: 'div',
     },
 
-    /**
-     * Disable caching entirely for this component.
-     */
     noCache: {
       type: Boolean,
-      default: false,
     },
 
-    /**
-     * The key to use for the cache entry. If left empty a key is automatically
-     * generated based on the props passed to the child.
-     * The key is automatically prefixed by the component name.
-     */
     cacheKey: {
       type: String,
-      default: '',
     },
 
-    /**
-     * Cache tags that can be later used for invalidation.
-     */
     cacheTags: {
-      type: Array as PropType<string[]>,
-      default: () => [],
+      type: [String, Array],
     },
 
-    /**
-     * Define a max age for the cached entry.
-     */
     maxAge: {
-      type: Number,
-      default: -1,
+      type: [Number, String],
     },
 
-    /**
-     * Provide the async data keys used by the cached component.
-     *
-     * If provided the payload data will be cached alongside the component.
-     * If the component uses asyncData and the keys are not provided you will
-     * receive a hydration mismatch error in the client.
-     */
     asyncDataKeys: {
-      type: Array as PropType<string[]>,
-      default: () => [],
+      type: Array,
     },
   },
   async setup(props) {
-    // Get Nuxt app.
-    const nuxtApp = useNuxtApp()
+    const tag = props.tag ?? 'div'
 
+    const nuxtApp = useNuxtApp()
     const slots = useSlots()
 
-    // Extract the contents of the default slot.
     if (!slots.default) {
       return () => ''
     }
@@ -131,21 +99,13 @@ export default defineComponent({
     if (isServer && !props.noCache) {
       const helper = new ComponentCacheHelper()
 
-      // For backwards-compatibility we assume that the component is
-      // cacheable by default.
-      helper.setCacheable()
-
-      if (typeof props.maxAge === 'number') {
-        helper.setMaxAge(props.maxAge)
-      }
-
       provide(INJECT_COMPONENT_CACHE_CONTEXT, helper)
 
-      const cacheKey = getCacheKey(props as any, first as any)
+      const cacheKey = getCacheKey(props, first)
 
       // Return if no cache key found.
       if (!cacheKey) {
-        return () => h(props.tag, slots.default!())
+        return () => h(tag, slots.default!())
       }
 
       // Get the current instance.
@@ -155,14 +115,14 @@ export default defineComponent({
         if (debug) {
           logger.warn('Failed to get SSR context.', props)
         }
-        return () => h(props.tag, slots.default!())
+        return () => h(tag, slots.default!())
       }
 
       const event = nuxtApp.ssrContext.event
 
       const isEnabled = await enabledForRequest(event)
       if (!isEnabled) {
-        return () => h(props.tag, slots.default!())
+        return () => h(tag, slots.default!())
       }
 
       // Method to get the cached version of a component.
@@ -255,6 +215,27 @@ export default defineComponent({
           }
         }
 
+        // For backwards-compatibility we assume that the component is
+        // cacheable by default.
+        helper.setCacheable()
+
+        if (props.asyncDataKeys) {
+          helper.addPayloadKeys(props.asyncDataKeys)
+        }
+
+        if (
+          typeof props.maxAge === 'string' ||
+          typeof props.maxAge === 'number'
+        ) {
+          helper.setMaxAge(props.maxAge)
+        } else {
+          helper.setMaxAge(-1)
+        }
+
+        if (props.cacheTags) {
+          helper.addTags(props.cacheTags)
+        }
+
         // Store the original set.
         const originalModules = nuxtApp.ssrContext.modules
 
@@ -284,14 +265,12 @@ export default defineComponent({
         // markup already generated.
         try {
           // The cache tags for this component.
-          const cacheTags = [...props.cacheTags, ...helper.tags]
-
-          const asyncDataKeys = [...props.asyncDataKeys, ...helper.payloadKeys]
+          const cacheTags = helper.tags
 
           const maxAge = helper.maxAge ?? -1
 
           // Extract the payload relevant to the component.
-          const payload: Record<string, any> = asyncDataKeys.reduce<
+          const payload: Record<string, any> = helper.payloadKeys.reduce<
             Record<string, string>
           >((acc, key) => {
             acc[key] = nuxtApp.payload.data[key]
@@ -344,7 +323,7 @@ export default defineComponent({
       const cachedMarkup = await getOrCreateCachedComponent()
       if (cachedMarkup) {
         return () =>
-          h(props.tag, {
+          h(tag, {
             innerHTML: cachedMarkup,
           })
       }
@@ -353,6 +332,6 @@ export default defineComponent({
     // Fallback behavior: Return the default slot.
     // This is also what will end up in the client bundles (default Vue
     // behavior).
-    return () => h(props.tag, slots.default!())
+    return () => h(tag, slots.default!())
   },
 })

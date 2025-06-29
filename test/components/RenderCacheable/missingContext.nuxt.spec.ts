@@ -93,9 +93,9 @@ describe('RenderCacheable with missing context', () => {
         asyncDataKeys: ['examplePayload'],
         cacheKey: 'foobar',
         cacheTags: ['test'],
-        maxAge: -1,
+        maxAge: undefined,
         noCache: false,
-        tag: 'div',
+        tag: undefined,
       },
     )
   })
@@ -126,9 +126,9 @@ describe('RenderCacheable with missing context', () => {
       asyncDataKeys: ['examplePayload'],
       cacheKey: 'foobar',
       cacheTags: ['test'],
-      maxAge: -1,
+      maxAge: undefined,
       noCache: false,
-      tag: 'div',
+      tag: undefined,
     })
   })
 })
