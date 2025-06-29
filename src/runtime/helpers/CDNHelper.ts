@@ -6,6 +6,7 @@ import {
   DEFAULT_CDN_TAG_HEADER,
 } from './../../build/options/defaults'
 import { onlyUnique } from './server'
+import { parseMaxAge, type MaxAge } from './maxAge'
 
 const numericProperties = [
   'maxAge',
@@ -153,9 +154,10 @@ export class NuxtMultiCacheCDNHelper {
    */
   public setNumeric<T extends CacheControlNumericProperties>(
     key: T,
-    value: number,
+    providedValue: MaxAge,
   ): NuxtMultiCacheCDNHelper {
     const currentValue = this._control[key]
+    const value = parseMaxAge(providedValue)
     if (
       currentValue === null ||
       currentValue === undefined ||
