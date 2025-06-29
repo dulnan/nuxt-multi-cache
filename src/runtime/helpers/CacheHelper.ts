@@ -1,4 +1,4 @@
-import { parseMaxAge, type MaxAge } from './maxAge'
+import { CACHE_PERMANENT, parseMaxAge, type MaxAge } from './maxAge'
 
 type NumericKeys<T> = {
   [K in keyof T]: T[K] extends number | null ? K : never
@@ -100,7 +100,7 @@ export class CacheHelper {
   getExpires<K extends NumericKeys<this>>(property: K): number | undefined {
     const value = this[property] as number | null
 
-    if (value === null || value === -1) {
+    if (value === null || value === CACHE_PERMANENT) {
       return
     }
 

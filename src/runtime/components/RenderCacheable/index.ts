@@ -98,239 +98,231 @@ export default defineComponent<Props>({
       return () => ''
     }
 
-    // Wrap all server-side code in an if statement so that it gets properly
-    // removed from the client bundles.
-    if (isServer && !props.noCache) {
-      const helper = new ComponentCacheHelper()
+    const renderFallback = () => h(tag, defaultSlot)
 
-      provide(INJECT_COMPONENT_CACHE_CONTEXT, helper)
+    if (!isServer || props.noCache) {
+      return renderFallback
+    }
 
-      const cacheKey = getCacheKey(props, first)
+    // We have to call provide() before the first await or else it will not
+    // work. To prevent always creating a ComponentCacheHelper instance, even
+    // if not needed, we provide an empty object instead and create the helper
+    // later and assign it to the helper property.
+    const providedContext: { helper?: ComponentCacheHelper } = {
+      helper: undefined,
+    }
 
-      // Return if no cache key found.
-      if (!cacheKey) {
-        return () => h(tag, slots.default!())
+    // Injected by useComponentCache().
+    provide(INJECT_COMPONENT_CACHE_CONTEXT, providedContext)
+
+    const ssrContext = nuxtApp.ssrContext
+
+    if (!ssrContext) {
+      if (debug) {
+        logger.warn('Failed to get SSR context.', props)
+      }
+      return renderFallback
+    }
+
+    const cacheKey = getCacheKey(props, first)
+
+    // Return if no cache key found.
+    if (!cacheKey) {
+      return renderFallback
+    }
+
+    // Get the current instance.
+    const currentInstance = getCurrentInstance()
+
+    if (!currentInstance) {
+      if (debug) {
+        logger.warn(
+          'Failed to get current instance in RenderCacheable component.',
+          props,
+        )
       }
 
-      // Get the current instance.
-      const currentInstance = getCurrentInstance()
+      return renderFallback
+    }
 
-      if (!nuxtApp.ssrContext) {
-        if (debug) {
-          logger.warn('Failed to get SSR context.', props)
-        }
-        return () => h(tag, slots.default!())
+    const event = ssrContext.event
+
+    const isEnabled = await enabledForRequest(event)
+    if (!isEnabled) {
+      return renderFallback
+    }
+
+    // Get the cache storage. If the module is disabled this will be
+    // undefined.
+    const componentCache = getMultiCacheContext(event)?.component
+    if (!componentCache) {
+      return renderFallback
+    }
+
+    const bubbleError = componentCache.bubbleError
+
+    const fullCacheKey = await getCacheKeyWithPrefix(cacheKey, event)
+
+    // Get the cached item from the storage.
+    const cached = await getCachedComponent(
+      componentCache.storage,
+      fullCacheKey,
+    ).catch((e) => {
+      logger.error('Failed to get component cache item.', {
+        fullCacheKey,
+      })
+      if (bubbleError) {
+        throw e
       }
+    })
 
-      const event = nuxtApp.ssrContext.event
-
-      const isEnabled = await enabledForRequest(event)
-      if (!isEnabled) {
-        return () => h(tag, slots.default!())
-      }
-
-      // Method to get the cached version of a component.
-      // If it doesn't exist, it will be rendered to a string and then stored
-      // in the cache.
-      const getOrCreateCachedComponent = async (): Promise<
-        string | undefined
-      > => {
-        if (!nuxtApp.ssrContext) {
-          return
-        }
-
-        // A parent component is required when calling the ssrRenderSlotInner
-        // method.
-        if (!currentInstance) {
-          if (debug) {
-            logger.warn(
-              'Failed to get current instance in RenderCacheable component.',
-              props,
-            )
-          }
-          return
-        }
-
-        // Get the cache storage. If the module is disabled this will be
-        // undefined.
-        const multiCache = getMultiCacheContext(event)
-        if (!multiCache?.component) {
-          return
-        }
-
-        const bubbleError = multiCache.component.bubbleError
-
-        const fullCacheKey = await getCacheKeyWithPrefix(cacheKey, event)
-
-        // Get the cached item from the storage.
-        const cached = await getCachedComponent(
-          multiCache.component.storage,
-          fullCacheKey,
-        ).catch((e) => {
-          logger.error('Failed to get component cache item.', {
-            fullCacheKey,
-          })
-          if (bubbleError) {
-            throw e
-          }
+    const renderMarkup = (markup: string) => {
+      return () =>
+        h(tag, {
+          innerHTML: markup,
         })
+    }
 
-        if (cached) {
-          const { data, payload, expires, ssrModules } = cached
+    if (cached) {
+      const { data, payload, expires, ssrModules } = cached
 
-          const now = Date.now() / 1000
-          const isExpired = expires && now >= expires
+      const now = Date.now() / 1000
+      const isExpired = expires && now >= expires
 
-          // Check if the cache entry is expired.
-          if (isExpired) {
-            if (debug) {
-              logger.error(
-                "Don't return component from cache because it's expired.",
-                {
-                  fullCacheKey,
-                  expires,
-                },
-              )
-            }
-          } else {
-            // If payload is available for component add it to the global payload
-            // object.
-            if (payload) {
-              Object.keys(payload).forEach((key) => {
-                nuxtApp.payload.data[key] = payload[key]
-              })
-            }
-
-            if (ssrModules && nuxtApp.ssrContext?.modules) {
-              const modules = nuxtApp.ssrContext.modules
-              ssrModules.forEach((mod) => modules.add(mod))
-            }
-
-            if (debug) {
-              logger.info('Returning cached component.', {
-                fullCacheKey,
-                payload: payload ? Object.keys(payload) : [],
-                expires,
-                props,
-              })
-            }
-
-            return data
-          }
-        }
-
-        // For backwards-compatibility we assume that the component is
-        // cacheable by default.
-        helper.setCacheable()
-
-        if (props.asyncDataKeys) {
-          helper.addPayloadKeys(props.asyncDataKeys)
-        }
-
-        if (props.maxAge !== undefined && props.maxAge !== null) {
-          helper.setMaxAge(props.maxAge)
-        }
-
-        if (props.cacheTags) {
-          helper.addTags(props.cacheTags)
-        }
-
-        // Store the original set.
-        const originalModules = nuxtApp.ssrContext.modules
-
-        // Override with a new Set, so we can capture all module identifiers
-        // that were added during rendering of the entire slot.
-        nuxtApp.ssrContext.modules = new Set()
-
-        // Render the contents of the slot to string.
-        const data = await renderSlot(slots, currentInstance)
-
-        const ssrModules = [...nuxtApp.ssrContext.modules.values()]
-
-        if (originalModules) {
-          ssrModules.forEach((id) => originalModules.add(id))
-        }
-
-        // Restore the original set.
-        nuxtApp.ssrContext.modules = originalModules
-
-        // Not cacheable, return.
-        if (!helper.isCacheable()) {
-          return data
-        }
-
-        // Storing the markup in cache is wrapped in a try/catch. That way if
-        // the cache backend is down for some reason we can still return the
-        // markup already generated.
-        try {
-          // The cache tags for this component.
-          const cacheTags = helper.tags
-
-          const maxAge = helper.maxAge ?? -1
-
-          // Extract the payload relevant to the component.
-          const payload: Record<string, any> = helper.payloadKeys.reduce<
-            Record<string, string>
-          >((acc, key) => {
-            acc[key] = nuxtApp.payload.data[key]
-            return acc
-          }, {})
-
-          const expires = helper.getExpires('maxAge')
-
-          // Store in cache.
-          multiCache.component.storage.setItemRaw(
-            fullCacheKey,
-            encodeComponentCacheItem(
-              data,
-              payload,
-              expires,
-              cacheTags,
-              ssrModules,
-            ),
-            { ttl: maxAge },
-          )
-          if (debug) {
-            logger.log('Stored component in cache.', {
-              file: currentInstance.type.__file,
-              fullCacheKey,
-              expires,
-              cacheTags,
-            })
-          }
-        } catch (e) {
+      // Check if the cache entry is expired.
+      if (isExpired) {
+        if (debug) {
           logger.error(
-            'Failed to store component in cache.',
+            "Don't return component from cache because it's expired.",
             {
               fullCacheKey,
-              props,
+              expires,
             },
-            e,
           )
-          if (bubbleError) {
-            throw e
-          }
+        }
+      } else {
+        // If payload is available for component add it to the global payload
+        // object.
+        if (payload) {
+          Object.keys(payload).forEach((key) => {
+            nuxtApp.payload.data[key] = payload[key]
+          })
         }
 
-        // Return the stringified slot content as innerHTML.
-        return data
-      }
+        if (ssrModules && nuxtApp.ssrContext?.modules) {
+          const modules = nuxtApp.ssrContext.modules
+          ssrModules.forEach((mod) => modules.add(mod))
+        }
 
-      // Try to get a cached version of the child.
-      // We wrap it in a try/catch so that in case something goes wrong (e.g.
-      // storage driver backend [redis] down) we fall back to render it again.
-      const cachedMarkup = await getOrCreateCachedComponent()
-      if (cachedMarkup) {
-        return () =>
-          h(tag, {
-            innerHTML: cachedMarkup,
+        if (debug) {
+          logger.info('Returning cached component.', {
+            fullCacheKey,
+            payload: payload ? Object.keys(payload) : [],
+            expires,
+            props,
           })
+        }
+
+        return renderMarkup(data)
       }
     }
 
-    // Fallback behavior: Return the default slot.
-    // This is also what will end up in the client bundles (default Vue
-    // behavior).
-    return () => h(tag, slots.default!())
+    const helper = new ComponentCacheHelper()
+    providedContext.helper = helper
+
+    // For backwards-compatibility we assume that the component is
+    // cacheable by default.
+    helper.setCacheable()
+
+    if (props.asyncDataKeys) {
+      helper.addPayloadKeys(props.asyncDataKeys)
+    }
+
+    if (props.maxAge !== undefined && props.maxAge !== null) {
+      helper.setMaxAge(props.maxAge)
+    }
+
+    if (props.cacheTags) {
+      helper.addTags(props.cacheTags)
+    }
+
+    // Store the original set.
+    const originalModules = ssrContext.modules
+
+    // Override with a new Set, so we can capture all module identifiers
+    // that were added during rendering of the entire slot.
+    ssrContext.modules = new Set()
+
+    // Render the contents of the slot to string.
+    const slotMarkup = await renderSlot(slots, currentInstance)
+
+    const ssrModules = [...ssrContext.modules.values()]
+
+    if (originalModules) {
+      ssrModules.forEach((id) => originalModules.add(id))
+    }
+
+    // Restore the original set.
+    ssrContext.modules = originalModules
+
+    // Not cacheable, return.
+    if (!helper.isCacheable()) {
+      return renderMarkup(slotMarkup)
+    }
+
+    // Storing the markup in cache is wrapped in a try/catch. That way if
+    // the cache backend is down for some reason we can still return the
+    // markup already generated.
+    try {
+      // The cache tags for this component.
+      const cacheTags = helper.tags
+
+      const maxAge = helper.maxAge
+
+      // Extract the payload relevant to the component.
+      const payload: Record<string, any> = helper.payloadKeys.reduce<
+        Record<string, string>
+      >((acc, key) => {
+        acc[key] = nuxtApp.payload.data[key]
+        return acc
+      }, {})
+
+      const expires = helper.getExpires('maxAge')
+
+      // Store in cache.
+      await componentCache.storage.setItemRaw(
+        fullCacheKey,
+        encodeComponentCacheItem(
+          slotMarkup,
+          payload,
+          expires,
+          cacheTags,
+          ssrModules,
+        ),
+        { ttl: maxAge },
+      )
+      if (debug) {
+        logger.log('Stored component in cache.', {
+          file: currentInstance.type.__file,
+          fullCacheKey,
+          expires,
+          cacheTags,
+        })
+      }
+    } catch (e) {
+      logger.error(
+        'Failed to store component in cache.',
+        {
+          fullCacheKey,
+          props,
+        },
+        e,
+      )
+      if (bubbleError) {
+        throw e
+      }
+    }
+
+    return renderMarkup(slotMarkup)
   },
 })

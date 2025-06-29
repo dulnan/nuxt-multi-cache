@@ -1,7 +1,7 @@
 {
   "name": "nuxt-multi-cache",
   "version": "4.0.0-alpha.1",
-  "description": "SSR route, component and data cache for Nuxt.js",
+  "description": "SSR route, component and data cache for Nuxt",
   "type": "module",
   "exports": {
     ".": {

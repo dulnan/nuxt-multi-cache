@@ -34,6 +34,10 @@ describe('Module setup', () => {
         component: {
           enabled: true,
         },
+        api: {
+          enabled: false,
+          authorization: false,
+        },
       },
       nuxt,
     )

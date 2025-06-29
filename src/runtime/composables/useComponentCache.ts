@@ -20,14 +20,14 @@ export function useComponentCache(
     return
   }
 
-  const helper = inject<ComponentCacheHelper | null>(
+  const ctx = inject<{ helper?: ComponentCacheHelper } | null>(
     INJECT_COMPONENT_CACHE_CONTEXT,
     null,
   )
 
-  if (!helper) {
+  if (!ctx?.helper) {
     return
   }
 
-  cb(helper)
+  cb(ctx.helper)
 }
