@@ -26,12 +26,24 @@ export class CacheHelper {
    * concrete class `this` is*.  That includes fields that subclasses
    * add later.
    */
-  setNumeric<K extends NumericKeys<this>>(property: K, value: number): this {
+  setNumeric<K extends NumericKeys<this>>(
+    property: K,
+    providedValue: number | string,
+  ): this {
     const current = this[property] as number | null
 
-    if (current === null || value < current) {
-      // TypeScript cannot prove the assignment is safe, so cast.
-      ;(this as any)[property] = value
+    const value =
+      typeof providedValue === 'string'
+        ? parseInt(providedValue)
+        : providedValue
+
+    if (Number.isNaN(value)) {
+      return this
+    }
+
+    if (current === null || value < current || current === -1) {
+      // @ts-expect-error It's correct, but TS doesn't know.
+      this[property] = value
     }
     return this
   }
@@ -44,7 +56,7 @@ export class CacheHelper {
    *
    * You can always directly set the maxAge property on this object.
    */
-  setMaxAge(v = 0): this {
+  setMaxAge(v: string | number = 0): this {
     // @ts-expect-error TS is not able to determine the type here because the base class uses this in the generic.
     return this.setNumeric('maxAge', v)
   }

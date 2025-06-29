@@ -131,8 +131,12 @@ export class NuxtMultiCacheCDNHelper {
   /**
    * Add cache tags.
    */
-  public addTags(tags: string[]): NuxtMultiCacheCDNHelper {
-    this._tags.push(...tags)
+  public addTags(tags?: string | string[]): NuxtMultiCacheCDNHelper {
+    if (Array.isArray(tags)) {
+      this._tags.push(...tags)
+    } else if (typeof tags === 'string') {
+      this._tags.push(tags)
+    }
     return this
   }
 
