@@ -91,6 +91,10 @@ argument (`'weather'`) as the key:
 const { data: weather } = await useCachedAsyncData<WeatherResponse>(
   'weather',
   () => $fetch('/api/getWeather'),
+  {
+    clientMaxAge: '5m',
+    serverMaxAge: 'permanent',
+  },
 )
 ```
 

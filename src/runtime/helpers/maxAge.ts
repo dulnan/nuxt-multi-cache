@@ -22,7 +22,7 @@ type NamedInterval = 'next-hour' | 'midnight' | 'end-of-week'
 
 type NamedMaxAge = NamedExpires | NamedInterval
 
-export type MaxAge = NamedMaxAge | 'permanent' | number
+export type MaxAge = NamedMaxAge | 'permanent' | 'never' | number
 
 function calculateInterval(v: NamedInterval): number {
   const now = new Date()
@@ -64,6 +64,8 @@ export function parseMaxAge(v: MaxAge): number {
     return calculateInterval(v)
   } else if (v === 'permanent') {
     return CACHE_PERMANENT
+  } else if (v === 'never') {
+    return CACHE_NEVER
   }
 
   const duration = DURATIONS[v]

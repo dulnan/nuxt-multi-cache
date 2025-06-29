@@ -12,7 +12,12 @@ import {
   toValue,
   computed,
 } from '#imports'
-import { parseMaxAge, type MaxAge } from '../helpers/maxAge'
+import {
+  CACHE_PERMANENT,
+  CACHE_NEVER,
+  parseMaxAge,
+  type MaxAge,
+} from '../helpers/maxAge'
 
 type KeysOf<T> = Array<
   T extends T ? (keyof T extends string ? keyof T : never) : never
@@ -31,21 +36,23 @@ type CachedAsyncDataOptions<
   /**
    * The client-side max age in seconds.
    *
-   * If undefined, 0 or negative, nothing will be cached.
+   * If undefined or 0, nothing will be cached. To cache permanently, define 'permanent' or -1.
    *
    * If a positive integer value is provided, the composable will return
    * cached data (either from payload or from previous client-side
    * fetches) for the given duration.
    */
-  clientMaxAge?: MaxAge
+  clientMaxAge: MaxAge
 
   /**
    * The server-side max age in seconds.
    *
    * Can be a number or a method that receives the result of your useAsyncData
    * handler and should return a number.
+   *
+   * If undefined or 0, nothing will be cached. To cache permanently, define 'permanent' or -1.
    */
-  serverMaxAge?: ValueOrMethod<MaxAge, ResT>
+  serverMaxAge: ValueOrMethod<MaxAge, ResT>
 
   /**
    * The server-side cache tags to use.
@@ -92,7 +99,7 @@ function valueOrMethod<T extends number | string[] | MaxAge, ResT>(
 }
 
 function isValidMaxAge(v?: unknown): v is number {
-  return typeof v === 'number' && (v >= 1 || v === -1)
+  return typeof v === 'number' && (v >= 1 || v === CACHE_PERMANENT)
 }
 
 export function useCachedAsyncData<
@@ -104,7 +111,7 @@ export function useCachedAsyncData<
 >(
   key: MaybeRefOrGetter<string>,
   handler: (ctx?: NuxtApp) => Promise<ResT>,
-  options?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
+  options: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
 ): AsyncData<
   PickFrom<DataT, PickKeys> | DefaultT,
   | (NuxtErrorDataT extends Error | NuxtError
@@ -122,7 +129,7 @@ export function useCachedAsyncData<
 >(
   key: MaybeRefOrGetter<string>,
   handler: (ctx?: NuxtApp) => Promise<ResT>,
-  options?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
+  options: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
 ): AsyncData<
   PickFrom<DataT, PickKeys> | DefaultT,
   | (NuxtErrorDataT extends Error | NuxtError
@@ -142,9 +149,9 @@ export function useCachedAsyncData<
  * value. This will cache the result in Nuxt's static data cache. The cache is
  * not permanent, e.g. a browser refresh "purges" all cached data.
  *
- * @param {string} key The key used for both useAsyncData and useDataCache.
+ * @param {string} _key The key used for both useAsyncData and useDataCache.
  * @param {Function} handler The handler that should fetch the data.
- * @param {CachedAsyncDataOptions|undefined} providedOptions The options.
+ * @param {CachedAsyncDataOptions} options The options.
  */
 export function useCachedAsyncData<
   ResT,
@@ -155,7 +162,10 @@ export function useCachedAsyncData<
 >(
   _key: MaybeRefOrGetter<string>,
   handler: (app?: NuxtApp) => Promise<ResT>,
-  providedOptions?: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT>,
+  options: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT> = {
+    clientMaxAge: 0,
+    serverMaxAge: 0,
+  },
 ): AsyncData<
   PickFrom<DataT, PickKeys> | DefaultT,
   | (NuxtErrorDataT extends Error | NuxtError
@@ -164,10 +174,6 @@ export function useCachedAsyncData<
   | DefaultAsyncDataErrorValue
 > {
   const reactiveKey = computed(() => toValue(_key))
-  const options: CachedAsyncDataOptions<ResT, DataT, PickKeys, DefaultT> =
-    providedOptions && typeof providedOptions === 'object'
-      ? providedOptions
-      : {}
 
   // Client-side behaviour is slightly different than server side.
   // On the client, the result is cached in a static cache.
@@ -295,7 +301,8 @@ export function useCachedAsyncData<
       const cacheTags = valueOrMethod(options?.serverCacheTags, result)
 
       // Get the max age.
-      const providedMaxAge = valueOrMethod(options?.serverMaxAge, result) ?? 0
+      const providedMaxAge =
+        valueOrMethod(options?.serverMaxAge, result) ?? CACHE_NEVER
 
       // We transform the data here, so we can store it in the cache.
       const data = options?.transform
