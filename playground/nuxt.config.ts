@@ -48,6 +48,15 @@ export default defineNuxtConfig({
     },
   },
 
+  typescript: {
+    strict: true,
+    tsConfig: {
+      compilerOptions: {
+        noUncheckedIndexedAccess: true,
+      },
+    },
+  },
+
   future: {
     compatibilityVersion: 4,
   },

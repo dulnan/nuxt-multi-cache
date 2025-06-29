@@ -94,6 +94,10 @@ export default defineComponent<Props>({
 
     const first = defaultSlot[0]
 
+    if (!first) {
+      return () => ''
+    }
+
     // Wrap all server-side code in an if statement so that it gets properly
     // removed from the client bundles.
     if (isServer && !props.noCache) {

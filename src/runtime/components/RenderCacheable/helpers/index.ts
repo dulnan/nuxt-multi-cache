@@ -15,7 +15,7 @@ import {
 import { logger } from '../../../helpers/logger'
 import type { ComponentCacheItem } from './../../../types'
 import { debug } from '#nuxt-multi-cache/config'
-import type { MaxAge } from '~/src/runtime/helpers/maxAge'
+import type { MaxAge } from './../../../helpers/maxAge'
 
 type RenderCacheableSlotVNode = VNode<
   RendererNode,

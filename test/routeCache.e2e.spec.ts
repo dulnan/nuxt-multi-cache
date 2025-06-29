@@ -122,7 +122,7 @@ describe('The route cache feature', () => {
       },
     )
 
-    const cacheItem = decodeRouteCacheItem(cache.rows[0].data)
+    const cacheItem = decodeRouteCacheItem(cache.rows[0]!.data)
 
     expect(cacheItem?.headers['set-cookie']).toEqual(undefined)
   })
@@ -144,7 +144,7 @@ describe('The route cache feature', () => {
       },
     )
 
-    const cacheItem = decodeRouteCacheItem(cache.rows[0].data)
+    const cacheItem = decodeRouteCacheItem(cache.rows[0]!.data)
 
     expect(cacheItem?.headers['set-cookie']).toMatchInlineSnapshot(
       `"country=us; Path=/"`,
