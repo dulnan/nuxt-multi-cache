@@ -77,6 +77,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext: {},
         event: {},
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -105,6 +106,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext: {},
         event: {},
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -130,6 +132,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -153,6 +156,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -179,6 +183,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -199,6 +204,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {
             examplePayload: EXAMPLE_PAYLOAD,
@@ -224,6 +230,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -249,6 +256,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -277,6 +285,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -294,6 +303,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload,
       }
     })
@@ -321,6 +331,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -341,6 +352,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -361,6 +373,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload,
       }
     })
@@ -388,6 +401,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload,
       }
     })
@@ -403,7 +417,7 @@ describe('RenderCacheable', () => {
             "asyncDataKeys": [],
             "cacheKey": "set_error",
             "cacheTags": [],
-            "maxAge": 0,
+            "maxAge": -1,
             "noCache": false,
             "tag": "div",
           },
@@ -428,6 +442,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -444,7 +459,7 @@ describe('RenderCacheable', () => {
           "asyncDataKeys": [],
           "cacheKey": "get_error",
           "cacheTags": [],
-          "maxAge": 0,
+          "maxAge": -1,
           "noCache": false,
           "tag": "div",
         },
@@ -472,6 +487,7 @@ describe('RenderCacheable', () => {
       return {
         ssrContext,
         event: ssrContext.event,
+        _asyncData: {},
         payload: {
           data: {},
         },
@@ -489,7 +505,7 @@ describe('RenderCacheable', () => {
           "asyncDataKeys": [],
           "cacheKey": "set_error",
           "cacheTags": [],
-          "maxAge": 0,
+          "maxAge": -1,
           "noCache": false,
           "tag": "div",
         },

@@ -1,10 +1,10 @@
 import path from 'path'
 import { setup, createPage } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
+import { expect as playwrightExpect } from '@nuxt/test-utils/playwright'
 import type { ModuleOptions } from '../src/build/options'
 import purgeAll from './__helpers__/purgeAll'
 import getDataCacheItems from './__helpers__/getDataCacheItems'
-import { sleep } from './__helpers__'
 
 const multiCache: ModuleOptions = {
   component: {
@@ -133,20 +133,15 @@ describe('The useCachedAsyncData composable', () => {
     await purgeAll()
 
     const page = await createPage('/useCachedAsyncDataReactiveKey')
-    const number1 = await page.locator('#api-value').innerText()
+    await playwrightExpect(page.locator('#api-value')).toHaveText('0')
     const initialTimestamp = await page.locator('#api-timestamp').innerText()
 
-    expect(number1).toEqual('0')
-
     await page.locator('#increment').click()
-    sleep(500)
-    expect(await page.locator('#api-value').innerText()).toEqual('1')
+    await playwrightExpect(page.locator('#api-value')).toHaveText('1')
     await page.locator('#increment').click()
-    sleep(500)
-    expect(await page.locator('#api-value').innerText()).toEqual('2')
+    await playwrightExpect(page.locator('#api-value')).toHaveText('2')
     await page.locator('#decrement').click()
     await page.locator('#decrement').click()
-    sleep(500)
 
     const timestamp = await page.locator('#api-timestamp').innerText()
     // It should be the same timestamp as initially, because it's still within
@@ -154,6 +149,6 @@ describe('The useCachedAsyncData composable', () => {
     expect(initialTimestamp).toEqual(timestamp)
 
     // And it should again be 0.
-    expect(await page.locator('#api-value').innerText()).toEqual('0')
+    await playwrightExpect(page.locator('#api-value')).toHaveText('0')
   })
 }, 8_000)

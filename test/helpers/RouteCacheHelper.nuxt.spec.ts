@@ -23,14 +23,8 @@ describe('The RouteCacheHelper', () => {
     expect(methods).toMatchInlineSnapshot(`
       [
         "constructor",
-        "addTags",
-        "setCacheable",
-        "setUncacheable",
-        "setNumeric",
-        "setMaxAge",
         "setStaleIfError",
         "allowStaleWhileRevalidate",
-        "getExpires",
       ]
     `)
 

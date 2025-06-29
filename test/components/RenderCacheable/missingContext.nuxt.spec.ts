@@ -68,7 +68,7 @@ describe('RenderCacheable with missing context', () => {
     const loggerSpy = vi.spyOn(logger, 'warn')
 
     const vue = await import('vue')
-    vue.getCurrentInstance = vi.fn().mockReturnValue({ parent: undefined })
+    vue.getCurrentInstance = vi.fn().mockReturnValue(null)
     vue.useSSRContext = vi.fn().mockReturnValue({ event: {} })
 
     // App with storage containing a cached component.
@@ -88,12 +88,12 @@ describe('RenderCacheable with missing context', () => {
 
     await renderToString(app, ssrContext)
     expect(loggerSpy).toHaveBeenCalledWith(
-      'Failed to get parent component in Cacheable component.',
+      'Failed to get current instance in RenderCacheable component.',
       {
         asyncDataKeys: ['examplePayload'],
         cacheKey: 'foobar',
         cacheTags: ['test'],
-        maxAge: 0,
+        maxAge: -1,
         noCache: false,
         tag: 'div',
       },
@@ -126,7 +126,7 @@ describe('RenderCacheable with missing context', () => {
       asyncDataKeys: ['examplePayload'],
       cacheKey: 'foobar',
       cacheTags: ['test'],
-      maxAge: 0,
+      maxAge: -1,
       noCache: false,
       tag: 'div',
     })
