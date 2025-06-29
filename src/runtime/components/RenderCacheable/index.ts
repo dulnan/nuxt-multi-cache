@@ -115,18 +115,15 @@ export default defineComponent({
     // Get Nuxt app.
     const nuxtApp = useNuxtApp()
 
-    const ssrModulesBefore =
-      isServer && nuxtApp.ssrContext && nuxtApp.ssrContext.modules
-        ? [...nuxtApp.ssrContext.modules.values()]
-        : []
+    const slots = useSlots()
 
     // Extract the contents of the default slot.
-    const slots = useSlots()
     if (!slots.default) {
       return () => ''
     }
 
     const defaultSlot = slots.default()
+
     const first = defaultSlot[0]
 
     // Wrap all server-side code in an if statement so that it gets properly
@@ -174,6 +171,10 @@ export default defineComponent({
       const getOrCreateCachedComponent = async (): Promise<
         string | undefined
       > => {
+        if (!nuxtApp.ssrContext) {
+          return
+        }
+
         // A parent component is required when calling the ssrRenderSlotInner
         // method.
         if (!currentInstance) {
@@ -254,22 +255,29 @@ export default defineComponent({
           }
         }
 
+        // Store the original set.
+        const originalModules = nuxtApp.ssrContext.modules
+
+        // Override with a new Set, so we can capture all module identifiers
+        // that were added during rendering of the entire slot.
+        nuxtApp.ssrContext.modules = new Set()
+
         // Render the contents of the slot to string.
         const data = await renderSlot(slots, currentInstance)
+
+        const ssrModules = [...nuxtApp.ssrContext.modules.values()]
+
+        if (originalModules) {
+          ssrModules.forEach((id) => originalModules.add(id))
+        }
+
+        // Restore the original set.
+        nuxtApp.ssrContext.modules = originalModules
 
         // Not cacheable, return.
         if (!helper.isCacheable()) {
           return data
         }
-
-        const ssrModulesAfter = nuxtApp.ssrContext!.modules
-          ? [...nuxtApp.ssrContext!.modules.values()]
-          : []
-
-        // Figure out which modules were added to the set while rendering.
-        const ssrModules = ssrModulesAfter.filter(
-          (v) => !ssrModulesBefore.includes(v),
-        )
 
         // Storing the markup in cache is wrapped in a try/catch. That way if
         // the cache backend is down for some reason we can still return the
