@@ -3,6 +3,7 @@ import { setup, createPage } from '@nuxt/test-utils/e2e'
 import { describe, expect, test, beforeEach } from 'vitest'
 import purgeAll from './../../__helpers__/purgeAll'
 import getComponentCacheItem from '~/test/__helpers__/getComponentCacheItem'
+import { parseMaxAge } from '~/src/runtime/helpers/maxAge'
 
 await setup({
   server: true,
@@ -49,5 +50,69 @@ describe('The RenderCacheable component', () => {
       diff,
       'The component sets a max age of 10, so the number of seconds until it expires should be less than the defined max age',
     ).toBeLessThan(15)
+  })
+
+  test('sets max age of "0" correctly on component', async () => {
+    const page1 = await createPage('/max-age?maxAge=0')
+    const timestamp1 = await page1.locator('#timestamp').innerText()
+    const page2 = await createPage('/max-age?maxAge=0')
+    const timestamp2 = await page2.locator('#timestamp').innerText()
+
+    expect(timestamp1).not.toEqual(timestamp2)
+  })
+
+  test('sets max age of "-1" correctly on component', async () => {
+    const page1 = await createPage('/max-age?maxAge=-1')
+    const timestamp1 = await page1.locator('#timestamp').innerText()
+    const page2 = await createPage('/max-age?maxAge=-1')
+    const timestamp2 = await page2.locator('#timestamp').innerText()
+
+    expect(timestamp1).toEqual(timestamp2)
+  })
+
+  test('sets max age of "1d" correctly on component', async () => {
+    const page1 = await createPage('/max-age?maxAge=1d')
+    const timestamp1 = await page1.locator('#timestamp').innerText()
+    const page2 = await createPage('/max-age?maxAge=1d')
+    const timestamp2 = await page2.locator('#timestamp').innerText()
+
+    expect(timestamp1).toEqual(timestamp2)
+
+    const rows = await getComponentCacheItem()
+    expect(rows).toHaveLength(1)
+
+    const now = Math.round(Date.now() / 1000)
+
+    const expires = rows.at(0)!.item!.expires!
+    const maxAge = expires - now
+
+    const diff = Math.round(maxAge / 60 / 60)
+
+    // Because we use Math.round(), even several seconds will not cause the
+    // diff to go to 23.
+    expect(diff).toEqual(24)
+  })
+
+  test('sets max age of "midnight" correctly on component', async () => {
+    const page1 = await createPage('/max-age?maxAge=midnight')
+    const timestamp1 = await page1.locator('#timestamp').innerText()
+    const page2 = await createPage('/max-age?maxAge=midnight')
+    const timestamp2 = await page2.locator('#timestamp').innerText()
+
+    expect(timestamp1).toEqual(timestamp2)
+
+    const rows = await getComponentCacheItem()
+    expect(rows).toHaveLength(1)
+
+    const now = Math.round(Date.now() / 1000)
+
+    const expectedMaxAge = Math.round(parseMaxAge('midnight') / 60)
+
+    const expires = rows.at(0)!.item!.expires!
+    const maxAge = expires - now
+
+    // Dividing by 60 gives us 1min of time for the test to run, which is way
+    // above the actual timeout.
+    expect(Math.round(maxAge / 60)).toEqual(expectedMaxAge)
   })
 })

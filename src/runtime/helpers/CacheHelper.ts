@@ -1,3 +1,5 @@
+import { parseMaxAge, type MaxAge } from './maxAge'
+
 type NumericKeys<T> = {
   [K in keyof T]: T[K] extends number | null ? K : never
 }[keyof T]
@@ -28,18 +30,11 @@ export class CacheHelper {
    */
   setNumeric<K extends NumericKeys<this>>(
     property: K,
-    providedValue: number | string,
+    providedValue: MaxAge,
   ): this {
     const current = this[property] as number | null
 
-    const value =
-      typeof providedValue === 'string'
-        ? parseInt(providedValue)
-        : providedValue
-
-    if (Number.isNaN(value)) {
-      return this
-    }
+    const value = parseMaxAge(providedValue)
 
     if (current === null || value < current || current === -1) {
       // @ts-expect-error It's correct, but TS doesn't know.
@@ -56,7 +51,7 @@ export class CacheHelper {
    *
    * You can always directly set the maxAge property on this object.
    */
-  setMaxAge(v: string | number = 0): this {
+  setMaxAge(v: MaxAge): this {
     // @ts-expect-error TS is not able to determine the type here because the base class uses this in the generic.
     return this.setNumeric('maxAge', v)
   }

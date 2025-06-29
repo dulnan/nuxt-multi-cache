@@ -13,6 +13,12 @@ import {
 } from '../../helpers/server'
 import { logger } from '../../helpers/logger'
 import { debug } from '#nuxt-multi-cache/config'
+import {
+  CACHE_NEVER,
+  CACHE_PERMANENT,
+  type MaxAge,
+  parseMaxAge,
+} from '../../helpers/maxAge'
 
 export async function useDataCache<T>(
   key: string,
@@ -43,10 +49,17 @@ export async function useDataCache<T>(
   const addToCache: DataCacheAddToCacheMethod<T> = (
     data: T,
     cacheTags: string[] = [],
-    maxAge?: number,
+    providedMaxAge?: MaxAge,
   ) => {
     const item: CacheItem = { data: data as any, cacheTags }
-    if (maxAge) {
+    const maxAge =
+      providedMaxAge !== undefined ? parseMaxAge(providedMaxAge) : null
+
+    if (maxAge === CACHE_NEVER) {
+      return Promise.resolve()
+    }
+
+    if (maxAge !== CACHE_PERMANENT && typeof maxAge === 'number') {
       item.expires = getExpiresValue(maxAge)
     }
 
@@ -55,7 +68,9 @@ export async function useDataCache<T>(
     }
 
     try {
-      return multiCache.data!.storage.setItem(fullKey, item, { ttl: maxAge })
+      return multiCache.data!.storage.setItem(fullKey, item, {
+        ttl: maxAge !== CACHE_PERMANENT ? maxAge : undefined,
+      })
     } catch (e) {
       logger.error('Failed to store data cache item.', e)
       if (bubbleError) {

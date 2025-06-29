@@ -4,6 +4,7 @@ import type { H3Event } from 'h3'
 import type { NuxtMultiCacheRouteCacheHelper } from './helpers/RouteCacheHelper'
 import type { NuxtMultiCacheCDNHelper } from './helpers/CDNHelper'
 import type { MultiCacheState } from './helpers/MultiCacheState'
+import type { MaxAge } from './helpers/maxAge'
 
 export type MultiCacheInstance = {
   storage: Storage
@@ -206,7 +207,7 @@ export type CachePurgeTagsResponse = {
 export type DataCacheAddToCacheMethod<T> = (
   data: T,
   tags?: string[],
-  maxAge?: number,
+  maxAge?: MaxAge,
 ) => Promise<void>
 
 export type DataCacheCallbackContext<T> = {

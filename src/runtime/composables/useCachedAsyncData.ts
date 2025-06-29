@@ -12,12 +12,13 @@ import {
   toValue,
   computed,
 } from '#imports'
+import { parseMaxAge, type MaxAge } from '../helpers/maxAge'
 
 type KeysOf<T> = Array<
   T extends T ? (keyof T extends string ? keyof T : never) : never
 >
 
-type ValueOrMethod<T extends number | string[] | undefined, ResT> =
+type ValueOrMethod<T extends number | string[] | undefined | MaxAge, ResT> =
   | ((v: ResT) => T)
   | T
 
@@ -36,7 +37,7 @@ type CachedAsyncDataOptions<
    * cached data (either from payload or from previous client-side
    * fetches) for the given duration.
    */
-  clientMaxAge?: number
+  clientMaxAge?: MaxAge
 
   /**
    * The server-side max age in seconds.
@@ -44,7 +45,7 @@ type CachedAsyncDataOptions<
    * Can be a number or a method that receives the result of your useAsyncData
    * handler and should return a number.
    */
-  serverMaxAge?: ValueOrMethod<number, ResT>
+  serverMaxAge?: ValueOrMethod<MaxAge, ResT>
 
   /**
    * The server-side cache tags to use.
@@ -80,7 +81,7 @@ function getClientSideCachedData<DataT>(
 /**
  * Resolves the value for options that can either be a value or method.
  */
-function valueOrMethod<T extends number | string[], ResT>(
+function valueOrMethod<T extends number | string[] | MaxAge, ResT>(
   value: ValueOrMethod<T, ResT> | undefined,
   result: ResT,
 ): T | undefined {
@@ -91,7 +92,7 @@ function valueOrMethod<T extends number | string[], ResT>(
 }
 
 function isValidMaxAge(v?: unknown): v is number {
-  return typeof v === 'number' && v >= 1
+  return typeof v === 'number' && (v >= 1 || v === -1)
 }
 
 export function useCachedAsyncData<
@@ -189,11 +190,15 @@ export function useCachedAsyncData<
           ? await options.transform(result)
           : (result as DataT)
 
+        const maxAge = options.clientMaxAge
+          ? parseMaxAge(options.clientMaxAge)
+          : null
+
         // If a value is provided, we may also cache it client side.
-        if (isValidMaxAge(options.clientMaxAge)) {
+        if (isValidMaxAge(maxAge)) {
           const cacheItem: ClientSideCachedAsyncData<DataT> = {
             data,
-            expires: Date.now() + options.clientMaxAge * 1000,
+            expires: Date.now() + maxAge * 1000,
           }
           app.static.data[reactiveKey.value] = cacheItem
         }
@@ -290,18 +295,15 @@ export function useCachedAsyncData<
       const cacheTags = valueOrMethod(options?.serverCacheTags, result)
 
       // Get the max age.
-      const maxAge = valueOrMethod(options?.serverMaxAge, result)
+      const providedMaxAge = valueOrMethod(options?.serverMaxAge, result) ?? 0
 
       // We transform the data here, so we can store it in the cache.
       const data = options?.transform
         ? await options.transform(result)
         : (result as DataT)
 
-      // <= 0 means should not cache.
-      if (isValidMaxAge(maxAge)) {
-        // Add the item to the cache.
-        await addToCache(data, cacheTags, maxAge)
-      }
+      // Add the item to the cache.
+      await addToCache(data, cacheTags, providedMaxAge)
 
       // Again, we have to cast it here because the transform method was called
       // manually and is not called again by Nuxt.

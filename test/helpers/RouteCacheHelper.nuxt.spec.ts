@@ -32,7 +32,7 @@ describe('The RouteCacheHelper', () => {
     expect(helper.addTags()).toEqual(helper)
     expect(helper.setCacheable()).toEqual(helper)
     expect(helper.setUncacheable()).toEqual(helper)
-    expect(helper.setMaxAge()).toEqual(helper)
+    expect(helper.setMaxAge(0)).toEqual(helper)
     expect(helper.setStaleIfError()).toEqual(helper)
   })
 

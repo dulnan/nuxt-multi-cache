@@ -15,6 +15,7 @@ import {
 import { logger } from '../../../helpers/logger'
 import type { ComponentCacheItem } from './../../../types'
 import { debug } from '#nuxt-multi-cache/config'
+import type { MaxAge } from '~/src/runtime/helpers/maxAge'
 
 type RenderCacheableSlotVNode = VNode<
   RendererNode,
@@ -49,7 +50,7 @@ export type Props = {
   /**
    * Define a max age for the cached entry.
    */
-  maxAge?: number | string
+  maxAge?: MaxAge
 
   /**
    * Provide the async data keys used by the cached component.

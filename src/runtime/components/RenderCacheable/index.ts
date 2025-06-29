@@ -223,13 +223,8 @@ export default defineComponent<Props>({
           helper.addPayloadKeys(props.asyncDataKeys)
         }
 
-        if (
-          typeof props.maxAge === 'string' ||
-          typeof props.maxAge === 'number'
-        ) {
+        if (props.maxAge !== undefined && props.maxAge !== null) {
           helper.setMaxAge(props.maxAge)
-        } else {
-          helper.setMaxAge(-1)
         }
 
         if (props.cacheTags) {
