@@ -33,7 +33,7 @@ describe('The RouteCacheHelper', () => {
     expect(helper.setCacheable()).toEqual(helper)
     expect(helper.setUncacheable()).toEqual(helper)
     expect(helper.setMaxAge(0)).toEqual(helper)
-    expect(helper.setStaleIfError()).toEqual(helper)
+    expect(helper.setStaleIfError(0)).toEqual(helper)
   })
 
   test('adds cache tags', () => {

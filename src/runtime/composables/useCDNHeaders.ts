@@ -11,11 +11,14 @@ import { isServer } from '#nuxt-multi-cache/config'
  * That way the entire code patch, incl. calling useCDNHeaders, is removed
  * from client bundles.
  *
- * @param providedEvent Must be provided if not in a Vue context (page, component). This is the case when using this inside defineEventHandler.
+ * @param cb - The callback. Receives the CDN Helper as the first argument.
+ * @param providedEvent - Optionally provide the request event if useRequestEvent() fails.
+ * @param applyToEvent - Whether to apply the headers to the event. Defaults to false.
  */
 export function useCDNHeaders(
   cb: (helper: NuxtMultiCacheCDNHelper) => void,
   providedEvent?: H3Event,
+  applyToEvent?: boolean,
 ): void {
   if (!isServer) {
     return
@@ -27,5 +30,5 @@ export function useCDNHeaders(
     return
   }
 
-  serverUseCdnHeaders(cb, event)
+  serverUseCdnHeaders(cb, event, applyToEvent)
 }

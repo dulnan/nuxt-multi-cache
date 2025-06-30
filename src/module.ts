@@ -62,6 +62,7 @@ export default defineNuxtModule<ModuleOptions>({
     if (options.cdn || nuxt.options._prepare) {
       helper.addComposable('useCDNHeaders')
       helper.addServerUtil('useCDNHeaders')
+      helper.addPlugin('applyCDNHeaders', 'server')
     }
 
     // Add RenderCacheable component if feature is enabled.

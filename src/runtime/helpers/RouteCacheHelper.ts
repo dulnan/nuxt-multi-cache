@@ -1,4 +1,5 @@
 import { CacheHelper } from './CacheHelper'
+import type { MaxAge } from './maxAge'
 
 export class NuxtMultiCacheRouteCacheHelper extends CacheHelper {
   /**
@@ -16,7 +17,7 @@ export class NuxtMultiCacheRouteCacheHelper extends CacheHelper {
    *
    * If set, then a stale route will be served if that refreshed route throws an error.
    */
-  setStaleIfError(v = 0): NuxtMultiCacheRouteCacheHelper {
+  setStaleIfError(v: MaxAge): NuxtMultiCacheRouteCacheHelper {
     // @ts-expect-error TS is not able to determine the type here because the base class uses this in the generic.
     return this.setNumeric('staleIfError', v)
   }

@@ -9,6 +9,7 @@ import {
 export function useCDNHeaders(
   cb: (helper: NuxtMultiCacheCDNHelper) => void,
   event: H3Event,
+  applyToEvent?: boolean,
 ): void {
   if (!cdnEnabled) {
     return
@@ -26,6 +27,10 @@ export function useCDNHeaders(
   }
 
   cb(helper)
+
+  if (applyToEvent === false) {
+    return
+  }
 
   // We have to set the headers already here because we could be in a cached
   // nitro event handler, where the event is being duplicated to run the

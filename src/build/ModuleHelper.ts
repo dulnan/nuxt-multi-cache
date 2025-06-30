@@ -251,10 +251,16 @@ export class ModuleHelper {
     }
   }
 
-  public addPlugin(name: string) {
-    addPlugin(this.resolvers.module.resolve('./runtime/plugins/' + name), {
-      append: false,
-    })
+  public addPlugin(name: string, mode: 'all' | 'server' | 'client') {
+    addPlugin(
+      {
+        src: this.resolvers.module.resolve('./runtime/plugins/' + name),
+        mode,
+      },
+      {
+        append: false,
+      },
+    )
   }
 
   public addServerHandler(name: string, path: string, method: RouterMethod) {
