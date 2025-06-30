@@ -22,6 +22,28 @@ type NamedInterval = 'next-hour' | 'midnight' | 'end-of-week'
 
 type NamedMaxAge = NamedExpires | NamedInterval
 
+/**
+ * Possible values when defining max age or other time-based values.
+ *
+ * - 1m - Cache for 1 minute.
+ * - 5m - Cache for 5 minutes.
+ * - 10m - Cache for 10 minutes.
+ * - 15m - Cache for 15 minutes.
+ * - 30m - Cache for 30 minutes.
+ * - 1h - Cache for 1 hour.
+ * - 2h - Cache for 2 hours.
+ * - 4h - Cache for 4 hours.
+ * - 6h - Cache for 6 hours.
+ * - 12h - Cache for 12 hours.
+ * - 1d - Cache for 1 day.
+ * - 2d - Cache for 2 days.
+ * - 7d - Cache for 7 days.
+ * - permanent - Cache forever.
+ * - never - Do not cache at all.
+ * - next-hour - Cache until the next full hour.
+ * - midnight - Cache until midnight.
+ * - end-of-week - Cache until end of current week (Sunday at 23:59:59).
+ */
 export type MaxAge = NamedMaxAge | 'permanent' | 'never' | number
 
 function calculateInterval(v: NamedInterval): number {

@@ -59,8 +59,8 @@ const { data: noMaxAge } = await useCachedAsyncData(
   'no-max-age',
   () => Promise.resolve(Date.now().toString()),
   {
-    serverMaxAge: undefined,
-    clientMaxAge: undefined,
+    serverMaxAge: 'never',
+    clientMaxAge: 'never',
   },
 )
 

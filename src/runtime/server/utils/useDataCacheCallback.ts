@@ -1,10 +1,11 @@
 import type { H3Event } from 'h3'
 import { useDataCache } from './useDataCache'
+import { MaxAge } from '../../helpers/maxAge'
 
 type UseDataCacheCallbackReturnValue<T> = {
   value: T
   cacheTags?: string[]
-  maxAge?: number
+  maxAge?: MaxAge
 }
 
 export type UseDataCacheCallbackCallback<T> = () =>
