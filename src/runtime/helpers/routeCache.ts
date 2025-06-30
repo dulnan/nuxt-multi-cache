@@ -1,7 +1,22 @@
-import { setResponseHeaders, setResponseStatus, type H3Event } from 'h3'
+import {
+  setResponseHeader,
+  setResponseHeaders,
+  setResponseStatus,
+  type H3Event,
+} from 'h3'
 import type { RouteCacheItem } from '../types'
+import { ROUTE_CACHE_TAGS_HEADER } from './constants'
+import { isInternalServerRequest } from './server'
 
 export function setCachedResponse(event: H3Event, decoded: RouteCacheItem) {
+  if (isInternalServerRequest(event) && decoded.cacheTags) {
+    setResponseHeader(
+      event,
+      ROUTE_CACHE_TAGS_HEADER,
+      decoded.cacheTags.join(' '),
+    )
+  }
+
   // Set the cached headers. The name suggests otherwise, but this appends
   // headers (e.g. does not override existing headers.)
   if (decoded.headers) {

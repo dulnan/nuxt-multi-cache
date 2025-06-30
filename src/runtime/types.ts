@@ -244,6 +244,11 @@ export type MultiCacheEventContext = {
   routeCachedDecoded?: RouteCacheItem
 
   /**
+   * Whether this request originates from within the Nuxt app during SSR.
+   */
+  isInternalServerRequest?: boolean
+
+  /**
    * The nuxt-multi-cache CDN helper.
    */
   cdn?: NuxtMultiCacheCDNHelper

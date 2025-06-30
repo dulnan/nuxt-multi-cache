@@ -8,6 +8,7 @@ const composables = [
   'useCDNHeaders',
   'useComponentCache',
   'useMultiCacheApp',
+  'useCacheAwareFetchInterceptor',
 ].sort()
 
 export default defineConfig({

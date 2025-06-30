@@ -2,6 +2,8 @@ import { type H3Event, getRequestURL } from 'h3'
 import type { CacheItem, MultiCacheInstances } from './../types'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 import { isServer } from '#nuxt-multi-cache/config'
+import { getRequestHeader } from 'h3'
+import { SERVER_REQUEST_HEADER } from './constants'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
 
@@ -113,6 +115,18 @@ export function encodeRouteCacheKey(event: H3Event): string {
     return path.substring(0, questionMarkIndex)
   }
   return path
+}
+
+export function isInternalServerRequest(event: H3Event): boolean {
+  event.context.multiCache ||= {}
+
+  if (event.context.multiCache.isInternalServerRequest === undefined) {
+    const isServerRequest =
+      getRequestHeader(event, SERVER_REQUEST_HEADER) === 'true'
+    event.context.multiCache.isInternalServerRequest = isServerRequest
+  }
+
+  return event.context.multiCache.isInternalServerRequest
 }
 
 /**

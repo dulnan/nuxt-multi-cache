@@ -71,6 +71,10 @@ export default defineNuxtModule<ModuleOptions>({
       helper.addComposable('useComponentCache')
     }
 
+    if (options.cdn || options.route || nuxt.options._prepare) {
+      helper.addComposable('useCacheAwareFetchInterceptor')
+    }
+
     // Add the server plugin if any of the features is enabled.
     // During local development these might all be disabled, so it's not
     // necessary to add the plugin.

@@ -86,11 +86,11 @@ describe.skip('Caching with the file system driver', () => {
     await purgeAll()
     await createPageWithoutHydration('/cachedPageFromDisk', 'en')
     const data1 = await getRouteCacheItems()
-    expect(data1?.rows).toHaveLength(1)
+    expect(data1).toHaveLength(1)
     await purgeTags('test_tag')
     await sleep(1000)
 
     const data2 = await getRouteCacheItems()
-    expect(data2?.rows).toHaveLength(0)
+    expect(data2).toHaveLength(0)
   })
 })
