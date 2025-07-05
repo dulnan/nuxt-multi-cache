@@ -1,4 +1,4 @@
-import { defineComponent, useSlots, getCurrentInstance, h } from 'vue'
+import { defineComponent, getCurrentInstance, h } from 'vue'
 import { useNuxtApp } from '#app'
 import { provide } from '#imports'
 import { encodeComponentCacheItem } from '../../helpers/cacheItem'

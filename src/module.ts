@@ -67,8 +67,7 @@ export default defineNuxtModule<ModuleOptions>({
 
     // Add RenderCacheable component if feature is enabled.
     if (options.component || nuxt.options._prepare) {
-      helper.addComponent('RenderCacheable', 'client')
-      helper.addComponent('RenderCacheable', 'server')
+      helper.addComponent('RenderCacheable', 'all')
       helper.addComposable('useComponentCache')
     }
 
