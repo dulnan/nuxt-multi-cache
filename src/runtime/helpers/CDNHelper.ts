@@ -1,12 +1,12 @@
 import { CacheControl, parse } from '@tusbar/cache-control'
 import { setResponseHeader, type H3Event } from 'h3'
 import type { FetchResponse } from 'ofetch'
-import {
-  DEFAULT_CDN_CONTROL_HEADER,
-  DEFAULT_CDN_TAG_HEADER,
-} from './../../build/options/defaults'
 import { onlyUnique } from './server'
 import { parseMaxAge, type MaxAge } from './maxAge'
+import {
+  cdnCacheControlHeader,
+  cdnCacheTagHeader,
+} from '#nuxt-multi-cache/config'
 
 const numericProperties = [
   'maxAge',
@@ -43,8 +43,8 @@ export class NuxtMultiCacheCDNHelper {
   _tags: string[]
   _control: CacheControl
   constructor(
-    public readonly cacheControlHeader = DEFAULT_CDN_CONTROL_HEADER,
-    public readonly cacheTagsHeader = DEFAULT_CDN_TAG_HEADER,
+    public readonly cacheControlHeader = cdnCacheControlHeader,
+    public readonly cacheTagsHeader = cdnCacheTagHeader,
   ) {
     this._tags = []
     this._control = new CacheControl()

@@ -7,7 +7,6 @@ import {
 } from '../../helpers/cacheItem'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { onlyUnique } from '../../helpers/server'
-import { DEFAULT_CACHE_TAG_INVALIDATION_DELAY } from './../../../build/options/defaults'
 import type { CachePurgeTagsResponse, MultiCacheInstances } from './../../types'
 import { checkAuth } from './helpers'
 import { cacheTagInvalidationDelay } from '#nuxt-multi-cache/config'
@@ -61,10 +60,10 @@ export class DebouncedInvalidator {
   constructor() {
     this.tags = []
     this.timeout = null
-    this.delay = DEFAULT_CACHE_TAG_INVALIDATION_DELAY
+    this.delay = cacheTagInvalidationDelay
   }
 
-  setDelay(delay = DEFAULT_CACHE_TAG_INVALIDATION_DELAY) {
+  setDelay(delay: number) {
     this.delay = delay
   }
 
