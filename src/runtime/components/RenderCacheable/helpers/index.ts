@@ -1,6 +1,5 @@
 import { hash } from 'ohash'
 import type { Storage } from 'unstorage'
-import { ssrRenderSlotInner } from 'vue/server-renderer'
 import type {
   VNode,
   RendererNode,
@@ -17,7 +16,7 @@ import type { ComponentCacheItem } from './../../../types'
 import { debug } from '#nuxt-multi-cache/config'
 import type { MaxAge } from './../../../helpers/maxAge'
 
-type RenderCacheableSlotVNode = VNode<
+export type RenderCacheableSlotVNode = VNode<
   RendererNode,
   RendererElement,
   { [key: string]: any }
@@ -147,7 +146,7 @@ async function unrollBuffer(buffer: any[]) {
  * buffer array. Then the unrollBuffer method is called which merges the
  * nested array into a single string of markup.
  */
-export function renderSlot(
+export async function renderSlot(
   slots: Slots,
   parent: ComponentInternalInstance,
 ): Promise<string> {
@@ -158,6 +157,10 @@ export function renderSlot(
   const push = (v: any) => {
     buffer.push(v)
   }
+
+  const ssrRenderSlotInner = await import('vue/server-renderer').then(
+    (mod) => mod.ssrRenderSlotInner,
+  )
 
   // Render the contents of the default slot. We pass in the push method
   // that will mutate our buffer array and add items to it.
