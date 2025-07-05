@@ -104,7 +104,10 @@ describe('The CDNHelper', () => {
   })
 
   test('mergeFromResponse handles cache tags correctly', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(
+      DEFAULT_CDN_CONTROL_HEADER,
+      DEFAULT_CDN_TAG_HEADER,
+    )
 
     const mockResponse = {
       headers: {
@@ -120,7 +123,10 @@ describe('The CDNHelper', () => {
   })
 
   test('mergeFromResponse calls mergeCacheControlHeader with correct value', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(
+      DEFAULT_CDN_CONTROL_HEADER,
+      DEFAULT_CDN_TAG_HEADER,
+    )
     const spy = vi.spyOn(helper, 'mergeCacheControlHeader')
 
     const mockResponse = {

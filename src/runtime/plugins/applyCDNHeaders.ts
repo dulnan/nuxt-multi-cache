@@ -1,5 +1,8 @@
 import { defineNuxtPlugin, useCDNHeaders } from '#imports'
 
+/**
+ * Applies the CDN headers during SSR.
+ */
 export default defineNuxtPlugin({
   name: 'nuxt-multi-cache:cdn-headers',
   setup(nuxtApp) {

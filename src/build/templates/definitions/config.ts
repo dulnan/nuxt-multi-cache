@@ -15,7 +15,6 @@ export const debug = ${JSON.stringify(!!helper.options.debug)}
 export const cdnCacheControlHeader = import.meta.server ? ${JSON.stringify(helper.options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER)} : ''
 export const cdnCacheTagHeader = import.meta.server ? ${JSON.stringify(helper.options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER)} : ''
 export const cdnEnabled = ${JSON.stringify(!!helper.options.cdn?.enabled)}
-export const routeCacheEnabled = ${JSON.stringify(!!helper.options.route?.enabled)}
 export const cacheTagInvalidationDelay = ${JSON.stringify(helper.options.api?.cacheTagInvalidationDelay || DEFAULT_CACHE_TAG_INVALIDATION_DELAY)}
 export const isServer = import.meta.server
 `
@@ -26,7 +25,6 @@ export declare const debug: boolean
 export declare const cdnCacheControlHeader: string
 export declare const cdnCacheTagHeader: string
 export declare const cdnEnabled: boolean
-export declare const routeCacheEnabled: boolean
 export declare const cacheTagInvalidationDelay: number
 export declare const isServer: boolean
 `

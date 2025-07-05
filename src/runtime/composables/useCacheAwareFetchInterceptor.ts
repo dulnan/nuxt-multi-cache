@@ -1,6 +1,5 @@
 import type { FetchContext, ResponseType, FetchResponse } from 'ofetch'
-import { useRequestEvent } from '#imports'
-import { cdnEnabled, routeCacheEnabled } from '#nuxt-multi-cache/config'
+import { useRequestEvent, useRuntimeConfig } from '#imports'
 import { useCDNHeaders } from './../server/utils/useCDNHeaders'
 import { useRouteCache } from './../server/utils/useRouteCache'
 import {
@@ -35,7 +34,12 @@ type UseCacheAwareFetchInterceptor = {
  * this is an internal request originating from Nuxt during SSR.
  */
 export function useCacheAwareFetchInterceptor(): UseCacheAwareFetchInterceptor {
-  if (import.meta.server && (routeCacheEnabled || cdnEnabled)) {
+  const config = useRuntimeConfig()
+
+  if (
+    import.meta.server &&
+    (config.multiCache.cdn || config.multiCache.route)
+  ) {
     const event = useRequestEvent()
 
     if (!event) {
@@ -44,7 +48,7 @@ export function useCacheAwareFetchInterceptor(): UseCacheAwareFetchInterceptor {
 
     return {
       onResponse: function (ctx) {
-        if (cdnEnabled) {
+        if (config.multiCache.cdn) {
           useCDNHeaders(
             (cdn) => {
               cdn.mergeFromResponse(ctx.response)
@@ -54,7 +58,7 @@ export function useCacheAwareFetchInterceptor(): UseCacheAwareFetchInterceptor {
           )
         }
 
-        if (routeCacheEnabled) {
+        if (config.multiCache.route) {
           const routeCacheTags = (
             ctx.response.headers.get(ROUTE_CACHE_TAGS_HEADER) || ''
           ).split(' ')

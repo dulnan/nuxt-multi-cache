@@ -11,7 +11,7 @@ import { isServer } from '#nuxt-multi-cache/config'
  * the current route.
  *
  * The helper is provided via a callback, which is only called server side.
- * That way the entire code patch, incl. calling useRouteCache, is removed
+ * That way the entire code path, incl. calling useRouteCache, is removed
  * from client bundles.
  */
 export function useRouteCache(
