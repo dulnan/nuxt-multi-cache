@@ -80,11 +80,10 @@ export default defineComponent<Props>({
       type: Array,
     },
   },
-  async setup(props) {
+  async setup(props, { slots }) {
     const tag = props.tag ?? 'div'
 
     const nuxtApp = useNuxtApp()
-    const slots = useSlots()
 
     if (!slots.default) {
       return () => ''

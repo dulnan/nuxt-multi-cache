@@ -278,13 +278,15 @@ export class ModuleHelper {
     })
   }
 
-  public addComponent(name: string) {
+  public addComponent(name: string, mode: 'client' | 'server' | 'all') {
+    const fileName = mode === 'all' ? 'index' : mode
     addComponent({
       filePath: this.resolvers.module.resolve(
-        './runtime/components/' + name + '/index',
+        './runtime/components/' + name + '/' + fileName,
       ),
       name,
       global: true,
+      mode,
     })
   }
 
