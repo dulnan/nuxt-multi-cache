@@ -146,7 +146,7 @@ export function renderSlot(
       return Promise.resolve(e)
     }
 
-    throw new Error('Unexpected error.')
+    throw e
   }
 }
 

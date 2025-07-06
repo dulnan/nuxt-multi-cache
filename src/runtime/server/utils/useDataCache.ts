@@ -50,8 +50,10 @@ export async function useDataCache<T>(
     data: T,
     cacheTags: string[] = [],
     providedMaxAge?: MaxAge,
+    providedStaleIfError?: MaxAge,
   ) => {
     const maxAge = parseMaxAge(providedMaxAge ?? CACHE_PERMANENT)
+    const staleIfError = parseMaxAge(providedStaleIfError ?? CACHE_NEVER)
 
     if (maxAge === CACHE_NEVER) {
       return Promise.resolve()
@@ -61,6 +63,7 @@ export async function useDataCache<T>(
       data: data as any,
       cacheTags,
       expires: getExpiresValue(maxAge),
+      staleIfErrorExpires: getExpiresValue(staleIfError),
     }
 
     if (debug) {
@@ -96,6 +99,7 @@ export async function useDataCache<T>(
           // Extract the value. If the item was stored along its cache tags, it
           // will be an object with a cacheTags property.
           value: item.data as T,
+          staleValue: item.data as T,
           cacheTags: item.cacheTags || [],
           expires: item.expires,
         }
@@ -106,9 +110,18 @@ export async function useDataCache<T>(
       }
     }
 
+    const staleValue =
+      item &&
+      item.staleIfErrorExpires &&
+      !isExpired(item.staleIfErrorExpires, Date.now() / 1000)
+        ? item.data
+        : undefined
+
     return {
       addToCache,
-      cacheTags: [],
+      staleValue: staleValue as T,
+      cacheTags: item?.cacheTags || [],
+      expires: item?.expires,
     }
   } catch (e) {
     logger.error('Failed to load data cache item,', e)

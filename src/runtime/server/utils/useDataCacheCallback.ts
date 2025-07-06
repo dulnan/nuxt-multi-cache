@@ -1,16 +1,10 @@
 import type { H3Event } from 'h3'
 import { useDataCache } from './useDataCache'
-import type { MaxAge } from '../../helpers/maxAge'
+import { DataCacheHelper } from '../../helpers/DataCacheHelper'
 
-type UseDataCacheCallbackReturnValue<T> = {
-  value: T
-  cacheTags?: string[]
-  maxAge?: MaxAge
-}
-
-export type UseDataCacheCallbackCallback<T> = () =>
-  | Promise<UseDataCacheCallbackReturnValue<T>>
-  | UseDataCacheCallbackReturnValue<T>
+export type UseDataCacheCallbackCallback<T> = (
+  helper?: DataCacheHelper,
+) => Promise<T> | T
 
 export async function useDataCacheCallback<T>(
   key: string,
@@ -19,11 +13,27 @@ export async function useDataCacheCallback<T>(
 ): Promise<T> {
   const fromCache = await useDataCache<T>(key, event)
 
+  // The "value" property contains a value if the item is not yet expired.
   if (fromCache.value) {
     return fromCache.value
   }
 
-  const result = await cb()
-  await fromCache.addToCache(result.value, result.cacheTags, result.maxAge)
-  return result.value
+  const helper = new DataCacheHelper()
+
+  try {
+    const result = await cb(helper)
+    await fromCache.addToCache(
+      result,
+      helper.tags,
+      helper.maxAge,
+      helper.staleIfError ?? undefined,
+    )
+    return result
+  } catch (e) {
+    if (fromCache.staleValue) {
+      return fromCache.staleValue
+    }
+
+    throw e
+  }
 }

@@ -26,5 +26,5 @@ export async function useDataCacheCallback<T>(
   }
 
   const result = await cb()
-  return result.value
+  return result
 }

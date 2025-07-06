@@ -18,16 +18,17 @@ const { data } = await useAsyncData(() => {
   // Will be cached on the server.
   // On the client, it will always be executed.
   // The method returns the value of `value` returned by the callback.
-  return useDataCacheCallback(key.value, async () => {
+  return useDataCacheCallback(key.value, async (cache) => {
     const value = await $fetch('/api/get-user/' + userId)
 
-    // You must return an object with a `value` property.
-    // Optionally, you can also return cache tags and a max age.
-    return {
-      value,
-      cacheTags: ['user:' + userId],
-      maxAge: 60 * 60,
+    // The cache helper is only available on the server.
+    // It's recommended to also check for "import.meta.server", so that the
+    // code inside is removed from client bundles.
+    if (cache && import.meta.server) {
+      cache.addTags(['user:' + userId]).setMaxAge('1h')
     }
+
+    return value
   })
 })
 ```
@@ -42,11 +43,41 @@ in the next 60 minutes, it will return the value from cache, or until the
 
 The key for the cache item.
 
-### cb?: `() => Promise<{ value: T; cacheTags?: string[]; maxAge?: number }>`
+### cb?: `(cache?: DataCacheHelper) => Promise<T>`
 
-The callback is called whenever nothing in the cache exists. It is expected to
-return an object with at least a `value` property. You may optionally also
-return `cacheTags` and `maxAge` properties.
+The callback is called whenever nothing in the cache exists or if the item in
+the cache is expired. The value you return will be put in the cache.
+
+The callback also receives the _cache helper_ as an argument. The cache helper
+is only available on the server. The helper provides methods to control the
+cacheability:
+
+```typescript
+const data = await useDataCacheCallback(
+  'data-cache-callback-key',
+  function (helper) {
+    if (helper && import.meta.server) {
+      // Add cache tags.
+      helper.addTags(['one', 'two', 'three'])
+
+      // Revalidate after 4 hours.
+      helper.setMaxAge('4h')
+
+      // Allows the composable to return a stale value for up to one day if
+      // this callback throws an error.
+      helper.setStaleIfError('1d')
+    }
+
+    return {
+      timestamp: Date.now(),
+    }
+  },
+)
+```
+
+It's recommended to wrap calls to helper methods in
+`if (helper && import.meta.server)`, so that the entire if block can be removed
+from client bundles.
 
 ### event?: `H3Event`
 
@@ -57,19 +88,17 @@ When called in a Nitro server context, the argument is required.
 
 ## Return Value
 
-The method will return the `value` property returned by your callback:
+The method will return the value from your callback.
 
 ```typescript
-const data = await useDataCacheCallback('users', async () => {
+const data = await useDataCacheCallback('users', async (cache) => {
+  if (cache && import.meta.server) {
+    cache.addTags('users').setMaxAge('1h')
+  }
+
   return {
-    value: [
-      {
-        firstName: 'John',
-        lastName: 'Wayne',
-      },
-    ],
-    maxAge: 60 * 60,
-    cacheTags: ['users'],
+    firstName: 'John',
+    lastName: 'Wayne',
   }
 })
 

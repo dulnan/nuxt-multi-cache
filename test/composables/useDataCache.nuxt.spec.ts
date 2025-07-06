@@ -28,10 +28,15 @@ vi.mock('#nuxt-multi-cache/config', () => {
 
 function buildEvent(bubbleError = false): H3Event {
   const storage: Record<string, CacheItem> = {
-    foobar: { data: 'Cached data.', expires: -1 },
+    foobar: {
+      data: 'Cached data.',
+      expires: -1,
+      staleIfErrorExpires: 0,
+    },
     expires: {
       data: 'Data with expiration date.',
       expires: 1669849200,
+      staleIfErrorExpires: 0,
     },
   }
 
@@ -196,7 +201,11 @@ describe('useDataCache composable', () => {
   test('Uses provided event to get data cache.', async () => {
     setIsServer(true)
     const storage: Record<string, CacheItem> = {
-      foobar: { data: 'More cached data.', expires: -1 },
+      foobar: {
+        data: 'More cached data.',
+        expires: -1,
+        staleIfErrorExpires: 0,
+      },
     }
     const event = {
       context: {

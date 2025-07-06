@@ -18,10 +18,11 @@ vi.mock('#nuxt-multi-cache/config', () => {
 
 function buildEvent(bubbleError = false): H3Event {
   const storage: Record<string, CacheItem> = {
-    foobar: { data: 'Cached data.', expires: -1 },
+    foobar: { data: 'Cached data.', expires: -1, staleIfErrorExpires: 0 },
     expires: {
       data: 'Data with expiration date.',
       expires: 1669849200,
+      staleIfErrorExpires: 0,
     },
   }
   return {
@@ -145,20 +146,18 @@ describe('useDataCacheCallback composable', () => {
       buildEvent(),
     )
 
-    expect(result).toEqual('New value')
+    expect(result.value).toEqual('New value')
   })
 
-  test.only('Puts data in cache with cache tags', async () => {
+  test('Puts data in cache with cache tags', async () => {
     isServerValue = true
     const event = buildEvent()
 
     await useDataCacheCallback(
       'callback_data_with_tags',
-      () => {
-        return {
-          value: 'Foobar',
-          cacheTags: ['one', 'two', 'three'],
-        }
+      (helper) => {
+        helper?.addTags(['one', 'two', 'three'])
+        return 'Foobar'
       },
       event,
     )
@@ -176,11 +175,9 @@ describe('useDataCacheCallback composable', () => {
 
     await useDataCacheCallback(
       'data_with_expires',
-      () => {
-        return {
-          value: 'Foobar',
-          maxAge: 1800,
-        }
+      (helper) => {
+        helper?.setMaxAge(1800)
+        return 'Foobar'
       },
       event,
     )

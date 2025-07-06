@@ -12,12 +12,9 @@ const event = useRequestEvent()
 const { data } = await useAsyncData(() =>
   useDataCacheCallback(
     'current-time',
-    () => {
-      return {
-        value: Date.now().toString(),
-        maxAge: 600,
-        cacheTags: ['time'],
-      }
+    (helper) => {
+      helper?.setMaxAge(600).addTags('time')
+      return Date.now().toString()
     },
     event,
   ),

@@ -31,6 +31,7 @@ export interface MultiCacheInstances {
 export interface CacheItem {
   data: string
   expires: number
+  staleIfErrorExpires: number
   cacheTags?: string[]
 }
 
@@ -38,14 +39,12 @@ export interface RouteCacheItem extends CacheItem {
   headers: Record<string, any>
   statusCode: number
   staleWhileRevalidate: boolean
-  staleIfErrorExpires?: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DataCacheItem extends CacheItem {}
 
 export interface ComponentCacheItem extends CacheItem {
-  staleIfErrorExpires: number
   payload?: Record<string, any>
   ssrModules?: string[]
 }
@@ -209,13 +208,39 @@ export type DataCacheAddToCacheMethod<T> = (
   data: T,
   tags?: string[],
   maxAge?: MaxAge,
+  staleIfError?: MaxAge,
 ) => Promise<void>
 
 export type DataCacheCallbackContext<T> = {
+  /**
+   * Add the given item to the cache.
+   */
   addToCache: DataCacheAddToCacheMethod<T>
+
+  /**
+   * The cached value if not expired.
+   */
   value?: T
+
+  /**
+   * Contains the stale value, even if it's expired.
+   */
+  staleValue?: T
+
+  /**
+   * The cache tags.
+   */
   cacheTags: string[]
+
+  /**
+   * The timestamp when the item will expire.
+   */
   expires?: number
+
+  /**
+   * The timestamp when the item's "staleIfError" will expire.
+   */
+  staleIfErrorExpires?: number
 }
 
 export type MultiCacheEventContext = {
