@@ -3,6 +3,7 @@ import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { CacheItem } from './../../src/runtime/types'
 import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 
 const { getIsServer, setIsServer } = vi.hoisted(() => {
   let serverValue = false
@@ -290,9 +291,7 @@ describe('useDataCache composable', () => {
     setIsServer(true)
     const date = new Date(2023, 11, 1, 12, 0, 0)
     vi.setSystemTime(date)
-    const expireTime = Math.round(
-      new Date(2023, 11, 1, 12, 0, 1).getTime() / 1000,
-    )
+    const expireTime = toTimestamp(new Date(2023, 11, 1, 12, 0, 1))
     const event = buildEventWithStorage({
       foobar: {
         data: 'More cached data.',
@@ -310,9 +309,7 @@ describe('useDataCache composable', () => {
     setIsServer(true)
     const date = new Date(2023, 11, 1, 12, 0, 0)
     vi.setSystemTime(date)
-    const expireTime = Math.round(
-      new Date(2023, 11, 1, 11, 59, 59).getTime() / 1000,
-    )
+    const expireTime = toTimestamp(new Date(2023, 11, 1, 11, 59, 59))
     const event = buildEventWithStorage({
       foobar: {
         data: 'More cached data.',

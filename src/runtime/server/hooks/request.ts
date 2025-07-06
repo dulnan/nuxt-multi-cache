@@ -1,5 +1,5 @@
 import { type H3Event, getRequestURL } from 'h3'
-import { enabledForRequest } from '../../helpers/server'
+import { enabledForRequest, getRequestTimestamp } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
@@ -54,5 +54,7 @@ export async function onRequest(event: H3Event) {
 
   // Add the route cache helper.
   event.context.multiCache ||= {}
-  event.context.multiCache.route = new NuxtMultiCacheRouteCacheHelper()
+  event.context.multiCache.route = new NuxtMultiCacheRouteCacheHelper(
+    getRequestTimestamp(event),
+  )
 }

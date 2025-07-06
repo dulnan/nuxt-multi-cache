@@ -1,16 +1,19 @@
 <template>
   <div class="main-layout">
     <header>
-<!--      <RenderCacheable cache-key="navbar" :async-data-keys="['navbar']">-->
-        <Navbar />
-<!--      </RenderCacheable>-->
+      <Navbar />
     </header>
     <main>
       <slot />
-      <api-playground />
+      <api-playground v-if="routeCacheEnabled" />
     </main>
   </div>
 </template>
+
+<script setup lang="ts">
+import { routeCacheEnabled } from '#nuxt-multi-cache/config'
+import ApiPlayground from '../components/apiPlayground.vue'
+</script>
 
 <style>
 .main-layout {
@@ -20,6 +23,3 @@
   padding: 2rem;
 }
 </style>
-<script setup lang="ts">
-import ApiPlayground from "../components/apiPlayground.vue";
-</script>

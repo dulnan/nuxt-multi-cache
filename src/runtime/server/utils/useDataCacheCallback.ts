@@ -1,6 +1,7 @@
 import type { H3Event } from 'h3'
 import { useDataCache } from './useDataCache'
 import { DataCacheHelper } from '../../helpers/DataCacheHelper'
+import { getRequestTimestamp } from '../../helpers/server'
 
 export type UseDataCacheCallbackCallback<T> = (
   helper?: DataCacheHelper,
@@ -18,7 +19,7 @@ export async function useDataCacheCallback<T>(
     return fromCache.value
   }
 
-  const helper = new DataCacheHelper()
+  const helper = new DataCacheHelper(getRequestTimestamp(event))
 
   try {
     const result = await cb(helper)

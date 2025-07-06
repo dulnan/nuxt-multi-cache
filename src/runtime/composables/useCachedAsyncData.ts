@@ -17,6 +17,7 @@ import {
   CACHE_NEVER,
   parseMaxAge,
   type MaxAge,
+  toTimestamp,
 } from '../helpers/maxAge'
 
 type KeysOf<T> = Array<
@@ -188,6 +189,7 @@ export function useCachedAsyncData<
     return useAsyncData<ResT, any, DataT, PickKeys, DefaultT>(
       reactiveKey,
       async () => {
+        const now = toTimestamp(new Date())
         const result = await handler(app)
 
         // We already transform the data here so that we can store the
@@ -197,7 +199,7 @@ export function useCachedAsyncData<
           : (result as DataT)
 
         const maxAge = options.clientMaxAge
-          ? parseMaxAge(options.clientMaxAge)
+          ? parseMaxAge(options.clientMaxAge, now)
           : null
 
         // If a value is provided, we may also cache it client side.

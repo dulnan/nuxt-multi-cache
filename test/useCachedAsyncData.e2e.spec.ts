@@ -37,15 +37,20 @@ await setup({
   nuxtConfig,
 })
 
+async function countRowsForVary(vary: string): Promise<number> {
+  const items = await getDataCacheItems()
+  return items.rows.filter((v) => v.key.includes('--' + vary)).length
+}
+
 describe('The useCachedAsyncData composable', () => {
   test('Puts the handler result into the cache', async () => {
     await purgeAll()
 
     // First call puts it into cache.
-    await createPage('/useCachedAsyncData')
+    await createPage('/useCachedAsyncData?vary=one')
 
     const data = await getDataCacheItems()
-    const item = data.rows.find((v) => v.key === 'en--all-users')
+    const item = data.rows.find((v) => v.key === 'en--all-users--one')
 
     expect(item).toBeTruthy()
     expect(item!.data.cacheTags).toMatchInlineSnapshot(`
@@ -76,10 +81,9 @@ describe('The useCachedAsyncData composable', () => {
   test('treats a max age of 0 as uncacheable on the server', async () => {
     await purgeAll()
 
-    const page1 = await createPage('/useCachedAsyncData')
+    const page1 = await createPage('/useCachedAsyncData?vary=two')
 
-    const data: any = await getDataCacheItems()
-    expect(data.rows).toHaveLength(1)
+    expect(await countRowsForVary('two')).toEqual(1)
 
     const number1 = await page1.locator('#not-cached-data').innerText()
 
@@ -91,7 +95,7 @@ describe('The useCachedAsyncData composable', () => {
   test('treats a max age of 0 as uncacheable on the client', async () => {
     await purgeAll()
 
-    const page = await createPage('/useCachedAsyncData')
+    const page = await createPage('/useCachedAsyncData?vary=three')
     const number1 = await page.locator('#not-cached-data').innerText()
 
     await page.locator('#go-to-home').click()
@@ -104,10 +108,9 @@ describe('The useCachedAsyncData composable', () => {
   test('treats no max age as uncacheable on the server', async () => {
     await purgeAll()
 
-    const page1 = await createPage('/useCachedAsyncData')
+    const page1 = await createPage('/useCachedAsyncData?vary=four')
 
-    const data: any = await getDataCacheItems()
-    expect(data.rows).toHaveLength(1)
+    expect(await countRowsForVary('four')).toEqual(1)
 
     const number1 = await page1.locator('#no-max-age').innerText()
 
@@ -124,9 +127,8 @@ describe('The useCachedAsyncData composable', () => {
 
     await page.locator('#go-to-home').click()
     await page.locator('#route-useCachedAsyncData').click()
-    const number2 = await page.locator('#no-max-age').innerText()
 
-    expect(number1).not.toEqual(number2)
+    await playwrightExpect(page.locator('#no-max-age')).not.toHaveText(number1)
   })
 
   test('works using a reactive key', async () => {

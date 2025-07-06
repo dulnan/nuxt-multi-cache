@@ -5,10 +5,14 @@ import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
 } from './../../src/build/options/defaults'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+
+const mockDate = new Date('2024-03-15T10:30:00.000Z')
+const mockDateTimestamp = toTimestamp(mockDate)
 
 describe('The CDNHelper', () => {
   test('can be instanciated correctly', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     expect(helper).toBeInstanceOf(NuxtMultiCacheCDNHelper)
 
     expect(helper._tags).toEqual([])
@@ -16,7 +20,7 @@ describe('The CDNHelper', () => {
   })
 
   test('Returns self in every method.', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
 
     // Make sure this test fails if new methods are added, so that this test
     // will be updated.
@@ -48,7 +52,7 @@ describe('The CDNHelper', () => {
   })
 
   test('Sets cache control properties', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     helper.set('maxAge', 9999)
     helper.set('noTransform', true)
     expect(helper._control.maxAge).toEqual(9999)
@@ -56,7 +60,7 @@ describe('The CDNHelper', () => {
   })
 
   test('adds cache tags', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     helper.addTags(['one'])
     expect(helper._tags).toEqual(['one'])
 
@@ -65,13 +69,13 @@ describe('The CDNHelper', () => {
   })
 
   test('sets numeric values', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     helper.setNumeric('maxAge', 9999)
     expect(helper._control.maxAge).toEqual(9999)
   })
 
   test('sets numeric values only if they are lower than the current value', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     helper.setNumeric('maxAge', 1000)
     expect(helper._control.maxAge).toEqual(1000)
     helper.setNumeric('maxAge', 8000)
@@ -79,7 +83,7 @@ describe('The CDNHelper', () => {
   })
 
   test('handles setting the private flag correctly', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     expect(helper._control.public).toBeNull()
     expect(helper._control.private).toBeNull()
 
@@ -89,7 +93,7 @@ describe('The CDNHelper', () => {
   })
 
   test('handles setting the public flag correctly', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     expect(helper._control.public).toBeNull()
     expect(helper._control.private).toBeNull()
 
@@ -105,6 +109,7 @@ describe('The CDNHelper', () => {
 
   test('mergeFromResponse handles cache tags correctly', () => {
     const helper = new NuxtMultiCacheCDNHelper(
+      mockDateTimestamp,
       DEFAULT_CDN_CONTROL_HEADER,
       DEFAULT_CDN_TAG_HEADER,
     )
@@ -124,6 +129,7 @@ describe('The CDNHelper', () => {
 
   test('mergeFromResponse calls mergeCacheControlHeader with correct value', () => {
     const helper = new NuxtMultiCacheCDNHelper(
+      mockDateTimestamp,
       DEFAULT_CDN_CONTROL_HEADER,
       DEFAULT_CDN_TAG_HEADER,
     )
@@ -144,7 +150,7 @@ describe('The CDNHelper', () => {
   })
 
   test('mergeCacheControlHeader handles private flag correctly', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     helper.public()
 
     helper.mergeCacheControlHeader('private')
@@ -153,7 +159,7 @@ describe('The CDNHelper', () => {
   })
 
   test('mergeCacheControlHeader respects existing private flag', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     helper.private()
 
     helper.mergeCacheControlHeader('public')
@@ -162,7 +168,7 @@ describe('The CDNHelper', () => {
   })
 
   test('mergeCacheControlHeader handles numeric properties correctly', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     helper.setNumeric('maxAge', 7200)
 
     helper.mergeCacheControlHeader('max-age=3600')
@@ -185,7 +191,7 @@ describe('The CDNHelper', () => {
   })
 
   test('mergeCacheControlHeader handles boolean properties correctly', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
 
     helper.mergeCacheControlHeader('no-store, no-cache')
     expect(helper._control.noStore, 'Should set boolean properties').toEqual(
@@ -196,7 +202,7 @@ describe('The CDNHelper', () => {
     )
 
     // Boolean properties from cache-control are only set if true.
-    const anotherHelper = new NuxtMultiCacheCDNHelper()
+    const anotherHelper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     anotherHelper.setBoolean('noStore')
 
     // This header doesn't have no-store, but it shouldn't
@@ -206,7 +212,7 @@ describe('The CDNHelper', () => {
   })
 
   test('setBoolean sets boolean values to true', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
 
     helper.setBoolean('noStore')
     expect(helper._control.noStore).toEqual(true)
@@ -216,7 +222,7 @@ describe('The CDNHelper', () => {
   })
 
   test('handles complex cache-control header merging correctly', () => {
-    const helper = new NuxtMultiCacheCDNHelper()
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
     helper.setNumeric('maxAge', 86400)
     helper.public()
 

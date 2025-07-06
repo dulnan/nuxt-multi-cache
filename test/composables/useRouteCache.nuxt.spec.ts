@@ -3,6 +3,10 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { useRouteCache } from './../../src/runtime/composables/useRouteCache'
 import { NuxtMultiCacheRouteCacheHelper } from './../../src/runtime/helpers/RouteCacheHelper'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+
+const mockDate = new Date('2024-03-15T10:30:00.000Z')
+const mockDateTimestamp = toTimestamp(mockDate)
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
@@ -47,7 +51,7 @@ function buildEvent(): H3Event {
         },
       },
       multiCache: {
-        route: new NuxtMultiCacheRouteCacheHelper(),
+        route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp),
       },
     },
   } as H3Event

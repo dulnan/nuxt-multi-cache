@@ -3,6 +3,7 @@ import { setCachedResponse } from '../../helpers/routeCache'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { sendWebResponse } from 'h3'
 import { logger } from '../../helpers/logger'
+import { getRequestTimestamp } from '../../helpers/server'
 
 /**
  * Callback for the 'error' nitro hook.
@@ -37,7 +38,7 @@ export function onError(_error: Error, ctx: CapturedErrorContext) {
     }
 
     // If we reached the expiry date, return.
-    const now = Date.now() / 1000
+    const now = getRequestTimestamp(ctx.event)
     if (now >= decoded.staleIfErrorExpires) {
       return
     }

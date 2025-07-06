@@ -6,6 +6,7 @@ import {
   ROUTE_CACHE_TAGS_HEADER,
   SERVER_REQUEST_HEADER,
 } from '../helpers/constants'
+import { isServer } from '#nuxt-multi-cache/config'
 
 type OnResponseInterceptor = (
   ctx: FetchContext<unknown, ResponseType> & {
@@ -36,10 +37,7 @@ type UseCacheAwareFetchInterceptor = {
 export function useCacheAwareFetchInterceptor(): UseCacheAwareFetchInterceptor {
   const config = useRuntimeConfig()
 
-  if (
-    import.meta.server &&
-    (config.multiCache.cdn || config.multiCache.route)
-  ) {
+  if (isServer && (config.multiCache.cdn || config.multiCache.route)) {
     const event = useRequestEvent()
 
     if (!event) {

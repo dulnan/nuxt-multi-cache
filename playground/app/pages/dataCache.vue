@@ -11,7 +11,7 @@ import { useDataCache, useAsyncData } from '#imports'
 function getData(): Promise<string> {
   return new Promise((resolve) => {
     setTimeout(() => {
-      resolve(Math.round(Math.random() * 100000000).toString())
+      resolve(Math.floor(Math.random() * 100000000).toString())
     }, 500)
   })
 }

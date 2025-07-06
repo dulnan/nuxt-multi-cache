@@ -46,8 +46,8 @@ type NamedMaxAge = NamedExpires | NamedInterval
  */
 export type MaxAge = NamedMaxAge | 'permanent' | 'never' | number
 
-function calculateInterval(v: NamedInterval): number {
-  const now = new Date()
+function calculateInterval(v: NamedInterval, providedNow: number): number {
+  const now = new Date(providedNow * 1000)
   let target: Date
 
   switch (v) {
@@ -79,14 +79,14 @@ function calculateInterval(v: NamedInterval): number {
   return Math.ceil((target.getTime() - now.getTime()) / 1000)
 }
 
-export function parseMaxAge(v: MaxAge): number {
+export function parseMaxAge(v: MaxAge, now: number): number {
   if (typeof v === 'number') {
     if (v === CACHE_PERMANENT || v === CACHE_NEVER) {
       return v
     }
-    return Math.max(Math.round(v), -1)
+    return Math.max(Math.floor(v), -1)
   } else if (v === 'next-hour' || v === 'midnight' || v === 'end-of-week') {
-    return calculateInterval(v)
+    return calculateInterval(v, now)
   } else if (v === 'permanent') {
     return CACHE_PERMANENT
   } else if (v === 'never') {
@@ -110,4 +110,8 @@ export function isExpired(expires: number, now: number): boolean {
   }
 
   return expires < now
+}
+
+export function toTimestamp(date: Date): number {
+  return Math.floor(date.getTime() / 1000)
 }

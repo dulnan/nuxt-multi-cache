@@ -25,6 +25,8 @@ export class CacheHelper {
    */
   maxAge = CACHE_PERMANENT
 
+  constructor(private readonly now: number) {}
+
   /**
    * Set a numeric property, but **only** when the new value is
    * lower than the existing one (or the property is still `null`).
@@ -39,7 +41,7 @@ export class CacheHelper {
   ): this {
     const current = this[property] as number | null
 
-    const value = parseMaxAge(providedValue)
+    const value = parseMaxAge(providedValue, this.now)
 
     if (current === null || value < current || current === -1) {
       // @ts-expect-error It's correct, but TS doesn't know.
@@ -111,7 +113,7 @@ export class CacheHelper {
       return value
     }
 
-    return Math.floor(Date.now() / 1000) + value
+    return this.now + value
   }
 
   /**

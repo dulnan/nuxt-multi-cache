@@ -1,10 +1,10 @@
 import { type H3Event, getRequestURL } from 'h3'
-import type { CacheItem, MultiCacheInstances } from './../types'
+import type { MultiCacheInstances } from './../types'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 import { isServer } from '#nuxt-multi-cache/config'
 import { getRequestHeader } from 'h3'
 import { SERVER_REQUEST_HEADER } from './constants'
-import { CACHE_NEVER, CACHE_PERMANENT } from './maxAge'
+import { CACHE_NEVER, CACHE_PERMANENT, toTimestamp } from './maxAge'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
 
@@ -47,13 +47,6 @@ export function getMultiCacheRouteHelper(
   event: H3Event,
 ): NuxtMultiCacheRouteCacheHelper | undefined {
   return event.context?.multiCache?.route
-}
-
-export function getExpiresValue(maxAge: number) {
-  if (maxAge === CACHE_PERMANENT || maxAge === CACHE_NEVER) {
-    return maxAge
-  }
-  return Math.round(Date.now() / 1000 + maxAge)
 }
 
 async function determinePrefix(event: H3Event): Promise<string> {
@@ -101,6 +94,13 @@ export async function getCacheKeyWithPrefix(
   }
 
   return prefix ? `${prefix}--${cacheKey}` : cacheKey
+}
+
+export function getRequestTimestamp(event: H3Event): number {
+  event.context ||= {}
+  event.context.multiCache ||= {}
+  event.context.multiCache.requestTimestamp ||= toTimestamp(new Date())
+  return event.context.multiCache.requestTimestamp
 }
 
 /**

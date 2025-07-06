@@ -250,6 +250,11 @@ export type MultiCacheEventContext = {
   cachePrefix?: string | null
 
   /**
+   * The request timestamp.
+   */
+  requestTimestamp?: number | null
+
+  /**
    * Whether *any* caching is enabled for the current request.
    */
   enabledForRequest?: boolean

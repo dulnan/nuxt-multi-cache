@@ -4,7 +4,7 @@ import { describe, expect, test, beforeEach } from 'vitest'
 import { expect as playwrightExpect } from '@nuxt/test-utils/playwright'
 import purgeAll from './../../__helpers__/purgeAll'
 import getComponentCacheItem from '~/test/__helpers__/getComponentCacheItem'
-import { parseMaxAge } from '~/src/runtime/helpers/maxAge'
+import { parseMaxAge, toTimestamp } from '~/src/runtime/helpers/maxAge'
 import { createPageWithoutHydration, sleep } from '~/test/__helpers__'
 
 await setup({
@@ -44,7 +44,7 @@ describe('The RenderCacheable component', () => {
     const row = items.at(0)
     const expires = row!.item.expires!
 
-    const now = Math.round(Date.now() / 1000)
+    const now = toTimestamp(new Date())
 
     const diff = expires - now
 
@@ -83,14 +83,14 @@ describe('The RenderCacheable component', () => {
     const rows = await getComponentCacheItem()
     expect(rows).toHaveLength(1)
 
-    const now = Math.round(Date.now() / 1000)
+    const now = toTimestamp(new Date())
 
     const expires = rows.at(0)!.item!.expires!
     const maxAge = expires - now
 
-    const diff = Math.round(maxAge / 60 / 60)
+    const diff = Math.floor(maxAge / 60 / 60)
 
-    // Because we use Math.round(), even several seconds will not cause the
+    // Because we use Math.floor(), even several seconds will not cause the
     // diff to go to 23.
     expect(diff).toEqual(24)
   })
@@ -106,9 +106,9 @@ describe('The RenderCacheable component', () => {
     const rows = await getComponentCacheItem()
     expect(rows).toHaveLength(1)
 
-    const now = Math.floor(Date.now() / 1000)
+    const now = toTimestamp(new Date())
 
-    const expectedMaxAge = Math.floor(parseMaxAge('midnight') / 60)
+    const expectedMaxAge = Math.floor(parseMaxAge('midnight', now) / 60)
 
     const expires = rows.at(0)!.item!.expires!
     const maxAge = expires - now

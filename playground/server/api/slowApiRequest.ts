@@ -20,7 +20,7 @@ export default defineEventHandler<Promise<{ data: number }>>((event) => {
   const query = getQuery(event)
 
   useRouteCache((helper) => {
-    helper.setCacheable().allowStaleWhileRevalidate().setMaxAge(1)
+    helper.setCacheable().allowStaleWhileRevalidate().setMaxAge(2)
   }, event)
 
   if (query.slow === 'true') {

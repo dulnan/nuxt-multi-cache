@@ -43,6 +43,7 @@ export class NuxtMultiCacheCDNHelper {
   _tags: string[]
   _control: CacheControl
   constructor(
+    private readonly now: number,
     public readonly cacheControlHeader = cdnCacheControlHeader,
     public readonly cacheTagsHeader = cdnCacheTagHeader,
   ) {
@@ -157,7 +158,7 @@ export class NuxtMultiCacheCDNHelper {
     providedValue: MaxAge,
   ): NuxtMultiCacheCDNHelper {
     const currentValue = this._control[key]
-    const value = parseMaxAge(providedValue)
+    const value = parseMaxAge(providedValue, this.now)
     if (
       currentValue === null ||
       currentValue === undefined ||

@@ -5,6 +5,10 @@ import {
   getMultiCacheRouteHelper,
   MULTI_CACHE_CONTEXT_KEY,
 } from './../../src/runtime/helpers/server'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+
+const mockDate = new Date('2024-03-15T10:30:00.000Z')
+const mockDateTimestamp = toTimestamp(mockDate)
 
 const EVENT: any = {
   context: {
@@ -18,7 +22,7 @@ const EVENT: any = {
       },
     },
     multiCache: {
-      route: new NuxtMultiCacheRouteCacheHelper(),
+      route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp),
     },
   },
 }

@@ -1,9 +1,10 @@
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { encodeRouteCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { serveCachedHandler } from '../../../src/runtime/server/handler/serveCachedRoute'
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
 import { logger } from '../../../src/runtime/helpers/logger'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
@@ -37,6 +38,14 @@ vi.mock('nitropack/runtime', () => {
 })
 
 describe('serveCachedRoute event handler', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   test('Gets a route from cache.', async () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
@@ -150,7 +159,7 @@ describe('serveCachedRoute event handler', () => {
                         'x-custom-header': 'test',
                       },
                       200,
-                      (date.getTime() - 3000) / 1000,
+                      toTimestamp(date) - 3000,
                       undefined,
                       undefined,
                       [],
@@ -161,6 +170,9 @@ describe('serveCachedRoute event handler', () => {
             },
           },
         },
+        multiCache: {
+          requestTimestamp: toTimestamp(date),
+        },
       },
     }
 
@@ -168,7 +180,10 @@ describe('serveCachedRoute event handler', () => {
     expect(await serveCachedHandler(event as any)).toBeUndefined()
 
     // Now set time to one year ago.
-    vi.setSystemTime(new Date(date).setFullYear(2021))
+    const newDate = new Date(date)
+    newDate.setFullYear(2021)
+    event.context.multiCache.requestTimestamp = toTimestamp(newDate)
+    vi.setSystemTime(newDate)
 
     const result = await serveCachedHandler(event as any)
 

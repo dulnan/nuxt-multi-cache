@@ -1,14 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { CacheHelper } from '~/src/runtime/helpers/CacheHelper'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 
 // Mock Date for predictable time-based tests
 const mockDate = new Date('2024-03-15T10:30:00.000Z')
+const mockDateTimestamp = toTimestamp(mockDate)
 
 describe('CacheHelper', () => {
   let cache: CacheHelper
 
   beforeEach(() => {
-    cache = new CacheHelper()
+    cache = new CacheHelper(mockDateTimestamp)
     vi.useFakeTimers()
     vi.setSystemTime(mockDate)
   })
@@ -71,7 +73,7 @@ describe('CacheHelper', () => {
       expect(cache.maxAge).toBe(1800)
 
       // midnight: should calculate time until next midnight
-      const cache2 = new CacheHelper()
+      const cache2 = new CacheHelper(mockDateTimestamp)
       cache2.setMaxAge('midnight')
       // From 10:30 to next midnight (24:00) = 13.5 hours = 48600 seconds
       expect(cache2.maxAge).toBe(48600)
@@ -79,7 +81,7 @@ describe('CacheHelper', () => {
 
     it('should handle fractional numbers by rounding', () => {
       cache.setMaxAge(123.7)
-      expect(cache.maxAge).toBe(124)
+      expect(cache.maxAge).toBe(123)
 
       cache.setMaxAge(123.3)
       expect(cache.maxAge).toBe(123) // Should update since rounded value is lower
@@ -239,7 +241,7 @@ describe('CacheHelper', () => {
 
     it('should calculate correct expiration timestamp', () => {
       cache.setMaxAge(300) // 5 minutes
-      const currentTimestamp = Math.floor(Date.now() / 1000)
+      const currentTimestamp = toTimestamp(new Date())
       const expires = cache.getExpires('maxAge')
 
       expect(expires).toBe(currentTimestamp + 300)
@@ -258,7 +260,7 @@ describe('CacheHelper', () => {
       // Move time slightly forward to test flooring
       vi.setSystemTime(new Date(mockDate.getTime() + 500)) // +500ms
 
-      const currentTimestamp = Math.floor(Date.now() / 1000)
+      const currentTimestamp = toTimestamp(new Date())
       const expires = cache.getExpires('maxAge')
 
       expect(expires).toBe(currentTimestamp + 100)
@@ -336,8 +338,9 @@ describe('CacheHelper', () => {
       expect(cache.maxAge).toBe(1800) // 30 minutes
 
       // Test at exactly the hour
-      vi.setSystemTime(new Date('2024-03-15T11:00:00.000Z'))
-      const cache2 = new CacheHelper()
+      const date = new Date('2024-03-15T11:00:00.000Z')
+      vi.setSystemTime(date)
+      const cache2 = new CacheHelper(toTimestamp(date))
       cache2.setMaxAge('next-hour')
       expect(cache2.maxAge).toBe(3600) // Full hour
     })
@@ -348,8 +351,9 @@ describe('CacheHelper', () => {
       expect(cache.maxAge).toBe(48600) // 13.5 * 3600
 
       // Test near midnight
-      vi.setSystemTime(new Date('2024-03-15T23:59:00.000Z'))
-      const cache2 = new CacheHelper()
+      const date = new Date('2024-03-15T23:59:00.000Z')
+      vi.setSystemTime(date)
+      const cache2 = new CacheHelper(toTimestamp(date))
       cache2.setMaxAge('midnight')
       expect(cache2.maxAge).toBe(60) // 1 minute to midnight
     })
@@ -380,8 +384,8 @@ describe('CacheHelper', () => {
     })
 
     it('should maintain independent state for different instances', () => {
-      const cache1 = new CacheHelper()
-      const cache2 = new CacheHelper()
+      const cache1 = new CacheHelper(mockDateTimestamp)
+      const cache2 = new CacheHelper(mockDateTimestamp)
 
       cache1.setMaxAge(100).setCacheable().addTags('cache1')
       cache2.setMaxAge(200).setUncacheable().addTags('cache2')

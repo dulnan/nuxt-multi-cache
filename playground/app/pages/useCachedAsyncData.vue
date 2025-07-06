@@ -19,11 +19,15 @@
 </template>
 
 <script lang="ts" setup>
-import { useCachedAsyncData } from '#imports'
+import { useCachedAsyncData, useRoute } from '#imports'
 import type { UsersWithCacheability } from '~~/server/api/getUsersWithCacheability'
 
+const route = useRoute()
+
+const vary = computed(() => route.query.vary?.toString() ?? '-default')
+
 const { data, refresh } = await useCachedAsyncData(
-  'all-users',
+  'all-users--' + vary.value,
   () => $fetch<UsersWithCacheability>('/api/getUsersWithCacheability'),
   {
     serverMaxAge: 5,
@@ -47,7 +51,7 @@ const { data, refresh } = await useCachedAsyncData(
 )
 
 const { data: notCachedData } = await useCachedAsyncData(
-  'not-cached-data',
+  'not-cached-data' + vary.value,
   () => Promise.resolve(Date.now().toString()),
   {
     serverMaxAge: 0,
@@ -56,7 +60,7 @@ const { data: notCachedData } = await useCachedAsyncData(
 )
 
 const { data: noMaxAge } = await useCachedAsyncData(
-  'no-max-age',
+  'no-max-age' + vary.value,
   () => Promise.resolve(Date.now().toString()),
   {
     serverMaxAge: 'never',

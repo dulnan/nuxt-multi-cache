@@ -5,6 +5,7 @@ import {
   cdnCacheTagHeader,
   cdnEnabled,
 } from '#nuxt-multi-cache/config'
+import { getRequestTimestamp } from '../../helpers/server'
 
 export function useCDNHeaders(
   cb: (helper: NuxtMultiCacheCDNHelper) => void,
@@ -19,6 +20,7 @@ export function useCDNHeaders(
 
   if (!helper) {
     helper = new NuxtMultiCacheCDNHelper(
+      getRequestTimestamp(event),
       cdnCacheControlHeader,
       cdnCacheTagHeader,
     )

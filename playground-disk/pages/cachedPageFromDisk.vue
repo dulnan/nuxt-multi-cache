@@ -6,7 +6,7 @@
 import { useRouteCache, useState } from '#imports'
 
 const random = useState('random_data', () => {
-  return 'RANDOM_NUMBER__' + Math.round(Math.random() * 1000000000) + '__'
+  return 'RANDOM_NUMBER__' + Math.floor(Math.random() * 1000000000) + '__'
 })
 
 useRouteCache((helper) => {

@@ -4,6 +4,7 @@ import { useDataCacheCallback } from './../../src/runtime/composables/useDataCac
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { CacheItem } from './../../src/runtime/types'
 import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 
 let isServerValue = false
 
@@ -105,7 +106,7 @@ describe('useDataCacheCallback composable', () => {
         'foobar',
         () => {
           return {
-            value: Math.round(Math.random() * 1000000000),
+            value: Math.floor(Math.random() * 1000000000),
           }
         },
         buildEvent(),
@@ -240,13 +241,9 @@ describe('useDataCacheCallback composable', () => {
     isServerValue = true
     const date = new Date(2015, 5, 6, 12, 0, 0, 0)
     vi.setSystemTime(date)
-    const expires = Math.round(
-      new Date(2015, 5, 6, 11, 59, 59, 0).getTime() / 1000,
-    )
+    const expires = toTimestamp(new Date(2015, 5, 6, 11, 59, 59, 0))
 
-    const staleIfErrorExpires = Math.round(
-      new Date(2015, 5, 6, 12, 0, 1, 0).getTime() / 1000,
-    )
+    const staleIfErrorExpires = toTimestamp(new Date(2015, 5, 6, 12, 0, 1, 0))
     const event = buildEventWithStorage({
       foobar: {
         data: 'Some stale data.',
@@ -270,9 +267,7 @@ describe('useDataCacheCallback composable', () => {
     isServerValue = true
     const date = new Date(2015, 5, 6, 12, 0, 0, 0)
     vi.setSystemTime(date)
-    const expires = Math.round(
-      new Date(2015, 5, 6, 11, 59, 59, 0).getTime() / 1000,
-    )
+    const expires = toTimestamp(new Date(2015, 5, 6, 11, 59, 59, 0))
     const event = buildEventWithStorage({
       foobar: {
         data: 'Some stale data.',
@@ -296,13 +291,9 @@ describe('useDataCacheCallback composable', () => {
     isServerValue = true
     const date = new Date(2015, 5, 6, 12, 0, 0, 0)
     vi.setSystemTime(date)
-    const expires = Math.round(
-      new Date(2015, 5, 6, 11, 59, 59, 0).getTime() / 1000,
-    )
+    const expires = toTimestamp(new Date(2015, 5, 6, 11, 59, 59, 0))
 
-    const staleIfErrorExpires = Math.round(
-      new Date(2015, 5, 6, 11, 59, 59, 0).getTime() / 1000,
-    )
+    const staleIfErrorExpires = toTimestamp(new Date(2015, 5, 6, 11, 59, 59, 0))
     const event = buildEventWithStorage({
       foobar: {
         data: 'Some stale data.',

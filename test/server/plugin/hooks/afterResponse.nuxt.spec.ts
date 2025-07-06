@@ -3,6 +3,10 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onAfterResponse } from '../../../../src/runtime/server/hooks/afterResponse'
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../../src/runtime/helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../../../src/runtime/helpers/RouteCacheHelper'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+
+const mockDate = new Date('2024-03-15T10:30:00.000Z')
+const mockDateTimestamp = toTimestamp(mockDate)
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
@@ -60,7 +64,7 @@ describe('afterResponse nitro hook handler', () => {
               },
             },
             multiCache: {
-              route: new NuxtMultiCacheRouteCacheHelper()
+              route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
                 .setCacheable()
                 .setMaxAge(1200),
             },
@@ -116,7 +120,9 @@ describe('afterResponse nitro hook handler', () => {
               route: {},
             },
             multiCache: {
-              route: new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
+              route: new NuxtMultiCacheRouteCacheHelper(
+                mockDateTimestamp,
+              ).setUncacheable(),
             },
           },
           node: {
@@ -143,7 +149,9 @@ describe('afterResponse nitro hook handler', () => {
               route: {},
             },
             multiCache: {
-              route: new NuxtMultiCacheRouteCacheHelper().setCacheable(),
+              route: new NuxtMultiCacheRouteCacheHelper(
+                mockDateTimestamp,
+              ).setCacheable(),
             },
           },
 
@@ -165,7 +173,7 @@ describe('afterResponse nitro hook handler', () => {
   })
 
   test('Puts a cacheable item in cache.', async () => {
-    const date = new Date(2022, 11, 29, 13, 0)
+    const date = new Date(2022, 11, 29, 13, 0, 0, 0)
     vi.setSystemTime(date)
 
     const storedItems: any[] = []
@@ -202,7 +210,7 @@ describe('afterResponse nitro hook handler', () => {
           },
         },
         multiCache: {
-          route: new NuxtMultiCacheRouteCacheHelper()
+          route: new NuxtMultiCacheRouteCacheHelper(toTimestamp(date))
             .setCacheable()
             .setMaxAge(1200),
         },

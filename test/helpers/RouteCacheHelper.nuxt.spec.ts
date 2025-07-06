@@ -1,9 +1,13 @@
 import { describe, expect, test } from 'vitest'
 import { NuxtMultiCacheRouteCacheHelper } from './../../src/runtime/helpers/RouteCacheHelper'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+
+const mockDate = new Date('2024-03-15T10:30:00.000Z')
+const mockDateTimestamp = toTimestamp(mockDate)
 
 describe('The RouteCacheHelper', () => {
   test('can be instanciated correctly', () => {
-    const helper = new NuxtMultiCacheRouteCacheHelper()
+    const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
     expect(helper).toBeInstanceOf(NuxtMultiCacheRouteCacheHelper)
 
     expect(helper.tags, 'Defaults to empty array.').toEqual([])
@@ -12,7 +16,7 @@ describe('The RouteCacheHelper', () => {
   })
 
   test('Returns self in every method.', () => {
-    const helper = new NuxtMultiCacheRouteCacheHelper()
+    const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
 
     // Make sure this test fails if new methods are added, so that this test
     // will fail.
@@ -37,7 +41,7 @@ describe('The RouteCacheHelper', () => {
   })
 
   test('adds cache tags', () => {
-    const helper = new NuxtMultiCacheRouteCacheHelper()
+    const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
     helper.addTags(['one'])
     expect(helper.tags).toEqual(['one'])
     helper.addTags(['two'])
@@ -45,7 +49,7 @@ describe('The RouteCacheHelper', () => {
   })
 
   test('sets the cacheable value correctly', () => {
-    const helper = new NuxtMultiCacheRouteCacheHelper()
+    const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
     expect(helper.cacheable).toEqual(null)
     helper.setCacheable()
     expect(helper.cacheable).toEqual(true)
@@ -54,7 +58,7 @@ describe('The RouteCacheHelper', () => {
   })
 
   test('Does not set to cacheable if it was set before', () => {
-    const helper = new NuxtMultiCacheRouteCacheHelper()
+    const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
     expect(helper.cacheable).toEqual(null)
     helper.setUncacheable()
     expect(helper.cacheable).toEqual(false)
@@ -63,7 +67,7 @@ describe('The RouteCacheHelper', () => {
   })
 
   test('sets the max age correctly', () => {
-    const helper = new NuxtMultiCacheRouteCacheHelper()
+    const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
     expect(helper.maxAge, 'Defaults to permanent.').toEqual(-1)
     helper.setMaxAge(8000)
     expect(

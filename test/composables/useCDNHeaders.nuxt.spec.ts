@@ -2,12 +2,16 @@ import type { H3Event } from 'h3'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
 import { useCDNHeaders } from './../../src/runtime/composables/useCDNHeaders'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+
+const now = new Date(2025, 5, 5, 12, 0, 0, 0)
+const nowTimestamp = toTimestamp(now)
 
 function buildEvent(): H3Event {
   return {
     context: {
       multiCache: {
-        cdn: new NuxtMultiCacheCDNHelper(),
+        cdn: new NuxtMultiCacheCDNHelper(nowTimestamp),
       },
     },
   } as H3Event
@@ -69,7 +73,7 @@ describe('useCDNHeaders composable', () => {
 
   test('Uses the provided event.', () => {
     isServerValue = true
-    const dummyHelper = new NuxtMultiCacheCDNHelper()
+    const dummyHelper = new NuxtMultiCacheCDNHelper(nowTimestamp)
 
     useCDNHeaders(
       (helper) => {

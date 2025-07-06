@@ -7,18 +7,14 @@ import type {
 import {
   enabledForRequest,
   getCacheKeyWithPrefix,
-  getExpiresValue,
   getMultiCacheContext,
+  getRequestTimestamp,
 } from '../../helpers/server'
 import { logger } from '../../helpers/logger'
 import { debug } from '#nuxt-multi-cache/config'
-import {
-  CACHE_NEVER,
-  CACHE_PERMANENT,
-  type MaxAge,
-  parseMaxAge,
-} from '../../helpers/maxAge'
+import { CACHE_NEVER, CACHE_PERMANENT, type MaxAge } from '../../helpers/maxAge'
 import { isExpired } from '../../helpers/maxAge'
+import { DataCacheHelper } from '../../helpers/DataCacheHelper'
 
 export async function useDataCache<T>(
   key: string,
@@ -46,24 +42,30 @@ export async function useDataCache<T>(
 
   const fullKey = await getCacheKeyWithPrefix(key, event)
 
+  const now = getRequestTimestamp(event)
   const addToCache: DataCacheAddToCacheMethod<T> = (
     data: T,
     cacheTags: string[] = [],
     providedMaxAge?: MaxAge,
     providedStaleIfError?: MaxAge,
   ) => {
-    const maxAge = parseMaxAge(providedMaxAge ?? CACHE_PERMANENT)
-    const staleIfError = parseMaxAge(providedStaleIfError ?? CACHE_NEVER)
+    const helper = new DataCacheHelper(now)
+    if (providedMaxAge) {
+      helper.setMaxAge(providedMaxAge)
+    }
+    if (providedStaleIfError) {
+      helper.setStaleIfError(providedStaleIfError)
+    }
 
-    if (maxAge === CACHE_NEVER) {
+    if (helper.maxAge === CACHE_NEVER) {
       return Promise.resolve()
     }
 
     const item: CacheItem = {
       data: data as any,
       cacheTags,
-      expires: getExpiresValue(maxAge),
-      staleIfErrorExpires: getExpiresValue(staleIfError),
+      expires: helper.getExpires('maxAge') ?? CACHE_PERMANENT,
+      staleIfErrorExpires: helper.getExpires('staleIfError') ?? CACHE_NEVER,
     }
 
     if (debug) {
@@ -72,7 +74,7 @@ export async function useDataCache<T>(
 
     try {
       return multiCache.data!.storage.setItem(fullKey, item, {
-        ttl: maxAge !== CACHE_PERMANENT ? maxAge : undefined,
+        ttl: helper.maxAge !== CACHE_PERMANENT ? helper.maxAge : undefined,
       })
     } catch (e) {
       logger.error('Failed to store data cache item.', e)
@@ -90,12 +92,12 @@ export async function useDataCache<T>(
     const staleValue =
       item &&
       item.staleIfErrorExpires &&
-      !isExpired(item.staleIfErrorExpires, Date.now() / 1000)
+      !isExpired(item.staleIfErrorExpires, now)
         ? (item.data as T)
         : undefined
 
     if (item) {
-      const itemIsExpired = isExpired(item.expires, Date.now() / 1000)
+      const itemIsExpired = isExpired(item.expires, now)
       if (!itemIsExpired) {
         if (debug) {
           logger.info('Returned item from data cache: ' + fullKey)

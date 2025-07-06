@@ -7,6 +7,7 @@ import {
   getMultiCacheContext,
   getCacheKeyWithPrefix,
   enabledForRequest,
+  getRequestTimestamp,
 } from './../../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helper'
 import { type Props, props } from '../shared'
@@ -164,6 +165,8 @@ export default defineComponent<Props>({
         })
     }
 
+    const now = getRequestTimestamp(event)
+
     function returnCached(cacheItem: ComponentCacheItem) {
       // If payload is available for component add it to the global payload
       // object.
@@ -191,8 +194,6 @@ export default defineComponent<Props>({
     }
 
     if (cached) {
-      const now = Date.now() / 1000
-
       // Check if the cache entry is expired.
       if (isExpired(cached.expires, now)) {
         if (debug) {
@@ -209,7 +210,7 @@ export default defineComponent<Props>({
       }
     }
 
-    const helper = new ComponentCacheHelper()
+    const helper = new ComponentCacheHelper(now)
     providedContext.helper = helper
 
     // For backwards-compatibility we assume that the component is
@@ -246,7 +247,7 @@ export default defineComponent<Props>({
       if (cached) {
         const canReturnStale = !isExpired(
           cached.staleIfErrorExpires,
-          Date.now() / 1000,
+          getRequestTimestamp(event),
         )
         if (canReturnStale) {
           return returnCached(cached)
