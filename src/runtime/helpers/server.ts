@@ -4,7 +4,7 @@ import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 import { isServer } from '#nuxt-multi-cache/config'
 import { getRequestHeader } from 'h3'
 import { SERVER_REQUEST_HEADER } from './constants'
-import { CACHE_NEVER, CACHE_PERMANENT, toTimestamp } from './maxAge'
+import { toTimestamp } from './maxAge'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
 
@@ -18,14 +18,14 @@ export async function enabledForRequest(event: H3Event): Promise<boolean> {
   if (!isServer) {
     return Promise.resolve(false)
   }
-  const serverOptions = await import('#nuxt-multi-cache/server-options').then(
-    (v) => v.serverOptions,
-  )
 
   event.context ||= {}
   event.context.multiCache ||= {}
 
   if (event.context.multiCache.enabledForRequest === undefined) {
+    const serverOptions = await import('#nuxt-multi-cache/server-options').then(
+      (v) => v.serverOptions,
+    )
     if (serverOptions.enabledForRequest) {
       const isEnabled = await serverOptions.enabledForRequest(event)
       event.context.multiCache.enabledForRequest = !!isEnabled
@@ -77,13 +77,8 @@ export async function getCacheKeyWithPrefix(
   cacheKey: string,
   event: H3Event,
 ): Promise<string> {
-  if (!event.context) {
-    event.context = {}
-  }
-
-  if (!event.context.multiCache) {
-    event.context.multiCache = {}
-  }
+  event.context ||= {}
+  event.context.multiCache ||= {}
 
   let prefix = event.context.multiCache.cachePrefix
 
@@ -118,6 +113,7 @@ export function encodeRouteCacheKey(event: H3Event): string {
 }
 
 export function isInternalServerRequest(event: H3Event): boolean {
+  event.context ||= {}
   event.context.multiCache ||= {}
 
   if (event.context.multiCache.isInternalServerRequest === undefined) {
