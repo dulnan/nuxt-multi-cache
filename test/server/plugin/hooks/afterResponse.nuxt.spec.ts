@@ -230,7 +230,7 @@ describe('afterResponse nitro hook handler', () => {
 
     expect(storedItems[0]).toMatchInlineSnapshot(`
       {
-        "item": "{"headers":{"x-test":"foobar"},"statusCode":200,"expires":1672320000,"cacheTags":[],"staleWhileRevalidate":false}<CACHE_ITEM><html></html>",
+        "item": "{"headers":{"x-test":"foobar"},"statusCode":200,"expires":1672320000,"cacheTags":[],"staleIfErrorExpires":0,"staleWhileRevalidate":false}<CACHE_ITEM><html></html>",
         "key": "/foobar",
         "options": {
           "ttl": 1200,

@@ -15,6 +15,7 @@ import { logger } from '../../helpers/logger'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
+import { isExpired } from '../../helpers/maxAge'
 
 function canBeServedFromCache(
   key: string,
@@ -22,10 +23,9 @@ function canBeServedFromCache(
   state: MultiCacheState,
 ): boolean {
   const now = Date.now() / 1000
-  const isExpired = decoded.expires ? now >= decoded.expires : false
 
   // Item is not expired, so we can serve it.
-  if (!isExpired) {
+  if (!isExpired(decoded.expires, now)) {
     return true
   }
 

@@ -30,6 +30,12 @@ export type Props = {
   maxAge?: MaxAge
 
   /**
+   * Define how lang a stale component can be returned if there is an error
+   * during rendering.
+   */
+  staleIfError?: MaxAge
+
+  /**
    * Provide the async data keys used by the cached component.
    *
    * If provided the payload data will be cached alongside the component.
@@ -57,6 +63,10 @@ export const props = {
   },
 
   maxAge: {
+    type: [Number, String],
+  },
+
+  staleIfError: {
     type: [Number, String],
   },
 

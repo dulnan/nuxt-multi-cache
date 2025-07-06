@@ -145,7 +145,7 @@ describe('RenderCacheable', () => {
       '"<div><div>Test App</div><div><div>Hello world</div></div></div>"',
     )
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      `"{"payload":{},"cacheTags":[],"ssrModules":[]}<CACHE_ITEM><div>Hello world</div>"`,
+      `"{"payload":{},"cacheTags":[],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
@@ -170,7 +170,7 @@ describe('RenderCacheable', () => {
       `"<div><div>Test App</div><div><div>Markup from cache</div></div></div>"`,
     )
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      '"{}<CACHE_ITEM><div>Markup from cache</div>"',
+      `"{"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Markup from cache</div>"`,
     )
   })
 
@@ -191,7 +191,7 @@ describe('RenderCacheable', () => {
     })
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      `"{"payload":{},"cacheTags":["test"],"ssrModules":[]}<CACHE_ITEM><div>Hello world</div>"`,
+      `"{"payload":{},"cacheTags":["test"],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
@@ -214,7 +214,7 @@ describe('RenderCacheable', () => {
     })
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      `"{"payload":{"examplePayload":{"data":"This is example payload."}},"cacheTags":["test"],"ssrModules":[]}<CACHE_ITEM><div>Hello world</div>"`,
+      `"{"payload":{"examplePayload":{"data":"This is example payload."}},"cacheTags":["test"],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
@@ -238,7 +238,7 @@ describe('RenderCacheable', () => {
     })
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::withExpiration']).toMatchInlineSnapshot(
-      `"{"payload":{},"expires":1669854600,"cacheTags":[],"ssrModules":[]}<CACHE_ITEM><div>Hello world</div>"`,
+      `"{"payload":{},"cacheTags":[],"ssrModules":[],"expires":1669854600,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
@@ -340,7 +340,7 @@ describe('RenderCacheable', () => {
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot(`
       {
-        "InnerComponent::CKAyMFHC05PW5FiE4G9tlfYrHyHI5577VSf3tQI76Wg": "{"payload":{},"cacheTags":[],"ssrModules":[]}<CACHE_ITEM><div>Hello neptun</div>",
+        "InnerComponent::CKAyMFHC05PW5FiE4G9tlfYrHyHI5577VSf3tQI76Wg": "{"payload":{},"cacheTags":[],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello neptun</div>",
       }
     `)
   })
@@ -419,6 +419,7 @@ describe('RenderCacheable', () => {
             "cacheTags": undefined,
             "maxAge": undefined,
             "noCache": false,
+            "staleIfError": undefined,
             "tag": undefined,
           },
         },
@@ -461,6 +462,7 @@ describe('RenderCacheable', () => {
           "cacheTags": undefined,
           "maxAge": undefined,
           "noCache": false,
+          "staleIfError": undefined,
           "tag": undefined,
         },
         "setup function",
@@ -507,6 +509,7 @@ describe('RenderCacheable', () => {
           "cacheTags": undefined,
           "maxAge": undefined,
           "noCache": false,
+          "staleIfError": undefined,
           "tag": undefined,
         },
         "setup function",

@@ -9,7 +9,6 @@ import {
   getCacheKeyWithPrefix,
   getExpiresValue,
   getMultiCacheContext,
-  isExpired,
 } from '../../helpers/server'
 import { logger } from '../../helpers/logger'
 import { debug } from '#nuxt-multi-cache/config'
@@ -19,6 +18,7 @@ import {
   type MaxAge,
   parseMaxAge,
 } from '../../helpers/maxAge'
+import { isExpired } from '../../helpers/maxAge'
 
 export async function useDataCache<T>(
   key: string,
@@ -51,16 +51,16 @@ export async function useDataCache<T>(
     cacheTags: string[] = [],
     providedMaxAge?: MaxAge,
   ) => {
-    const item: CacheItem = { data: data as any, cacheTags }
-    const maxAge =
-      providedMaxAge !== undefined ? parseMaxAge(providedMaxAge) : null
+    const maxAge = parseMaxAge(providedMaxAge ?? CACHE_PERMANENT)
 
     if (maxAge === CACHE_NEVER) {
       return Promise.resolve()
     }
 
-    if (maxAge !== CACHE_PERMANENT && typeof maxAge === 'number') {
-      item.expires = getExpiresValue(maxAge)
+    const item: CacheItem = {
+      data: data as any,
+      cacheTags,
+      expires: getExpiresValue(maxAge),
     }
 
     if (debug) {
@@ -85,7 +85,7 @@ export async function useDataCache<T>(
     const item = await multiCache.data.storage.getItem<CacheItem>(fullKey)
 
     if (item) {
-      const itemIsExpired = isExpired(item)
+      const itemIsExpired = isExpired(item.expires, Date.now() / 1000)
       if (!itemIsExpired) {
         if (debug) {
           logger.info('Returned item from data cache: ' + fullKey)

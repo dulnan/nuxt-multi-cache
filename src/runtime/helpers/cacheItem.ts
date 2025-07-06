@@ -1,5 +1,6 @@
 import type { ComponentCacheItem, RouteCacheItem } from '../types'
 import { logger } from './logger'
+import { CACHE_NEVER, CACHE_PERMANENT } from './maxAge'
 
 const DELIMITER = '<CACHE_ITEM>'
 
@@ -39,9 +40,9 @@ export function encodeRouteCacheItem(
   return encodeCacheItem(data, {
     headers,
     statusCode,
-    expires,
+    expires: expires ?? CACHE_PERMANENT,
     cacheTags,
-    staleIfErrorExpires,
+    staleIfErrorExpires: staleIfErrorExpires ?? CACHE_NEVER,
     staleWhileRevalidate,
   })
 }
@@ -78,8 +79,16 @@ export function encodeComponentCacheItem(
   expires?: number | undefined,
   cacheTags?: string[],
   ssrModules?: string[],
+  staleIfErrorExpires?: number,
 ): string {
-  return encodeCacheItem(data, { payload, expires, cacheTags, ssrModules })
+  const cacheItem: Omit<ComponentCacheItem, 'data'> = {
+    payload,
+    cacheTags,
+    ssrModules,
+    expires: expires ?? CACHE_PERMANENT,
+    staleIfErrorExpires: staleIfErrorExpires ?? CACHE_NEVER,
+  }
+  return encodeCacheItem(data, cacheItem)
 }
 
 /**

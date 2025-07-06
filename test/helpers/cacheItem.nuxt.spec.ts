@@ -17,7 +17,7 @@ describe('cacheItem helpers', () => {
         [],
       ),
     ).toMatchInlineSnapshot(
-      `"{"headers":{},"statusCode":200,"cacheTags":[],"staleWhileRevalidate":false}<CACHE_ITEM><html></html>"`,
+      `"{"headers":{},"statusCode":200,"expires":-1,"cacheTags":[],"staleIfErrorExpires":0,"staleWhileRevalidate":false}<CACHE_ITEM><html></html>"`,
     )
 
     expect(
@@ -34,7 +34,7 @@ describe('cacheItem helpers', () => {
         [],
       ),
     ).toEqual(
-      `{"headers":{"Accept-Language":"de, en","Cache-Control":"private"},"statusCode":200,"cacheTags":[]}<CACHE_ITEM><html></html>`,
+      `{"headers":{"Accept-Language":"de, en","Cache-Control":"private"},"statusCode":200,"expires":-1,"cacheTags":[],"staleIfErrorExpires":0}<CACHE_ITEM><html></html>`,
     )
 
     expect(

@@ -15,6 +15,8 @@ import {
   ComponentCacheHelper,
   INJECT_COMPONENT_CACHE_CONTEXT,
 } from '../../../helpers/ComponentCacheHelper'
+import { isExpired } from '../../../helpers/maxAge'
+import type { ComponentCacheItem } from '../../../types'
 
 /**
  * Wrapper for cacheable components.
@@ -151,47 +153,48 @@ export default defineComponent<Props>({
         })
     }
 
-    if (cached) {
-      const { data, payload, expires, ssrModules } = cached
+    function returnCached(cacheItem: ComponentCacheItem) {
+      // If payload is available for component add it to the global payload
+      // object.
+      if (cacheItem.payload) {
+        Object.keys(cacheItem.payload).forEach((key) => {
+          nuxtApp.payload.data[key] = cacheItem.payload![key]
+        })
+      }
 
+      if (cacheItem.ssrModules && nuxtApp.ssrContext?.modules) {
+        const modules = nuxtApp.ssrContext.modules
+        cacheItem.ssrModules.forEach((mod) => modules.add(mod))
+      }
+
+      if (debug) {
+        logger.info('Returning cached component.', {
+          fullCacheKey,
+          payload: cacheItem.payload ? Object.keys(cacheItem.payload) : [],
+          expires: cacheItem.expires,
+          props,
+        })
+      }
+
+      return renderMarkup(cacheItem.data)
+    }
+
+    if (cached) {
       const now = Date.now() / 1000
-      const isExpired = expires && now >= expires
 
       // Check if the cache entry is expired.
-      if (isExpired) {
+      if (isExpired(cached.expires, now)) {
         if (debug) {
           logger.error(
             "Don't return component from cache because it's expired.",
             {
               fullCacheKey,
-              expires,
+              expires: cached.expires,
             },
           )
         }
       } else {
-        // If payload is available for component add it to the global payload
-        // object.
-        if (payload) {
-          Object.keys(payload).forEach((key) => {
-            nuxtApp.payload.data[key] = payload[key]
-          })
-        }
-
-        if (ssrModules && nuxtApp.ssrContext?.modules) {
-          const modules = nuxtApp.ssrContext.modules
-          ssrModules.forEach((mod) => modules.add(mod))
-        }
-
-        if (debug) {
-          logger.info('Returning cached component.', {
-            fullCacheKey,
-            payload: payload ? Object.keys(payload) : [],
-            expires,
-            props,
-          })
-        }
-
-        return renderMarkup(data)
+        return returnCached(cached)
       }
     }
 
@@ -210,6 +213,10 @@ export default defineComponent<Props>({
       helper.setMaxAge(props.maxAge)
     }
 
+    if (props.staleIfError !== undefined && props.staleIfError !== null) {
+      helper.setStaleIfError(props.staleIfError)
+    }
+
     if (props.cacheTags) {
       helper.addTags(props.cacheTags)
     }
@@ -222,7 +229,23 @@ export default defineComponent<Props>({
     ssrContext.modules = new Set()
 
     // Render the contents of the slot to string.
-    const slotMarkup = await renderSlot(slots, currentInstance)
+    const renderResult = await renderSlot(slots, currentInstance)
+
+    if (renderResult instanceof Error) {
+      if (cached) {
+        const canReturnStale = !isExpired(
+          cached.staleIfErrorExpires,
+          Date.now() / 1000,
+        )
+        if (canReturnStale) {
+          return returnCached(cached)
+        }
+      }
+
+      // Re-throw error. Note we ignore bubbleError here, because it's not an
+      // error related to a nuxt-multi-cache issue.
+      throw renderResult
+    }
 
     const ssrModules = [...ssrContext.modules.values()]
 
@@ -235,7 +258,7 @@ export default defineComponent<Props>({
 
     // Not cacheable, return.
     if (!helper.isCacheable()) {
-      return renderMarkup(slotMarkup)
+      return renderMarkup(renderResult)
     }
 
     // Storing the markup in cache is wrapped in a try/catch. That way if
@@ -256,16 +279,18 @@ export default defineComponent<Props>({
       }, {})
 
       const expires = helper.getExpires('maxAge')
+      const staleIfErrorExpires = helper.getExpires('staleIfError')
 
       // Store in cache.
       await componentCache.storage.setItemRaw(
         fullCacheKey,
         encodeComponentCacheItem(
-          slotMarkup,
+          renderResult,
           payload,
           expires,
           cacheTags,
           ssrModules,
+          staleIfErrorExpires,
         ),
         { ttl: maxAge },
       )
@@ -291,6 +316,6 @@ export default defineComponent<Props>({
       }
     }
 
-    return renderMarkup(slotMarkup)
+    return renderMarkup(renderResult)
   },
 })

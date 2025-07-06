@@ -111,35 +111,43 @@ async function unrollBuffer(buffer: any[]) {
 export function renderSlot(
   slots: Slots,
   parent: ComponentInternalInstance,
-): Promise<string> {
-  // Set up buffer and push method. Ideally we could use
-  // vue/server-renderer's "createBuffer" method, but unfortunately it
-  // isn't exported.
-  const buffer: any[] = []
-  const push = (v: any) => {
-    buffer.push(v)
+): Promise<string | Error> {
+  try {
+    // Set up buffer and push method. Ideally we could use
+    // vue/server-renderer's "createBuffer" method, but unfortunately it
+    // isn't exported.
+    const buffer: any[] = []
+    const push = (v: any) => {
+      buffer.push(v)
+    }
+
+    // Render the contents of the default slot. We pass in the push method
+    // that will mutate our buffer array and add items to it.
+    ssrRenderSlotInner(
+      // Slots of this wrapper component.
+      slots,
+      // Chose the default slot.
+      'default',
+      // Slot props are not supported.
+      {},
+      // No fallback render function.
+      null,
+      // Method that pushes markup fragments or promises to our buffer.
+      push,
+      // This wrapper component's parent.
+      parent,
+    )
+
+    // The buffer now contains a nested array of strings or promises. This
+    // method flattens the array down to a single string.
+    return unrollBuffer(buffer)
+  } catch (e) {
+    if (e instanceof Error) {
+      return Promise.resolve(e)
+    }
+
+    throw new Error('Unexpected error.')
   }
-
-  // Render the contents of the default slot. We pass in the push method
-  // that will mutate our buffer array and add items to it.
-  ssrRenderSlotInner(
-    // Slots of this wrapper component.
-    slots,
-    // Chose the default slot.
-    'default',
-    // Slot props are not supported.
-    {},
-    // No fallback render function.
-    null,
-    // Method that pushes markup fragments or promises to our buffer.
-    push,
-    // This wrapper component's parent.
-    parent,
-  )
-
-  // The buffer now contains a nested array of strings or promises. This
-  // method flattens the array down to a single string.
-  return unrollBuffer(buffer)
 }
 
 /**

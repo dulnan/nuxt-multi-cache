@@ -30,7 +30,7 @@ export interface MultiCacheInstances {
 
 export interface CacheItem {
   data: string
-  expires?: number
+  expires: number
   cacheTags?: string[]
 }
 
@@ -45,6 +45,7 @@ export interface RouteCacheItem extends CacheItem {
 export interface DataCacheItem extends CacheItem {}
 
 export interface ComponentCacheItem extends CacheItem {
+  staleIfErrorExpires: number
   payload?: Record<string, any>
   ssrModules?: string[]
 }

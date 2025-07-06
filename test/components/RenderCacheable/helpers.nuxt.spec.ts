@@ -1,4 +1,4 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createStorage } from 'unstorage'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import {
@@ -77,6 +77,10 @@ describe('getCachedComponent', () => {
     const storage = createStorage()
     storage.setItemRaw('foobar', encodeComponentCacheItem('<div></div>'))
     const item = await getCachedComponent(storage, 'foobar')
-    expect(item).toEqual({ data: '<div></div>' })
+    expect(item).toEqual({
+      data: '<div></div>',
+      expires: -1,
+      staleIfErrorExpires: 0,
+    })
   })
 })

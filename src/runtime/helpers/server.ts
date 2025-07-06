@@ -4,6 +4,7 @@ import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 import { isServer } from '#nuxt-multi-cache/config'
 import { getRequestHeader } from 'h3'
 import { SERVER_REQUEST_HEADER } from './constants'
+import { CACHE_NEVER, CACHE_PERMANENT } from './maxAge'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
 
@@ -49,11 +50,10 @@ export function getMultiCacheRouteHelper(
 }
 
 export function getExpiresValue(maxAge: number) {
+  if (maxAge === CACHE_PERMANENT || maxAge === CACHE_NEVER) {
+    return maxAge
+  }
   return Math.round(Date.now() / 1000 + maxAge)
-}
-
-export function isExpired(item: CacheItem) {
-  return item.expires ? Date.now() / 1000 > item.expires : false
 }
 
 async function determinePrefix(event: H3Event): Promise<string> {

@@ -81,6 +81,9 @@ function calculateInterval(v: NamedInterval): number {
 
 export function parseMaxAge(v: MaxAge): number {
   if (typeof v === 'number') {
+    if (v === CACHE_PERMANENT || v === CACHE_NEVER) {
+      return v
+    }
     return Math.max(Math.round(v), -1)
   } else if (v === 'next-hour' || v === 'midnight' || v === 'end-of-week') {
     return calculateInterval(v)
@@ -97,4 +100,14 @@ export function parseMaxAge(v: MaxAge): number {
   }
 
   return duration
+}
+
+export function isExpired(expires: number, now: number): boolean {
+  if (expires === CACHE_PERMANENT) {
+    return false
+  } else if (expires === CACHE_NEVER) {
+    return true
+  }
+
+  return expires < now
 }

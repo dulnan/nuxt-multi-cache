@@ -6,9 +6,9 @@ describe('The RouteCacheHelper', () => {
     const helper = new NuxtMultiCacheRouteCacheHelper()
     expect(helper).toBeInstanceOf(NuxtMultiCacheRouteCacheHelper)
 
-    expect(helper.tags).toEqual([])
-    expect(helper.cacheable).toEqual(null)
-    expect(helper.maxAge).toEqual(null)
+    expect(helper.tags, 'Defaults to empty array.').toEqual([])
+    expect(helper.cacheable, 'Defaults to no choice.').toEqual(null)
+    expect(helper.maxAge, 'Defaults to permanent.').toEqual(-1)
   })
 
   test('Returns self in every method.', () => {
@@ -64,12 +64,15 @@ describe('The RouteCacheHelper', () => {
 
   test('sets the max age correctly', () => {
     const helper = new NuxtMultiCacheRouteCacheHelper()
-    expect(helper.maxAge).toEqual(null)
+    expect(helper.maxAge, 'Defaults to permanent.').toEqual(-1)
     helper.setMaxAge(8000)
-    expect(helper.maxAge).toEqual(8000)
+    expect(
+      helper.maxAge,
+      'Allows setting initial max age value even if technically larger than -1.',
+    ).toEqual(8000)
     helper.setMaxAge(5000)
-    expect(helper.maxAge).toEqual(5000)
+    expect(helper.maxAge, 'Sets a lower max age value.').toEqual(5000)
     helper.setMaxAge(999999999)
-    expect(helper.maxAge).toEqual(5000)
+    expect(helper.maxAge, 'Does not set a larger max age value.').toEqual(5000)
   })
 })

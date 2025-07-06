@@ -21,7 +21,7 @@ describe('CacheHelper', () => {
     it('should initialize with default values', () => {
       expect(cache.tags).toEqual([])
       expect(cache.cacheable).toBe(null)
-      expect(cache.maxAge).toBe(null)
+      expect(cache.maxAge, 'Defaults to permanent.').toBe(-1)
     })
   })
 
@@ -229,12 +229,12 @@ describe('CacheHelper', () => {
 
   describe('getExpires', () => {
     it('should return undefined for null maxAge', () => {
-      expect(cache.getExpires('maxAge')).toBeUndefined()
+      expect(cache.getExpires('maxAge')).toEqual(-1)
     })
 
     it('should return undefined for permanent cache (-1)', () => {
       cache.setMaxAge('permanent')
-      expect(cache.getExpires('maxAge')).toBeUndefined()
+      expect(cache.getExpires('maxAge')).toEqual(-1)
     })
 
     it('should calculate correct expiration timestamp', () => {
@@ -247,10 +247,9 @@ describe('CacheHelper', () => {
 
     it('should handle zero maxAge', () => {
       cache.maxAge = 0
-      const currentTimestamp = Math.floor(Date.now() / 1000)
       const expires = cache.getExpires('maxAge')
 
-      expect(expires).toBe(currentTimestamp)
+      expect(expires).toBe(0)
     })
 
     it('should floor the timestamp calculation', () => {
