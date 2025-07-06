@@ -4,6 +4,7 @@ import { describe, expect, test, beforeEach } from 'vitest'
 import purgeAll from './../../__helpers__/purgeAll'
 import getComponentCacheItem from '~/test/__helpers__/getComponentCacheItem'
 import { parseMaxAge } from '~/src/runtime/helpers/maxAge'
+import { createPageWithoutHydration, sleep } from '~/test/__helpers__'
 
 await setup({
   server: true,
@@ -115,4 +116,21 @@ describe('The RenderCacheable component', () => {
     // above the actual timeout.
     expect(Math.round(maxAge / 60)).toEqual(expectedMaxAge)
   })
+
+  test('returns a stale component if it throws an error during re-rendering.', async () => {
+    const page1 = await createPageWithoutHydration('/stale-if-error', 'en')
+    const timestamp1 = await page1.locator('#timestamp').innerText()
+
+    // The max age is 1s, so let's wait for 3s for it to become expired.
+    await sleep(3000)
+
+    const page3 = await createPageWithoutHydration(
+      '/stale-if-error?throwError=true',
+      'en',
+    )
+    const timestamp3 = await page3.locator('#timestamp').innerText()
+    expect(timestamp3, 'Should have returned a stale item from cache').toEqual(
+      timestamp1,
+    )
+  }, 10_000)
 })
