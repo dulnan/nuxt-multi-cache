@@ -1,6 +1,7 @@
 import path from 'node:path'
 import { setup, createPage } from '@nuxt/test-utils/e2e'
 import { describe, expect, test, beforeEach } from 'vitest'
+import { expect as playwrightExpect } from '@nuxt/test-utils/playwright'
 import purgeAll from './../../__helpers__/purgeAll'
 import getComponentCacheItem from '~/test/__helpers__/getComponentCacheItem'
 import { parseMaxAge } from '~/src/runtime/helpers/maxAge'
@@ -132,5 +133,68 @@ describe('The RenderCacheable component', () => {
     expect(timestamp3, 'Should have returned a stale item from cache').toEqual(
       timestamp1,
     )
+  }, 10_000)
+
+  test('works when rendered inside a server component', async () => {
+    const page = await createPageWithoutHydration('/inside-server-island', 'en')
+    const timestamp1 = await page.locator('#timestamp').innerText()
+
+    await page.reload()
+
+    await playwrightExpect(
+      page.locator('#timestamp'),
+      'Should return the cached component with the previous timestamp.',
+    ).toHaveText(timestamp1)
+
+    // The max age is 3s, so let's wait for 5s for it to become expired.
+    await sleep(5000)
+
+    await page.reload()
+
+    await playwrightExpect(
+      page.locator('#timestamp'),
+      'should not be returned from cache anymore.',
+    ).not.toHaveText(timestamp1)
+  }, 10_000)
+
+  test('works when rendered inside a server component, loaded on the client side.', async () => {
+    const page = await createPage('/inside-server-island-dynamic')
+
+    await page.locator('#button').click()
+
+    const timestamp1 = await page.locator('#timestamp').innerText()
+    await playwrightExpect(page.locator('#index'), 'Initial value').toHaveText(
+      '1',
+    )
+
+    // Click twice to toggle the rendering of the component.
+    await page.locator('#button').click()
+    await page.locator('#button').click()
+
+    await playwrightExpect(
+      page.locator('#index'),
+      'should still have initial value, because the component has not yet expired.',
+    ).toHaveText('1')
+    await playwrightExpect(
+      page.locator('#timestamp'),
+      'should still have initial value, because the component has not yet expired.',
+    ).toHaveText(timestamp1)
+
+    // The max age is 3s, so let's wait for 5s for it to become expired.
+    await sleep(4000)
+
+    // Click twice to toggle the rendering of the component.
+    await page.locator('#button').click()
+    await page.locator('#button').click()
+
+    // 3 because we clicked the button 3 times, but the second time was returned from cache.
+    await playwrightExpect(
+      page.locator('#index'),
+      'should now have a different value, because the component has expired.',
+    ).toHaveText('3')
+    await playwrightExpect(
+      page.locator('#timestamp'),
+      'should have changed',
+    ).not.toHaveText(timestamp1)
   }, 10_000)
 })

@@ -36,7 +36,7 @@ export function getCacheKey(
 ): string | undefined {
   const componentName = getComponentName(vnode)
   const hasProps = Object.keys(vnode.props || {}).length > 0
-  const cacheKeyBase = props.cacheKey || (hasProps ? hash(vnode.props) : '')
+  const cacheKeyBase = props.cacheKey ?? (hasProps ? hash(vnode.props) : '')
 
   if (!componentName) {
     if (debug) {
