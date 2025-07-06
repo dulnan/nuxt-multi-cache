@@ -5,7 +5,7 @@ import {
   getCacheKey,
   getComponentName,
   getCachedComponent,
-} from './../../../src/runtime/components/RenderCacheable/helpers/index'
+} from './../../../src/runtime/components/RenderCacheable/server/helper'
 
 describe('getCacheKey', () => {
   test('Returns no cache key if component has no name.', () => {

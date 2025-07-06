@@ -1,6 +1,6 @@
 /* eslint-disable vue/one-component-per-file */
 import { createSSRApp, defineComponent } from 'vue'
-import RenderCacheable from '../../../../src/runtime/components/RenderCacheable'
+import RenderCacheable from '../../../../src/runtime/components/RenderCacheable/server'
 import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
 
 export function createTestApp(

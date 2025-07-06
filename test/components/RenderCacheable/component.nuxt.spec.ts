@@ -3,7 +3,7 @@ import { defineComponent, nextTick } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import RenderCacheable from '../../../src/runtime/components/RenderCacheable'
+import RenderCacheable from '../../../src/runtime/components/RenderCacheable/server'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { createTestApp } from './__helpers__'
 
@@ -121,7 +121,7 @@ describe('RenderCacheable', () => {
     })
     const wrapper = mount(TestComponent)
     await nextTick()
-    expect(wrapper.html()).toBeFalsy()
+    expect(wrapper.html()).toMatchInlineSnapshot(`"<div></div>"`)
   })
 
   test('Puts markup in cache', async () => {

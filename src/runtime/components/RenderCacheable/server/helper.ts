@@ -1,5 +1,6 @@
 import { hash } from 'ohash'
 import type { Storage } from 'unstorage'
+import { ssrRenderSlotInner } from 'vue/server-renderer'
 import type {
   VNode,
   RendererNode,
@@ -14,52 +15,13 @@ import {
 import { logger } from '../../../helpers/logger'
 import type { ComponentCacheItem } from './../../../types'
 import { debug } from '#nuxt-multi-cache/config'
-import type { MaxAge } from './../../../helpers/maxAge'
+import type { Props } from '../shared'
 
 export type RenderCacheableSlotVNode = VNode<
   RendererNode,
   RendererElement,
   { [key: string]: any }
 >
-
-export type Props = {
-  /**
-   * The tag to use for the wrapper.
-   */
-  tag?: string
-
-  /**
-   * Disable caching entirely for this component.
-   */
-  noCache?: boolean
-
-  /**
-   * The key to use for the cache entry. If left empty a key is automatically
-   * generated based on the props passed to the child.
-   *
-   * The key is automatically prefixed by the component name.
-   */
-  cacheKey?: string
-
-  /**
-   * Cache tags that can be later used for invalidation.
-   */
-  cacheTags?: string | string[]
-
-  /**
-   * Define a max age for the cached entry.
-   */
-  maxAge?: MaxAge
-
-  /**
-   * Provide the async data keys used by the cached component.
-   *
-   * If provided the payload data will be cached alongside the component.
-   * If the component uses asyncData and the keys are not provided you will
-   * receive a hydration mismatch error in the client.
-   */
-  asyncDataKeys?: string | string[]
-}
 
 /**
  * Build the cache key.
@@ -146,7 +108,7 @@ async function unrollBuffer(buffer: any[]) {
  * buffer array. Then the unrollBuffer method is called which merges the
  * nested array into a single string of markup.
  */
-export async function renderSlot(
+export function renderSlot(
   slots: Slots,
   parent: ComponentInternalInstance,
 ): Promise<string> {
@@ -157,10 +119,6 @@ export async function renderSlot(
   const push = (v: any) => {
     buffer.push(v)
   }
-
-  const ssrRenderSlotInner = await import('vue/server-renderer').then(
-    (mod) => mod.ssrRenderSlotInner,
-  )
 
   // Render the contents of the default slot. We pass in the push method
   // that will mutate our buffer array and add items to it.
