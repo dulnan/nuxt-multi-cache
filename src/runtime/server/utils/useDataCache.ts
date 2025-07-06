@@ -87,6 +87,13 @@ export async function useDataCache<T>(
   try {
     const item = await multiCache.data.storage.getItem<CacheItem>(fullKey)
 
+    const staleValue =
+      item &&
+      item.staleIfErrorExpires &&
+      !isExpired(item.staleIfErrorExpires, Date.now() / 1000)
+        ? (item.data as T)
+        : undefined
+
     if (item) {
       const itemIsExpired = isExpired(item.expires, Date.now() / 1000)
       if (!itemIsExpired) {
@@ -99,7 +106,7 @@ export async function useDataCache<T>(
           // Extract the value. If the item was stored along its cache tags, it
           // will be an object with a cacheTags property.
           value: item.data as T,
-          staleValue: item.data as T,
+          staleValue,
           cacheTags: item.cacheTags || [],
           expires: item.expires,
         }
@@ -110,16 +117,9 @@ export async function useDataCache<T>(
       }
     }
 
-    const staleValue =
-      item &&
-      item.staleIfErrorExpires &&
-      !isExpired(item.staleIfErrorExpires, Date.now() / 1000)
-        ? item.data
-        : undefined
-
     return {
       addToCache,
-      staleValue: staleValue as T,
+      staleValue,
       cacheTags: item?.cacheTags || [],
       expires: item?.expires,
     }

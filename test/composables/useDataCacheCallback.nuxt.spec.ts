@@ -16,6 +16,31 @@ vi.mock('#nuxt-multi-cache/config', () => {
   }
 })
 
+function buildEventWithStorage(storage: Record<string, CacheItem>): H3Event {
+  return {
+    context: {
+      [MULTI_CACHE_CONTEXT_KEY]: {
+        cache: {
+          data: {
+            storage: {
+              getItem: (key: string) => {
+                if (key === 'force_get_error') {
+                  throw new Error('Failed to get data cache item.')
+                }
+                return Promise.resolve(storage[key])
+              },
+              setItem: (key: string, data: any) => {
+                storage[key] = data
+                return Promise.resolve()
+              },
+            },
+          },
+        },
+      },
+    },
+  } as H3Event
+}
+
 function buildEvent(bubbleError = false): H3Event {
   const storage: Record<string, CacheItem> = {
     foobar: { data: 'Cached data.', expires: -1, staleIfErrorExpires: 0 },
@@ -188,5 +213,112 @@ describe('useDataCacheCallback composable', () => {
     expect(
       (await useDataCache('data_with_expires', event)).expires,
     ).toMatchInlineSnapshot('1638318600')
+  })
+
+  test('Returns stale data if permanent age defined', async () => {
+    isServerValue = true
+    const event = buildEventWithStorage({
+      foobar: {
+        data: 'Some stale data.',
+        expires: -1,
+        staleIfErrorExpires: -1,
+      },
+    })
+
+    const data = await useDataCacheCallback(
+      'foobar',
+      () => {
+        throw new Error('Error loading data')
+      },
+      event,
+    )
+
+    expect(data).toEqual('Some stale data.')
+  })
+
+  test('Returns stale data if staleIfError not yet expired', async () => {
+    isServerValue = true
+    const date = new Date(2015, 5, 6, 12, 0, 0, 0)
+    vi.setSystemTime(date)
+    const expires = Math.round(
+      new Date(2015, 5, 6, 11, 59, 59, 0).getTime() / 1000,
+    )
+
+    const staleIfErrorExpires = Math.round(
+      new Date(2015, 5, 6, 12, 0, 1, 0).getTime() / 1000,
+    )
+    const event = buildEventWithStorage({
+      foobar: {
+        data: 'Some stale data.',
+        expires,
+        staleIfErrorExpires,
+      },
+    })
+
+    const data = await useDataCacheCallback(
+      'foobar',
+      () => {
+        throw new Error('Error loading data')
+      },
+      event,
+    )
+
+    expect(data).toEqual('Some stale data.')
+  })
+
+  test('Throws an error if no staleIfError is defined', async () => {
+    isServerValue = true
+    const date = new Date(2015, 5, 6, 12, 0, 0, 0)
+    vi.setSystemTime(date)
+    const expires = Math.round(
+      new Date(2015, 5, 6, 11, 59, 59, 0).getTime() / 1000,
+    )
+    const event = buildEventWithStorage({
+      foobar: {
+        data: 'Some stale data.',
+        expires,
+        staleIfErrorExpires: 0,
+      },
+    })
+
+    await expect(() =>
+      useDataCacheCallback(
+        'foobar',
+        () => {
+          throw new Error('Error loading data')
+        },
+        event,
+      ),
+    ).rejects.toThrowError('Error loading data')
+  })
+
+  test('Throws an error if staleIfError is expired', async () => {
+    isServerValue = true
+    const date = new Date(2015, 5, 6, 12, 0, 0, 0)
+    vi.setSystemTime(date)
+    const expires = Math.round(
+      new Date(2015, 5, 6, 11, 59, 59, 0).getTime() / 1000,
+    )
+
+    const staleIfErrorExpires = Math.round(
+      new Date(2015, 5, 6, 11, 59, 59, 0).getTime() / 1000,
+    )
+    const event = buildEventWithStorage({
+      foobar: {
+        data: 'Some stale data.',
+        expires,
+        staleIfErrorExpires,
+      },
+    })
+
+    await expect(() =>
+      useDataCacheCallback(
+        'foobar',
+        () => {
+          throw new Error('Error loading data')
+        },
+        event,
+      ),
+    ).rejects.toThrowError('Error loading data')
   })
 })

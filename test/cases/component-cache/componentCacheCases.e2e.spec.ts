@@ -106,16 +106,16 @@ describe('The RenderCacheable component', () => {
     const rows = await getComponentCacheItem()
     expect(rows).toHaveLength(1)
 
-    const now = Math.round(Date.now() / 1000)
+    const now = Math.floor(Date.now() / 1000)
 
-    const expectedMaxAge = Math.round(parseMaxAge('midnight') / 60)
+    const expectedMaxAge = Math.floor(parseMaxAge('midnight') / 60)
 
     const expires = rows.at(0)!.item!.expires!
     const maxAge = expires - now
 
     // Dividing by 60 gives us 1min of time for the test to run, which is way
     // above the actual timeout.
-    expect(Math.round(maxAge / 60)).toEqual(expectedMaxAge)
+    expect(Math.floor(maxAge / 60)).toEqual(expectedMaxAge)
   })
 
   test('returns a stale component if it throws an error during re-rendering.', async () => {

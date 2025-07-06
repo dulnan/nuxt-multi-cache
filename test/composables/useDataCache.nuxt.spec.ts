@@ -26,6 +26,31 @@ vi.mock('#nuxt-multi-cache/config', () => {
   }
 })
 
+function buildEventWithStorage(storage: Record<string, CacheItem>): H3Event {
+  return {
+    context: {
+      [MULTI_CACHE_CONTEXT_KEY]: {
+        cache: {
+          data: {
+            storage: {
+              getItem: (key: string) => {
+                if (key === 'force_get_error') {
+                  throw new Error('Failed to get data cache item.')
+                }
+                return Promise.resolve(storage[key])
+              },
+              setItem: (key: string, data: any) => {
+                storage[key] = data
+                return Promise.resolve()
+              },
+            },
+          },
+        },
+      },
+    },
+  } as H3Event
+}
+
 function buildEvent(bubbleError = false): H3Event {
   const storage: Record<string, CacheItem> = {
     foobar: {
@@ -225,10 +250,80 @@ describe('useDataCache composable', () => {
           },
         },
       },
-    }
+    } as H3Event
 
-    const cache = await useDataCache('foobar', event as any)
+    const cache = await useDataCache('foobar', event)
     expect(cache.value).toEqual('More cached data.')
+  })
+
+  test('Returns staleValue if permanent stale age value', async () => {
+    setIsServer(true)
+    const event = buildEventWithStorage({
+      foobar: {
+        data: 'More cached data.',
+        expires: -1,
+        staleIfErrorExpires: -1,
+      },
+    })
+
+    const cache = await useDataCache('foobar', event)
+    expect(cache.value).toEqual('More cached data.')
+    expect(cache.staleValue).toEqual('More cached data.')
+  })
+
+  test('Does not return staleValue if not specified', async () => {
+    setIsServer(true)
+    const event = buildEventWithStorage({
+      foobar: {
+        data: 'More cached data.',
+        expires: -1,
+        staleIfErrorExpires: 0,
+      },
+    })
+
+    const cache = await useDataCache('foobar', event)
+    expect(cache.value).toEqual('More cached data.')
+    expect(cache.staleValue).toBeUndefined()
+  })
+
+  test('Returns staleValue if not yet expired', async () => {
+    setIsServer(true)
+    const date = new Date(2023, 11, 1, 12, 0, 0)
+    vi.setSystemTime(date)
+    const expireTime = Math.round(
+      new Date(2023, 11, 1, 12, 0, 1).getTime() / 1000,
+    )
+    const event = buildEventWithStorage({
+      foobar: {
+        data: 'More cached data.',
+        expires: -1,
+        staleIfErrorExpires: expireTime,
+      },
+    })
+
+    const cache = await useDataCache('foobar', event)
+    expect(cache.value).toEqual('More cached data.')
+    expect(cache.staleValue).toEqual('More cached data.')
+  })
+
+  test('Does not return staleValue if expired', async () => {
+    setIsServer(true)
+    const date = new Date(2023, 11, 1, 12, 0, 0)
+    vi.setSystemTime(date)
+    const expireTime = Math.round(
+      new Date(2023, 11, 1, 11, 59, 59).getTime() / 1000,
+    )
+    const event = buildEventWithStorage({
+      foobar: {
+        data: 'More cached data.',
+        expires: -1,
+        staleIfErrorExpires: expireTime,
+      },
+    })
+
+    const cache = await useDataCache('foobar', event)
+    expect(cache.value).toEqual('More cached data.')
+    expect(cache.staleValue).toBeUndefined()
   })
 
   test('Bubbles errors when bubbleError === true', async () => {
