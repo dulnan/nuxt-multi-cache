@@ -1,4 +1,4 @@
-import { defineComponent, getCurrentInstance, h } from 'vue'
+import { defineComponent, getCurrentInstance, h, onErrorCaptured } from 'vue'
 import { useNuxtApp } from '#app'
 import { provide } from '#imports'
 import { encodeComponentCacheItem } from '../../../helpers/cacheItem'
@@ -114,6 +114,17 @@ export default defineComponent<Props>({
 
       return renderFallback
     }
+
+    // Capture errors during rendering of the slot.
+    let renderError: Error | undefined = undefined
+
+    onErrorCaptured((err) => {
+      renderError = err
+
+      // Stop the error from bubbling. We will optionally throw an error later
+      // if no stale component can be returned.
+      return false
+    }, currentInstance)
 
     const event = ssrContext.event
 
@@ -231,7 +242,7 @@ export default defineComponent<Props>({
     // Render the contents of the slot to string.
     const renderResult = await renderSlot(slots, currentInstance)
 
-    if (renderResult instanceof Error) {
+    if (renderResult instanceof Error || renderError) {
       if (cached) {
         const canReturnStale = !isExpired(
           cached.staleIfErrorExpires,
@@ -244,7 +255,11 @@ export default defineComponent<Props>({
 
       // Re-throw error. Note we ignore bubbleError here, because it's not an
       // error related to a nuxt-multi-cache issue.
-      throw renderResult
+      if (renderError) {
+        throw renderError
+      } else if (renderResult instanceof Error) {
+        throw renderResult
+      }
     }
 
     const ssrModules = [...ssrContext.modules.values()]
