@@ -22,12 +22,43 @@ export const isServer = import.meta.server
   },
   () => {
     return `
+/**
+ * Whether debug mode is enabled at build time.
+ */
 export declare const debug: boolean
-export declare const cdnCacheControlHeader: string
-export declare const cdnCacheTagHeader: string
+
+/**
+ * Whether the CDN feature is enabled at build time.
+ *
+ * The feature may still be disabled at runtime via runtime config.
+ */
 export declare const cdnEnabled: boolean
+
+/**
+ * The CDN cache control header name.
+ */
+export declare const cdnCacheControlHeader: string
+
+/**
+ * The CDN cache tag header name.
+ */
+export declare const cdnCacheTagHeader: string
+
+/**
+ * Whether the route cache is enabled at build time.
+ *
+ * The cache may still be disabled at runtime via runtime config.
+ */
 export declare const routeCacheEnabled: boolean
+
+/**
+ * The delay in milliseconds before invalidating cache tags.
+ */
 export declare const cacheTagInvalidationDelay: number
+
+/**
+ * Alias for import.meta.server, used for mocking in tests.
+ */
 export declare const isServer: boolean
 `
   },

@@ -6,6 +6,8 @@ import type { NuxtMultiCacheCDNHelper } from './helpers/CDNHelper'
 import type { MultiCacheState } from './helpers/MultiCacheState'
 import type { MaxAge } from './helpers/maxAge'
 
+export type BubbleCacheability = boolean | 'route' | 'cdn'
+
 export type MultiCacheInstance = {
   storage: Storage
   bubbleError: boolean
@@ -32,6 +34,12 @@ export interface CacheItem {
   data: string
   expires: number
   staleIfErrorExpires: number
+  cacheTags?: string[]
+}
+
+export interface CacheableItemInterface {
+  expires?: number | null
+  staleIfErrorExpires?: number | null
   cacheTags?: string[]
 }
 

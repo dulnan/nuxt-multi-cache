@@ -1,6 +1,9 @@
+import type { CacheableItemInterface } from '../types'
+import type { CacheabilityInterface } from './CacheabilityInterface'
 import {
   CACHE_NEVER,
   CACHE_PERMANENT,
+  expiresToMaxAge,
   parseMaxAge,
   type MaxAge,
 } from './maxAge'
@@ -9,7 +12,7 @@ type NumericKeys<T> = {
   [K in keyof T]: T[K] extends number | null ? K : never
 }[keyof T]
 
-export class CacheHelper {
+export class CacheHelper implements CacheabilityInterface {
   /**
    * The collected cache tags.
    */
@@ -24,6 +27,11 @@ export class CacheHelper {
    * The maximum age.
    */
   maxAge = CACHE_PERMANENT
+
+  /**
+   * The stale if error age.
+   */
+  staleIfError: number | null = null
 
   constructor(private readonly now: number) {}
 
@@ -61,6 +69,16 @@ export class CacheHelper {
   setMaxAge(v: MaxAge): this {
     // @ts-expect-error TS is not able to determine the type here because the base class uses this in the generic.
     return this.setNumeric('maxAge', v)
+  }
+
+  /**
+   * Set the staleIfError in seconds.
+   *
+   * If set, then a stale version of the component may be returned if an error happens during rendering.
+   */
+  setStaleIfError(v: MaxAge): this {
+    // @ts-expect-error TS is not able to determine the type here because the base class uses this in the generic.
+    return this.setNumeric('staleIfError', v)
   }
 
   /**
@@ -121,5 +139,51 @@ export class CacheHelper {
    */
   public isCacheable(): boolean {
     return this.cacheable === true
+  }
+
+  public mergeFromCacheItem(item: CacheableItemInterface): this {
+    if (item.cacheTags) {
+      this.addTags(item.cacheTags)
+    }
+
+    if (item.expires !== null && item.expires !== undefined) {
+      this.setMaxAge(expiresToMaxAge(item.expires, this.now))
+    }
+
+    if (
+      item.staleIfErrorExpires !== null &&
+      item.staleIfErrorExpires !== undefined
+    ) {
+      this.setStaleIfError(expiresToMaxAge(item.staleIfErrorExpires, this.now))
+    }
+
+    return this
+  }
+
+  public getMaxAge(): number {
+    return this.maxAge
+  }
+
+  public getStaleIfError(): number | null {
+    return this.staleIfError
+  }
+
+  public getTags(): string[] {
+    return this.tags
+  }
+
+  public mergeFromCacheability(cacheability: CacheabilityInterface): this {
+    const maxAge = cacheability.getMaxAge()
+    if (maxAge !== null) {
+      this.setMaxAge(maxAge)
+    }
+
+    const staleIfError = cacheability.getStaleIfError()
+    if (staleIfError !== null) {
+      this.setStaleIfError(staleIfError)
+    }
+
+    this.addTags(cacheability.getTags())
+    return this
   }
 }

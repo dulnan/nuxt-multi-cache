@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { useRoute } from '#imports'
+import { useRoute, computed } from '#imports'
 
 const route = useRoute()
 

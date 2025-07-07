@@ -115,3 +115,14 @@ export function isExpired(expires: number, now: number): boolean {
 export function toTimestamp(date: Date): number {
   return Math.floor(date.getTime() / 1000)
 }
+
+export function expiresToMaxAge(expires: number, now: number): number {
+  if (expires === CACHE_PERMANENT) {
+    return CACHE_PERMANENT
+  } else if (expires === CACHE_NEVER) {
+    return CACHE_NEVER
+  }
+
+  const remaining = Math.floor(expires - now)
+  return Math.max(remaining, 0)
+}

@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { useAsyncData } from '#imports'
+import { useAsyncData, useComponentCache } from '#imports'
 
 const props = defineProps<{
   throwError: boolean

@@ -55,6 +55,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
     },
     debug: false,
     cdnEnabled: true,
+    routeCacheEnabled: true,
   }
 })
 
@@ -415,6 +416,7 @@ describe('RenderCacheable', () => {
           "fullCacheKey": "InnerComponent::set_error",
           "props": {
             "asyncDataKeys": undefined,
+            "bubbleCacheability": false,
             "cacheKey": "set_error",
             "cacheTags": undefined,
             "maxAge": undefined,
@@ -458,6 +460,7 @@ describe('RenderCacheable', () => {
         [Error: Failed to get item.],
         {
           "asyncDataKeys": undefined,
+          "bubbleCacheability": false,
           "cacheKey": "get_error",
           "cacheTags": undefined,
           "maxAge": undefined,
@@ -505,6 +508,7 @@ describe('RenderCacheable', () => {
         [Error: Failed to set item.],
         {
           "asyncDataKeys": undefined,
+          "bubbleCacheability": false,
           "cacheKey": "set_error",
           "cacheTags": undefined,
           "maxAge": undefined,

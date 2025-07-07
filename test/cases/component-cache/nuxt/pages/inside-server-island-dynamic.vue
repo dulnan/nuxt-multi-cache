@@ -11,6 +11,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from '#imports'
+
 const isVisible = ref(false)
 const index = ref(0)
 

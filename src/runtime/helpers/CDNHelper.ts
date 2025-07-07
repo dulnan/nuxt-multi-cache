@@ -2,11 +2,13 @@ import { CacheControl, parse } from '@tusbar/cache-control'
 import { setResponseHeader, type H3Event } from 'h3'
 import type { FetchResponse } from 'ofetch'
 import { onlyUnique } from './server'
-import { parseMaxAge, type MaxAge } from './maxAge'
+import { expiresToMaxAge, parseMaxAge, type MaxAge } from './maxAge'
 import {
   cdnCacheControlHeader,
   cdnCacheTagHeader,
 } from '#nuxt-multi-cache/config'
+import type { CacheableItemInterface } from '../types'
+import type { CacheabilityInterface } from './CacheabilityInterface'
 
 const numericProperties = [
   'maxAge',
@@ -39,7 +41,7 @@ type CacheControlBooleanProperties = keyof Pick<
   (typeof booleanProperties)[number]
 >
 
-export class NuxtMultiCacheCDNHelper {
+export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   _tags: string[]
   _control: CacheControl
   constructor(
@@ -202,5 +204,57 @@ export class NuxtMultiCacheCDNHelper {
       this._control.public = true
     }
     return this
+  }
+
+  public mergeFromCacheItem(
+    item: CacheableItemInterface,
+  ): NuxtMultiCacheCDNHelper {
+    if (item.cacheTags) {
+      this.addTags(item.cacheTags)
+    }
+
+    if (item.expires !== null && item.expires !== undefined) {
+      this.setNumeric('maxAge', expiresToMaxAge(item.expires, this.now))
+    }
+    if (
+      item.staleIfErrorExpires !== null &&
+      item.staleIfErrorExpires !== undefined
+    ) {
+      this.setNumeric(
+        'staleIfError',
+        expiresToMaxAge(item.staleIfErrorExpires, this.now),
+      )
+    }
+
+    return this
+  }
+
+  public mergeFromCacheability(
+    cacheability: CacheabilityInterface,
+  ): NuxtMultiCacheCDNHelper {
+    const maxAge = cacheability.getMaxAge()
+    if (maxAge !== null) {
+      this.setNumeric('maxAge', maxAge)
+    }
+
+    const staleIfError = cacheability.getStaleIfError()
+    if (staleIfError !== null) {
+      this.setNumeric('staleIfError', staleIfError)
+    }
+
+    this.addTags(cacheability.getTags())
+    return this
+  }
+
+  public getMaxAge(): number | null {
+    return this._control.maxAge
+  }
+
+  public getStaleIfError(): number | null {
+    return this._control.staleIfError
+  }
+
+  public getTags(): string[] {
+    return this._tags
   }
 }

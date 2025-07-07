@@ -18,6 +18,7 @@ import {
 } from '../../../helpers/ComponentCacheHelper'
 import { isExpired } from '../../../helpers/maxAge'
 import type { ComponentCacheItem } from '../../../types'
+import { bubbleCacheability } from './../../../helpers/bubbleCacheability'
 
 /**
  * Wrapper for cacheable components.
@@ -116,17 +117,6 @@ export default defineComponent<Props>({
       return renderFallback
     }
 
-    // Capture errors during rendering of the slot.
-    let renderError: Error | undefined = undefined
-
-    onErrorCaptured((err) => {
-      renderError = err
-
-      // Stop the error from bubbling. We will optionally throw an error later
-      // if no stale component can be returned.
-      return false
-    }, currentInstance)
-
     const event = ssrContext.event
 
     const isEnabled = await enabledForRequest(event)
@@ -190,6 +180,8 @@ export default defineComponent<Props>({
         })
       }
 
+      bubbleCacheability(cacheItem, event, props.bubbleCacheability)
+
       return renderMarkup(cacheItem.data)
     }
 
@@ -240,6 +232,17 @@ export default defineComponent<Props>({
     // that were added during rendering of the entire slot.
     ssrContext.modules = new Set()
 
+    // Capture errors during rendering of the slot.
+    let renderError: Error | undefined = undefined
+
+    onErrorCaptured((err) => {
+      renderError = err
+
+      // Stop the error from bubbling. We will optionally throw an error later
+      // if no stale component can be returned.
+      return false
+    }, currentInstance)
+
     // Render the contents of the slot to string.
     const renderResult = await renderSlot(slots, currentInstance)
 
@@ -271,6 +274,8 @@ export default defineComponent<Props>({
 
     // Restore the original set.
     ssrContext.modules = originalModules
+
+    bubbleCacheability(helper, event, props.bubbleCacheability)
 
     // Not cacheable, return.
     if (!helper.isCacheable()) {

@@ -1,4 +1,5 @@
 import type { MaxAge } from '../../../helpers/maxAge'
+import type { BubbleCacheability } from '../../../types'
 
 export type Props = {
   /**
@@ -43,6 +44,11 @@ export type Props = {
    * receive a hydration mismatch error in the client.
    */
   asyncDataKeys?: string | string[]
+
+  /**
+   * If cacheability of the component should be bubbled to the route cache and/or CDN headers.
+   */
+  bubbleCacheability?: BubbleCacheability
 }
 
 export const props = {
@@ -72,5 +78,9 @@ export const props = {
 
   asyncDataKeys: {
     type: Array,
+  },
+
+  bubbleCacheability: {
+    type: [Boolean, String],
   },
 }

@@ -4,17 +4,19 @@ import { useDataCacheCallback as serverUseDataCacheCallback } from '../server/ut
 import { useNuxtApp } from '#imports'
 import { logger } from '../helpers/logger'
 import { debug, isServer } from '#nuxt-multi-cache/config'
+import type { UseDataCacheOptions } from '../server/utils/useDataCache'
 
 export async function useDataCacheCallback<T>(
   key: string,
   cb: UseDataCacheCallbackCallback<T>,
-  providedEvent?: H3Event,
+  providedEvent?: H3Event | null,
+  options?: UseDataCacheOptions,
 ): Promise<T> {
   if (isServer) {
     const event = providedEvent || useNuxtApp().ssrContext?.event
 
     if (event) {
-      return serverUseDataCacheCallback(key, cb, event)
+      return serverUseDataCacheCallback(key, cb, event, options)
     } else {
       if (debug) {
         logger.warn(

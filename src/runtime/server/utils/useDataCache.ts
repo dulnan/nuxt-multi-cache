@@ -3,6 +3,7 @@ import type {
   DataCacheAddToCacheMethod,
   DataCacheCallbackContext,
   CacheItem,
+  BubbleCacheability,
 } from '../../types'
 import {
   enabledForRequest,
@@ -15,10 +16,16 @@ import { debug } from '#nuxt-multi-cache/config'
 import { CACHE_NEVER, CACHE_PERMANENT, type MaxAge } from '../../helpers/maxAge'
 import { isExpired } from '../../helpers/maxAge'
 import { DataCacheHelper } from '../../helpers/DataCacheHelper'
+import { bubbleCacheability } from '../../helpers/bubbleCacheability'
+
+export type UseDataCacheOptions = {
+  bubbleCacheability?: BubbleCacheability
+}
 
 export async function useDataCache<T>(
   key: string,
   event: H3Event,
+  options?: UseDataCacheOptions | null,
 ): Promise<DataCacheCallbackContext<T>> {
   const dummy: DataCacheCallbackContext<T> = {
     addToCache: (_v: T) => {
@@ -56,6 +63,9 @@ export async function useDataCache<T>(
     if (providedStaleIfError) {
       helper.setStaleIfError(providedStaleIfError)
     }
+    helper.addTags(cacheTags)
+
+    bubbleCacheability(helper, event, options?.bubbleCacheability)
 
     if (helper.maxAge === CACHE_NEVER) {
       return Promise.resolve()
@@ -63,7 +73,7 @@ export async function useDataCache<T>(
 
     const item: CacheItem = {
       data: data as any,
-      cacheTags,
+      cacheTags: helper.getTags(),
       expires: helper.getExpires('maxAge') ?? CACHE_PERMANENT,
       staleIfErrorExpires: helper.getExpires('staleIfError') ?? CACHE_NEVER,
     }
@@ -102,6 +112,8 @@ export async function useDataCache<T>(
         if (debug) {
           logger.info('Returned item from data cache: ' + fullKey)
         }
+
+        bubbleCacheability(item, event, options?.bubbleCacheability)
 
         return {
           addToCache,

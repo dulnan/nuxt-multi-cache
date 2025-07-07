@@ -27,7 +27,6 @@ describe('The RouteCacheHelper', () => {
     expect(methods).toMatchInlineSnapshot(`
       [
         "constructor",
-        "setStaleIfError",
         "allowStaleWhileRevalidate",
       ]
     `)

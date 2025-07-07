@@ -40,6 +40,11 @@ describe('The CDNHelper', () => {
         "setBoolean",
         "private",
         "public",
+        "mergeFromCacheItem",
+        "mergeFromCacheability",
+        "getMaxAge",
+        "getStaleIfError",
+        "getTags",
       ]
     `)
 

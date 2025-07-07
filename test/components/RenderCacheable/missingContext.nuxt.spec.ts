@@ -91,10 +91,12 @@ describe('RenderCacheable with missing context', () => {
       'Failed to get current instance in RenderCacheable component.',
       {
         asyncDataKeys: ['examplePayload'],
+        bubbleCacheability: false,
         cacheKey: 'foobar',
         cacheTags: ['test'],
         maxAge: undefined,
         noCache: false,
+        staleIfError: undefined,
         tag: undefined,
       },
     )
@@ -124,10 +126,12 @@ describe('RenderCacheable with missing context', () => {
     await renderToString(app, ssrContext)
     expect(loggerSpy).toHaveBeenCalledWith('Failed to get SSR context.', {
       asyncDataKeys: ['examplePayload'],
+      bubbleCacheability: false,
       cacheKey: 'foobar',
       cacheTags: ['test'],
       maxAge: undefined,
       noCache: false,
+      staleIfError: undefined,
       tag: undefined,
     })
   })

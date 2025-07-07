@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3'
-import { useDataCache } from './useDataCache'
+import { useDataCache, type UseDataCacheOptions } from './useDataCache'
 import { DataCacheHelper } from '../../helpers/DataCacheHelper'
 import { getRequestTimestamp } from '../../helpers/server'
+import { bubbleCacheability } from '../../helpers/bubbleCacheability'
 
 export type UseDataCacheCallbackCallback<T> = (
   helper?: DataCacheHelper,
@@ -11,8 +12,9 @@ export async function useDataCacheCallback<T>(
   key: string,
   cb: UseDataCacheCallbackCallback<T>,
   event: H3Event,
+  options?: UseDataCacheOptions,
 ): Promise<T> {
-  const fromCache = await useDataCache<T>(key, event)
+  const fromCache = await useDataCache<T>(key, event, options)
 
   // The "value" property contains a value if the item is not yet expired.
   if (fromCache.value) {
@@ -32,6 +34,7 @@ export async function useDataCacheCallback<T>(
     return result
   } catch (e) {
     if (fromCache.staleValue) {
+      bubbleCacheability(fromCache, event, options?.bubbleCacheability)
       return fromCache.staleValue
     }
 

@@ -6,7 +6,12 @@ import {
   ROUTE_CACHE_TAGS_HEADER,
   SERVER_REQUEST_HEADER,
 } from '../helpers/constants'
-import { isServer } from '#nuxt-multi-cache/config'
+import {
+  cdnEnabled,
+  isServer,
+  routeCacheEnabled,
+} from '#nuxt-multi-cache/config'
+import type { BubbleCacheability } from '../types'
 
 type OnResponseInterceptor = (
   ctx: FetchContext<unknown, ResponseType> & {
@@ -33,8 +38,13 @@ type UseCacheAwareFetchInterceptor = {
  *
  * The onRequest interceptor adds a special request header to indicate that
  * this is an internal request originating from Nuxt during SSR.
+ *
+ * @param bubbleCacheability Which cacheability to bubble. true => everything,
+ * route => only route cache, cdn => only CDN headers. Defaults to true.
  */
-export function useCacheAwareFetchInterceptor(): UseCacheAwareFetchInterceptor {
+export function useCacheAwareFetchInterceptor(
+  bubbleCacheability: BubbleCacheability = true,
+): UseCacheAwareFetchInterceptor {
   const config = useRuntimeConfig()
 
   if (isServer && (config.multiCache.cdn || config.multiCache.route)) {
@@ -46,7 +56,11 @@ export function useCacheAwareFetchInterceptor(): UseCacheAwareFetchInterceptor {
 
     return {
       onResponse: function (ctx) {
-        if (config.multiCache.cdn) {
+        if (
+          cdnEnabled &&
+          config.multiCache.cdn &&
+          (bubbleCacheability === true || bubbleCacheability === 'cdn')
+        ) {
           useCDNHeaders(
             (cdn) => {
               cdn.mergeFromResponse(ctx.response)
@@ -56,7 +70,11 @@ export function useCacheAwareFetchInterceptor(): UseCacheAwareFetchInterceptor {
           )
         }
 
-        if (config.multiCache.route) {
+        if (
+          routeCacheEnabled &&
+          config.multiCache.route &&
+          (bubbleCacheability === true || bubbleCacheability === 'route')
+        ) {
           const routeCacheTags = (
             ctx.response.headers.get(ROUTE_CACHE_TAGS_HEADER) || ''
           ).split(' ')
