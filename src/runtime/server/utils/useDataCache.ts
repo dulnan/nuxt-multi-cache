@@ -19,6 +19,10 @@ import { DataCacheHelper } from '../../helpers/DataCacheHelper'
 import { bubbleCacheability } from '../../helpers/bubbleCacheability'
 
 export type UseDataCacheOptions = {
+  /**
+   * If set, the cacheability of this data cache item will bubble to other
+   * caches.
+   */
   bubbleCacheability?: BubbleCacheability
 }
 

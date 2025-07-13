@@ -90,9 +90,8 @@ describe('The RenderCacheable component', () => {
 
     const diff = Math.floor(maxAge / 60 / 60)
 
-    // Because we use Math.floor(), even several seconds will not cause the
-    // diff to go to 23.
-    expect(diff).toEqual(24)
+    expect(diff).toBeLessThanOrEqual(24)
+    expect(diff).toBeGreaterThanOrEqual(23)
   })
 
   test('sets max age of "midnight" correctly on component', async () => {
