@@ -1,11 +1,11 @@
 import path from 'path'
 import { setup } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import type { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { ModuleOptions } from '../src/build/options'
 import purgeAll from './__helpers__/purgeAll'
 import { createPageWithoutHydration } from './__helpers__'
 
-const multiCache: NuxtMultiCacheOptions = {
+const multiCache: ModuleOptions = {
   component: {
     enabled: true,
   },

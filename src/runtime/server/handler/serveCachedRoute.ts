@@ -4,27 +4,28 @@ import {
   encodeRouteCacheKey,
   getCacheKeyWithPrefix,
   getMultiCacheContext,
+  getRequestTimestamp,
 } from '../../helpers/server'
 import {
   decodeRouteCacheItem,
   handleRawCacheData,
 } from '../../helpers/cacheItem'
 import type { RouteCacheItem } from '../../types'
-import { MultiCacheState } from '../../helpers/MultiCacheState'
+import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/logger'
 import { setCachedResponse } from '../../helpers/routeCache'
-import { useRuntimeConfig } from '#imports'
+import { debug } from '#nuxt-multi-cache/config'
+import { serverOptions } from '#nuxt-multi-cache/server-options'
+import { isExpired } from '../../helpers/maxAge'
 
 function canBeServedFromCache(
+  event: H3Event,
   key: string,
   decoded: RouteCacheItem,
   state: MultiCacheState,
 ): boolean {
-  const now = Date.now() / 1000
-  const isExpired = decoded.expires ? now >= decoded.expires : false
-
   // Item is not expired, so we can serve it.
-  if (!isExpired) {
+  if (!isExpired(decoded.expires, getRequestTimestamp(event))) {
     return true
   }
 
@@ -39,22 +40,22 @@ function canBeServedFromCache(
 }
 
 export async function serveCachedHandler(event: H3Event) {
+  const { state } = useMultiCacheApp()
+  const context = getMultiCacheContext(event)
+
+  if (!context?.route) {
+    return
+  }
+
   try {
-    const { serverOptions, state } = useMultiCacheApp()
-    const context = getMultiCacheContext(event)
-
-    if (!context?.route) {
-      return
-    }
-
     // Build the cache key.
-    const fullKey = serverOptions?.route?.buildCacheKey
+    const fullKey = serverOptions.route?.buildCacheKey
       ? await serverOptions.route.buildCacheKey(event)
-      : getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
+      : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
 
     // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(
-      await context.route.getItemRaw(fullKey),
+      await context.route.storage.getItemRaw(fullKey),
     )
 
     // No cache entry.
@@ -70,23 +71,23 @@ export async function serveCachedHandler(event: H3Event) {
     }
 
     // Store the decoded cache item in the event context.
-    event.__MULTI_CACHE_DECODED_CACHED_ROUTE = decoded
+    event.context.multiCache ||= {}
+    event.context.multiCache.routeCachedDecoded = decoded
 
     // Check if item can be served from cache.
-    if (!canBeServedFromCache(fullKey, decoded, state)) {
+    if (!canBeServedFromCache(event, fullKey, decoded, state)) {
       // Mark the key as being revalidated.
       if (decoded.staleWhileRevalidate) {
         state.addKeyBeingRevalidated(fullKey)
-        event.__MULTI_CACHE_REVALIDATION_KEY = fullKey
+        event.context.multiCache ||= {}
+        event.context.multiCache.routeRevalidationkey = fullKey
       }
 
       // Returning, so the route is revalidated.
       return
     }
 
-    const debugEnabled = useRuntimeConfig().multiCache.debug
-
-    if (debugEnabled) {
+    if (debug) {
       const url = getRequestURL(event)
       logger.info('Serving cached route for path: ' + url.toString(), {
         fullKey,
@@ -97,9 +98,13 @@ export async function serveCachedHandler(event: H3Event) {
 
     return decoded.data
   } catch (e) {
-    if (e instanceof Error) {
-      // eslint-disable-next-line no-console
-      console.debug(e.message)
+    logger.error(
+      `Error while attempting to serve cached route for path "${event.path}".`,
+      e,
+    )
+
+    if (context.route.bubbleError) {
+      throw e
     }
   }
 }

@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3'
-import { useRouteCache } from '#nuxt-multi-cache/composables'
+import { useRouteCache } from '#imports'
 
 const getResult = function () {
   return new Promise((resolve) => {

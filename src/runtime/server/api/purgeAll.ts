@@ -1,26 +1,35 @@
-import { defineEventHandler } from 'h3'
+import { defineEventHandler, createError } from 'h3'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-import type { NuxtMultiCacheSSRContext } from './../../types'
+import type { CachePurgeAllResponse, MultiCacheInstances } from './../../types'
 import { checkAuth } from './helpers'
 
-export default defineEventHandler(async (event) => {
-  await checkAuth(event)
+export default defineEventHandler<Promise<CachePurgeAllResponse>>(
+  async (event) => {
+    await checkAuth(event)
 
-  const app = useMultiCacheApp()
+    const app = useMultiCacheApp()
 
-  if (!app.cache) {
-    return
-  }
-
-  let key: keyof NuxtMultiCacheSSRContext
-  for (key in app.cache) {
-    const cache = app.cache[key]
-    if (cache) {
-      await cache.clear()
+    if (!app.cache) {
+      throw createError({
+        statusCode: 500,
+        statusMessage: 'Failed to get nuxt-multi-cache app.',
+      })
     }
-  }
 
-  return {
-    status: 'OK',
-  }
-})
+    let key: keyof MultiCacheInstances
+    for (key in app.cache) {
+      const cache = app.cache[key]
+      if (cache) {
+        await cache.storage.clear()
+      }
+    }
+
+    if (app.cacheTagRegistry) {
+      await app.cacheTagRegistry.purgeEverything()
+    }
+
+    return {
+      status: 'OK',
+    }
+  },
+)

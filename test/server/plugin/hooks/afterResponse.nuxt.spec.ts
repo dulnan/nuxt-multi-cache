@@ -1,11 +1,12 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onAfterResponse } from '../../../../src/runtime/server/hooks/afterResponse'
-import {
-  MULTI_CACHE_CONTEXT_KEY,
-  MULTI_CACHE_ROUTE_CONTEXT_KEY,
-} from '../../../../src/runtime/helpers/server'
+import { MULTI_CACHE_CONTEXT_KEY } from '../../../../src/runtime/helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../../../src/runtime/helpers/RouteCacheHelper'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+
+const mockDate = new Date('2024-03-15T10:30:00.000Z')
+const mockDateTimestamp = toTimestamp(mockDate)
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
@@ -20,7 +21,7 @@ mockNuxtImport('useRuntimeConfig', () => {
   }
 })
 
-vi.mock('#multi-cache-server-options', () => {
+vi.mock('#nuxt-multi-cache/server-options', () => {
   return {
     serverOptions: {},
   }
@@ -40,8 +41,49 @@ vi.mock('nitropack/runtime', () => {
 
 describe('afterResponse nitro hook handler', () => {
   test('Returns if response.body is not a string', async () => {
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: {
+          route: {},
+        },
+        serverOptions: {},
+        config: {
+          cdn: {},
+        },
+      },
+    })
     expect(
-      await onAfterResponse({} as any, { body: {} } as any),
+      await onAfterResponse(
+        {
+          context: {
+            multiCacheApp: {
+              cache: {
+                route: {
+                  storage: {},
+                },
+              },
+            },
+            multiCache: {
+              route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
+                .setCacheable()
+                .setMaxAge(1200),
+            },
+          },
+          node: {
+            res: {
+              statusCode: 200,
+              getHeaders: () => {
+                return {}
+              },
+            },
+            req: {
+              originalUrl: '/',
+              headers: {},
+            },
+          },
+        } as any,
+        { body: null } as any,
+      ),
     ).toBeUndefined()
 
     expect(
@@ -51,7 +93,21 @@ describe('afterResponse nitro hook handler', () => {
 
   test('Returns if route cache is not available', async () => {
     expect(
-      await onAfterResponse({} as any, { body: '<html></html>' } as any),
+      await onAfterResponse(
+        {
+          context: {},
+          node: {
+            res: {
+              statusCode: 200,
+            },
+            req: {
+              originalUrl: '/',
+              headers: {},
+            },
+          },
+        } as any,
+        { body: '<html></html>' } as any,
+      ),
     ).toBeUndefined()
   })
 
@@ -59,11 +115,25 @@ describe('afterResponse nitro hook handler', () => {
     expect(
       await onAfterResponse(
         {
-          [MULTI_CACHE_CONTEXT_KEY]: {
-            route: {},
+          context: {
+            [MULTI_CACHE_CONTEXT_KEY]: {
+              route: {},
+            },
+            multiCache: {
+              route: new NuxtMultiCacheRouteCacheHelper(
+                mockDateTimestamp,
+              ).setUncacheable(),
+            },
           },
-          [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-            new NuxtMultiCacheRouteCacheHelper().setUncacheable(),
+          node: {
+            res: {
+              statusCode: 200,
+            },
+            req: {
+              originalUrl: '/',
+              headers: {},
+            },
+          },
         } as any,
         { body: '<html></html>' } as any,
       ),
@@ -74,11 +144,16 @@ describe('afterResponse nitro hook handler', () => {
     expect(
       await onAfterResponse(
         {
-          [MULTI_CACHE_CONTEXT_KEY]: {
-            route: {},
+          context: {
+            [MULTI_CACHE_CONTEXT_KEY]: {
+              route: {},
+            },
+            multiCache: {
+              route: new NuxtMultiCacheRouteCacheHelper(
+                mockDateTimestamp,
+              ).setCacheable(),
+            },
           },
-          [MULTI_CACHE_ROUTE_CONTEXT_KEY]:
-            new NuxtMultiCacheRouteCacheHelper().setCacheable(),
 
           node: {
             res: {
@@ -98,7 +173,7 @@ describe('afterResponse nitro hook handler', () => {
   })
 
   test('Puts a cacheable item in cache.', async () => {
-    const date = new Date(2022, 11, 29, 13, 0)
+    const date = new Date(2022, 11, 29, 13, 0, 0, 0)
     vi.setSystemTime(date)
 
     const storedItems: any[] = []
@@ -121,17 +196,25 @@ describe('afterResponse nitro hook handler', () => {
 
     const event = {
       path: '/foobar',
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        route: {
-          setItemRaw(key, item, options) {
-            storedItems.push({ key, item, options })
-            return Promise.resolve()
+      context: {
+        multiCacheApp: {
+          cache: {
+            route: {
+              storage: {
+                setItemRaw(key: string, item: any, options: any) {
+                  storedItems.push({ key, item, options })
+                  return Promise.resolve()
+                },
+              },
+            },
           },
         },
+        multiCache: {
+          route: new NuxtMultiCacheRouteCacheHelper(toTimestamp(date))
+            .setCacheable()
+            .setMaxAge(1200),
+        },
       },
-      [MULTI_CACHE_ROUTE_CONTEXT_KEY]: new NuxtMultiCacheRouteCacheHelper()
-        .setCacheable()
-        .setMaxAge(1200),
 
       node: {
         res: {
@@ -155,7 +238,7 @@ describe('afterResponse nitro hook handler', () => {
 
     expect(storedItems[0]).toMatchInlineSnapshot(`
       {
-        "item": "{"headers":{"x-test":"foobar"},"statusCode":200,"expires":1672320000,"cacheTags":[],"staleWhileRevalidate":false}<CACHE_ITEM><html></html>",
+        "item": "{"headers":{"x-test":"foobar"},"statusCode":200,"expires":1672320000,"cacheTags":[],"staleIfErrorExpires":0,"staleWhileRevalidate":false}<CACHE_ITEM><html></html>",
         "key": "/foobar",
         "options": {
           "ttl": 1200,

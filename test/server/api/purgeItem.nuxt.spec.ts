@@ -29,9 +29,6 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
     checkAuth: () => {
       return Promise.resolve()
     },
-    getCacheInstance: (event: any) => {
-      return event.__MULTI_CACHE.data
-    },
   }
 })
 
@@ -42,7 +39,7 @@ describe('purgeItem API handler', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {
-          data: storageData,
+          data: { storage: storageData },
         },
         serverOptions: {
           api: {
@@ -80,15 +77,17 @@ describe('purgeItem API handler', () => {
     expect(spyClearData).toHaveBeenCalledTimes(2)
   })
 
-  test('Throws error if no keys are provided', () => {
-    const storageData = createStorage()
+  test('Throws error if no keys are provided', async () => {
+    const storage = createStorage()
 
     const event: any = {
-      __MULTI_CACHE: {
-        data: storageData,
+      multiCacheApp: {
+        cache: {
+          data: { storage },
+        },
       },
     }
-    expect(purgeItem(event)).rejects.toThrowErrorMatchingInlineSnapshot(
+    await expect(purgeItem(event)).rejects.toThrowErrorMatchingInlineSnapshot(
       `[Error: No valid keys provided.]`,
     )
   })

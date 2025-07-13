@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3'
-import { getCurrentInstance, useSSRContext } from 'vue'
 import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
-import { getMultiCacheCDNHelper } from './../helpers/server'
+import { useCDNHeaders as serverUseCdnHeaders } from './../server/utils/useCDNHeaders'
+import { useRequestEvent } from '#imports'
+import { isServer } from '#nuxt-multi-cache/config'
 
 /**
  * Return the helper to be used for interacting with the CDN headers feature.
@@ -10,47 +11,24 @@ import { getMultiCacheCDNHelper } from './../helpers/server'
  * That way the entire code patch, incl. calling useCDNHeaders, is removed
  * from client bundles.
  *
- * @param providedEvent Must be provided if not in a Vue context (page, component). This is the case when using this inside defineEventHandler.
+ * @param cb - The callback. Receives the CDN Helper as the first argument.
+ * @param providedEvent - Optionally provide the request event if useRequestEvent() fails.
+ * @param applyToEvent - Whether to apply the headers to the event. Defaults to false.
  */
 export function useCDNHeaders(
   cb: (helper: NuxtMultiCacheCDNHelper) => void,
   providedEvent?: H3Event,
+  applyToEvent?: boolean,
 ): void {
-  const isServer =
-    import.meta.env.VITEST_SERVER === 'true' || import.meta.server
   if (!isServer) {
     return
   }
 
-  const event: H3Event = (() => {
-    // Event provided by user.
-    if (providedEvent) {
-      return providedEvent
-    }
+  const event = providedEvent || useRequestEvent()
 
-    // Prevent logging warnings when not in vue context.
-    if (!getCurrentInstance()) {
-      return
-    }
-
-    // SSR context should exist at this point, but TS doesn't know that.
-    const ssrContext = useSSRContext()
-    if (ssrContext) {
-      return ssrContext.event
-    }
-  })()
-
-  // Event couldn't be found for some reason.
   if (!event) {
     return
   }
 
-  // Get CDN helper.
-  const helper = getMultiCacheCDNHelper(event)
-  if (!helper) {
-    return
-  }
-
-  // Call callback with the helper.
-  cb(helper)
+  serverUseCdnHeaders(cb, event, applyToEvent)
 }

@@ -17,17 +17,19 @@ provided by unstorage.
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import redisDriver from 'unstorage/drivers/redis'
 
-export default defineMultiCacheOptions({
-  component: {
-    storage: {
-      driver: redisDriver({
-        base: 'component:',
-      }),
+export default defineMultiCacheOptions(() => {
+  return {
+    component: {
+      storage: {
+        driver: redisDriver({
+          base: 'component:',
+        }),
+      },
     },
-  },
+  }
 })
 ```
 
@@ -44,7 +46,7 @@ object.
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { defineDriver } from 'unstorage'
 
 const customDriver = defineDriver((_opts) => {
@@ -72,12 +74,14 @@ const customDriver = defineDriver((_opts) => {
   }
 })
 
-export default defineMultiCacheOptions({
-  component: {
-    storage: {
-      driver: customDriver(),
+export default defineMultiCacheOptions(() => {
+  return {
+    component: {
+      storage: {
+        driver: customDriver(),
+      },
     },
-  },
+  }
 })
 ```
 

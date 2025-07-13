@@ -2,21 +2,24 @@ import type { H3Event } from 'h3'
 import { createError, getHeader } from 'h3'
 import type { Storage } from 'unstorage'
 import { useMultiCacheApp } from '../../utils/useMultiCacheApp'
-import type { NuxtMultiCacheSSRContext } from './../../../types'
+import type { CacheType, MultiCacheInstances } from './../../../types'
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
 
-export function getCacheInstance(event: H3Event): Storage {
+export function getCacheInstance(event: H3Event): {
+  storage: Storage
+  name: CacheType
+} {
   const multiCache = useMultiCacheApp()
 
   const cacheName = event.context.params?.cacheName as
-    | keyof NuxtMultiCacheSSRContext
+    | keyof MultiCacheInstances
     | undefined
 
   if (cacheName) {
     const cache = multiCache.cache[cacheName]
     if (cache) {
-      return cache
+      return { storage: cache.storage, name: cacheName }
     }
   }
 
@@ -32,18 +35,17 @@ export function getCacheInstance(event: H3Event): Storage {
  * Throws an error if authorization failed.
  */
 export async function checkAuth(event: H3Event) {
-  const { serverOptions, config } = useMultiCacheApp()
-  const { authorizationDisabled, authorizationToken } = config.api || {}
+  const app = useMultiCacheApp()
 
   // Allow if authorization is explicitly disabled.
-  if (authorizationDisabled) {
+  if (app.config.api.authorizationDisabled) {
     return
   }
 
   // Check authorization using token.
-  if (authorizationToken) {
+  if (app.config.api.authorizationToken) {
     const headerToken = getHeader(event, AUTH_HEADER)
-    if (headerToken === authorizationToken) {
+    if (headerToken === app.config.api.authorizationToken) {
       return
     }
     // Unauthorized.
@@ -53,7 +55,7 @@ export async function checkAuth(event: H3Event) {
     })
   }
 
-  const authorization = serverOptions.api?.authorization
+  const authorization = app.serverOptions.api?.authorization
 
   // At this stage if this method is missing, we throw an error to indicate
   // that the module is not configured properly.

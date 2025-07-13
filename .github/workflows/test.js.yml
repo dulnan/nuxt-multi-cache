@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [19.x]
+        node-version: [20.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -23,23 +23,24 @@ jobs:
         run: |
           npm ci
           npx playwright-core install chromium
+          npm run dev:prepare
+
+      - name: Prettier/ESLint
+        run: |
+          npm run prettier
+          npm run lint
+
+      - name: TypeScript
+        run: |
+          npm run typecheck
 
       - name: Module Builder
         run: |
-          npm run dev:prepare
           npm run prepack
 
       - name: Vitest
         run: |
-          # For some reason this has to be removed or else the test fails.
-          rm -rf .nuxt
+          npm run dev:build
           npm run test:ci
 
-      - name: Prettier
-        run: |
-          npm run prettier
 
-      - name: nuxi typecheck
-        run: |
-          npm run dev:prepare
-          npm run typecheck

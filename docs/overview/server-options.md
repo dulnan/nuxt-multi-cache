@@ -20,10 +20,12 @@ major release.
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
-export default defineMultiCacheOptions({
-  // ...
+export default defineMultiCacheOptions(() => {
+  return {
+    // ...
+  }
 })
 ```
 
@@ -37,25 +39,27 @@ example a custom cache driver.
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import redisDriver from 'unstorage/drivers/redis'
 
-export default defineMultiCacheOptions({
-  data: {
-    storage: {
-      driver: redisDriver({
-        base: 'data:',
-      }),
+export default defineMultiCacheOptions(() => {
+  return {
+    data: {
+      storage: {
+        driver: redisDriver({
+          base: 'data:',
+        }),
+      },
     },
-  },
 
-  component: {
-    storage: {
-      driver: redisDriver({
-        base: 'component:',
-      }),
+    component: {
+      storage: {
+        driver: redisDriver({
+          base: 'component:',
+        }),
+      },
     },
-  },
+  }
 })
 ```
 
@@ -74,17 +78,19 @@ granted by returning a Promise that resolves to `true` or `false`.
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { isAuthenticated } from './somewhere'
 
-export default defineMultiCacheOptions({
-  api: {
-    // Use a custom method that checks authorization. Can be something like
-    // cookie, basic auth or request IP.
-    authorization: async function (event) {
-      return await isAuthenticated(event)
+export default defineMultiCacheOptions(() => {
+  return {
+    api: {
+      // Use a custom method that checks authorization. Can be something like
+      // cookie, basic auth or request IP.
+      authorization: async function (event) {
+        return await isAuthenticated(event)
+      },
     },
-  },
+  }
 })
 ```
 
@@ -95,23 +101,25 @@ export default defineMultiCacheOptions({
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
-export default defineMultiCacheOptions({
-  // Custom callback that decides if caching should be enabled for the current
-  // request. Returning false here prevents access to the cache for the
-  // duration of the request.
-  enabledForRequest: async function (event) {
-    const user = await getUserFromRequest(event)
+export default defineMultiCacheOptions(() => {
+  return {
+    // Custom callback that decides if caching should be enabled for the current
+    // request. Returning false here prevents access to the cache for the
+    // duration of the request.
+    enabledForRequest: async function (event) {
+      const user = await getUserFromRequest(event)
 
-    // Disabled all caching for logged in users.
-    if (user.isLoggedIn) {
-      return false
-    }
+      // Disabled all caching for logged in users.
+      if (user.isLoggedIn) {
+        return false
+      }
 
-    // Caches enabled for anonymous users.
-    return true
-  },
+      // Caches enabled for anonymous users.
+      return true
+    },
+  }
 })
 ```
 
@@ -131,10 +139,12 @@ redis).
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
-export default defineMultiCacheOptions({
-  cacheKeyPrefix: 'example_com',
+export default defineMultiCacheOptions(() => {
+  return {
+    cacheKeyPrefix: 'example_com',
+  }
 })
 ```
 
@@ -149,7 +159,7 @@ is if your app responds differently based on the request headers, e.g.
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { H3Event, getHeader } from 'h3'
 
 function getCacheKeyPrefix(event: H3Event): string {
@@ -161,10 +171,12 @@ function getCacheKeyPrefix(event: H3Event): string {
   return 'en'
 }
 
-export default defineMultiCacheOptions({
-  cacheKeyPrefix: (event) => {
-    return Promise.resolve(getCacheKeyPrefix(event))
-  },
+export default defineMultiCacheOptions(() => {
+  return {
+    cacheKeyPrefix: (event) => {
+      return Promise.resolve(getCacheKeyPrefix(event))
+    },
+  }
 })
 ```
 

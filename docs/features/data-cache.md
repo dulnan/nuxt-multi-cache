@@ -23,15 +23,17 @@ export default defineNuxtConfig({
 
 ```typescript [multiCache.serverOptions.ts]
 // ~/server/multiCache.serverOptions.ts
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
-export default defineMultiCacheOptions({
-  data: {
-    storage: {
-      driver: myCustomDriver(),
+export default defineMultiCacheOptions(() => {
+  return {
+    data: {
+      storage: {
+        driver: myCustomDriver(),
+      },
     },
-  },
+  }
 })
 ```
 
@@ -76,6 +78,23 @@ const { data: weather } = await useAsyncData('weather', async () => {
 </script>
 ```
 
+## Using `useDataCacheCallback`
+
+If you prefer a different syntax, you can use
+[useDataCacheCallback](/composables/useDataCache) instead:
+
+```typescript
+const user = await useDataCacheCallback(key.value, async (cache) => {
+  const response = await $fetch('/api/get-user/' + userId)
+
+  if (cache && import.meta.server) {
+    cache.addTags(['user:' + userId]).setMaxAge('1h')
+  }
+
+  return response
+})
+```
+
 ## Using `useCachedAsyncData`
 
 The example above can be simplified by using the
@@ -89,6 +108,10 @@ argument (`'weather'`) as the key:
 const { data: weather } = await useCachedAsyncData<WeatherResponse>(
   'weather',
   () => $fetch('/api/getWeather'),
+  {
+    clientMaxAge: '5m',
+    serverMaxAge: 'permanent',
+  },
 )
 ```
 
@@ -98,10 +121,10 @@ You can use it in custom server handlers, but you have to provide the `H3Event`
 object as the second argument.
 
 ```typescript
-import { useDataCache } from '#nuxt-multi-cache/composables'
+import { useDataCache } from '#imports'
 
 export default defineEventHandler(async (event) => {
-  const { value, addToCache } = await useDataCache('weather')
+  const { value, addToCache } = await useDataCache('weather', event)
   if (value) {
     return value
   }

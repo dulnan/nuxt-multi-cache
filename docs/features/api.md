@@ -25,17 +25,19 @@ export default defineNuxtConfig({
 
 ```typescript [multiCache.serverOptions.ts]
 // ~/server/multiCache.serverOptions.ts
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { isAuthenticated } from './somewhere'
 
-export default defineMultiCacheOptions({
-  api: {
-    // Use a custom method that checks authorization. Can be something like
-    // cookie, basic auth or request IP.
-    authorization: async function (event) {
-      return await isAuthenticated(event)
+export default defineMultiCacheOptions(() => {
+  return {
+    api: {
+      // Use a custom method that checks authorization. Can be something like
+      // cookie, basic auth or request IP.
+      authorization: async function (event) {
+        return await isAuthenticated(event)
+      },
     },
-  },
+  }
 })
 ```
 
@@ -47,8 +49,8 @@ By default the endpoints are not accesible without authorization.
 
 #### Token based (x-nuxt-multi-cache-token)
 
-This is the authorization used when the provided `api.authorization` value is a
-string. In this case the token is expected in the `x-nuxt-multi-cache-token`
+This is the default authorization used when the `api.authorization` option is
+provided. In this case the token is expected in the `x-nuxt-multi-cache-token`
 header:
 
 ::: code-group
@@ -73,6 +75,13 @@ curl -X POST -i \
 ```
 
 :::
+
+It's also possible to
+[provide the token using runtime config](/overview/runtime-config#api-authorization-token):
+
+```dotenv
+NUXT_MULTI_CACHE_API_AUTHORIZATION_TOKEN=PtSR0mDATQpNlvNgqRf
+```
 
 #### Custom Callback
 

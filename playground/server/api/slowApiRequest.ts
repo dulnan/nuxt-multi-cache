@@ -1,5 +1,5 @@
 import { defineEventHandler, getQuery } from 'h3'
-import { useRouteCache } from '#nuxt-multi-cache/composables'
+import { useRouteCache } from '#imports'
 
 let counter = -1
 
@@ -20,7 +20,7 @@ export default defineEventHandler<Promise<{ data: number }>>((event) => {
   const query = getQuery(event)
 
   useRouteCache((helper) => {
-    helper.setCacheable().allowStaleWhileRevalidate().setMaxAge(1)
+    helper.setCacheable().allowStaleWhileRevalidate().setMaxAge(2)
   }, event)
 
   if (query.slow === 'true') {

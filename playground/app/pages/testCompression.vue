@@ -9,7 +9,7 @@
 import { useRouteCache, useState } from '#imports'
 
 const random = useState('compression_random_number', () => {
-  return Math.round(Math.random() * 100000000)
+  return Math.floor(Math.random() * 100000000)
 })
 
 useRouteCache((v) => v.setCacheable().setMaxAge(1000))

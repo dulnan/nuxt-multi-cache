@@ -1,6 +1,8 @@
 import type { H3Event } from 'h3'
 import { defineEventHandler, readBody, createError } from 'h3'
+import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { checkAuth, getCacheInstance } from './helpers'
+import type { CachePurgeItemResponse } from '../../types'
 
 async function getKeysToPurge(event: H3Event): Promise<string[]> {
   const body = await readBody(event)
@@ -14,14 +16,22 @@ async function getKeysToPurge(event: H3Event): Promise<string[]> {
   })
 }
 
-export default defineEventHandler(async (event) => {
-  await checkAuth(event)
-  const affectedKeys = await getKeysToPurge(event)
-  const cache = getCacheInstance(event)
-  affectedKeys.forEach((key) => cache.removeItem(key))
+export default defineEventHandler<Promise<CachePurgeItemResponse>>(
+  async (event) => {
+    await checkAuth(event)
+    const affectedKeys = await getKeysToPurge(event)
+    const { storage, name } = getCacheInstance(event)
+    const app = useMultiCacheApp()
+    for (const key of affectedKeys) {
+      await storage.removeItem(key)
+      if (app.cacheTagRegistry) {
+        await app.cacheTagRegistry.removeCacheItem(name, key)
+      }
+    }
 
-  return {
-    status: 'OK',
-    affectedKeys,
-  }
-})
+    return {
+      status: 'OK',
+      affectedKeys,
+    }
+  },
+)

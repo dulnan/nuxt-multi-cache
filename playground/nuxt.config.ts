@@ -6,6 +6,7 @@ export default defineNuxtConfig({
     '/spaPageWithCachedComponent': { ssr: false },
     '/spaDataCache': { ssr: false },
     '/spaPageWithException': { ssr: false },
+    '/nitro-swr': { swr: 3 },
     '/api/routeCacheWithRouteRules': {
       headers: {
         'x-route-rules-header': 'Set via routeRules',
@@ -18,7 +19,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: [NuxtMultiCache],
+  modules: [NuxtMultiCache, '@nuxt/eslint'],
 
   imports: {
     autoImport: true,
@@ -47,10 +48,30 @@ export default defineNuxtConfig({
     },
   },
 
+  typescript: {
+    strict: true,
+    tsConfig: {
+      compilerOptions: {
+        noUncheckedIndexedAccess: true,
+      },
+    },
+  },
+
   future: {
     compatibilityVersion: 4,
   },
 
   css: ['vue-json-pretty/lib/styles.css'],
   compatibilityDate: '2024-10-18',
+
+  vite: {
+    build: {
+      minify: false,
+    },
+    server: {
+      watch: {
+        usePolling: true,
+      },
+    },
+  },
 })

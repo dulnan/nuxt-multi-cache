@@ -42,9 +42,11 @@ describe('/api/purge/all', () => {
     const event: any = {
       context: {},
     }
-    const result = await purgeAll(event)
-
-    expect(result).toBeUndefined()
+    await expect(() =>
+      purgeAll(event),
+    ).rejects.toThrowErrorMatchingInlineSnapshot(
+      `[Error: Failed to get nuxt-multi-cache app.]`,
+    )
     mocks.useNitroApp.mockRestore()
   })
 
@@ -55,8 +57,8 @@ describe('/api/purge/all', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {
-          data: storageData,
-          component: storageComponent,
+          data: { storage: storageData },
+          component: { storage: storageComponent },
         },
         serverOptions: {
           api: {

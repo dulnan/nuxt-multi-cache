@@ -29,10 +29,6 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
     checkAuth: () => {
       return Promise.resolve()
     },
-    getCacheInstance: (event: any) => {
-      const cache = event.__CACHE_NAME
-      return event.__MULTI_CACHE[cache]
-    },
   }
 })
 
@@ -40,7 +36,7 @@ async function doInspect(storage: any, cache: string, key: string) {
   mocks.useNitroApp.mockReturnValue({
     multiCache: {
       cache: {
-        [cache]: storage,
+        [cache]: { storage },
       },
       serverOptions: {
         api: {
@@ -108,9 +104,9 @@ describe('inspectItem API handler', () => {
     `)
   })
 
-  test('Throws 404 if item is not found.', () => {
+  test('Throws 404 if item is not found.', async () => {
     const storage = createStorage()
-    expect(
+    await expect(
       doInspect(storage, 'data', 'foobar'),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `[Error: Cache item does not exist.]`,

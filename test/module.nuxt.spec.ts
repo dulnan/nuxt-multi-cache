@@ -3,7 +3,13 @@ import { describe, expect, test } from 'vitest'
 import nuxtMultiCache from './../src/module'
 
 async function testServerHandlerAdded(search: string, config: any) {
-  const nuxt = await loadNuxt({})
+  const nuxt = await loadNuxt({
+    defaultConfig: {
+      devtools: {
+        enabled: false,
+      },
+    },
+  })
 
   await nuxtMultiCache(config, nuxt)
   const handler = nuxt.options.serverHandlers.find((v) => {
@@ -15,12 +21,22 @@ async function testServerHandlerAdded(search: string, config: any) {
 
 describe('Module setup', () => {
   test('Should only add components if feature is enabled', async () => {
-    const nuxt = await loadNuxt({})
+    const nuxt = await loadNuxt({
+      defaultConfig: {
+        devtools: {
+          enabled: false,
+        },
+      },
+    })
 
     await nuxtMultiCache(
       {
         component: {
           enabled: true,
+        },
+        api: {
+          enabled: false,
+          authorization: false,
         },
       },
       nuxt,
@@ -33,7 +49,13 @@ describe('Module setup', () => {
   })
 
   test('Should only add API handlers if feature is enabled', async () => {
-    const nuxt = await loadNuxt({})
+    const nuxt = await loadNuxt({
+      defaultConfig: {
+        devtools: {
+          enabled: false,
+        },
+      },
+    })
 
     await nuxtMultiCache(
       {
@@ -55,7 +77,13 @@ describe('Module setup', () => {
   })
 
   test('Should use provided API prefix.', async () => {
-    const nuxt = await loadNuxt({})
+    const nuxt = await loadNuxt({
+      defaultConfig: {
+        devtools: {
+          enabled: false,
+        },
+      },
+    })
 
     await nuxtMultiCache(
       {

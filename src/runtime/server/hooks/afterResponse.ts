@@ -7,13 +7,14 @@ import {
 import {
   encodeRouteCacheKey,
   getCacheKeyWithPrefix,
+  getCacheTagRegistry,
   getMultiCacheContext,
   getMultiCacheRouteHelper,
 } from '../../helpers/server'
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
-import { useRuntimeConfig } from '#imports'
+import { debug } from '#nuxt-multi-cache/config'
 
 function isPureObject(value: any) {
   const proto = Object.getPrototypeOf(value)
@@ -37,7 +38,12 @@ function stringify(value: any): string | undefined {
     if (typeof value.toJSON === 'function') {
       return stringify(value.toJSON())
     }
-  } catch (_e) {}
+  } catch (e) {
+    logger.error(
+      'Error while attempting to stringify response for route cache.',
+      e,
+    )
+  }
 }
 
 /**
@@ -48,7 +54,7 @@ export async function onAfterResponse(
   response: { body?: unknown } | undefined,
 ) {
   // Has already been served from cache, so there is nothing to do here.
-  if (event.__MULTI_CACHE_SERVED_FROM_CACHE) {
+  if (event.context?.multiCache?.routeServedFromCache) {
     return
   }
 
@@ -56,9 +62,9 @@ export async function onAfterResponse(
     return
   }
 
-  const responseData = stringify(response.body)
+  const statusCode = getResponseStatus(event)
 
-  if (!responseData) {
+  if (statusCode !== 200) {
     return
   }
 
@@ -72,9 +78,9 @@ export async function onAfterResponse(
     return
   }
 
-  const statusCode = getResponseStatus(event)
+  const responseData = stringify(response.body)
 
-  if (statusCode !== 200) {
+  if (!responseData) {
     return
   }
 
@@ -95,11 +101,12 @@ export async function onAfterResponse(
 
   const cacheKey = serverOptions?.route?.buildCacheKey
     ? await serverOptions.route.buildCacheKey(event)
-    : getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
+    : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
 
   const expires = routeHelper.getExpires('maxAge')
   const staleIfErrorExpires = routeHelper.getExpires('staleIfError')
   const staleWhileRevalidate = !!routeHelper.staleWhileRevalidate
+  const cacheTags = routeHelper.getTags()
 
   const cacheItem = encodeRouteCacheItem(
     responseData,
@@ -108,28 +115,42 @@ export async function onAfterResponse(
     expires,
     staleIfErrorExpires,
     staleWhileRevalidate,
-    routeHelper.tags,
+    cacheTags,
   )
 
-  const debugEnabled = useRuntimeConfig().multiCache.debug
-
-  if (debugEnabled) {
+  if (debug) {
     const url = getRequestURL(event)
     logger.info('Storing route in cache: ' + url.toString(), {
       cacheKey,
       expires,
       staleIfErrorExpires,
-      cacheTags: routeHelper.tags,
+      cacheTags,
       staleWhileRevalidate,
       statusCode,
     })
   }
 
-  await multiCache.route.setItemRaw(cacheKey, cacheItem, {
-    ttl: routeHelper.maxAge,
-  })
+  try {
+    await multiCache.route.storage.setItemRaw(cacheKey, cacheItem, {
+      ttl: routeHelper.maxAge,
+    })
+    if (cacheTags.length) {
+      const registry = getCacheTagRegistry(event)
+      if (registry) {
+        await registry.addCacheTags(cacheKey, 'route', cacheTags)
+      }
+    }
+  } catch (e) {
+    logger.error(`Failed to store route cache item for path "${event.path}"`, e)
 
-  if (event.__MULTI_CACHE_REVALIDATION_KEY) {
-    state.removeKeyBeingRevalidated(event.__MULTI_CACHE_REVALIDATION_KEY)
+    if (multiCache.route?.bubbleError) {
+      throw e
+    }
+  }
+
+  if (event.context.multiCache?.routeRevalidationkey) {
+    state.removeKeyBeingRevalidated(
+      event.context.multiCache.routeRevalidationkey,
+    )
   }
 }

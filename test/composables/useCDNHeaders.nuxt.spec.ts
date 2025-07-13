@@ -1,37 +1,55 @@
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-import { describe, expect, test, vi } from 'vitest'
+import type { H3Event } from 'h3'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
-import { useCDNHeaders } from './../../src/runtime/composables'
+import { useCDNHeaders } from './../../src/runtime/composables/useCDNHeaders'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 
-vi.mock('vue', async (importOriginal) => {
-  const actual = await importOriginal()
+const now = new Date(2025, 5, 5, 12, 0, 0, 0)
+const nowTimestamp = toTimestamp(now)
+
+function buildEvent(): H3Event {
   return {
-    // @ts-ignore
-    ...actual,
-    useSSRContext: () => {
+    context: {
+      multiCache: {
+        cdn: new NuxtMultiCacheCDNHelper(nowTimestamp),
+      },
+    },
+  } as H3Event
+}
+
+vi.mock('#imports', () => {
+  return {
+    useRequestEvent: () => {
+      return buildEvent()
+    },
+    useRuntimeConfig: () => {
       return {
-        event: {
-          __MULTI_CACHE_CDN: new NuxtMultiCacheCDNHelper(),
+        multiCache: {
+          data: true,
         },
       }
-    },
-    getCurrentInstance: () => {
-      return true
     },
   }
 })
 
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {
-        component: true,
-      },
-    }
+let isServerValue = false
+
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    get isServer() {
+      return isServerValue
+    },
+    debug: false,
+    cdnEnabled: true,
+    cdnCacheControlHeader: 'Surrogate-Control',
+    cdnCacheTagHeader: 'Cache-Tag',
   }
 })
 
 describe('useCDNHeaders composable', () => {
+  beforeEach(() => {
+    isServerValue = false
+  })
   test('Does not call callback in client', () => {
     const params = {
       cb() {},
@@ -43,60 +61,44 @@ describe('useCDNHeaders composable', () => {
   })
 
   test('Calls callback on server', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const params = {
       cb() {},
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useCDNHeaders(spyCallback as any)
+    useCDNHeaders(spyCallback as any, buildEvent())
     expect(spyCallback).toHaveBeenCalledOnce()
   })
 
   test('Uses the provided event.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
-    const dummyHelper = 'dummy helper'
+    isServerValue = true
+    const dummyHelper = new NuxtMultiCacheCDNHelper(nowTimestamp)
 
     useCDNHeaders(
       (helper) => {
         expect(helper).toEqual(dummyHelper)
       },
       {
-        __MULTI_CACHE_CDN: dummyHelper,
+        context: {
+          multiCache: {
+            cdn: dummyHelper,
+          },
+        },
       } as any,
     )
   })
 
   test('Gets the event from SSR context.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
 
     useCDNHeaders((helper) => {
       expect(helper).toHaveProperty('_control')
     })
   })
 
-  test('Does not call callback if event is missing.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
-
-    const vue = await import('vue')
-    vue.useSSRContext = vi.fn().mockReturnValueOnce({})
-
-    const params = {
-      cb() {},
-    }
-
-    const spyCallback = vi.spyOn(params, 'cb')
-    useCDNHeaders(spyCallback as any)
-    expect(spyCallback).not.toHaveBeenCalled()
-  })
-
-  test('Does not call callback if CDN helper is missing.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
-
-    const vue = await import('vue')
-    vue.useSSRContext = vi.fn().mockReturnValueOnce({
-      event: {},
-    })
+  test('Does not call callback if event is missing.', () => {
+    isServerValue = true
 
     const params = {
       cb() {},

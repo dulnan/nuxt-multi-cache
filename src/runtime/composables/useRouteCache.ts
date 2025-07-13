@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3'
-import { getCurrentInstance, useSSRContext } from 'vue'
-import { NuxtMultiCacheRouteCacheHelper } from './../helpers/RouteCacheHelper'
+import type { NuxtMultiCacheRouteCacheHelper } from './../helpers/RouteCacheHelper'
 import { getMultiCacheRouteHelper } from './../helpers/server'
+import { useRequestEvent } from '#imports'
+import { isServer } from '#nuxt-multi-cache/config'
 
 /**
  * Get the helper to be used for interacting with the route cache.
@@ -10,42 +11,25 @@ import { getMultiCacheRouteHelper } from './../helpers/server'
  * the current route.
  *
  * The helper is provided via a callback, which is only called server side.
- * That way the entire code patch, incl. calling useRouteCache, is removed
+ * That way the entire code path, incl. calling useRouteCache, is removed
  * from client bundles.
  */
 export function useRouteCache(
   cb: (helper: NuxtMultiCacheRouteCacheHelper) => void,
   providedEvent?: H3Event,
 ): void {
-  const isServer =
-    import.meta.env.VITEST_SERVER === 'true' || import.meta.server
   if (!isServer) {
     return
   }
 
-  const event: H3Event = (() => {
-    // Event provided by user.
-    if (providedEvent) {
-      return providedEvent
-    }
-
-    // Prevent logging warnings when not in vue context.
-    if (!getCurrentInstance()) {
-      return
-    }
-
-    // SSR context should exist at this point, but TS doesn't know that.
-    const ssrContext = useSSRContext()
-    if (ssrContext) {
-      return ssrContext.event
-    }
-  })()
+  const event = providedEvent || useRequestEvent()
 
   if (!event) {
     return
   }
 
   const helper = getMultiCacheRouteHelper(event)
+
   if (!helper) {
     return
   }

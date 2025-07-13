@@ -1,11 +1,11 @@
-import { describe, expect, test, vi } from 'vitest'
+import { describe, expect, test } from 'vitest'
 import { createStorage } from 'unstorage'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import {
   getCacheKey,
   getComponentName,
   getCachedComponent,
-} from './../../../src/runtime/components/RenderCacheable/helpers/index'
+} from './../../../src/runtime/components/RenderCacheable/server/helper'
 
 describe('getCacheKey', () => {
   test('Returns no cache key if component has no name.', () => {
@@ -38,7 +38,9 @@ describe('getCacheKey', () => {
         type: { name: 'MyComponent' },
         props: { hello: 'one' },
       } as any),
-    ).toMatchInlineSnapshot('"MyComponent::voBC1hkg5S"')
+    ).toMatchInlineSnapshot(
+      `"MyComponent::AKu9ti69MYahEcv8PwEZFe0Ycb8YyUY_-RWGnNH8zws"`,
+    )
   })
 })
 
@@ -75,6 +77,10 @@ describe('getCachedComponent', () => {
     const storage = createStorage()
     storage.setItemRaw('foobar', encodeComponentCacheItem('<div></div>'))
     const item = await getCachedComponent(storage, 'foobar')
-    expect(item).toEqual({ data: '<div></div>' })
+    expect(item).toEqual({
+      data: '<div></div>',
+      expires: -1,
+      staleIfErrorExpires: 0,
+    })
   })
 })

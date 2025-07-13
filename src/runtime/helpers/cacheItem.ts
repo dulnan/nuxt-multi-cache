@@ -1,4 +1,6 @@
 import type { ComponentCacheItem, RouteCacheItem } from '../types'
+import { logger } from './logger'
+import { CACHE_NEVER, CACHE_PERMANENT } from './maxAge'
 
 const DELIMITER = '<CACHE_ITEM>'
 
@@ -38,9 +40,9 @@ export function encodeRouteCacheItem(
   return encodeCacheItem(data, {
     headers,
     statusCode,
-    expires,
+    expires: expires ?? CACHE_PERMANENT,
     cacheTags,
-    staleIfErrorExpires,
+    staleIfErrorExpires: staleIfErrorExpires ?? CACHE_NEVER,
     staleWhileRevalidate,
   })
 }
@@ -49,8 +51,12 @@ export function encodeRouteCacheItem(
  * Decode the encoded route cache string item.
  */
 export function decodeRouteCacheItem(
-  cacheItem: string,
+  cacheItem?: string,
 ): RouteCacheItem | undefined {
+  if (!cacheItem) {
+    return
+  }
+
   try {
     const decoded = decodeCacheItem<Omit<RouteCacheItem, 'data'>>(cacheItem)
     if (decoded) {
@@ -59,7 +65,9 @@ export function decodeRouteCacheItem(
         data: decoded.data,
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    logger.error('Failed to decode route cache item.', e)
+  }
 }
 
 /**
@@ -70,8 +78,17 @@ export function encodeComponentCacheItem(
   payload?: Record<string, any>,
   expires?: number | undefined,
   cacheTags?: string[],
+  ssrModules?: string[],
+  staleIfErrorExpires?: number,
 ): string {
-  return encodeCacheItem(data, { payload, expires, cacheTags })
+  const cacheItem: Omit<ComponentCacheItem, 'data'> = {
+    payload,
+    cacheTags,
+    ssrModules,
+    expires: expires ?? CACHE_PERMANENT,
+    staleIfErrorExpires: staleIfErrorExpires ?? CACHE_NEVER,
+  }
+  return encodeCacheItem(data, cacheItem)
 }
 
 /**
@@ -88,7 +105,9 @@ export function decodeComponentCacheItem(
         data: decoded.data,
       }
     }
-  } catch (e) {}
+  } catch (e) {
+    logger.error('Failed to decode component cache item.', e)
+  }
 }
 
 /**

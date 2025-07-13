@@ -1,9 +1,6 @@
 <template>
   <div>
-    <RenderCacheable
-      cache-key="test_18539"
-      :async-data-keys="['withAsyncData']"
-    >
+    <RenderCacheable cache-key="test_18539">
       <WithAsyncData />
     </RenderCacheable>
   </div>

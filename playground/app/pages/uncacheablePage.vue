@@ -7,7 +7,7 @@ import { computed } from 'vue'
 import { useRouteCache } from '#imports'
 
 const random = computed(() => {
-  return 'RANDOM_NUMBER__' + Math.round(Math.random() * 1000000000) + '__'
+  return 'RANDOM_NUMBER__' + Math.floor(Math.random() * 1000000000) + '__'
 })
 
 useRouteCache((helper) => {

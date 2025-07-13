@@ -1,5 +1,5 @@
 import { defineEventHandler } from 'h3'
-import { useRouteCache } from '#nuxt-multi-cache/composables'
+import { useRouteCache } from '#imports'
 
 export default defineEventHandler<{ data: number }>((event) => {
   useRouteCache((v) => {

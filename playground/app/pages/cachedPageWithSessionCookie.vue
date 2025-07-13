@@ -7,7 +7,7 @@ import { useRouteCache, useCookie } from '#imports'
 
 const session = useCookie('SESSION', {
   default() {
-    return Math.round(Math.random() * 1000).toString()
+    return Math.floor(Math.random() * 1000).toString()
   },
 })
 

@@ -32,6 +32,7 @@ async function doRequest(throwError?: boolean) {
       headers: {
         'x-nuxt-throw-error': throwError ? 'true' : '',
       },
+      retry: 0,
     })
     data.value = `${counter.value}: ${result.data}`
   } catch (e) {

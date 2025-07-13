@@ -1,5 +1,7 @@
 # useCDNHeaders
 
+Available in **Nuxt** and **Nitro**.
+
 The `useCDNHeaders` composable which is included if the
 [CDN feature](/features/cdn-cache-control) is enabled, expects a callback which
 it will call with the helper as the first argument. Doing it this way allows
@@ -28,6 +30,20 @@ useCDNHeaders((helper) => {
 })
 ```
 
+## Arguments
+
+### callback?: `(cache: NuxtMultiCacheCDNHelper) => void`
+
+The callback that receives the CDN cache helper. The callback is only called on
+the server.
+
+### event?: `H3Event`
+
+The optional `H3Event` event. This is not needed when the composable is called
+in a Nuxt app context (e.g. plugin, other composables, component).
+
+When called in a Nitro server context, the argument is required.
+
 ## Methods
 
 ### set(key: string, value: any)
@@ -48,6 +64,21 @@ This method works for the following numeric properties:
 
 The method will only set the value **if it is lower than the current value**.
 
+### setBoolean(key: string)
+
+This method works for the following boolean properties:
+
+- immutable
+- maxStale
+- mustRevalidate
+- noCache
+- noStore
+- noTransform
+- onlyIfCached
+- proxyRevalidate
+
+The method will always set the boolean value to `true`.
+
 ### private()
 
 Sets `private` to `true` and sets the value of `public` to `false`. Use this if
@@ -67,3 +98,29 @@ value of `public` will remain `false`.
 
 Add cache tags for the Cache-Tag header. Duplicates will be automatically
 removed.
+
+### mergeFromResponse(response: FetchResponse)
+
+Merges the cache tags and cache control from the given fetch response.
+
+Note that internally the method will only call setNumeric(), setBoolean() and
+private(), meaning that merging will never set a higher max age than currently
+or mark the response as public.
+
+```typescript
+const event = useRequestEvent()
+
+const { data } = await useAsyncData(() => {
+  return $fetch.raw('/api/load-users').then((response) => {
+    useCDNHeaders((cdn) => {
+      cdn.mergeFromResponse(response)
+    }, event)
+
+    return response.json()
+  })
+})
+```
+
+### mergeCacheControlHeader(header: string)
+
+Parses and merges the given `Cache-Control` header value.

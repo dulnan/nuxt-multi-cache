@@ -1,7 +1,12 @@
+import type { H3Event } from 'h3'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-import { describe, expect, test, vi } from 'vitest'
-import { useRouteCache } from './../../src/runtime/composables'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+import { useRouteCache } from './../../src/runtime/composables/useRouteCache'
 import { NuxtMultiCacheRouteCacheHelper } from './../../src/runtime/helpers/RouteCacheHelper'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+
+const mockDate = new Date('2024-03-15T10:30:00.000Z')
+const mockDateTimestamp = toTimestamp(mockDate)
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
@@ -13,19 +18,27 @@ mockNuxtImport('useRuntimeConfig', () => {
   }
 })
 
-vi.mock('vue', async (importOriginal) => {
-  const actual = await importOriginal()
+let isServerValue = false
+
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    get isServer() {
+      return isServerValue
+    },
+    debug: false,
+  }
+})
+
+function buildEvent(): H3Event {
   const storage: Record<string, any> = {
     foobar: 'Cached data.',
   }
   return {
-    // @ts-ignore
-    ...actual,
-    useSSRContext: () => {
-      return {
-        event: {
-          __MULTI_CACHE: {
-            data: {
+    context: {
+      multiCacheApp: {
+        cache: {
+          data: {
+            storage: {
               getItem: (key: string) => {
                 return Promise.resolve(storage[key])
               },
@@ -35,17 +48,34 @@ vi.mock('vue', async (importOriginal) => {
               },
             },
           },
-          __MULTI_CACHE_ROUTE: new NuxtMultiCacheRouteCacheHelper(),
+        },
+      },
+      multiCache: {
+        route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp),
+      },
+    },
+  } as H3Event
+}
+
+vi.mock('#imports', () => {
+  return {
+    useRequestEvent: () => {
+      return buildEvent()
+    },
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          data: true,
         },
       }
-    },
-    getCurrentInstance: () => {
-      return true
     },
   }
 })
 
 describe('useRouteCache composable', () => {
+  beforeEach(() => {
+    isServerValue = false
+  })
   test('Does not call callback in client', () => {
     const params = {
       cb() {},
@@ -57,18 +87,18 @@ describe('useRouteCache composable', () => {
   })
 
   test('Calls callback on server', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const params = {
       cb() {},
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useRouteCache(spyCallback as any)
+    useRouteCache(spyCallback as any, buildEvent())
     expect(spyCallback).toHaveBeenCalledOnce()
   })
 
   test('Uses the provided event.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
     const dummyHelper = 'dummy helper'
 
     useRouteCache(
@@ -76,24 +106,25 @@ describe('useRouteCache composable', () => {
         expect(helper).toEqual(dummyHelper)
       },
       {
-        __MULTI_CACHE_ROUTE: dummyHelper,
+        context: {
+          multiCache: {
+            route: dummyHelper,
+          },
+        },
       } as any,
     )
   })
 
   test('Gets the event from SSR context.', () => {
-    import.meta.env.VITEST_SERVER = 'true'
+    isServerValue = true
 
     useRouteCache((helper) => {
       expect(helper).toHaveProperty('tags')
     })
   })
 
-  test('Does not call callback if event is missing.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
-
-    const vue = await import('vue')
-    vue.useSSRContext = vi.fn().mockReturnValueOnce({})
+  test('Does not call callback if event is missing.', () => {
+    isServerValue = true
 
     const params = {
       cb() {},
@@ -104,20 +135,24 @@ describe('useRouteCache composable', () => {
     expect(spyCallback).not.toHaveBeenCalled()
   })
 
-  test('Does not call callback if route helper is missing.', async () => {
-    import.meta.env.VITEST_SERVER = 'true'
-
-    const vue = await import('vue')
-    vue.useSSRContext = vi.fn().mockReturnValueOnce({
-      event: {},
-    })
+  test('Does not call callback if route helper is missing.', () => {
+    isServerValue = true
 
     const params = {
       cb() {},
     }
 
     const spyCallback = vi.spyOn(params, 'cb')
-    useRouteCache(spyCallback as any)
+    useRouteCache(
+      spyCallback as any,
+      {
+        context: {
+          multiCache: {
+            route: undefined,
+          },
+        },
+      } as any,
+    )
     expect(spyCallback).not.toHaveBeenCalled()
   })
 })

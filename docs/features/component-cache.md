@@ -13,9 +13,6 @@ first child in the slot. Alternatively, you can provide a custom cache key.
 On the server, the contents of the default slot will be cached as markup. After
 that, rendering is skipped and the markup is directly rendered.
 
-Note that the slot can only have a single child. If you need to include multiple
-children, you have to create a separate component for that.
-
 ::: warning
 
 Due to a [bug in Vue](https://github.com/vuejs/core/issues/6207) it's currently
@@ -23,6 +20,18 @@ not possible to use `<Teleport>` together with `<RenderCacheable>` (or any other
 async component).
 
 :::
+
+The cacheability of a component can also be set dynamically using the
+[useComponentCache](/composables/useComponentCache) composable.
+
+## Requirements
+
+- The slot may only contain a single component
+- You can only cache a component, not any other type of templates
+- If you need to render a component conditionally, put the `v-if` on
+  `<RenderCacheable>`, **not** the component to be cached
+- **Do not** alter global state from within cached components, as the code is
+  only [executed once](#caveats)
 
 ## Configuration
 
@@ -44,15 +53,17 @@ export default defineNuxtConfig({
 ```
 
 ```typescript [multiCache.serverOptions.ts]
-import { defineMultiCacheOptions } from 'nuxt-multi-cache/dist/runtime/serverOptions'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
-export default defineMultiCacheOptions({
-  component: {
-    storage: {
-      driver: myCustomDriver(),
+export default defineMultiCacheOptions(() => {
+  return {
+    component: {
+      storage: {
+        driver: myCustomDriver(),
+      },
     },
-  },
+  }
 })
 ```
 
@@ -77,8 +88,8 @@ skip rendering.
 ## Cache Key
 
 Because the component is only rendered once it can't rely on external state.
-This means the following features should not be used in a cached component (list
-not exhaustive):
+This means the following features should _generally_ not be used in a cached
+component (list not exhaustive):
 
 - Global state (useState)
 - Pinia (useStore)
@@ -265,6 +276,16 @@ Provide the async data keys used by the cached component. If provided, the
 payload data will be cached alongside the component. If the component uses
 asyncData and the keys are not provided, you will receive a hydration mismatch
 error in the client.
+
+## Caveats
+
+Keep in mind that the code of components wrapped in `<RenderCacheable>` is only
+executed once - afterwards only its cached markup is used.
+
+This means that you must avoid relying on global state in your components,
+unless you vary the cache key accordingly. You must also not define or alter
+global state from within the component in any way, as this will cause unexpected
+behaviour.
 
 ## Behind the Scenes
 

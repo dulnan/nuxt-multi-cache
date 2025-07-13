@@ -1,8 +1,10 @@
-import { describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { encodeRouteCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { serveCachedHandler } from '../../../src/runtime/server/handler/serveCachedRoute'
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
+import { logger } from '../../../src/runtime/helpers/logger'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 
 mockNuxtImport('useRuntimeConfig', () => {
   return () => {
@@ -17,7 +19,7 @@ mockNuxtImport('useRuntimeConfig', () => {
   }
 })
 
-vi.mock('#multi-cache-server-options', () => {
+vi.mock('#nuxt-multi-cache/server-options', () => {
   return {
     serverOptions: {},
   }
@@ -36,6 +38,14 @@ vi.mock('nitropack/runtime', () => {
 })
 
 describe('serveCachedRoute event handler', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   test('Gets a route from cache.', async () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
@@ -63,24 +73,28 @@ describe('serveCachedRoute event handler', () => {
           headers: {},
         },
       },
-      context: {},
-
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        route: {
-          getItemRaw() {
-            return Promise.resolve(
-              encodeRouteCacheItem(
-                '<html></html>',
-                {
-                  'x-custom-header': 'test',
+      context: {
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          cache: {
+            route: {
+              storage: {
+                getItemRaw() {
+                  return Promise.resolve(
+                    encodeRouteCacheItem(
+                      '<html></html>',
+                      {
+                        'x-custom-header': 'test',
+                      },
+                      200,
+                      undefined,
+                      undefined,
+                      undefined,
+                      [],
+                    ),
+                  )
                 },
-                200,
-                undefined,
-                undefined,
-                undefined,
-                [],
-              ),
-            )
+              },
+            },
           },
         },
       },
@@ -128,28 +142,36 @@ describe('serveCachedRoute event handler', () => {
           headers: {},
         },
       },
-      context: {},
       response: null as Response | null,
       respondWith: function (res: any) {
         this.response = res
       },
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        route: {
-          getItemRaw() {
-            return Promise.resolve(
-              encodeRouteCacheItem(
-                '<html></html>',
-                {
-                  'x-custom-header': 'test',
+      context: {
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          cache: {
+            route: {
+              storage: {
+                getItemRaw() {
+                  return Promise.resolve(
+                    encodeRouteCacheItem(
+                      '<html></html>',
+                      {
+                        'x-custom-header': 'test',
+                      },
+                      200,
+                      toTimestamp(date) - 3000,
+                      undefined,
+                      undefined,
+                      [],
+                    ),
+                  )
                 },
-                200,
-                (date.getTime() - 3000) / 1000,
-                undefined,
-                undefined,
-                [],
-              ),
-            )
+              },
+            },
           },
+        },
+        multiCache: {
+          requestTimestamp: toTimestamp(date),
         },
       },
     }
@@ -158,7 +180,10 @@ describe('serveCachedRoute event handler', () => {
     expect(await serveCachedHandler(event as any)).toBeUndefined()
 
     // Now set time to one year ago.
-    vi.setSystemTime(new Date(date).setFullYear(2021))
+    const newDate = new Date(date)
+    newDate.setFullYear(2021)
+    event.context.multiCache.requestTimestamp = toTimestamp(newDate)
+    vi.setSystemTime(newDate)
 
     const result = await serveCachedHandler(event as any)
 
@@ -168,7 +193,7 @@ describe('serveCachedRoute event handler', () => {
   })
 
   test('Catches errors happening when loading item from cache.', async () => {
-    const consoleSpy = vi.spyOn(global.console, 'debug')
+    const consoleSpy = vi.spyOn(logger, 'error')
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {},
@@ -187,11 +212,16 @@ describe('serveCachedRoute event handler', () => {
           headers: {},
         },
       },
-      context: {},
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        route: {
-          getItemRaw() {
-            throw new Error('Failed to get item from cache.')
+      context: {
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          cache: {
+            route: {
+              storage: {
+                getItemRaw() {
+                  throw new Error('Failed to get item from cache.')
+                },
+              },
+            },
           },
         },
       },
@@ -199,7 +229,12 @@ describe('serveCachedRoute event handler', () => {
 
     await serveCachedHandler(event as any)
 
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to get item from cache.')
+    expect(consoleSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        "Error while attempting to serve cached route for path "/".",
+        [Error: Failed to get item from cache.],
+      ]
+    `)
     mocks.useNitroApp.mockRestore()
   })
 })

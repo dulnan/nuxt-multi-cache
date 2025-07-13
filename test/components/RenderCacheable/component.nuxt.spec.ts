@@ -3,7 +3,7 @@ import { defineComponent, nextTick } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
-import RenderCacheable from '../../../src/runtime/components/RenderCacheable'
+import RenderCacheable from '../../../src/runtime/components/RenderCacheable/server'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { createTestApp } from './__helpers__'
 
@@ -24,19 +24,38 @@ const EXAMPLE_PAYLOAD = {
   data: 'This is example payload.',
 }
 
-const nuxtApp = {
-  payload: {
-    data: {
-      examplePayload: EXAMPLE_PAYLOAD,
-    },
-  },
-}
+const mocks = vi.hoisted(() => {
+  return {
+    useNuxtApp: vi.fn(),
+  }
+})
 
 vi.mock('#app', () => {
   return {
-    useNuxtApp: () => {
-      return nuxtApp
+    useNuxtApp: mocks.useNuxtApp,
+  }
+})
+
+const { getIsServer, setIsServer } = vi.hoisted(() => {
+  let serverValue = false
+
+  return {
+    getIsServer: vi.fn(() => serverValue),
+    setIsServer: (value: boolean) => {
+      serverValue = value
     },
+  }
+})
+
+// Use the hoisted function in the mock
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    get isServer() {
+      return getIsServer()
+    },
+    debug: false,
+    cdnEnabled: true,
+    routeCacheEnabled: true,
   }
 })
 
@@ -49,10 +68,21 @@ describe('RenderCacheable', () => {
     vi.useRealTimers()
   })
   test('Renders the default slot', async () => {
+    setIsServer(true)
     const InnerComponent = defineComponent({
       template: `
       <div>Hello world</div>
       `,
+    })
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext: {},
+        event: {},
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
     })
     const TestComponent = defineComponent({
       components: { RenderCacheable, InnerComponent },
@@ -72,6 +102,17 @@ describe('RenderCacheable', () => {
   })
 
   test('Renders nothing if default slot is empty', async () => {
+    setIsServer(true)
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext: {},
+        event: {},
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
     const TestComponent = defineComponent({
       components: { RenderCacheable },
       template: `<Suspense>
@@ -81,23 +122,47 @@ describe('RenderCacheable', () => {
     })
     const wrapper = mount(TestComponent)
     await nextTick()
-    expect(wrapper.html()).toBeFalsy()
+    expect(wrapper.html()).toMatchInlineSnapshot(`"<div></div>"`)
   })
 
   test('Puts markup in cache', async () => {
+    setIsServer(true)
     const { app, ssrContext, storage } = createTestApp()
+
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+
     const first = await renderToString(app, ssrContext)
 
     expect(first).toMatchInlineSnapshot(
       '"<div><div>Test App</div><div><div>Hello world</div></div></div>"',
     )
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      `"{"payload":{},"cacheTags":[]}<CACHE_ITEM><div>Hello world</div>"`,
+      `"{"payload":{},"cacheTags":[],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
   test('Returns cached markup if available.', async () => {
+    setIsServer(true)
     const { app, ssrContext, storage } = createTestApp()
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
     const mockedMarkup = `<div>Markup from cache</div>`
     storage['InnerComponent::foobar'] = encodeComponentCacheItem(mockedMarkup)
     const first = await renderToString(app, ssrContext)
@@ -106,44 +171,80 @@ describe('RenderCacheable', () => {
       `"<div><div>Test App</div><div><div>Markup from cache</div></div></div>"`,
     )
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      '"{}<CACHE_ITEM><div>Markup from cache</div>"',
+      `"{"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Markup from cache</div>"`,
     )
   })
 
   test('Adds cache tags to the cache entry.', async () => {
+    setIsServer(true)
     const { app, ssrContext, storage } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']"`,
     )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      `"{"payload":{},"cacheTags":["test"]}<CACHE_ITEM><div>Hello world</div>"`,
+      `"{"payload":{},"cacheTags":["test"],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
   test('Caches payload alongside component if asyncDataKeys is provided.', async () => {
+    setIsServer(true)
     const { app, ssrContext, storage } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
     )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {
+            examplePayload: EXAMPLE_PAYLOAD,
+          },
+        },
+      }
+    })
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
-      `"{"payload":{"examplePayload":{"data":"This is example payload."}},"cacheTags":["test"]}<CACHE_ITEM><div>Hello world</div>"`,
+      `"{"payload":{"examplePayload":{"data":"This is example payload."}},"cacheTags":["test"],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
   test('Calculates expires value when maxAge is provided.', async () => {
+    setIsServer(true)
     const date = new Date(2022, 11, 1)
     vi.setSystemTime(date)
 
     const { app, ssrContext, storage } = createTestApp(
       `cacheKey="withExpiration" :max-age="1800"`,
     )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
     await renderToString(app, ssrContext)
     expect(storage['InnerComponent::withExpiration']).toMatchInlineSnapshot(
-      `"{"payload":{},"expires":1669854600,"cacheTags":[]}<CACHE_ITEM><div>Hello world</div>"`,
+      `"{"payload":{},"cacheTags":[],"ssrModules":[],"expires":1669854600,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
   })
 
   test('Renders a component from cache.', async () => {
+    setIsServer(true)
     // App with storage containing a cached component.
     const { app, ssrContext } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
@@ -152,6 +253,16 @@ describe('RenderCacheable', () => {
         'InnerComponent::foobar': '<h1>FROM CACHE</h1>',
       },
     )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
     const result = await renderToString(app, ssrContext)
     expect(result).toMatchInlineSnapshot(
       '"<div><div>Test App</div><div><div>Hello </div></div></div>"',
@@ -159,6 +270,7 @@ describe('RenderCacheable', () => {
   })
 
   test('Does not render a component which is expired', async () => {
+    setIsServer(true)
     const { app, ssrContext } = createTestApp(
       `cacheKey="foobar" :cacheTags="['test']" :asyncDataKeys="['examplePayload']"`,
       '',
@@ -170,14 +282,32 @@ describe('RenderCacheable', () => {
         },
       },
     )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
     const result = await renderToString(app, ssrContext)
     expect(result).not.toContain('SHOULD NOT BE RENDERED')
   })
 
   test('Adds payload to nuxt app from a cached component', async () => {
-    const appImport = await import('#app')
-    const localNuxtApp = { payload: { data: {} } }
-    appImport.useNuxtApp = vi.fn().mockReturnValueOnce(localNuxtApp)
+    setIsServer(true)
+    const payload = { data: {} }
+
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload,
+      }
+    })
 
     // App with storage containing a cached component.
     const { app, ssrContext } = createTestApp(
@@ -190,54 +320,208 @@ describe('RenderCacheable', () => {
       },
     )
 
-    expect(localNuxtApp.payload.data).toEqual({})
+    expect(payload.data).toEqual({})
     await renderToString(app, ssrContext)
-    expect(localNuxtApp.payload.data).toEqual({ myPayload: 'Foobar' })
+    expect(payload.data).toEqual({ myPayload: 'Foobar' })
   })
 
   test('Uses props to infer cache key.', async () => {
+    setIsServer(true)
     const { app, ssrContext, storage } = createTestApp('', 'neptun')
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot(`
       {
-        "InnerComponent::bJdWg6O7EU": "{"payload":{},"cacheTags":[]}<CACHE_ITEM><div>Hello neptun</div>",
+        "InnerComponent::CKAyMFHC05PW5FiE4G9tlfYrHyHI5577VSf3tQI76Wg": "{"payload":{},"cacheTags":[],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello neptun</div>",
       }
     `)
   })
 
   test('Bails if no cache key could be generated.', async () => {
+    setIsServer(true)
     const { app, ssrContext, storage } = createTestApp('', 'neptun', {}, '')
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot('{}')
   })
 
   test('Handles errors when getting cache item.', async () => {
+    setIsServer(true)
     const consoleSpy = vi.spyOn(global.console, 'error')
-    const appImport = await import('#app')
-    const localNuxtApp = { payload: { data: {} } }
-    appImport.useNuxtApp = vi.fn().mockReturnValueOnce(localNuxtApp)
+    const payload = { data: {} }
 
     // App with storage containing a cached component.
     const { app, ssrContext } = createTestApp(`cacheKey="get_error"`)
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload,
+      }
+    })
 
-    expect(localNuxtApp.payload.data).toEqual({})
+    expect(payload.data).toEqual({})
     await renderToString(app, ssrContext)
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to get item.')
+    expect(consoleSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        "Failed to get component cache item.",
+        {
+          "fullCacheKey": "InnerComponent::get_error",
+        },
+      ]
+    `)
   })
 
   test('Handles errors when setting cache item.', async () => {
+    setIsServer(true)
     const consoleSpy = vi.spyOn(global.console, 'error')
-
-    const appImport = await import('#app')
-
-    const localNuxtApp = { payload: { data: {} } }
-    appImport.useNuxtApp = vi.fn().mockReturnValueOnce(localNuxtApp)
+    const payload = { data: {} }
 
     // App with storage containing a cached component.
     const { app, ssrContext } = createTestApp(`cacheKey="set_error"`)
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload,
+      }
+    })
 
-    expect(localNuxtApp.payload.data).toEqual({})
+    expect(payload.data).toEqual({})
     await renderToString(app, ssrContext)
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to set item.')
+    expect(consoleSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        "Failed to store component in cache.",
+        {
+          "fullCacheKey": "InnerComponent::set_error",
+          "props": {
+            "asyncDataKeys": undefined,
+            "bubbleCacheability": false,
+            "cacheKey": "set_error",
+            "cacheTags": undefined,
+            "maxAge": undefined,
+            "noCache": false,
+            "staleIfError": undefined,
+            "tag": undefined,
+          },
+        },
+        [Error: Failed to set item.],
+      ]
+    `)
+  })
+
+  test('Bubbles errors when getting cache item.', async () => {
+    setIsServer(true)
+
+    // App with storage containing a cached component.
+    const { app, ssrContext } = createTestApp(
+      `cacheKey="get_error"`,
+      'world',
+      {},
+      'InnerComponent',
+      true,
+    )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+    const errorHandlerSpy = vi.fn()
+    app.config.errorHandler = errorHandlerSpy
+    const result = await renderToString(app, ssrContext)
+
+    expect(errorHandlerSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        [Error: Failed to get item.],
+        {
+          "asyncDataKeys": undefined,
+          "bubbleCacheability": false,
+          "cacheKey": "get_error",
+          "cacheTags": undefined,
+          "maxAge": undefined,
+          "noCache": false,
+          "staleIfError": undefined,
+          "tag": undefined,
+        },
+        "setup function",
+      ]
+    `)
+
+    expect(result).toMatchInlineSnapshot(
+      `"<div><div>Test App</div><!----></div>"`,
+    )
+  })
+
+  test('Bubbles errors when setting cache item.', async () => {
+    setIsServer(true)
+    // App with storage containing a cached component.
+    const { app, ssrContext } = createTestApp(
+      `cacheKey="set_error"`,
+      'world',
+      {},
+      'InnerComponent',
+      true,
+    )
+
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+
+    const errorHandlerSpy = vi.fn()
+    app.config.errorHandler = errorHandlerSpy
+    const result = await renderToString(app, ssrContext)
+
+    expect(errorHandlerSpy.mock.lastCall).toMatchInlineSnapshot(`
+      [
+        [Error: Failed to set item.],
+        {
+          "asyncDataKeys": undefined,
+          "bubbleCacheability": false,
+          "cacheKey": "set_error",
+          "cacheTags": undefined,
+          "maxAge": undefined,
+          "noCache": false,
+          "staleIfError": undefined,
+          "tag": undefined,
+        },
+        "setup function",
+      ]
+    `)
+
+    expect(result).toMatchInlineSnapshot(
+      `"<div><div>Test App</div><!----></div>"`,
+    )
   })
 })

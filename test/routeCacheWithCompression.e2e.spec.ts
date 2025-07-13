@@ -1,10 +1,10 @@
 import path from 'node:path'
 import { setup, fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
-import type { NuxtMultiCacheOptions } from '../src/runtime/types'
+import type { ModuleOptions } from '../src/build/options'
 import purgeAll from './__helpers__/purgeAll'
 
-const multiCache: NuxtMultiCacheOptions = {
+const multiCache: ModuleOptions = {
   component: {
     enabled: false,
   },

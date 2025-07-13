@@ -1,4 +1,4 @@
-import { useCDNHeaders, useRouteCache } from '#nuxt-multi-cache/composables'
+import { useCDNHeaders, useRouteCache } from '#imports'
 import { defineEventHandler } from 'h3'
 
 type TestResponse = {

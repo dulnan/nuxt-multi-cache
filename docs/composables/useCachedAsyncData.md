@@ -1,13 +1,20 @@
 # useCachedAsyncData
 
+Only available in **Nuxt**.
+
 Helper composable to use
 [useAsyncData](https://nuxt.com/docs/api/composables/use-async-data) together
 with [useDataCache](/composables/useDataCache), with optional client-side
 caching.
 
 ```typescript
-const { data: users } = await useCachedAsyncData('all-users', () =>
-  $fetch('/api/users'),
+const { data: users } = await useCachedAsyncData(
+  'all-users',
+  () => $fetch('/api/users'),
+  {
+    clientMaxAge: 'permanent',
+    serverMaxAge: 'permanent',
+  },
 )
 ```
 
@@ -68,6 +75,7 @@ const { data } = await useCachedAsyncData(
   {
     // Cache this request for 10 minutes.
     clientMaxAge: 60 * 10,
+    serverMaxAge: 'midnight',
   },
 )
 ```
@@ -80,6 +88,7 @@ const { data, refresh } = await useCachedAsyncData(
   () => $fetch('/api/users'),
   {
     clientMaxAge: 60 * 10,
+    serverMaxAge: 'never',
   },
 )
 
@@ -104,6 +113,7 @@ const { data } = await useCachedAsyncData(
   {
     // Cache for 3600 seconds (1 hour).
     serverMaxAge: 60 * 60,
+    clientMaxAge: 'never',
   },
 )
 ```
@@ -115,6 +125,7 @@ const { data } = await useCachedAsyncData(
   {
     // Use the max age coming from the API response.
     serverMaxAge: (data) => data.maxAge,
+    clientMaxAge: 'never',
   },
 )
 ```
@@ -133,6 +144,8 @@ const { data } = await useCachedAsyncData(
   {
     // Hardcoded cache tags.
     serverCacheTags: ['users-list'],
+    clientMaxAge: 'never',
+    serverMaxAge: 'permanent',
   },
 )
 ```
@@ -144,6 +157,8 @@ const { data } = await useCachedAsyncData(
   {
     // Use the cache tags coming from the API response.
     serverCacheTags: (data) => data.cacheTags,
+    clientMaxAge: 'never',
+    serverMaxAge: 'permanent',
   },
 )
 ```
@@ -201,7 +216,12 @@ if (!value) {
 // Later we reuse the same key, but the fetch is different.
 // Because there is already a cache item with this key, it will return this one,
 // which will lead to unexpected behaviour.
-const { data: users } = await useCachedAsyncData('all-users', () =>
-  $fetch('/api/user-emails'),
+const { data: users } = await useCachedAsyncData(
+  'all-users',
+  () => $fetch('/api/user-emails'),
+  {
+    clientMaxAge: 'never',
+    serverMaxAge: 'permanent',
+  },
 )
 ```

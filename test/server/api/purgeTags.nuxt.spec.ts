@@ -1,11 +1,10 @@
 import { describe, expect, test, vi } from 'vitest'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { createStorage } from 'unstorage'
 import { sleep } from '../../__helpers__'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
-import purgeTags, {
-  DebouncedInvalidator,
-} from './../../../src/runtime/server/api/purgeTags'
+import purgeTags from './../../../src/runtime/server/api/purgeTags'
+import type { MultiCacheInstances } from '~/src/runtime/types'
+import { CacheTagInvalidator } from '~/src/runtime/helpers/CacheTagInvalidator'
 
 const mocks = vi.hoisted(() => {
   return {
@@ -37,21 +36,15 @@ vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
   }
 })
 
-vi.mock('#multi-cache-server-options', () => {
+vi.mock('#nuxt-multi-cache/server-options', () => {
   return {
     serverOptions: {},
   }
 })
 
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {
-        api: {
-          cacheTagInvalidationDelay: 1000,
-        },
-      },
-    }
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    cacheTagInvalidationDelay: 1000,
   }
 })
 
@@ -74,12 +67,16 @@ describe('purgeTags API handler', () => {
       encodeComponentCacheItem('Other data.', {}, undefined, ['one']),
     )
 
+    const cacheContext: MultiCacheInstances = {
+      data: { storage: storageData, bubbleError: false },
+      component: { storage: storageComponent, bubbleError: false },
+    }
+
+    const cacheTagInvalidator = new CacheTagInvalidator(cacheContext, null)
+
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
-        cache: {
-          data: storageData,
-          component: storageComponent,
-        },
+        cache: cacheContext,
         serverOptions: {
           api: {
             authorization: () => {
@@ -92,6 +89,7 @@ describe('purgeTags API handler', () => {
             cacheTagInvalidationDelay: 800,
           },
         },
+        cacheTagInvalidator,
       },
     })
 
@@ -123,36 +121,36 @@ describe('purgeTags API handler', () => {
     expect(await storageComponent.getItem('component2')).toBeNull()
   })
 
-  test('Throws error if no tags are provided', () => {
-    const storageData = createStorage()
+  test('Throws error if no tags are provided', async () => {
+    const storage = createStorage()
 
-    expect(
+    await expect(
       purgeTags({
-        __MULTI_CACHE: {
-          data: storageData,
+        context: {
+          multiCacheApp: {
+            cache: {
+              data: { storage },
+            },
+          },
         },
       } as any),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `[Error: No valid tags provided.]`,
     )
 
-    expect(
+    await expect(
       purgeTags({
-        __MULTI_CACHE: {
-          data: storageData,
+        context: {
+          multiCacheApp: {
+            cache: {
+              data: { storage },
+            },
+          },
         },
         body: 'Invalid body',
       } as any),
     ).rejects.toThrowErrorMatchingInlineSnapshot(
       `[Error: No valid tags provided.]`,
     )
-  })
-})
-
-describe('DebouncedInvalidator', () => {
-  test('Returns if cache context is not available.', async () => {
-    const invalidator = new DebouncedInvalidator()
-    const result = await invalidator.invalidate()
-    expect(result).toBeUndefined()
   })
 })
