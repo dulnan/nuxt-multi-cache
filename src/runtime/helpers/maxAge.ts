@@ -1,24 +1,33 @@
+const MINUTE = 60
+const HOUR = 60 * MINUTE
+const DAY = 24 * HOUR
+
 const DURATIONS = {
-  '1m': 60,
-  '5m': 5 * 60,
-  '10m': 10 * 60,
-  '15m': 15 * 60,
-  '30m': 30 * 60,
-  '1h': 60 * 60,
-  '2h': 60 * 60 * 2,
-  '4h': 60 * 60 * 4,
-  '6h': 60 * 60 * 6,
-  '12h': 60 * 60 * 12,
-  '1d': 60 * 60 * 24,
-  '2d': 60 * 60 * 24 * 2,
-  '7d': 60 * 60 * 24 * 7,
+  '1m': MINUTE,
+  '5m': 5 * MINUTE,
+  '10m': 10 * MINUTE,
+  '15m': 15 * MINUTE,
+  '30m': 30 * MINUTE,
+  '1h': HOUR,
+  '2h': 2 * HOUR,
+  '4h': 4 * HOUR,
+  '6h': 6 * HOUR,
+  '12h': 12 * HOUR,
+  '1d': DAY,
+  '2d': 2 * DAY,
+  '7d': 7 * DAY,
+  '30d': 30 * DAY,
 } as const
 
 export const CACHE_PERMANENT = -1
 export const CACHE_NEVER = 0
 
 type NamedExpires = keyof typeof DURATIONS
-type NamedInterval = 'next-hour' | 'midnight' | 'end-of-week'
+type NamedInterval =
+  | 'next-hour'
+  | 'midnight'
+  | 'end-of-week'
+  | 'next-quarter-hour'
 
 type NamedMaxAge = NamedExpires | NamedInterval
 
@@ -40,6 +49,7 @@ type NamedMaxAge = NamedExpires | NamedInterval
  * - 7d - Cache for 7 days.
  * - permanent - Cache forever.
  * - never - Do not cache at all.
+ * - next-quarter-hour - Cache until the next x.15 hour (08:00, 08:15, 08:30, etc.).
  * - next-hour - Cache until the next full hour.
  * - midnight - Cache until midnight.
  * - end-of-week - Cache until end of current week (Sunday at 23:59:59).
@@ -47,26 +57,31 @@ type NamedMaxAge = NamedExpires | NamedInterval
 export type MaxAge = NamedMaxAge | 'permanent' | 'never' | number
 
 function calculateInterval(v: NamedInterval, providedNow: number): number {
-  const now = new Date(providedNow * 1000)
-  let target: Date
+  const nowMilliseconds = providedNow * 1000
+  const target = new Date(nowMilliseconds)
 
   switch (v) {
     case 'next-hour': {
-      target = new Date(now)
       target.setMinutes(0, 0, 0)
       target.setHours(target.getHours() + 1)
       break
     }
 
+    case 'next-quarter-hour': {
+      target.setSeconds(0, 0)
+      const minutes = target.getMinutes()
+      const increment = 15 - (minutes % 15)
+      target.setMinutes(minutes + increment)
+      break
+    }
+
     case 'midnight': {
-      target = new Date(now)
       target.setHours(0, 0, 0, 0)
       target.setDate(target.getDate() + 1)
       break
     }
 
     case 'end-of-week': {
-      target = new Date(now)
       target.setHours(23, 59, 59, 999)
 
       const daysUntilSunday = (7 - target.getDay()) % 7
@@ -75,8 +90,8 @@ function calculateInterval(v: NamedInterval, providedNow: number): number {
     }
   }
 
-  // seconds until the chosen boundary.
-  return Math.ceil((target.getTime() - now.getTime()) / 1000)
+  // Seconds until the next interval.
+  return Math.ceil((target.getTime() - nowMilliseconds) / 1000)
 }
 
 export function parseMaxAge(v: MaxAge, now: number): number {
@@ -85,7 +100,12 @@ export function parseMaxAge(v: MaxAge, now: number): number {
       return v
     }
     return Math.max(Math.floor(v), -1)
-  } else if (v === 'next-hour' || v === 'midnight' || v === 'end-of-week') {
+  } else if (
+    v === 'next-hour' ||
+    v === 'midnight' ||
+    v === 'end-of-week' ||
+    v === 'next-quarter-hour'
+  ) {
     return calculateInterval(v, now)
   } else if (v === 'permanent') {
     return CACHE_PERMANENT

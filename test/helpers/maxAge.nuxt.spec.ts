@@ -318,6 +318,7 @@ describe('parseMaxAge', () => {
         '2d',
         '7d',
         // Named intervals
+        'next-quarter-hour',
         'next-hour',
         'midnight',
         'end-of-week',
