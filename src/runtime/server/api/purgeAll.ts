@@ -24,6 +24,10 @@ export default defineEventHandler<Promise<CachePurgeAllResponse>>(
       }
     }
 
+    if (app.cacheTagRegistry) {
+      await app.cacheTagRegistry.purgeEverything()
+    }
+
     return {
       status: 'OK',
     }

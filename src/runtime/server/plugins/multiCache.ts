@@ -20,6 +20,8 @@ import {
   routeCacheEnabled,
 } from '#nuxt-multi-cache/config'
 import { useRuntimeConfig } from '#imports'
+import { InMemoryCacheTagRegistry } from '../../helpers/InMemoryCacheTagRegistry'
+import { CacheTagInvalidator } from '../../helpers/CacheTagInvalidator'
 
 function createCacheContext(
   cache: MultiCacheServerOptionsCacheOptions | undefined,
@@ -56,11 +58,23 @@ function createMultiCacheApp(): MultiCacheApp {
     })
   }
 
+  const cacheTagRegistry =
+    serverOptions.cacheTagRegistry === 'in-memory'
+      ? new InMemoryCacheTagRegistry()
+      : serverOptions.cacheTagRegistry ?? null
+
+  const cacheTagInvalidator = new CacheTagInvalidator(
+    cacheContext,
+    cacheTagRegistry,
+  )
+
   return {
     cache: cacheContext,
     serverOptions,
     config: runtimeConfig.multiCache,
     state: new MultiCacheState(),
+    cacheTagRegistry,
+    cacheTagInvalidator,
   }
 }
 

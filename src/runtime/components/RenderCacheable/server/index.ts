@@ -8,6 +8,7 @@ import {
   getCacheKeyWithPrefix,
   enabledForRequest,
   getRequestTimestamp,
+  getCacheTagRegistry,
 } from './../../../helpers/server'
 import { getCacheKey, getCachedComponent, renderSlot } from './helper'
 import { type Props, props } from '../shared'
@@ -315,6 +316,12 @@ export default defineComponent<Props>({
         ),
         { ttl: maxAge },
       )
+      if (cacheTags.length) {
+        const registry = getCacheTagRegistry(event)
+        if (registry) {
+          await registry.addCacheTags(fullCacheKey, 'component', cacheTags)
+        }
+      }
       if (debug) {
         logger.log('Stored component in cache.', {
           file: currentInstance.type.__file,

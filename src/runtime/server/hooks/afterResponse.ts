@@ -7,6 +7,7 @@ import {
 import {
   encodeRouteCacheKey,
   getCacheKeyWithPrefix,
+  getCacheTagRegistry,
   getMultiCacheContext,
   getMultiCacheRouteHelper,
 } from '../../helpers/server'
@@ -105,6 +106,7 @@ export async function onAfterResponse(
   const expires = routeHelper.getExpires('maxAge')
   const staleIfErrorExpires = routeHelper.getExpires('staleIfError')
   const staleWhileRevalidate = !!routeHelper.staleWhileRevalidate
+  const cacheTags = routeHelper.getTags()
 
   const cacheItem = encodeRouteCacheItem(
     responseData,
@@ -113,7 +115,7 @@ export async function onAfterResponse(
     expires,
     staleIfErrorExpires,
     staleWhileRevalidate,
-    routeHelper.tags,
+    cacheTags,
   )
 
   if (debug) {
@@ -122,26 +124,29 @@ export async function onAfterResponse(
       cacheKey,
       expires,
       staleIfErrorExpires,
-      cacheTags: routeHelper.tags,
+      cacheTags,
       staleWhileRevalidate,
       statusCode,
     })
   }
 
-  await multiCache.route.storage
-    .setItemRaw(cacheKey, cacheItem, {
+  try {
+    await multiCache.route.storage.setItemRaw(cacheKey, cacheItem, {
       ttl: routeHelper.maxAge,
     })
-    .catch((e) => {
-      logger.error(
-        `Failed to store route cache item for path "${event.path}"`,
-        e,
-      )
-
-      if (multiCache.route?.bubbleError) {
-        throw e
+    if (cacheTags.length) {
+      const registry = getCacheTagRegistry(event)
+      if (registry) {
+        await registry.addCacheTags(cacheKey, 'route', cacheTags)
       }
-    })
+    }
+  } catch (e) {
+    logger.error(`Failed to store route cache item for path "${event.path}"`, e)
+
+    if (multiCache.route?.bubbleError) {
+      throw e
+    }
+  }
 
   if (event.context.multiCache?.routeRevalidationkey) {
     state.removeKeyBeingRevalidated(

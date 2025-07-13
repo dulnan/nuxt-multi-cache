@@ -3,10 +3,10 @@ import { checkAuth, getCacheInstance } from './helpers'
 
 export default defineEventHandler<Promise<unknown>>(async (event) => {
   await checkAuth(event)
-  const cache = getCacheInstance(event)
+  const { storage } = getCacheInstance(event)
   const query = getQuery(event)
   const key = query.key as string
-  const item = await cache.getItem(key)
+  const item = await storage.getItem(key)
   if (!item) {
     throw createError({
       statusCode: 404,

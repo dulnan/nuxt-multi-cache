@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { useComponentCache, useAsyncData } from '#imports'
-import type { MaxAge } from '~/dist/runtime/helpers/maxAge'
+import type { MaxAge } from '~/src/runtime/helpers/maxAge'
 
 const props = defineProps<{
   maxAge?: MaxAge

@@ -8,6 +8,7 @@ import type {
 import {
   enabledForRequest,
   getCacheKeyWithPrefix,
+  getCacheTagRegistry,
   getMultiCacheContext,
   getRequestTimestamp,
 } from '../../helpers/server'
@@ -54,20 +55,23 @@ export async function useDataCache<T>(
   const fullKey = await getCacheKeyWithPrefix(key, event)
 
   const now = getRequestTimestamp(event)
-  const addToCache: DataCacheAddToCacheMethod<T> = (
+  const addToCache: DataCacheAddToCacheMethod<T> = async (
     data: T,
-    cacheTags: string[] = [],
+    providedCacheTags: string[] = [],
     providedMaxAge?: MaxAge,
     providedStaleIfError?: MaxAge,
   ) => {
     const helper = new DataCacheHelper(now)
+
     if (providedMaxAge) {
       helper.setMaxAge(providedMaxAge)
     }
+
     if (providedStaleIfError) {
       helper.setStaleIfError(providedStaleIfError)
     }
-    helper.addTags(cacheTags)
+
+    helper.addTags(providedCacheTags)
 
     bubbleCacheability(helper, event, options?.bubbleCacheability)
 
@@ -75,9 +79,11 @@ export async function useDataCache<T>(
       return Promise.resolve()
     }
 
+    const cacheTags = helper.getTags()
+
     const item: CacheItem = {
       data: data as any,
-      cacheTags: helper.getTags(),
+      cacheTags,
       expires: helper.getExpires('maxAge') ?? CACHE_PERMANENT,
       staleIfErrorExpires: helper.getExpires('staleIfError') ?? CACHE_NEVER,
     }
@@ -87,17 +93,21 @@ export async function useDataCache<T>(
     }
 
     try {
-      return multiCache.data!.storage.setItem(fullKey, item, {
+      await multiCache.data!.storage.setItem(fullKey, item, {
         ttl: helper.maxAge !== CACHE_PERMANENT ? helper.maxAge : undefined,
       })
+      if (cacheTags.length) {
+        const registry = getCacheTagRegistry(event)
+        if (registry) {
+          await registry.addCacheTags(fullKey, 'data', cacheTags)
+        }
+      }
     } catch (e) {
       logger.error('Failed to store data cache item.', e)
       if (bubbleError) {
         throw e
       }
     }
-
-    return Promise.resolve()
   }
 
   try {

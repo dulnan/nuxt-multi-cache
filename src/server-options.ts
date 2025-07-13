@@ -4,7 +4,6 @@ import type { MultiCacheServerOptions } from './runtime/types'
  * Define nuxt-multi-cache server options.
  */
 export function defineMultiCacheOptions(
-  // eslint-disable-next-line @typescript-eslint/unified-signatures
   options: () => MultiCacheServerOptions,
 ): () => MultiCacheServerOptions
 
@@ -22,6 +21,7 @@ export function defineMultiCacheOptions(
  * ```
  */
 export function defineMultiCacheOptions(
+  // eslint-disable-next-line @typescript-eslint/unified-signatures
   options: MultiCacheServerOptions,
 ): () => MultiCacheServerOptions
 

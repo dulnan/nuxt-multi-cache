@@ -5,8 +5,11 @@ import type { NuxtMultiCacheRouteCacheHelper } from './helpers/RouteCacheHelper'
 import type { NuxtMultiCacheCDNHelper } from './helpers/CDNHelper'
 import type { MultiCacheState } from './helpers/MultiCacheState'
 import type { MaxAge } from './helpers/maxAge'
+import type { CacheTagInvalidator } from './helpers/CacheTagInvalidator'
 
 export type BubbleCacheability = boolean | 'route' | 'cdn'
+
+export type CacheType = 'route' | 'data' | 'component'
 
 export type MultiCacheInstance = {
   storage: Storage
@@ -62,6 +65,65 @@ export type ComponentCacheEntry = ComponentCacheItem | string
 export type MultiCacheServerOptionsCacheOptions = {
   storage?: CreateStorageOptions
   bubbleError?: boolean
+}
+
+export type CacheTagRegistry = {
+  /**
+   * Return which cache item keys to invalidate for the given cache tags.
+   *
+   * @param tags - The cache tags that will be invalidated.
+   *
+   * @returns An object with the cache types as properties and the cache item
+   * keys as values.
+   *
+   * @example
+   * ```
+   * {
+   *   data: ['load-users:de', 'global-config'],
+   *   component: ['PageFooter::anonymous:de', 'HeroTeaser::38d38ac58'],
+   *   route: ['de--products--583'],
+   * }
+   * ```
+   */
+  getCacheKeysForTags(
+    tags: string[],
+  ): Promise<Partial<Record<CacheType, string[]>>>
+
+  /**
+   * Removes the given cache tags from the registry.
+   *
+   * The method is called after getCacheKeysForTags() when the tags have
+   * been successfully invalidated.
+   */
+  removeTags(tags: string[]): Promise<void>
+
+  /**
+   * Remove all item keys of the given cache type.
+   *
+   * Called when a single cache is purged.
+   */
+  purgeCache(cacheType: CacheType): Promise<void>
+
+  /**
+   * Remove all item keys.
+   *
+   * Called when all caches are purged.
+   */
+  purgeEverything(): Promise<void>
+
+  /**
+   * Remove a cache item.
+   */
+  removeCacheItem(cacheType: CacheType, key: string | string[]): Promise<void>
+
+  /**
+   * Assign one or more cache tags to the given cache item key.
+   */
+  addCacheTags(
+    cacheItemKey: string,
+    cacheType: CacheType,
+    cacheTags: string[],
+  ): Promise<void>
 }
 
 export type MultiCacheServerOptionsRouteCacheOptions =
@@ -133,6 +195,27 @@ export type MultiCacheServerOptions = {
      */
     authorization?: (event: H3Event) => Promise<boolean>
   }
+
+  /**
+   * Define a "cache tag" registry.
+   *
+   * The job of the registry is to provide a fast and performant way to look up
+   * which cache items to purge when one or more cache tags are invalidated.
+   *
+   * By default, the cache tag invalidation mechanism is very inefficient, as
+   * it has to iterate over all cache items and read their cache tags, in order
+   * to "know" which cache items to delete.
+   *
+   * By providing a cache tag registry, you can greatly improve performance,
+   * especially when a lot of cache tags are being invalidated regularly.
+   *
+   * If 'in-memory' is set, the built-in cache tag registry is used that stores
+   * the data in memory. Note that this is *not* compatible when running
+   * multiple instances of the same app or when using external caches such as
+   * valkey or memcache, since these caches persist across app restarts,
+   * whereas the in-memory cache registry is "gone" after a restart.
+   */
+  cacheTagRegistry?: CacheTagRegistry | 'in-memory'
 }
 
 // This typo went unnoticed for quite some time, so we'll also export it with
@@ -190,6 +273,16 @@ export interface MultiCacheApp {
    * The state.
    */
   state: MultiCacheState
+
+  /**
+   * The cache tag registry.
+   */
+  cacheTagRegistry: CacheTagRegistry | null
+
+  /**
+   * The debounced cache tag invalidator.
+   */
+  cacheTagInvalidator: CacheTagInvalidator
 }
 
 export type CacheStatsResponse<T> = {
