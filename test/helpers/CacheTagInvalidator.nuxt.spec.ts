@@ -1,7 +1,8 @@
 import { CacheTagInvalidator } from '~/src/runtime/helpers/CacheTagInvalidator'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createStorage } from 'unstorage'
-import type { CacheTagRegistry, MultiCacheInstances } from '~/src/runtime/types'
+import type { MultiCacheInstances } from '~/src/runtime/types'
+import type { CacheTagRegistry } from '~/src/runtime/types/CacheTagRegistry'
 import {
   encodeComponentCacheItem,
   encodeRouteCacheItem,

@@ -57,7 +57,7 @@ calling `useDataCache`:
 const { value } = await useDataCache<WeatherResponse>('weather')
 ```
 
-### addToCache: `(data: any, tags?: string[], maxAge?: number)`
+### addToCache: `(data: any, tags?: string[], maxAge?: MaxAge, staleIfError?: MaxAge)`
 
 Use this method to add data to the cache for the given key. The data should be a
 string or an object that can be stringified to JSON.

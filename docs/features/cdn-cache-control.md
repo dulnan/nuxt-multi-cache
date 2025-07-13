@@ -178,3 +178,7 @@ const { data } = await useFetch('/api/load-users', {
   },
 })
 ```
+
+The module also provides a
+[useCacheAwareFetchInterceptor](/composables/useCacheAwareFetchInterceptor)
+composable that handles "bubbling" cacheability from a request to an API route.

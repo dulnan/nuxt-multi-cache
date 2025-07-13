@@ -13,9 +13,6 @@ first child in the slot. Alternatively, you can provide a custom cache key.
 On the server, the contents of the default slot will be cached as markup. After
 that, rendering is skipped and the markup is directly rendered.
 
-Note that the slot can only have a single child. If you need to include multiple
-children, you have to create a separate component for that.
-
 ::: warning
 
 Due to a [bug in Vue](https://github.com/vuejs/core/issues/6207) it's currently
@@ -26,6 +23,15 @@ async component).
 
 The cacheability of a component can also be set dynamically using the
 [useComponentCache](/composables/useComponentCache) composable.
+
+## Requirements
+
+- The slot may only contain a single component
+- You can only cache a component, not any other type of templates
+- If you need to render a component conditionally, put the `v-if` on
+  `<RenderCacheable>`, **not** the component to be cached
+- **Do not** alter global state from within cached components, as the code is
+  only [executed once](#caveats)
 
 ## Configuration
 
@@ -82,8 +88,8 @@ skip rendering.
 ## Cache Key
 
 Because the component is only rendered once it can't rely on external state.
-This means the following features should not be used in a cached component (list
-not exhaustive):
+This means the following features should _generally_ not be used in a cached
+component (list not exhaustive):
 
 - Global state (useState)
 - Pinia (useStore)

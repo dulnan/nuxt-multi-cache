@@ -10,7 +10,7 @@ interface CacheConfigOptions {
    * If you wish to completely disable a feature so that no code is added just
    * leave the entire configuration property undefined.
    */
-  enabled?: boolean
+  enabled: boolean
 }
 
 export type CDNOptions = {
@@ -106,9 +106,6 @@ export interface ModuleOptions {
      *
      * If a string is provided, the auth check will be done using the
      * `x-nuxt-multi-cache-token` header.
-     *
-     * If a function is provided you can implement a custom auth check that
-     * should return a Promise that resolves to true or false.
      *
      * If `false` is provided then authorization check is skipped. Only do
      * this if you made sure that the API endpoints are not public, since this

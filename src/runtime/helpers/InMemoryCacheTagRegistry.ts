@@ -1,4 +1,5 @@
-import type { CacheTagRegistry, CacheType } from '../types'
+import type { CacheType } from '../types'
+import type { CacheTagRegistry } from '../types/CacheTagRegistry'
 
 const CACHE_TYPES: CacheType[] = ['route', 'data', 'component']
 

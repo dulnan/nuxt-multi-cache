@@ -61,8 +61,6 @@ export default defineEventHandler((event) => {
 
 This will be executed for every request, including Nuxt pages and server routes.
 
-:::
-
 ## Component Cache
 
 The default values for the props of the `<RenderCacheable>` component are falsy.
@@ -73,7 +71,7 @@ domain, currency, etc., you can create your own wrapper:
 
 ```vue [ContextAwareCacheable.vue]
 <template>
-  <RenderCacheable :cacheKey="cacheKey">
+  <RenderCacheable :cache-key="cacheKey">
     <slot></slot>
   </RenderCacheable>
 </template>
@@ -94,11 +92,14 @@ Or, the more clean way would be to create a composable:
 ::: code-group
 
 ```typescript [./composables/useGlobalContextKey.ts]
-export default async function (suffix: string) {
+export default async function (suffix: string): string | undefined {
+  // Makes sure the rest of the code is not bundled in the client bundle.
+  if (import.meta.client) {
+    return
+  }
+
   const store = useStore()
-  return computed(() => {
-    return [store.language, store.currency, store.domain, suffix].join('_')
-  })
+  return [store.language, store.currency, store.domain, suffix].join('_')
 }
 ```
 
@@ -108,7 +109,7 @@ And then use it like this:
 
 ```vue
 <template>
-  <RenderCacheable :cacheKey="cacheKey">
+  <RenderCacheable :cache-key>
     <Navbar />
   </RenderCacheable>
 </template>

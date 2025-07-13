@@ -1,4 +1,97 @@
 import { defineConfig } from 'vitepress'
+import fs from 'fs'
+import path from 'path'
+import simpleGit from 'simple-git'
+
+const getCurrentBranch = async () => {
+  try {
+    const git = simpleGit(path.resolve(__dirname, '../..'))
+    const branch = await git.revparse(['--abbrev-ref', 'HEAD'])
+    return branch.trim()
+  } catch (error) {
+    console.warn(
+      'Could not determine git branch, falling back to "main":',
+      error.message,
+    )
+    return 'main'
+  }
+}
+
+const TYPE_FILES = [
+  './../../src/runtime/types/index.ts',
+  './../../src/runtime/types/CacheTagRegistry.ts',
+  './../../src/runtime/helpers/maxAge.ts',
+]
+
+const getTypeFiles = async () => {
+  const branch = await getCurrentBranch()
+  const allFiles = TYPE_FILES.flatMap((relativePath) => {
+    const rootPath = path.resolve(__dirname, '../..')
+    const filePath = path.resolve(__dirname, relativePath)
+    const githubUrl = filePath.replace(
+      rootPath,
+      `https://www.github.com/dulnan/nuxt-multi-cache/tree/${branch}`,
+    )
+    return fs
+      .readFileSync(filePath)
+      .toString()
+      .split('\n')
+      .map((line, index) => {
+        const rgx = /(type|interface) ([A-Z][^ <]*)/g
+        const typeName = [...line.matchAll(rgx)][0]?.[2]
+        if (typeName) {
+          return {
+            githubUrl: githubUrl + '#L' + (index + 1),
+            typeName,
+          }
+        }
+      })
+      .filter(Boolean)
+  })
+
+  return allFiles.reduce((acc, v) => {
+    acc[v!.typeName] = v!.githubUrl
+    return acc
+  }, {})
+}
+
+const typesMap = await getTypeFiles()
+
+function typeReferencePlugin(md) {
+  const regex = /\[type\.(\w+(\[\])?)\]/g
+
+  function replaceToken(tokens, idx) {
+    const token = tokens[idx]
+    const match = [...token.content.matchAll(regex)][0]
+
+    if (match) {
+      const arg = match[0].slice(6, -1)
+      const typeName = arg.replace('[', '').replace(']', '')
+
+      const githubUrl = typesMap[typeName]
+
+      if (!githubUrl) {
+        throw new Error(`Failed to link type with name: "${typeName}"`)
+      }
+
+      token.type = 'html_inline'
+      token.content = token.content.replace(
+        regex,
+        `<a href="${githubUrl}" target="_blank"><code>${arg}</code></a>`,
+      )
+    }
+  }
+
+  md.core.ruler.push('replace_type_reference', function (state) {
+    state.tokens.forEach((blockToken) => {
+      if (blockToken.type === 'inline' && blockToken.children) {
+        blockToken.children.forEach((token, idx) => {
+          replaceToken(blockToken.children, idx)
+        })
+      }
+    })
+  })
+}
 
 const composables = [
   'useDataCache',
@@ -17,6 +110,11 @@ export default defineConfig({
   lang: 'en',
   cleanUrls: true,
   appearance: 'dark',
+  markdown: {
+    config: (md) => {
+      md.use(typeReferencePlugin)
+    },
+  },
   head: [
     [
       'link',
@@ -94,6 +192,8 @@ export default defineConfig({
           { text: 'Runtime Config', link: '/overview/runtime-config' },
           { text: 'Server Options', link: '/overview/server-options' },
           { text: 'Cache Tags', link: '/overview/cache-tags' },
+          { text: 'Max Age', link: '/overview/max-age' },
+          { text: 'Stale if Error', link: '/overview/stale-if-error' },
           { text: 'Migrating from V1', link: '/overview/migrating-from-v1' },
         ],
       },

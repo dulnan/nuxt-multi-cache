@@ -22,14 +22,14 @@ const DURATIONS = {
 export const CACHE_PERMANENT = -1
 export const CACHE_NEVER = 0
 
-type NamedExpires = keyof typeof DURATIONS
+type NamedDurations = keyof typeof DURATIONS
 type NamedInterval =
   | 'next-hour'
   | 'midnight'
   | 'end-of-week'
   | 'next-quarter-hour'
 
-type NamedMaxAge = NamedExpires | NamedInterval
+type NamedMaxAge = NamedDurations | NamedInterval
 
 /**
  * Possible values when defining max age or other time-based values.

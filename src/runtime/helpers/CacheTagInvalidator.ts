@@ -1,5 +1,6 @@
 import { cacheTagInvalidationDelay } from '#nuxt-multi-cache/config'
-import type { CacheTagRegistry, CacheType, MultiCacheInstances } from '../types'
+import type { CacheType, MultiCacheInstances } from '../types'
+import type { CacheTagRegistry } from '../types/CacheTagRegistry'
 import {
   decodeComponentCacheItem,
   decodeRouteCacheItem,

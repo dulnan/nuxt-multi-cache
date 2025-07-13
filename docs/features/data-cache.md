@@ -78,6 +78,23 @@ const { data: weather } = await useAsyncData('weather', async () => {
 </script>
 ```
 
+## Using `useDataCacheCallback`
+
+If you prefer a different syntax, you can use
+[useDataCacheCallback](/composables/useDataCache) instead:
+
+```typescript
+const user = await useDataCacheCallback(key.value, async (cache) => {
+  const response = await $fetch('/api/get-user/' + userId)
+
+  if (cache && import.meta.server) {
+    cache.addTags(['user:' + userId]).setMaxAge('1h')
+  }
+
+  return response
+})
+```
+
 ## Using `useCachedAsyncData`
 
 The example above can be simplified by using the
