@@ -12,6 +12,13 @@ import { onError } from '../hooks/error'
 import { MultiCacheState } from '../../helpers/MultiCacheState'
 import { serveCachedHandler } from '../handler/serveCachedRoute'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
+import {
+  shouldLogCacheOverview,
+  cdnEnabled,
+  componentCacheEnabled,
+  dataCacheEnabled,
+  routeCacheEnabled,
+} from '#nuxt-multi-cache/config'
 import { useRuntimeConfig } from '#imports'
 
 function createCacheContext(
@@ -31,19 +38,19 @@ function createMultiCacheApp(): MultiCacheApp {
 
   // Initialize all enabled caches. Explicit initialization because some
   // caches might need additional configuration options and/or checks.
-  if (runtimeConfig.multiCache.component) {
+  if (runtimeConfig.multiCache.component && componentCacheEnabled) {
     cacheContext.component = createCacheContext(serverOptions.component, {
       bubbleError: false,
     })
   }
 
-  if (runtimeConfig.multiCache.data) {
+  if (runtimeConfig.multiCache.data && dataCacheEnabled) {
     cacheContext.data = createCacheContext(serverOptions.data, {
       bubbleError: true,
     })
   }
 
-  if (runtimeConfig.multiCache.route) {
+  if (runtimeConfig.multiCache.route && routeCacheEnabled) {
     cacheContext.route = createCacheContext(serverOptions.route, {
       bubbleError: false,
     })
@@ -80,5 +87,44 @@ export default defineNitroPlugin((nitroApp) => {
 
     // Hook into the error handler of H3 to try and serve stale cached routes.
     nitroApp.hooks.hook('error', onError)
+  }
+
+  if (shouldLogCacheOverview) {
+    const runtimeConfig = useRuntimeConfig()
+    const debugTableEntry = (
+      name: string,
+      atBuild?: boolean,
+      runtime?: boolean,
+    ) => {
+      console.log(
+        `| ${name.padEnd(18)} | ${(atBuild ? '✅' : '❌').padEnd(15)} | ${(atBuild && runtime ? '✅' : '❌').padEnd(17)} |`,
+      )
+    }
+    console.log('\n\nnuxt-multi-cache configuration')
+    console.log('-'.repeat(62))
+    console.log(
+      `| Feature            | Enabled in Build | Enabled at Runtime |`,
+    )
+    console.log('-'.repeat(62))
+    debugTableEntry(
+      'Component Cache',
+      componentCacheEnabled,
+      runtimeConfig.multiCache.component,
+    )
+    debugTableEntry(
+      'Data Cache',
+      dataCacheEnabled,
+      runtimeConfig.multiCache.data,
+    )
+    debugTableEntry(
+      'Route Cache',
+      routeCacheEnabled,
+      runtimeConfig.multiCache.route,
+    )
+    debugTableEntry('CDN Headers', cdnEnabled, runtimeConfig.multiCache.cdn)
+    console.log('-'.repeat(62))
+    console.log(
+      `You can disable this message by setting "disableCacheOverviewLogMessage: true" in the module's configuration.\n`,
+    )
   }
 })

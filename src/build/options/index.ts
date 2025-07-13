@@ -134,4 +134,9 @@ export interface ModuleOptions {
    * Log detailled messages to the console.
    */
   debug?: boolean
+
+  /**
+   * Don't log the caching overview.
+   */
+  disableCacheOverviewLogMessage?: boolean
 }

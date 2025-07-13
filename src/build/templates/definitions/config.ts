@@ -16,6 +16,9 @@ export const cdnCacheControlHeader = import.meta.server ? ${JSON.stringify(helpe
 export const cdnCacheTagHeader = import.meta.server ? ${JSON.stringify(helper.options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER)} : ''
 export const cdnEnabled = ${JSON.stringify(!!helper.options.cdn?.enabled)}
 export const routeCacheEnabled = ${JSON.stringify(!!helper.options.route?.enabled)}
+export const componentCacheEnabled = ${JSON.stringify(!!helper.options.component?.enabled)}
+export const dataCacheEnabled = ${JSON.stringify(!!helper.options.data?.enabled)}
+export const shouldLogCacheOverview = ${JSON.stringify(!helper.options.disableCacheOverviewLogMessage)}
 export const cacheTagInvalidationDelay = ${JSON.stringify(helper.options.api?.cacheTagInvalidationDelay || DEFAULT_CACHE_TAG_INVALIDATION_DELAY)}
 export const isServer = import.meta.server
 `
@@ -52,9 +55,28 @@ export declare const cdnCacheTagHeader: string
 export declare const routeCacheEnabled: boolean
 
 /**
+ * Whether the component cache is enabled at build time.
+ *
+ * The cache may still be disabled at runtime via runtime config.
+ */
+export declare const componentCacheEnabled: boolean
+
+/**
+ * Whether the data cache is enabled at build time.
+ *
+ * The cache may still be disabled at runtime via runtime config.
+ */
+export declare const dataCacheEnabled: boolean
+
+/**
  * The delay in milliseconds before invalidating cache tags.
  */
 export declare const cacheTagInvalidationDelay: number
+
+/**
+ * Whether the cache overview should be logged to the console.
+ */
+export declare const shouldLogCacheOverview: boolean
 
 /**
  * Alias for import.meta.server, used for mocking in tests.

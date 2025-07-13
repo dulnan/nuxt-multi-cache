@@ -26,7 +26,8 @@ export default defineVitestConfig({
             },
             cdn: {
               enabled: true
-            }
+            },
+            disableCacheOverviewLogMessage: true
           }
         },
       },
