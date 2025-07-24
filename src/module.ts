@@ -6,6 +6,8 @@ import type { ModuleOptions } from './build/options'
 import { defaultOptions } from './build/options/defaults'
 import { ModuleHelper } from './build/ModuleHelper'
 import { TEMPLATES } from './build/templates'
+import { pathToFileURL } from 'node:url'
+import { parseURL } from 'ufo'
 
 export type { ModuleOptions }
 
@@ -112,9 +114,22 @@ export default defineNuxtModule<ModuleOptions>({
           name: 'nuxt-multi-cache:server-only',
           enforce: 'pre',
           transformInclude(id) {
-            return id.includes('nuxt-multi-cache/server-options')
+            const path = parseURL(
+              decodeURIComponent(pathToFileURL(id).href),
+            ).pathname
+
+            return (
+              path.includes('server/multiCache.serverOptions') ||
+              path.includes('nuxt-multi-cache/server-options')
+            )
           },
-          transform() {
+          transform(_source, id) {
+            // The userland file exporting `defineMultiCacheOptions`.
+            if (id.includes('multiCache.serverOptions')) {
+              return 'export default function() { return {}; }'
+            }
+
+            // The server-options template provided by the module.
             return `export const serverOptions = {}`
           },
         }

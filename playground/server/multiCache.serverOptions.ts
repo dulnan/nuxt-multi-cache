@@ -1,6 +1,7 @@
 import { defineDriver } from 'unstorage'
 import { type H3Event, getQuery, getHeader } from 'h3'
 import { defineMultiCacheOptions } from './../../src/server-options'
+import * as fsDriver from 'unstorage/drivers/fs'
 
 function getCacheKeyPrefix(event: H3Event): string {
   const query = getQuery(event)
@@ -47,6 +48,15 @@ export default defineMultiCacheOptions(() => {
       },
       dispose() {},
     }
+  })
+
+  // This is not really used, but we'll leave this here to test that it is not
+  // included in the final client build, which should be handled by the
+  // custom build plugin added by the module.
+  // If it would be included, the build would fail, because the FS driver has
+  // imports on stuff that does not exist in the browser.
+  const foobar = fsDriver.default({
+    base: './__cache__/data',
   })
 
   return {
