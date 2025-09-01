@@ -9,6 +9,8 @@ import { TEMPLATES } from './build/templates'
 import { pathToFileURL } from 'node:url'
 import { parseURL } from 'ufo'
 
+export type { CacheTagRegistry } from './runtime/types/CacheTagRegistry'
+export type { CacheType } from './runtime/types/index'
 export type { ModuleOptions }
 
 export default defineNuxtModule<ModuleOptions>({
