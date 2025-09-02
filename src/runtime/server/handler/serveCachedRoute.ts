@@ -1,6 +1,7 @@
 import { type H3Event, getRequestURL } from 'h3'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import {
+  enabledForRequest,
   encodeRouteCacheKey,
   getCacheKeyWithPrefix,
   getMultiCacheContext,
@@ -40,12 +41,19 @@ function canBeServedFromCache(
 }
 
 export async function serveCachedHandler(event: H3Event) {
-  const { state } = useMultiCacheApp()
+  const isEnabled = await enabledForRequest(event)
+
+  if (!isEnabled) {
+    return
+  }
+
   const context = getMultiCacheContext(event)
 
   if (!context?.route) {
     return
   }
+
+  const { state } = useMultiCacheApp()
 
   try {
     // Build the cache key.

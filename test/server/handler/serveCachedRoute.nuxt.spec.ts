@@ -19,6 +19,16 @@ mockNuxtImport('useRuntimeConfig', () => {
   }
 })
 
+vi.mock('#nuxt-multi-cache/config', () => {
+  return {
+    isServer: true,
+    debug: false,
+    cdnEnabled: true,
+    cdnCacheControlHeader: 'Surrogate-Control',
+    cdnCacheTagHeader: 'Cache-Tag',
+  }
+})
+
 vi.mock('#nuxt-multi-cache/server-options', () => {
   return {
     serverOptions: {},
@@ -74,6 +84,9 @@ describe('serveCachedRoute event handler', () => {
         },
       },
       context: {
+        multiCache: {
+          enabledForRequest: true,
+        },
         [MULTI_CACHE_CONTEXT_KEY]: {
           cache: {
             route: {
@@ -110,6 +123,23 @@ describe('serveCachedRoute event handler', () => {
         "x-custom-header": "test",
       }
     `)
+    mocks.useNitroApp.mockRestore()
+  })
+
+  test('Does not return a route from cache if not enabled.', async () => {
+    const event = {
+      path: '/',
+      headers: {},
+      context: {
+        multiCache: {
+          enabledForRequest: false,
+        },
+      },
+    }
+
+    const result = await serveCachedHandler(event as any)
+
+    expect(result).toBeUndefined()
     mocks.useNitroApp.mockRestore()
   })
 
