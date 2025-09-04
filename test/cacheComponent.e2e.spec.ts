@@ -1,5 +1,6 @@
 import path from 'node:path'
 import { setup, $fetch, createPage } from '@nuxt/test-utils/e2e'
+import { expect as playwrightExpect } from '@nuxt/test-utils/playwright'
 import { describe, expect, test } from 'vitest'
 import type { ModuleOptions } from '../src/build/options'
 import purgeAll from './__helpers__/purgeAll'
@@ -139,5 +140,21 @@ describe('The component cache feature', () => {
       .then((v: any) => v.jsonValue())
     const secondValue = NUXT_SECOND?.data.withAsyncData.api
     expect(secondValue).toMatchInlineSnapshot('"This is data from the API."')
+  })
+
+  test('Remains reactive on the client', async () => {
+    const page = await createPage('/cachedComponentWithReactivity')
+
+    await page.locator('#increment').click()
+
+    const count = await page.locator('#count').innerText()
+    expect(count).toEqual('1')
+    await page.locator('#increment').click()
+    await page.locator('#increment').click()
+    await playwrightExpect(page.locator('#counter')).toHaveCount(0)
+    await page.locator('#increment').click()
+    await playwrightExpect(page.locator('#counter')).toHaveCount(1)
+    const countAfter = await page.locator('#count').innerText()
+    expect(countAfter).toEqual('4')
   })
 })

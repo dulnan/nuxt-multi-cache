@@ -37,16 +37,17 @@ export default defineComponent<Props>({
   name: 'RenderCacheable',
   props,
   setup(props, { slots }) {
-    const tag = props.tag ?? 'div'
+    return () => {
+      const tag = props.tag ?? 'div'
 
-    if (!slots.default) {
-      return () =>
-        h(tag, {
-          innerHTML: '',
-        })
+      if (!slots.default) {
+        return () =>
+          h(tag, {
+            innerHTML: '',
+          })
+      }
+      const defaultSlot = slots.default()
+      return h(tag, defaultSlot)
     }
-
-    const defaultSlot = slots.default()
-    return () => h(tag, defaultSlot)
   },
 })
