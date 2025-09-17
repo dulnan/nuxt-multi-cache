@@ -1,4 +1,4 @@
-import { createConsola, type ConsolaInstance } from 'consola/core'
+import { createConsola, type ConsolaInstance } from 'consola'
 
 type Logger = ConsolaInstance | typeof console
 
