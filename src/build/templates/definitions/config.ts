@@ -31,6 +31,7 @@ export const componentCacheEnabled = ${JSON.stringify(componentCacheEnabled)}
 export const dataCacheEnabled = ${JSON.stringify(dataCacheEnabled)}
 export const shouldLogCacheOverview = ${JSON.stringify(!helper.options.disableCacheOverviewLogMessage)}
 export const cacheTagInvalidationDelay = ${JSON.stringify(helper.options.api?.cacheTagInvalidationDelay || DEFAULT_CACHE_TAG_INVALIDATION_DELAY)}
+export const isTestMode = ${JSON.stringify(!!helper.options.enableTestMode)}
 export const isServer = import.meta.server
 `
   },
@@ -93,6 +94,11 @@ export declare const shouldLogCacheOverview: boolean
  * Alias for import.meta.server, used for mocking in tests.
  */
 export declare const isServer: boolean
+
+/**
+ * If test mode is enabled.
+ */
+export declare const isTestMode: boolean
 `
   },
 )

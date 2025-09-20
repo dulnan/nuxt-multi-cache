@@ -2,10 +2,13 @@ import { type H3Event, getRequestURL } from 'h3'
 import type { MultiCacheInstances } from './../types'
 import type { CacheTagRegistry } from './../types/CacheTagRegistry'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
-import { isServer } from '#nuxt-multi-cache/config'
+import { isServer, isTestMode } from '#nuxt-multi-cache/config'
 import { getRequestHeader } from 'h3'
-import { SERVER_REQUEST_HEADER } from './constants'
-import { toTimestamp } from './maxAge'
+import {
+  SERVER_REQUEST_HEADER,
+  TEST_MODE_DATE_OVERRIDE_HEADER,
+} from './constants'
+import { expiresToDateString, toTimestamp } from './maxAge'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
 
@@ -98,10 +101,31 @@ export async function getCacheKeyWithPrefix(
   return prefix ? `${prefix}--${cacheKey}` : cacheKey
 }
 
+function determineCurrentTime(event: H3Event): Date {
+  // Allow overriding the "current time" in test mode.
+  if (isTestMode) {
+    const override = getRequestHeader(event, TEST_MODE_DATE_OVERRIDE_HEADER)
+    if (override) {
+      const date = new Date(override)
+      if (Number.isNaN(date.getTime())) {
+        throw new Error(
+          `Invalid date provided during test mode in "${TEST_MODE_DATE_OVERRIDE_HEADER}" header.`,
+        )
+      }
+
+      return date
+    }
+  }
+
+  return new Date()
+}
+
 export function getRequestTimestamp(event: H3Event): number {
   event.context ||= {}
   event.context.multiCache ||= {}
-  event.context.multiCache.requestTimestamp ||= toTimestamp(new Date())
+  event.context.multiCache.requestTimestamp ||= toTimestamp(
+    determineCurrentTime(event),
+  )
   return event.context.multiCache.requestTimestamp
 }
 
