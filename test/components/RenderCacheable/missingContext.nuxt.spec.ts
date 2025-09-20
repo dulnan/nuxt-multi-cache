@@ -23,6 +23,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
     },
     debug: true,
     cdnEnabled: true,
+    isTestMode: true,
   }
 })
 

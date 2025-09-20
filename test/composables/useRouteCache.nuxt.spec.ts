@@ -26,6 +26,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
       return isServerValue
     },
     debug: false,
+    isTestMode: true,
   }
 })
 

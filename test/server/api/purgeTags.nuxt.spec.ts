@@ -45,6 +45,7 @@ vi.mock('#nuxt-multi-cache/server-options', () => {
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
     cacheTagInvalidationDelay: 1000,
+    isTestMode: true,
   }
 })
 

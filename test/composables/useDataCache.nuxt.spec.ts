@@ -4,6 +4,8 @@ import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { CacheItem } from './../../src/runtime/types'
 import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+import { TEST_MODE_DATE_OVERRIDE_HEADER } from '~/src/runtime/helpers/constants'
+import { buildEvent } from '../__helpers__/event'
 
 const { getIsServer, setIsServer } = vi.hoisted(() => {
   let serverValue = false
@@ -25,54 +27,28 @@ vi.mock('#nuxt-multi-cache/config', () => {
     debug: false,
     cdnEnabled: true,
     routeCacheEnabled: true,
+    isTestMode: true,
   }
 })
 
-function buildEventWithStorage(storage: Record<string, CacheItem>): H3Event {
+function buildEventWithStorage(
+  storage: Record<string, CacheItem>,
+  date?: Date,
+): H3Event {
   return {
-    context: {
-      [MULTI_CACHE_CONTEXT_KEY]: {
-        cache: {
-          data: {
-            storage: {
-              getItem: (key: string) => {
-                if (key === 'force_get_error') {
-                  throw new Error('Failed to get data cache item.')
-                }
-                return Promise.resolve(storage[key])
-              },
-              setItem: (key: string, data: any) => {
-                storage[key] = data
-                return Promise.resolve()
-              },
-            },
-          },
-        },
+    node: {
+      req: {
+        headers: {
+          [TEST_MODE_DATE_OVERRIDE_HEADER]: date
+            ? date.toISOString()
+            : undefined,
+        } as any,
       },
     },
-  } as H3Event
-}
-
-function buildEvent(bubbleError = false): H3Event {
-  const storage: Record<string, CacheItem> = {
-    foobar: {
-      data: 'Cached data.',
-      expires: -1,
-      staleIfErrorExpires: 0,
-    },
-    expires: {
-      data: 'Data with expiration date.',
-      expires: 1669849200,
-      staleIfErrorExpires: 0,
-    },
-  }
-
-  return {
     context: {
       [MULTI_CACHE_CONTEXT_KEY]: {
         cache: {
           data: {
-            bubbleError,
             storage: {
               getItem: (key: string) => {
                 if (key === 'force_get_error') {
@@ -235,6 +211,11 @@ describe('useDataCache composable', () => {
       },
     }
     const event = {
+      node: {
+        req: {
+          headers: {},
+        },
+      },
       context: {
         [MULTI_CACHE_CONTEXT_KEY]: {
           cache: {
