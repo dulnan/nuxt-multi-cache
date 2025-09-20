@@ -1,6 +1,5 @@
 import type { FetchContext, ResponseType, FetchResponse } from 'ofetch'
 import { useRequestEvent, useRuntimeConfig } from '#imports'
-import { useCDNHeaders } from './../server/utils/useCDNHeaders'
 import { useRouteCache } from './../server/utils/useRouteCache'
 import {
   ROUTE_CACHE_TAGS_HEADER,
@@ -12,6 +11,7 @@ import {
   routeCacheEnabled,
 } from '#nuxt-multi-cache/config'
 import type { BubbleCacheability } from '../types'
+import { useCDNHeadersImplementation } from '../shared/useCDNHeaders'
 
 type OnResponseInterceptor = (
   ctx: FetchContext<unknown, ResponseType> & {
@@ -61,7 +61,7 @@ export function useCacheAwareFetchInterceptor(
           config.multiCache.cdn &&
           (bubbleCacheability === true || bubbleCacheability === 'cdn')
         ) {
-          useCDNHeaders(
+          useCDNHeadersImplementation(
             (cdn) => {
               cdn.mergeFromResponse(ctx.response)
             },

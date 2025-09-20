@@ -8,7 +8,7 @@ import {
   SERVER_REQUEST_HEADER,
   TEST_MODE_DATE_OVERRIDE_HEADER,
 } from './constants'
-import { expiresToDateString, toTimestamp } from './maxAge'
+import { toTimestamp } from './maxAge'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
 

@@ -63,6 +63,9 @@ function buildEventWithStorage(
             },
           },
         },
+        config: {
+          data: true,
+        },
       },
     },
   } as H3Event
@@ -181,7 +184,7 @@ describe('useDataCache composable', () => {
   test('Returns dummy if SSR context not found', async () => {
     setIsServer(true)
 
-    const cache = await useDataCache('foobar', {} as H3Event)
+    const cache = await useDataCache('foobar', { context: {} } as H3Event)
     expect(cache.value).toBeFalsy()
     expect(cache.addToCache).toBeDefined()
   })
@@ -230,6 +233,9 @@ describe('useDataCache composable', () => {
                 },
               },
             },
+          },
+          config: {
+            data: true,
           },
         },
       },

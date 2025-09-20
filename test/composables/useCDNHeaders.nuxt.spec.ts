@@ -13,6 +13,11 @@ function buildEvent(): H3Event {
       multiCache: {
         cdn: new NuxtMultiCacheCDNHelper(nowTimestamp),
       },
+      multiCacheApp: {
+        config: {
+          cdn: true,
+        },
+      },
     },
   } as H3Event
 }

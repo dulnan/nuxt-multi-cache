@@ -35,6 +35,9 @@ export function buildEventWithStorage(
             },
           },
         },
+        config: {
+          data: true,
+        },
       },
     },
   } as H3Event
@@ -82,6 +85,9 @@ export function buildEvent(bubbleError = false, date?: Date): H3Event {
               },
             },
           },
+        },
+        config: {
+          data: true,
         },
       },
     },
