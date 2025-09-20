@@ -13,7 +13,7 @@ import {
 } from '../../helpers/cacheItem'
 import type { RouteCacheItem } from '../../types'
 import type { MultiCacheState } from '../../helpers/MultiCacheState'
-import { logger } from '../../helpers/logger'
+import { logger } from '../../helpers/multi-cache-logger'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
 import { serverOptions } from '#nuxt-multi-cache/server-options'

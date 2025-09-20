@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { logger } from '../helpers/logger'
+import { logger } from '../helpers/multi-cache-logger'
 import type { DataCacheCallbackContext } from '../types'
 import {
   useDataCache as serverUseDataCache,
