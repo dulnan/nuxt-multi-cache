@@ -84,6 +84,7 @@
     "eslint": "^9.25.1",
     "eslint-config-prettier": "^10.1.2",
     "eslint-plugin-prettier": "^5.2.6",
+    "glob": "^11.0.3",
     "h3-compression": "^0.3.2",
     "h3-fast-compression": "^1.0.1",
     "happy-dom": "^14.12.0",
