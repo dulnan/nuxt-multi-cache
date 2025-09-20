@@ -3,20 +3,6 @@ import { setup, fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test, beforeEach } from 'vitest'
 import purgeAll from './../../__helpers__/purgeAll'
 import getRouteCacheItems from '~/test/__helpers__/getRouteCacheItems'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-
-mockNuxtImport('useRuntimeConfig', () => {
-  return () => {
-    return {
-      multiCache: {
-        cdn: true,
-        data: true,
-        route: true,
-        component: true,
-      },
-    }
-  }
-})
 
 await setup({
   server: true,
