@@ -3,7 +3,7 @@ import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { encodeRouteCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { serveCachedHandler } from '../../../src/runtime/server/handler/serveCachedRoute'
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
-import { logger } from '../../../src/runtime/helpers/logger'
+import { logger } from '../../../src/runtime/helpers/multi-cache-logger'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 
 mockNuxtImport('useRuntimeConfig', () => {

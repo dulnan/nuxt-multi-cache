@@ -2,7 +2,7 @@ import { defineComponent, getCurrentInstance, h, onErrorCaptured } from 'vue'
 import { useNuxtApp } from '#app'
 import { provide } from '#imports'
 import { encodeComponentCacheItem } from '../../../helpers/cacheItem'
-import { logger } from '../../../helpers/logger'
+import { logger } from '../../../helpers/multi-cache-logger'
 import {
   getMultiCacheContext,
   getCacheKeyWithPrefix,

@@ -2,7 +2,7 @@ import type { CapturedErrorContext } from 'nitropack/types'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { sendWebResponse } from 'h3'
-import { logger } from '../../helpers/logger'
+import { logger } from '../../helpers/multi-cache-logger'
 import { getRequestTimestamp } from '../../helpers/server'
 
 /**

@@ -12,7 +12,7 @@ import {
   getMultiCacheContext,
   getRequestTimestamp,
 } from '../../helpers/server'
-import { logger } from '../../helpers/logger'
+import { logger } from '../../helpers/multi-cache-logger'
 import { debug } from '#nuxt-multi-cache/config'
 import { CACHE_NEVER, CACHE_PERMANENT, type MaxAge } from '../../helpers/maxAge'
 import { isExpired } from '../../helpers/maxAge'

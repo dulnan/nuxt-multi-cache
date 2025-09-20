@@ -12,7 +12,7 @@ import {
   getMultiCacheRouteHelper,
 } from '../../helpers/server'
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
-import { logger } from '../../helpers/logger'
+import { logger } from '../../helpers/multi-cache-logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { debug } from '#nuxt-multi-cache/config'
 

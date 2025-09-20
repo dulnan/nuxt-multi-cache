@@ -12,7 +12,7 @@ import {
   decodeComponentCacheItem,
   handleRawCacheData,
 } from '../../../helpers/cacheItem'
-import { logger } from '../../../helpers/logger'
+import { logger } from '../../../helpers/multi-cache-logger'
 import type { ComponentCacheItem } from './../../../types'
 import { debug } from '#nuxt-multi-cache/config'
 import type { Props } from '../shared'

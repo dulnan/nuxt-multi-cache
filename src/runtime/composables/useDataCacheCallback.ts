@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import type { UseDataCacheCallbackCallback } from '../server/utils/useDataCacheCallback'
 import { useDataCacheCallback as serverUseDataCacheCallback } from '../server/utils/useDataCacheCallback'
 import { useNuxtApp } from '#imports'
-import { logger } from '../helpers/logger'
+import { logger } from '../helpers/multi-cache-logger'
 import { debug, isServer } from '#nuxt-multi-cache/config'
 import type { UseDataCacheOptions } from '../server/utils/useDataCache'
 

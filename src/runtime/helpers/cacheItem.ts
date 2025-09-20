@@ -1,5 +1,5 @@
 import type { ComponentCacheItem, RouteCacheItem } from '../types'
-import { logger } from './logger'
+import { logger } from './multi-cache-logger'
 import { CACHE_NEVER, CACHE_PERMANENT } from './maxAge'
 
 const DELIMITER = '<CACHE_ITEM>'

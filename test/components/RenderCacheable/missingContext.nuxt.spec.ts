@@ -1,7 +1,7 @@
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi } from 'vitest'
-import { logger } from '../../../src/runtime/helpers/logger'
+import { logger } from '../../../src/runtime/helpers/multi-cache-logger'
 import { createTestApp } from './__helpers__'
 
 const { getIsServer, setIsServer } = vi.hoisted(() => {
