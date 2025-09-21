@@ -19,6 +19,7 @@ mockNuxtImport('useRuntimeConfig', () => {
 })
 
 let isServerValue = false
+let returnEvent = true
 
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
@@ -58,24 +59,18 @@ function buildEvent(): H3Event {
   } as H3Event
 }
 
-vi.mock('#imports', () => {
-  return {
-    useRequestEvent: () => {
+mockNuxtImport('useRequestEvent', () => {
+  return () => {
+    if (returnEvent) {
       return buildEvent()
-    },
-    useRuntimeConfig: () => {
-      return {
-        multiCache: {
-          data: true,
-        },
-      }
-    },
+    }
   }
 })
 
 describe('useRouteCache composable', () => {
   beforeEach(() => {
     isServerValue = false
+    returnEvent = true
   })
   test('Does not call callback in client', () => {
     const params = {
@@ -126,6 +121,7 @@ describe('useRouteCache composable', () => {
 
   test('Does not call callback if event is missing.', () => {
     isServerValue = true
+    returnEvent = false
 
     const params = {
       cb() {},

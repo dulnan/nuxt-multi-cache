@@ -5,7 +5,8 @@ import path from 'path'
 const alias: Record<string, string> = {
   '~': path.resolve(__dirname),
   '#nuxt-multi-cache/config': path.resolve(__dirname, './.nuxt/nuxt-multi-cache/config.js'),
-  '#nuxt-multi-cache/server-options': path.resolve(__dirname, './.nuxt/nuxt-multi-cache/server-options.js')
+  '#nuxt-multi-cache/server-options': path.resolve(__dirname, './.nuxt/nuxt-multi-cache/server-options.js'),
+  '#imports': path.resolve(__dirname, './.nuxt/imports.mjs')
 }
 
 export default defineConfig({
