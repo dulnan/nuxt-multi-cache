@@ -6,6 +6,7 @@ import getRouteCacheItems from '~/test/__helpers__/getRouteCacheItems'
 
 await setup({
   server: true,
+  browser: false,
   logLevel: 0,
   runner: 'vitest',
   build: true,

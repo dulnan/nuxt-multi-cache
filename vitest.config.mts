@@ -1,36 +1,33 @@
-import { defineVitestConfig } from '@nuxt/test-utils/config'
+import { defineConfig } from 'vitest/config'
+import { defineVitestProject } from '@nuxt/test-utils/config'
+import path from 'path'
 
-export default defineVitestConfig({
+const alias: Record<string, string> = {
+  '~': path.resolve(__dirname),
+  '#nuxt-multi-cache/config': path.resolve(__dirname, './.nuxt/nuxt-multi-cache/config.js'),
+  '#nuxt-multi-cache/server-options': path.resolve(__dirname, './.nuxt/nuxt-multi-cache/server-options.js')
+}
+
+export default defineConfig({
   test: {
-    include: ['./test/**/*.spec.ts'],
-    coverage: {
-      all: true,
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      include: ['src/**/*.*'],
-    },
-    // environment: 'nuxt',
-    environmentOptions: {
-      nuxt: {
-        overrides: {
-          modules: ['nuxt-multi-cache'],
-          multiCache: {
-            component: {
-              enabled: true
-            },
-            route: {
-              enabled: true,
-            },
-            data: {
-              enabled: true,
-            },
-            cdn: {
-              enabled: true
-            },
-            disableCacheOverviewLogMessage: true
-          }
+
+    projects: [
+      {
+        test: {
+          name: 'unit',
+          include: ['test/**/*.{e2e,node}.spec.ts'],
+          environment: 'node',
+          alias
         },
       },
-    },
+      await defineVitestProject({
+        test: {
+          name: 'nuxt',
+          include: ['test/**/*.nuxt.spec.ts'],
+          environment: 'nuxt',
+          alias
+        },
+      }),
+    ],
   },
 })

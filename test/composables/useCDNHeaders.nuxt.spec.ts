@@ -13,6 +13,11 @@ function buildEvent(): H3Event {
       multiCache: {
         cdn: new NuxtMultiCacheCDNHelper(nowTimestamp),
       },
+      multiCacheApp: {
+        config: {
+          cdn: true,
+        },
+      },
     },
   } as H3Event
 }
@@ -43,6 +48,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
     cdnEnabled: true,
     cdnCacheControlHeader: 'Surrogate-Control',
     cdnCacheTagHeader: 'Cache-Tag',
+    isTestMode: true,
   }
 })
 

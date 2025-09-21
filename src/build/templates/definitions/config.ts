@@ -10,16 +10,28 @@ export default defineTemplate(
     path: 'nuxt-multi-cache/config',
   },
   (helper) => {
+    // The module options syntax is such that if the key of a feature is
+    // completely undefined, then the feature is completely disabled.
+    // If any object is provided, then the feature is generally enabled,
+    // meaning that its functionality is included (such as composables or
+    // components), however it's not actually fully enabled.
+    // Whether a feature is fully enabled is decided using runtime config.
+    const cdnEnabled = !!helper.options.cdn
+    const routeCacheEnabled = !!helper.options.route
+    const componentCacheEnabled = !!helper.options.component
+    const dataCacheEnabled = !!helper.options.data
+
     return `
 export const debug = ${JSON.stringify(!!helper.options.debug)}
 export const cdnCacheControlHeader = import.meta.server ? ${JSON.stringify(helper.options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER)} : ''
 export const cdnCacheTagHeader = import.meta.server ? ${JSON.stringify(helper.options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER)} : ''
-export const cdnEnabled = ${JSON.stringify(!!helper.options.cdn?.enabled)}
-export const routeCacheEnabled = ${JSON.stringify(!!helper.options.route?.enabled)}
-export const componentCacheEnabled = ${JSON.stringify(!!helper.options.component?.enabled)}
-export const dataCacheEnabled = ${JSON.stringify(!!helper.options.data?.enabled)}
+export const cdnEnabled = ${JSON.stringify(cdnEnabled)}
+export const routeCacheEnabled = ${JSON.stringify(routeCacheEnabled)}
+export const componentCacheEnabled = ${JSON.stringify(componentCacheEnabled)}
+export const dataCacheEnabled = ${JSON.stringify(dataCacheEnabled)}
 export const shouldLogCacheOverview = ${JSON.stringify(!helper.options.disableCacheOverviewLogMessage)}
 export const cacheTagInvalidationDelay = ${JSON.stringify(helper.options.api?.cacheTagInvalidationDelay || DEFAULT_CACHE_TAG_INVALIDATION_DELAY)}
+export const isTestMode = ${JSON.stringify(!!helper.options.enableTestMode)}
 export const isServer = import.meta.server
 `
   },
@@ -82,6 +94,11 @@ export declare const shouldLogCacheOverview: boolean
  * Alias for import.meta.server, used for mocking in tests.
  */
 export declare const isServer: boolean
+
+/**
+ * If test mode is enabled.
+ */
+export declare const isTestMode: boolean
 `
   },
 )

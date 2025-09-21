@@ -10,6 +10,7 @@ import {
 
 vi.mock('#nuxt-multi-cache/config', () => ({
   cacheTagInvalidationDelay: 100,
+  isTestMode: true,
 }))
 
 describe('CacheTagInvalidator', () => {

@@ -19,6 +19,10 @@ export default defineNuxtConfig({
 
   compatibilityDate: '2025-04-27',
 
+  future: {
+    compatibilityVersion: 4,
+  },
+
   features: {
     inlineStyles: true,
   },

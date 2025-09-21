@@ -13,6 +13,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
       return true
     },
     debug: false,
+    isTestMode: true,
   }
 })
 
@@ -44,11 +45,7 @@ await setup({
   nuxtConfig,
 })
 
-// @TODO: Something somewhere in Nuxt changed again and this test fails because
-// it attempts to load server-side code (unstorage filesystem driver) in a
-// browser context. But it doesn't actually do that in the real world.
-// Skipping test for now. Revisit with the next minor update.
-describe.skip('Caching with the file system driver', () => {
+describe('Caching with the file system driver', () => {
   test('correctly serves a cached page', async () => {
     await purgeAll()
     const page1 = await createPageWithoutHydration('/cachedPageFromDisk', 'en')

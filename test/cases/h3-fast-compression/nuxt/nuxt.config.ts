@@ -15,4 +15,8 @@ export default defineNuxtConfig({
       authorization: false,
     },
   },
+
+  future: {
+    compatibilityVersion: 4,
+  },
 })

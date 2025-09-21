@@ -1,12 +1,12 @@
 import type { H3Event } from 'h3'
 import { logger } from '../helpers/multi-cache-logger'
 import type { DataCacheCallbackContext } from '../types'
-import {
-  useDataCache as serverUseDataCache,
-  type UseDataCacheOptions,
-} from './../server/utils/useDataCache'
 import { useNuxtApp } from '#imports'
 import { debug, isServer } from '#nuxt-multi-cache/config'
+import {
+  useDataCacheImplementation,
+  type UseDataCacheOptions,
+} from '../shared/useDataCache'
 
 export async function useDataCache<T>(
   key: string,
@@ -25,7 +25,7 @@ export async function useDataCache<T>(
     return dummy
   }
 
-  const event = providedEvent || useNuxtApp().ssrContext?.event
+  const event = providedEvent ?? useNuxtApp().ssrContext?.event
 
   if (!event) {
     if (debug) {
@@ -38,5 +38,5 @@ export async function useDataCache<T>(
     return Promise.resolve(dummy)
   }
 
-  return serverUseDataCache(key, event, options)
+  return useDataCacheImplementation(key, event, options)
 }

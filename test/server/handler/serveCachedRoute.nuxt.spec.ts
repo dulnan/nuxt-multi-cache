@@ -26,6 +26,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
     cdnEnabled: true,
     cdnCacheControlHeader: 'Surrogate-Control',
     cdnCacheTagHeader: 'Cache-Tag',
+    isTestMode: true,
   }
 })
 

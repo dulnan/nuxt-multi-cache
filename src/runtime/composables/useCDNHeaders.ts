@@ -1,8 +1,8 @@
 import type { H3Event } from 'h3'
 import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
-import { useCDNHeaders as serverUseCdnHeaders } from './../server/utils/useCDNHeaders'
 import { useRequestEvent } from '#imports'
 import { isServer } from '#nuxt-multi-cache/config'
+import { useCDNHeadersImplementation } from '../shared/useCDNHeaders'
 
 /**
  * Return the helper to be used for interacting with the CDN headers feature.
@@ -30,5 +30,5 @@ export function useCDNHeaders(
     return
   }
 
-  serverUseCdnHeaders(cb, event, applyToEvent)
+  useCDNHeadersImplementation(cb, event, applyToEvent)
 }

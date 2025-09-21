@@ -14,12 +14,10 @@ import { relative } from 'pathe'
 import type { RouterMethod } from 'h3'
 import type { Nuxt, ResolvedNuxtTemplate } from 'nuxt/schema'
 import type { ModuleOptions } from './options'
-import type { defaultOptions } from './options/defaults'
 import { logger } from './logger'
 import { fileExists } from './helpers'
 import type { ModuleTemplate } from './templates/defineTemplate'
-
-type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] }
+import { DEFAULT_API_PREFIX } from './options/defaults'
 
 /**
  * Log error message if obsolete configuration options are used.
@@ -49,11 +47,6 @@ function checkObsoleteOptions(options: any) {
     )
   }
 }
-
-type RequiredModuleOptions = WithRequired<
-  ModuleOptions,
-  keyof typeof defaultOptions
->
 
 type ModuleHelperResolvers = {
   /**
@@ -99,7 +92,7 @@ export class ModuleHelper {
 
   public readonly isDev: boolean
 
-  public readonly options: RequiredModuleOptions
+  public readonly options: ModuleOptions
 
   private nitroExternals: string[] = []
   private tsPaths: Record<string, string> = {}
@@ -115,7 +108,7 @@ export class ModuleHelper {
 
     checkObsoleteOptions(options)
 
-    this.options = options as RequiredModuleOptions
+    this.options = options
 
     this.isDev = nuxt.options.dev
     this.resolvers = {
@@ -266,7 +259,7 @@ export class ModuleHelper {
   public addServerHandler(name: string, path: string, method: RouterMethod) {
     addServerHandler({
       handler: this.resolvers.module.resolve('./runtime/server/api/' + name),
-      route: this.options.api.prefix + '/' + path,
+      route: (this.options.api?.prefix ?? DEFAULT_API_PREFIX) + '/' + path,
       method,
     })
   }

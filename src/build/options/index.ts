@@ -136,4 +136,16 @@ export interface ModuleOptions {
    * Don't log the caching overview.
    */
   disableCacheOverviewLogMessage?: boolean
+
+  /**
+   * Enables test mode.
+   *
+   * The following is possible during test mode:
+   * - Current time override
+   *   Send the X-Nuxt-Multi-Cache-Date-Override HTTP header to override the
+   *   "current time" for anything nuxt-multi-cache related. This allows
+   *   you to write tests for cache-related behaviour.
+   *   The date should be in the ISO format returned by date.toISOString().
+   */
+  enableTestMode?: boolean
 }
