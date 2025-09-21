@@ -12,12 +12,12 @@ function createRandomUser() {
     birthdate: faker.date.birthdate(),
     company: faker.company.name(),
     registeredAt: faker.date.past(),
-  };
+  }
 }
 
 async function generateUsers() {
   faker.seed(43234)
-  const users = Array.from({ length: 100 }).map(v => createRandomUser())
+  const users = Array.from({ length: 100 }).map((v) => createRandomUser())
   const destinationFile = path.resolve('./playground/data/users.json')
 
   await fsp.writeFile(destinationFile, JSON.stringify(users))
@@ -28,4 +28,3 @@ async function main() {
 }
 
 main()
-

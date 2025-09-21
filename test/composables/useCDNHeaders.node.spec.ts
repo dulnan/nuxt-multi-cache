@@ -22,10 +22,17 @@ function buildEvent(): H3Event {
   } as H3Event
 }
 
+let returnEvent = true
+
 vi.mock('#imports', () => {
   return {
-    useRequestEvent: () => {
-      return buildEvent()
+    get useRequestEvent() {
+      return () => {
+        if (returnEvent) {
+          return buildEvent()
+        }
+        return undefined
+      }
     },
     useRuntimeConfig: () => {
       return {
@@ -55,6 +62,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
 describe('useCDNHeaders composable', () => {
   beforeEach(() => {
     isServerValue = false
+    returnEvent = true
   })
   test('Does not call callback in client', () => {
     const params = {
@@ -105,6 +113,7 @@ describe('useCDNHeaders composable', () => {
 
   test('Does not call callback if event is missing.', () => {
     isServerValue = true
+    returnEvent = false
 
     const params = {
       cb() {},

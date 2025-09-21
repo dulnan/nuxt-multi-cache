@@ -1,8 +1,8 @@
 # Migrating from V1
 
-V2 was implemented from scratch and works completely different than V1. Also
-due to the breaking changes introduced in Nuxt 3 migrating the code to support
-Nuxt 3 was not possible.
+V2 was implemented from scratch and works completely different than V1. Also due
+to the breaking changes introduced in Nuxt 3 migrating the code to support Nuxt
+3 was not possible.
 
 ## $cache Plugin
 
@@ -13,6 +13,7 @@ The injected global `$cache` plugin is replaced by composables for each cache.
 Use the `useDataCache` composable to access the data cache.
 
 ### Nuxt 2
+
 ```typescript
 export default {
   async asyncData({ app }) {
@@ -24,11 +25,12 @@ export default {
     const response = await this.$axios.get('/api/getWeather')
     await app.$cache.data.set('weather', response)
     return response
-  }
+  },
 }
 ```
 
 ### Nuxt 3
+
 ```typescript
 const { data: weather } = await useAsyncData('weather', async () => {
   const { value, addToCache } = await useDataCache('weather')
@@ -57,7 +59,7 @@ export default {
   async asyncData({ app }) {
     app.$cache.route.setCacheable()
     app.$cache.route.addTags(['article:5', 'image:14'])
-  }
+  },
 }
 </script>
 ```
@@ -99,7 +101,7 @@ export default {
   serverCacheKey(props) {
     const variant = props.isHighlighted ? 'highlighted' : 'default'
     return `${props.productId}_${variant}`
-  }
+  },
 }
 </script>
 ```
