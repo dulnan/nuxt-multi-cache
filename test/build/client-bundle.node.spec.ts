@@ -11,7 +11,21 @@ type ClientBundle = {
 /**
  * The strings to check.
  */
-const STRINGS = ['consola']
+const STRINGS = [
+  // Must not be included because the build plugin overrides the entire file exporting these.
+  'consola',
+  'serverOptions',
+
+  // Should never be in the client bundle because it's noop on the client.
+  'useCDNHeaders',
+  'useRouteCache',
+  'bubbleCacheability(',
+
+  // Random strings that only appear in server code.
+  'Failed to get component cache item',
+  'Failed to get SSR context',
+  'No H3Event provided',
+]
 
 /**
  * Test that none of the defined strings appears in any of the generated client
