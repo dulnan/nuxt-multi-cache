@@ -5,7 +5,7 @@ import type { NuxtMultiCacheRouteCacheHelper } from './../helpers/RouteCacheHelp
 import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
 import type { MultiCacheState } from './../helpers/MultiCacheState'
 import type { MaxAge } from './../helpers/maxAge'
-import type { CacheTagInvalidator } from './../helpers/CacheTagInvalidator'
+import type { CacheTagInvalidator } from './CacheTagInvalidator'
 import type { CacheTagRegistry } from './CacheTagRegistry'
 
 export type BubbleCacheability = boolean | 'route' | 'cdn'
@@ -33,6 +33,11 @@ export interface MultiCacheInstances {
    */
   route?: MultiCacheInstance
 }
+
+export type CacheTagInvalidatorFactory = (
+  cache: MultiCacheInstances,
+  cacheTagRegistry: CacheTagRegistry | null,
+) => CacheTagInvalidator
 
 export interface CacheItem {
   data: string
@@ -158,6 +163,33 @@ export type MultiCacheServerOptions = {
    * whereas the in-memory cache registry is "gone" after a restart.
    */
   cacheTagRegistry?: CacheTagRegistry | 'in-memory'
+
+  /**
+   * Define a custom cache tag invalidator.
+   *
+   * The invalidator is responsible for managing the invalidation of cache tags.
+   * It receives cache tags via the `add()` method and decides when and how to
+   * invalidate the corresponding cache items.
+   *
+   * By providing a custom invalidator, you can:
+   * - Store the tags buffer in custom storage (MongoDB, Redis, etc.)
+   * - Implement custom invalidation logic (debounce, queue, immediate, etc.)
+   * - Add logging, metrics, or monitoring
+   *
+   * The factory function receives the cache instances and the cache tag registry
+   * (if configured), allowing you to integrate with them as needed.
+   *
+   * If 'in-memory' is set or if this option is not provided, the built-in
+   * in-memory invalidator is used.
+   *
+   * @example
+   * ```typescript
+   * cacheTagInvalidator: (cache, cacheTagRegistry) => {
+   *   return new MyCacheTagInvalidator(cache, cacheTagRegistry, mongoConnection)
+   * }
+   * ```
+   */
+  cacheTagInvalidator?: CacheTagInvalidatorFactory | 'in-memory'
 }
 
 // This typo went unnoticed for quite some time, so we'll also export it with

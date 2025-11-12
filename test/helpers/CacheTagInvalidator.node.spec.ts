@@ -1,4 +1,4 @@
-import { CacheTagInvalidator } from '~/src/runtime/helpers/CacheTagInvalidator'
+import { InMemoryCacheTagInvalidator } from '~/src/runtime/helpers/InMemoryCacheTagInvalidator'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createStorage } from 'unstorage'
 import type { MultiCacheInstances } from '~/src/runtime/types'
@@ -13,8 +13,8 @@ vi.mock('#nuxt-multi-cache/config', () => ({
   isTestMode: true,
 }))
 
-describe('CacheTagInvalidator', () => {
-  let cacheTagInvalidator: CacheTagInvalidator
+describe('InMemoryCacheTagInvalidator', () => {
+  let cacheTagInvalidator: InMemoryCacheTagInvalidator
   let mockCacheTagRegistry: CacheTagRegistry
   let cacheContext: MultiCacheInstances
 
@@ -60,24 +60,24 @@ describe('CacheTagInvalidator', () => {
 
   describe('constructor', () => {
     it('should initialize with cache instances and registry', () => {
-      cacheTagInvalidator = new CacheTagInvalidator(
+      cacheTagInvalidator = new InMemoryCacheTagInvalidator(
         cacheContext,
         mockCacheTagRegistry,
       )
 
-      expect(cacheTagInvalidator).toBeInstanceOf(CacheTagInvalidator)
+      expect(cacheTagInvalidator).toBeInstanceOf(InMemoryCacheTagInvalidator)
     })
 
     it('should initialize with null registry', () => {
-      cacheTagInvalidator = new CacheTagInvalidator(cacheContext, null)
+      cacheTagInvalidator = new InMemoryCacheTagInvalidator(cacheContext, null)
 
-      expect(cacheTagInvalidator).toBeInstanceOf(CacheTagInvalidator)
+      expect(cacheTagInvalidator).toBeInstanceOf(InMemoryCacheTagInvalidator)
     })
   })
 
   describe('add', () => {
     beforeEach(() => {
-      cacheTagInvalidator = new CacheTagInvalidator(
+      cacheTagInvalidator = new InMemoryCacheTagInvalidator(
         cacheContext,
         mockCacheTagRegistry,
       )
@@ -142,7 +142,7 @@ describe('CacheTagInvalidator', () => {
 
   describe('getCacheTags', () => {
     beforeEach(() => {
-      cacheTagInvalidator = new CacheTagInvalidator(
+      cacheTagInvalidator = new InMemoryCacheTagInvalidator(
         cacheContext,
         mockCacheTagRegistry,
       )
@@ -240,7 +240,7 @@ describe('CacheTagInvalidator', () => {
 
   describe('invalidate with cache tag registry', () => {
     beforeEach(() => {
-      cacheTagInvalidator = new CacheTagInvalidator(
+      cacheTagInvalidator = new InMemoryCacheTagInvalidator(
         cacheContext,
         mockCacheTagRegistry,
       )
@@ -321,7 +321,7 @@ describe('CacheTagInvalidator', () => {
         // route and component are missing
       }
 
-      const invalidator = new CacheTagInvalidator(
+      const invalidator = new InMemoryCacheTagInvalidator(
         incompleteCacheContext,
         mockCacheTagRegistry,
       )
@@ -336,7 +336,7 @@ describe('CacheTagInvalidator', () => {
 
   describe('invalidate without cache tag registry (fallback)', () => {
     beforeEach(() => {
-      cacheTagInvalidator = new CacheTagInvalidator(cacheContext, null)
+      cacheTagInvalidator = new InMemoryCacheTagInvalidator(cacheContext, null)
     })
 
     it('should invalidate using fallback method', async () => {
@@ -421,7 +421,7 @@ describe('CacheTagInvalidator', () => {
         // other caches are missing
       }
 
-      const invalidator = new CacheTagInvalidator(incompleteCacheContext, null)
+      const invalidator = new InMemoryCacheTagInvalidator(incompleteCacheContext, null)
       invalidator.add(['tag1'])
 
       const result = await invalidator.invalidate()
@@ -432,7 +432,7 @@ describe('CacheTagInvalidator', () => {
 
   describe('timeout and state management', () => {
     beforeEach(() => {
-      cacheTagInvalidator = new CacheTagInvalidator(
+      cacheTagInvalidator = new InMemoryCacheTagInvalidator(
         cacheContext,
         mockCacheTagRegistry,
       )

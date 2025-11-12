@@ -1,6 +1,7 @@
 import { cacheTagInvalidationDelay } from '#nuxt-multi-cache/config'
 import type { CacheType, MultiCacheInstances } from '../types'
 import type { CacheTagRegistry } from '../types/CacheTagRegistry'
+import type { CacheTagInvalidator } from '../types/CacheTagInvalidator'
 import {
   decodeComponentCacheItem,
   decodeRouteCacheItem,
@@ -14,7 +15,7 @@ import {
  * could lead to performance issues since tag invalidation can be very
  * inefficient.
  */
-export class CacheTagInvalidator {
+export class InMemoryCacheTagInvalidator implements CacheTagInvalidator {
   /**
    * Buffer of tags to invalidate in the next run.
    */

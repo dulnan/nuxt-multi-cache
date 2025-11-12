@@ -171,3 +171,149 @@ export default defineMultiCacheOptions(() => {
 ```
 
 :::
+
+## Cache Tag Invalidator
+
+The _Cache Tag Invalidator_ is responsible for managing the invalidation of
+cache tags. When cache tags are added via the `add()` method, the invalidator
+decides when and how to invalidate the corresponding cache items.
+
+By default, the module uses an in-memory invalidator with debounced invalidation
+to prevent performance issues from too many invalidation requests at once.
+
+### Using the built-in in-memory invalidator
+
+The built-in invalidator is used by default. You can explicitly configure it:
+
+::: code-group
+
+```typescript [~/server/multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+
+export default defineMultiCacheOptions(() => {
+  return {
+    cacheTagInvalidator: 'in-memory',
+  }
+})
+```
+
+:::
+
+### Custom Implementation
+
+Provide a factory function in `cacheTagInvalidator` that returns an object
+implementing the [type.CacheTagInvalidator] interface.
+
+The factory function receives:
+
+- `cache` - All cache instances (data, route, component)
+- `cacheTagRegistry` - The configured cache tag registry (if any)
+
+This allows you to:
+
+- Store the tags buffer in custom storage (MongoDB, Redis, etc.)
+- Implement custom invalidation logic (debounce, queue, immediate, etc.)
+- Add logging, metrics, or monitoring
+- Integrate with external invalidation systems
+
+You can use the built-in in-memory invalidator implementation as a reference:
+
+<<< @/../src/runtime/helpers/InMemoryCacheTagInvalidator.ts
+
+::: code-group
+
+```typescript [~/server/lib/MongoCacheTagInvalidator.ts]
+import type {
+  CacheTagInvalidator,
+  MultiCacheInstances,
+  CacheTagRegistry,
+} from 'nuxt-multi-cache'
+
+export class MongoCacheTagInvalidator implements CacheTagInvalidator {
+  private invalidationTimeout: NodeJS.Timeout | null = null
+
+  constructor(
+    private cache: MultiCacheInstances,
+    private registry: CacheTagRegistry | null,
+    private mongoCollection: Collection,
+  ) {}
+
+  add(tags: string[]): void {
+    // Store tags in MongoDB for persistence across restarts
+    this.mongoCollection.insertMany(
+      tags.map((tag) => ({
+        tag,
+        timestamp: Date.now(),
+        status: 'pending',
+      })),
+    )
+
+    // Schedule invalidation with custom delay
+    if (!this.invalidationTimeout) {
+      this.invalidationTimeout = setTimeout(() => {
+        this.invalidate()
+      }, 5000) // Custom 5 second delay
+    }
+  }
+
+  private async invalidate() {
+    // Get pending tags from MongoDB
+    const pendingTags = await this.mongoCollection
+      .find({ status: 'pending' })
+      .toArray()
+
+    const tags = pendingTags.map((doc) => doc.tag)
+
+    // Use registry if available for efficient invalidation
+    if (this.registry) {
+      const invalidationMap = await this.registry.getCacheKeysForTags(tags)
+
+      for (const [cacheType, keys] of Object.entries(invalidationMap)) {
+        const cache = this.cache[cacheType as keyof MultiCacheInstances]
+        if (cache) {
+          for (const key of keys) {
+            await cache.storage.removeItem(key)
+          }
+        }
+      }
+
+      await this.registry.removeTags(tags)
+    }
+
+    // Mark tags as processed in MongoDB
+    await this.mongoCollection.updateMany(
+      { status: 'pending' },
+      { $set: { status: 'processed', processedAt: Date.now() } },
+    )
+
+    this.invalidationTimeout = null
+  }
+}
+```
+
+```typescript [~/server/multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+import { MongoCacheTagInvalidator } from './lib/MongoCacheTagInvalidator'
+import { getMongoCollection } from './lib/mongo'
+
+export default defineMultiCacheOptions(() => {
+  return {
+    cacheTagInvalidator: (cache, cacheTagRegistry) => {
+      const mongoCollection = getMongoCollection('cache_tags')
+      return new MongoCacheTagInvalidator(cache, cacheTagRegistry, mongoCollection)
+    },
+  }
+})
+```
+
+:::
+
+::: warning Multiple Instances
+
+When running your app in multiple instances (e.g. via
+[PM2 Cluster Mode](https://pm2.keymetrics.io/docs/usage/cluster-mode/)), make
+sure your custom invalidator implementation can handle cross-instance
+synchronization. The built-in in-memory invalidator only works within a single
+instance.
+
+:::

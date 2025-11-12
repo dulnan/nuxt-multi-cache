@@ -21,7 +21,7 @@ import {
 } from '#nuxt-multi-cache/config'
 import { useRuntimeConfig } from '#imports'
 import { InMemoryCacheTagRegistry } from '../../helpers/InMemoryCacheTagRegistry'
-import { CacheTagInvalidator } from '../../helpers/CacheTagInvalidator'
+import { InMemoryCacheTagInvalidator } from '../../helpers/InMemoryCacheTagInvalidator'
 
 function createCacheContext(
   cache: MultiCacheServerOptionsCacheOptions | undefined,
@@ -63,10 +63,10 @@ function createMultiCacheApp(): MultiCacheApp {
       ? new InMemoryCacheTagRegistry()
       : (serverOptions.cacheTagRegistry ?? null)
 
-  const cacheTagInvalidator = new CacheTagInvalidator(
-    cacheContext,
-    cacheTagRegistry,
-  )
+  const cacheTagInvalidator =
+    typeof serverOptions.cacheTagInvalidator === 'function'
+      ? serverOptions.cacheTagInvalidator(cacheContext, cacheTagRegistry)
+      : new InMemoryCacheTagInvalidator(cacheContext, cacheTagRegistry)
 
   return {
     cache: cacheContext,
