@@ -1,4 +1,4 @@
-import { type H3Event, getRequestURL } from 'h3'
+import { type H3Event, getRequestURL, getRequestHeader } from 'h3'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import {
   enabledForRequest,
@@ -18,6 +18,7 @@ import { setCachedResponse } from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
 import { isExpired } from '../../helpers/maxAge'
+import { revalidateRoute } from './revalidateRoute'
 
 function canBeServedFromCache(
   event: H3Event,
@@ -41,6 +42,11 @@ function canBeServedFromCache(
 }
 
 export async function serveCachedHandler(event: H3Event) {
+  // Skip cache for revalidation requests to ensure fresh data is generated
+  if (getRequestHeader(event, 'x-nuxt-multi-cache-revalidate')) {
+    return
+  }
+
   const isEnabled = await enabledForRequest(event)
 
   if (!isEnabled) {
@@ -89,9 +95,43 @@ export async function serveCachedHandler(event: H3Event) {
         state.addKeyBeingRevalidated(fullKey)
         event.context.multiCache ||= {}
         event.context.multiCache.routeRevalidationkey = fullKey
+
+        // Check if background revalidation is enabled
+        const enableBackgroundRevalidation =
+          decoded.enableBackgroundRevalidation ?? false
+
+        if (enableBackgroundRevalidation && decoded.data) {
+          // Trigger background revalidation (non-blocking)
+          revalidateRoute(event, fullKey)
+            .catch((error) => {
+              logger.error(
+                `Background revalidation failed for key "${fullKey}":`,
+                error,
+              )
+            })
+            .finally(() => {
+              // Remove the key from the revalidation state after completion
+              state.removeKeyBeingRevalidated(fullKey)
+            })
+
+          // Serve the stale cached data immediately
+          if (debug) {
+            const url = getRequestURL(event)
+            logger.info(
+              'Serving stale route while revalidating for path: ' +
+                url.toString(),
+              {
+                fullKey,
+              },
+            )
+          }
+
+          setCachedResponse(event, decoded)
+          return decoded.data
+        }
       }
 
-      // Returning, so the route is revalidated.
+      // No stale-while-revalidate or background revalidation disabled, force normal revalidation
       return
     }
 

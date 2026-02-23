@@ -14,6 +14,7 @@ describe('cacheItem helpers', () => {
         undefined,
         undefined,
         false,
+        undefined,
         [],
       ),
     ).toMatchInlineSnapshot(
@@ -28,6 +29,7 @@ describe('cacheItem helpers', () => {
           'Cache-Control': 'private',
         },
         200,
+        undefined,
         undefined,
         undefined,
         undefined,
@@ -48,10 +50,11 @@ describe('cacheItem helpers', () => {
         5000,
         9000,
         true,
+        true,
         ['my_tag1', 'my_tag2'],
       ),
     ).toMatchInlineSnapshot(
-      `"{"headers":{"Accept-Language":"de, en","Cache-Control":"private"},"statusCode":200,"expires":5000,"cacheTags":["my_tag1","my_tag2"],"staleIfErrorExpires":9000,"staleWhileRevalidate":true}<CACHE_ITEM><html></html>"`,
+      `"{"headers":{"Accept-Language":"de, en","Cache-Control":"private"},"statusCode":200,"expires":5000,"cacheTags":["my_tag1","my_tag2"],"staleIfErrorExpires":9000,"staleWhileRevalidate":true,"enableBackgroundRevalidation":true}<CACHE_ITEM><html></html>"`,
     )
   })
 
