@@ -51,6 +51,7 @@ export interface RouteCacheItem extends CacheItem {
   headers: Record<string, any>
   statusCode: number
   staleWhileRevalidate: boolean
+  enableBackgroundRevalidation: boolean
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -92,6 +93,20 @@ export type MultiCacheServerOptionsRouteCacheOptions =
      * it makes sense to already exclude certain paths, such as `/_nuxt` or static assets like .css, .js, .png, .jpg, etc.
      */
     applies?: (path: string) => boolean
+
+    /**
+     * Enable background revalidation for stale-while-revalidate caching.
+     *
+     * When enabled (default), expired routes with stale-while-revalidate enabled
+     * will be served immediately from stale cache while being revalidated in the
+     * background. This provides faster response times for users.
+     *
+     * When disabled, expired routes will wait for revalidation to complete before
+     * serving the fresh content.
+     *
+     * @default true
+     */
+    enableBackgroundRevalidation?: boolean
   }
 
 export type MultiCacheServerOptions = {

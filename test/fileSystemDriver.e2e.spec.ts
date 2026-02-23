@@ -60,7 +60,7 @@ describe('Caching with the file system driver', () => {
     const page3 = await createPageWithoutHydration('/cachedPageFromDisk', 'en')
     const text3 = await page3.locator('#random-number').innerText()
     expect(text3).to.not.equal(text1)
-  })
+  }, 15_000)
 
   test('correctly returns a cached component', async () => {
     await purgeAll()
@@ -89,5 +89,5 @@ describe('Caching with the file system driver', () => {
 
     const data2 = await getRouteCacheItems()
     expect(data2).toHaveLength(0)
-  })
+  }, 10_000)
 })

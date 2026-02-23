@@ -103,6 +103,7 @@ describe('serveCachedRoute event handler', () => {
                       undefined,
                       undefined,
                       undefined,
+                      undefined,
                       [],
                     ),
                   )
@@ -131,6 +132,11 @@ describe('serveCachedRoute event handler', () => {
     const event = {
       path: '/',
       headers: {},
+      node: {
+        req: {
+          headers: {},
+        },
+      },
       context: {
         multiCache: {
           enabledForRequest: false,
@@ -191,6 +197,7 @@ describe('serveCachedRoute event handler', () => {
                       },
                       200,
                       toTimestamp(date) - 3000,
+                      undefined,
                       undefined,
                       undefined,
                       [],
