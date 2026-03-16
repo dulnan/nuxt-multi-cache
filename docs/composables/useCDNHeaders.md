@@ -124,3 +124,27 @@ const { data } = await useAsyncData(() => {
 ### mergeCacheControlHeader(header: string)
 
 Parses and merges the given `Cache-Control` header value.
+
+### addCustomDirective(name: string, value?: string | number | true)
+
+Adds a custom directive to the `Cache-Control` header that is not part of the
+standard specification. Some CDN providers support proprietary directives — for
+example Netlify's `durable` directive.
+
+Pass `true` (the default) for a valueless boolean directive, or a `string` /
+`number` for a directive with a value.
+
+```typescript
+useCDNHeaders((helper) => {
+  helper
+    .public()
+    .setNumeric('maxAge', 3600)
+    // boolean (valueless) directive
+    .addCustomDirective('durable')
+    // directive with a value
+    .addCustomDirective('cdn-ttl', 7200)
+})
+```
+
+This would produce a `Cache-Control` header like:
+`public, max-age=3600, durable, cdn-ttl=7200`

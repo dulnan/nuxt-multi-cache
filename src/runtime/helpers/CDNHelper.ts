@@ -44,6 +44,7 @@ type CacheControlBooleanProperties = keyof Pick<
 export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   _tags: string[]
   _control: CacheControl
+  _customDirectives: Map<string, string | number | true>
   constructor(
     private readonly now: number,
     public readonly cacheControlHeader = cdnCacheControlHeader,
@@ -51,6 +52,7 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   ) {
     this._tags = []
     this._control = new CacheControl()
+    this._customDirectives = new Map()
   }
 
   /**
@@ -67,7 +69,15 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
       setResponseHeader(event, this.cacheTagsHeader, cacheTagsValue)
     }
 
-    const cacheControlValue = this._control.format()
+    const parts: string[] = []
+    const standardValue = this._control.format()
+    if (standardValue) {
+      parts.push(standardValue)
+    }
+    for (const [name, value] of this._customDirectives) {
+      parts.push(value === true ? name : `${name}=${value}`)
+    }
+    const cacheControlValue = parts.join(', ')
     if (cacheControlValue) {
       setResponseHeader(event, this.cacheControlHeader, cacheControlValue)
     }
@@ -178,6 +188,25 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     key: T,
   ): NuxtMultiCacheCDNHelper {
     this._control[key] = true
+    return this
+  }
+
+  /**
+   * Add a custom cache-control directive that is not part of the standard
+   * Cache-Control specification. For example, some CDN providers support
+   * proprietary directives like `durable`.
+   *
+   * Pass `true` as the value for a boolean (valueless) directive, or a string
+   * or number for a directive with a value.
+   *
+   * @param name - The directive name.
+   * @param value - The directive value. Use `true` for a valueless directive.
+   */
+  public addCustomDirective(
+    name: string,
+    value: string | number | true = true,
+  ): NuxtMultiCacheCDNHelper {
+    this._customDirectives.set(name, value)
     return this
   }
 
