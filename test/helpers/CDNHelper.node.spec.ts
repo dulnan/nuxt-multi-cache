@@ -334,6 +334,7 @@ describe('The CDNHelper', () => {
     { reason: 'a name with an equals sign', name: 'foo=bar' },
     { reason: 'a name with a line break', name: 'foo\r\nbar' },
     { reason: 'a standard directive', name: 'public' },
+    { reason: 'must-understand', name: 'must-understand' },
     { reason: 'a standard directive in uppercase', name: 'Max-Age', value: 1 },
     { reason: 'NaN', name: 'cdn-ttl', value: Number.NaN },
     { reason: 'Infinity', name: 'cdn-ttl', value: Number.POSITIVE_INFINITY },
@@ -388,6 +389,7 @@ describe('The Cache-Control header of the CDNHelper', () => {
     ['immutable', 'immutable'],
     ['maxStale', 'max-stale'],
     ['mustRevalidate', 'must-revalidate'],
+    ['mustUnderstand', 'must-understand'],
     ['noCache', 'no-cache'],
     ['noStore', 'no-store'],
     ['noTransform', 'no-transform'],
@@ -429,6 +431,7 @@ describe('The Cache-Control header of the CDNHelper', () => {
           .setBoolean('noTransform')
           .setBoolean('noStore')
           .setBoolean('noCache')
+          .setBoolean('mustUnderstand')
           .setBoolean('mustRevalidate')
           .setBoolean('immutable')
           .setNumeric('minFresh', 5)
@@ -438,7 +441,7 @@ describe('The Cache-Control header of the CDNHelper', () => {
           .setNumeric('maxAge', 1),
       ),
     ).toBe(
-      'max-age=1, s-maxage=2, max-stale=4, min-fresh=5, immutable, must-revalidate, no-cache, no-store, no-transform, only-if-cached, proxy-revalidate, public, stale-while-revalidate=6, stale-if-error=7',
+      'max-age=1, s-maxage=2, max-stale=4, min-fresh=5, immutable, must-revalidate, must-understand, no-cache, no-store, no-transform, only-if-cached, proxy-revalidate, public, stale-while-revalidate=6, stale-if-error=7',
     )
   })
 
@@ -450,6 +453,7 @@ describe('The Cache-Control header of the CDNHelper', () => {
     'min-fresh=60',
     'immutable',
     'must-revalidate',
+    'must-understand',
     'no-cache',
     'no-store',
     'no-transform',
@@ -470,21 +474,18 @@ describe('The Cache-Control header of the CDNHelper', () => {
     // Directive names are case-insensitive.
     ['MAX-AGE=60, No-Store', 'max-age=60, no-store'],
     ['max-age=60,no-store', 'max-age=60, no-store'],
-    // A directive without a value is dropped if whitespace follows it.
-    ['no-store , max-age=60', 'max-age=60'],
+    ['no-store , max-age=60', 'max-age=60, no-store'],
     ['max-age=1.5', 'max-age=1'],
     ['max-age=abc', undefined],
     ['max-age=-1', undefined],
     // Unknown directives are dropped.
     ['durable, max-age=60', 'max-age=60'],
     ['', undefined],
-    // Quoted values are not parsed.
-    ['max-age="60"', undefined],
-    // A duration of 0 does not set max-stale.
-    ['max-stale=0', undefined],
-    // The directive is dropped if it has field names.
-    ['private="Set-Cookie"', undefined],
-    ['no-cache="Set-Cookie"', undefined],
+    ['max-age="60"', 'max-age=60'],
+    ['max-stale=0', 'max-stale=0'],
+    // Field names are dropped, the whole response is private or no-cache.
+    ['private="Set-Cookie"', 'private'],
+    ['no-cache="Set-Cookie"', 'no-cache'],
   ])('merges %j as %j', (header, expected) => {
     expect(
       getCacheControlHeader((helper) => helper.mergeCacheControlHeader(header)),

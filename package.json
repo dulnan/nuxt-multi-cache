@@ -67,7 +67,7 @@
   ],
   "dependencies": {
     "@nuxt/kit": "^4.6.3",
-    "@tusbar/cache-control": "^1.0.2",
+    "@tusbar/cache-control": "^3.0.1",
     "consola": "^3.4.2",
     "defu": "^6.1.4",
     "h3": "^1.15.4",
