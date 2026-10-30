@@ -44,6 +44,14 @@ in a Nuxt app context (e.g. plugin, other composables, component).
 
 When called in a Nitro server context, the argument is required.
 
+### applyToEvent?: `boolean`
+
+Whether to set the headers on the response right away. Defaults to `true`.
+
+If `false`, the values are only collected. In a Nuxt app, they are set on the
+response when the page has been rendered. In a Nitro server context, a later
+call with `applyToEvent` set to `true` (or omitted) sets them.
+
 ## Methods
 
 ### set(key: string, value: any)
