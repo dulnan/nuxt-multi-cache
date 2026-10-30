@@ -20,6 +20,7 @@ import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/multi-cache-logger'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import { debug } from '#nuxt-multi-cache/config'
+import { INTERNAL_RESPONSE_HEADERS } from '../../helpers/constants'
 
 function isPureObject(value: any) {
   const proto = Object.getPrototypeOf(value)
@@ -91,7 +92,9 @@ async function storeResponse(
 
   const { serverOptions } = getMultiCacheApp()
 
-  let responseHeaders = getResponseHeaders(event)
+  // A copy, because for internal requests (e.g. from the Nuxt app during SSR)
+  // this can be the actual headers object of the response.
+  let responseHeaders = { ...getResponseHeaders(event) }
 
   // We have to remove this header, because what we store in the cache is not
   // encoded. Apps may implement custom encoding that is applied in the
@@ -99,6 +102,11 @@ async function storeResponse(
   // cached route the same compression is also being applied again. If we were
   // to always send this header, then the response might be invalid.
   responseHeaders['content-encoding'] = undefined
+
+  // Internal headers must not be served to other requests from the cache.
+  for (const header of INTERNAL_RESPONSE_HEADERS) {
+    responseHeaders[header] = undefined
+  }
 
   if (serverOptions.route?.alterCachedHeaders) {
     responseHeaders = serverOptions.route.alterCachedHeaders(responseHeaders)

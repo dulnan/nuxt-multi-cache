@@ -64,6 +64,20 @@ describe('The useCacheAwareFetchInterceptor', () => {
     `)
   })
 
+  test('does not store or serve the internal headers of the API route', async () => {
+    // The page fetches the API route as an internal request, which gets the
+    // internal cache tags header.
+    await fetch('/route-cache')
+
+    const rows = await getRouteCacheItems()
+    const itemApi = rows.find((v) => v.key === 'api:handler-with-route')!.item
+    expect(Object.keys(itemApi.headers)).toEqual(['content-type'])
+
+    // Served from cache to an external request.
+    const response = await fetch('/api/handler-with-route')
+    expect(response.headers.get('x-nuxt-multi-cache-cache-tags')).toBeNull()
+  })
+
   test('adds no empty cache tag if the API route has no route cache tags', async () => {
     await fetch('/route-cache-api-without-tags')
 
