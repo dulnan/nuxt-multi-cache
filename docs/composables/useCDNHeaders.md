@@ -127,9 +127,21 @@ Parses and merges the given `Cache-Control` header value.
 
 ### addCustomDirective(name: string, value?: string | number | true)
 
-Adds a custom directive to the `Cache-Control` header that is not part of the
-standard specification. Some CDN providers support proprietary directives — for
-example Netlify's `durable` directive.
+Adds a directive that is not part of the standard specification to the CDN cache
+control header (configured via `cdn.cacheControlHeader`, by default
+`Surrogate-Control`). Some CDN providers support proprietary directives, for
+example Netlify's
+[`durable`](https://docs.netlify.com/platform/caching/#durable-directive)
+directive.
+
+::: info
+
+The directive only has an effect if your CDN reads the configured header.
+Netlify for example only reads `Netlify-CDN-Cache-Control`, `CDN-Cache-Control`
+and `Cache-Control`, so set `cdn.cacheControlHeader` to
+`Netlify-CDN-Cache-Control` to use `durable`.
+
+:::
 
 Pass `true` (the default) for a valueless boolean directive, or a `string` /
 `number` for a directive with a value.
@@ -152,5 +164,11 @@ useCDNHeaders((helper) => {
 })
 ```
 
-This would produce a `Cache-Control` header like:
-`public, max-age=3600, durable, cdn-ttl=7200`
+With the default config this will set the following header on the response:
+
+```http
+Surrogate-Control: max-age=3600, public, durable, cdn-ttl=7200
+```
+
+Custom directives are not merged from other responses: `mergeFromResponse()` and
+`mergeCacheControlHeader()` only pick up standard directives.
