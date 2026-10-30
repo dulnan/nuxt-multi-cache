@@ -2,7 +2,12 @@ import { CacheControl, parse } from '@tusbar/cache-control'
 import { setResponseHeader, type H3Event } from 'h3'
 import type { FetchResponse } from 'ofetch'
 import { onlyUnique } from './server'
-import { expiresToMaxAge, parseMaxAge, type MaxAge } from './maxAge'
+import {
+  CACHE_PERMANENT,
+  expiresToMaxAge,
+  parseMaxAge,
+  type MaxAge,
+} from './maxAge'
 import { logger } from './multi-cache-logger'
 import {
   cdnCacheControlHeader,
@@ -226,6 +231,9 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
    * to set the max age to 7 days the value won't be set.
    *
    * This basically means that the lowest value will always "win".
+   *
+   * A permanent value (`'permanent'` or -1) means "no limit", so it neither
+   * sets nor lowers the directive.
    */
   public setNumeric<T extends CacheControlNumericProperties>(
     key: T,
@@ -233,6 +241,10 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   ): NuxtMultiCacheCDNHelper {
     const currentValue = this._control[key]
     const value = parseMaxAge(providedValue, this.now)
+    if (value === CACHE_PERMANENT) {
+      return this
+    }
+
     if (
       currentValue === null ||
       currentValue === undefined ||

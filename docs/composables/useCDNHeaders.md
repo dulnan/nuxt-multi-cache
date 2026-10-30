@@ -51,7 +51,7 @@ When called in a Nitro server context, the argument is required.
 Set a value for a cache control property. Both arguments are fully typed, e.g.
 you can see possible values in your IDE.
 
-### setNumeric(key: string, value: number)
+### setNumeric(key: string, value: MaxAge)
 
 This method works for the following numeric properties:
 
@@ -63,6 +63,9 @@ This method works for the following numeric properties:
 - staleIfError
 
 The method will only set the value **if it is lower than the current value**.
+
+The value can be any [max age](/overview/max-age). `'permanent'` (or `-1`) means
+"no limit": It neither sets the directive nor replaces a lower value.
 
 ### setBoolean(key: string)
 

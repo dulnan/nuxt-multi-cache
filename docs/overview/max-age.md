@@ -50,6 +50,12 @@ The following two numbers have a "special" (but intuitive) meaning:
 Any other negative number, for example a max age calculated from a date that is
 already in the past, is treated like `0` and will not cache at all.
 
+## Setting the Max Age Multiple Times
+
+When the max age is set several times, for example by a page and by a component
+it renders, the lowest value wins. `'permanent'` counts as the highest value, so
+it never replaces a lower max age.
+
 ## Calculating the Expires Time
 
 The module uses a single timestamp to calculate the exact time a cache item will

@@ -39,6 +39,9 @@ export class CacheHelper implements CacheabilityInterface {
    * Set a numeric property, but **only** when the new value is
    * lower than the existing one (or the property is still `null`).
    *
+   * A permanent value (-1) is treated as the highest possible value: It
+   * replaces `null`, but never a finite value.
+   *
    * `property` is restricted to *numeric* properties of **whatever
    * concrete class `this` is*.  That includes fields that subclasses
    * add later.
@@ -51,7 +54,11 @@ export class CacheHelper implements CacheabilityInterface {
 
     const value = parseMaxAge(providedValue, this.now)
 
-    if (current === null || value < current || current === -1) {
+    if (
+      current === null ||
+      current === CACHE_PERMANENT ||
+      (value !== CACHE_PERMANENT && value < current)
+    ) {
       // @ts-expect-error It's correct, but TS doesn't know.
       this[property] = value
     }
@@ -61,8 +68,9 @@ export class CacheHelper implements CacheabilityInterface {
   /**
    * Set the max age in seconds.
    *
-   * The value is only set if it's smaller than the current max age or if it
-   * hasn't been set yet. The initial value is `null`.
+   * The value is only set if it's smaller than the current max age. The
+   * initial value is `-1` (permanent), which any other value replaces. Setting
+   * `'permanent'` never replaces a finite max age.
    *
    * You can always directly set the maxAge property on this object.
    */

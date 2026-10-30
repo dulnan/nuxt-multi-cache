@@ -1,6 +1,7 @@
 import { CacheControl } from '@tusbar/cache-control'
 import { describe, expect, test, vi } from 'vitest'
 import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
+import { CacheHelper } from './../../src/runtime/helpers/CacheHelper'
 import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
@@ -383,6 +384,54 @@ describe('The Cache-Control header of the CDNHelper', () => {
     expect(getCacheControlHeader((helper) => helper.setNumeric(key, 60))).toBe(
       expected,
     )
+  })
+
+  test.each(['maxAge', 'staleIfError'] as const)(
+    'contains no %s directive for a permanent value',
+    (key) => {
+      expect(
+        getCacheControlHeader((helper) => helper.setNumeric(key, 'permanent')),
+      ).toBeUndefined()
+      expect(
+        getCacheControlHeader((helper) => helper.setNumeric(key, -1)),
+      ).toBeUndefined()
+    },
+  )
+
+  test('keeps a lower max-age when a permanent value is set', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setNumeric('maxAge', 60).setNumeric('maxAge', 'permanent'),
+      ),
+    ).toBe('max-age=60')
+  })
+
+  test('contains no -1 when merging a permanent cache item', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.mergeFromCacheItem({ expires: -1, staleIfErrorExpires: -1 }),
+      ),
+    ).toBeUndefined()
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setNumeric('maxAge', 60).mergeFromCacheItem({ expires: -1 }),
+      ),
+    ).toBe('max-age=60')
+  })
+
+  test('contains no -1 when merging a permanent cacheability', () => {
+    // E.g. a data cache item without a max age.
+    const permanent = new CacheHelper(mockDateTimestamp).setStaleIfError(-1)
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.mergeFromCacheability(permanent),
+      ),
+    ).toBeUndefined()
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setNumeric('maxAge', 60).mergeFromCacheability(permanent),
+      ),
+    ).toBe('max-age=60')
   })
 
   test.each([
