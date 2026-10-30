@@ -158,6 +158,36 @@ export function maxAgeToExpires(v: MaxAge, now: number): number {
   return now + maxAge
 }
 
+/**
+ * Get the TTL in seconds for storing a cache item.
+ *
+ * The item must stay in the storage as long as it can be served: Until it
+ * expires, until its stale-if-error expires, or for as long as it may be
+ * served stale while revalidating.
+ *
+ * Returns undefined if the item must be stored without a TTL and CACHE_NEVER
+ * if it can never be served and must not be stored at all.
+ */
+export function getStorageTtl(
+  item: {
+    expires: number
+    staleIfErrorExpires: number
+    staleWhileRevalidate?: boolean
+  },
+  now: number,
+): number | undefined {
+  if (
+    item.expires === CACHE_PERMANENT ||
+    item.staleIfErrorExpires === CACHE_PERMANENT ||
+    item.staleWhileRevalidate
+  ) {
+    return undefined
+  }
+
+  const ttl = Math.max(item.expires, item.staleIfErrorExpires) - now
+  return ttl > 0 ? ttl : CACHE_NEVER
+}
+
 export function expiresToMaxAge(expires: number, now: number): number {
   if (expires === CACHE_PERMANENT) {
     return CACHE_PERMANENT

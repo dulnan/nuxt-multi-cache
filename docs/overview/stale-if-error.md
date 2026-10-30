@@ -92,3 +92,15 @@ useRouteCache((helper) => {
 })
 </script>
 ```
+
+## Only Use the Cache on Errors
+
+To never serve an item from cache, but keep a stale copy for when an error
+happens, set a max age of `0` together with a stale if error duration. This
+works for all three caches.
+
+```typescript
+useRouteCache((helper) => {
+  helper.setMaxAge(0).setStaleIfError('2h').setCacheable()
+})
+```

@@ -250,4 +250,109 @@ describe('afterResponse nitro hook handler', () => {
 
     mocks.useNitroApp.mockRestore()
   })
+
+  test.each([
+    ['permanent', (h: NuxtMultiCacheRouteCacheHelper) => h, undefined],
+    [
+      'max age with longer stale-if-error',
+      (h: NuxtMultiCacheRouteCacheHelper) =>
+        h.setMaxAge(60).setStaleIfError(3600),
+      3600,
+    ],
+    [
+      'max age 0 with stale-if-error',
+      (h: NuxtMultiCacheRouteCacheHelper) =>
+        h.setMaxAge(0).setStaleIfError(9000),
+      9000,
+    ],
+    [
+      'max age with SWR',
+      (h: NuxtMultiCacheRouteCacheHelper) =>
+        h.setMaxAge(60).allowStaleWhileRevalidate(),
+      undefined,
+    ],
+    [
+      'max age 0 with SWR',
+      (h: NuxtMultiCacheRouteCacheHelper) =>
+        h.setMaxAge(0).allowStaleWhileRevalidate(),
+      undefined,
+    ],
+    ['max age 0', (h: NuxtMultiCacheRouteCacheHelper) => h.setMaxAge(0), null],
+  ])(
+    'Stores the item with the correct TTL (%s)',
+    async (_label, configure, expectedTtl) => {
+      vi.setSystemTime(mockDate)
+
+      const storedItems: any[] = []
+      const removeKeyBeingRevalidated = vi.fn()
+
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+          serverOptions: {},
+          state: {
+            removeKeyBeingRevalidated,
+          },
+          config: {
+            cdn: {},
+          },
+        },
+      })
+
+      const event = {
+        path: '/foobar',
+        context: {
+          multiCacheApp: {
+            cache: {
+              route: {
+                storage: {
+                  setItemRaw(key: string, item: any, options: any) {
+                    storedItems.push({ key, item, options })
+                    return Promise.resolve()
+                  },
+                },
+              },
+            },
+          },
+          multiCache: {
+            route: configure(
+              new NuxtMultiCacheRouteCacheHelper(
+                mockDateTimestamp,
+              ).setCacheable(),
+            ),
+            routeRevalidationkey: '/foobar',
+          },
+        },
+        node: {
+          res: {
+            statusCode: 200,
+            getHeaders() {
+              return {}
+            },
+          },
+          req: {
+            originalUrl: '/foobar',
+            headers: {},
+          },
+        },
+      } as any
+
+      await onAfterResponse(event, { body: '<html></html>' } as any)
+
+      if (expectedTtl === null) {
+        // Never served from cache, so it's not stored.
+        expect(storedItems).toHaveLength(0)
+      } else {
+        expect(storedItems).toHaveLength(1)
+        expect(storedItems[0].options).toEqual({ ttl: expectedTtl })
+      }
+
+      // The revalidation key is removed, even if the item is not stored.
+      expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
+
+      mocks.useNitroApp.mockRestore()
+    },
+  )
 })

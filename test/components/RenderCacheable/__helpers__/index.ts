@@ -31,6 +31,7 @@ export function createTestApp(
   })
 
   const storage: Record<string, any> = providedStorage || {}
+  const ttls: Record<string, number | undefined> = {}
 
   const ssrContext = {
     event: {
@@ -40,11 +41,16 @@ export function createTestApp(
             component: {
               bubbleError,
               storage: {
-                setItemRaw: (key: string, data: any) => {
+                setItemRaw: (
+                  key: string,
+                  data: any,
+                  options?: { ttl?: number },
+                ) => {
                   if (key === 'InnerComponent::set_error') {
                     throw new Error('Failed to set item.')
                   }
                   storage[key] = data
+                  ttls[key] = options?.ttl
                 },
                 getItemRaw(key: string) {
                   if (key === 'InnerComponent::get_error') {
@@ -71,5 +77,5 @@ export function createTestApp(
       `,
   })
 
-  return { app, ssrContext, storage }
+  return { app, ssrContext, storage, ttls }
 }

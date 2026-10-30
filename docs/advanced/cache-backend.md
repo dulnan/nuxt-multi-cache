@@ -35,6 +35,19 @@ export default defineMultiCacheOptions(() => {
 
 :::
 
+## Expiration
+
+Items are stored with the `ttl` option of unstorage, so drivers that support
+expiration (such as Redis) remove items once they can no longer be served:
+
+- Items with a max age are kept until they expire, or until their
+  [stale if error](/overview/stale-if-error) duration ends, if that is later.
+- Items with a permanent max age or stale if error, and routes that allow
+  stale-while-revalidate, are stored without a TTL. They are kept until they are
+  purged.
+- Items with a max age of `0` are only stored if they have a stale if error
+  duration (or, for routes, allow stale-while-revalidate).
+
 ## Custom Driver
 
 Checkout the full example on

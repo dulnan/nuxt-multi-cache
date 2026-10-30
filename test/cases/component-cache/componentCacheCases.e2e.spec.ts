@@ -61,6 +61,9 @@ describe('The RenderCacheable component', () => {
     const timestamp2 = await page2.locator('#timestamp').innerText()
 
     expect(timestamp1).not.toEqual(timestamp2)
+
+    // It can never be served from cache, so it's not stored.
+    expect(await getComponentCacheItem()).toHaveLength(0)
   })
 
   test('sets max age of "-1" correctly on component', async () => {

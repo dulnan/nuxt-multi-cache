@@ -17,6 +17,7 @@ import { debug } from '#nuxt-multi-cache/config'
 import {
   CACHE_NEVER,
   CACHE_PERMANENT,
+  getStorageTtl,
   isExpired,
   type MaxAge,
 } from './../helpers/maxAge'
@@ -84,10 +85,6 @@ export async function useDataCacheImplementation<T>(
 
     bubbleCacheability(helper, event, options?.bubbleCacheability)
 
-    if (helper.maxAge === CACHE_NEVER) {
-      return Promise.resolve()
-    }
-
     const cacheTags = helper.getTags()
 
     const item: CacheItem = {
@@ -97,14 +94,20 @@ export async function useDataCacheImplementation<T>(
       staleIfErrorExpires: helper.getExpires('staleIfError') ?? CACHE_NEVER,
     }
 
+    const ttl = getStorageTtl(item, now)
+
+    // The item can never be returned, not even as a stale value (e.g. a max
+    // age of 0 without stale-if-error).
+    if (ttl === CACHE_NEVER) {
+      return
+    }
+
     if (debug) {
       logger.info('Stored item in data cache: ' + fullKey)
     }
 
     try {
-      await multiCache.data!.storage.setItem(fullKey, item, {
-        ttl: helper.maxAge !== CACHE_PERMANENT ? helper.maxAge : undefined,
-      })
+      await multiCache.data!.storage.setItem(fullKey, item, { ttl })
       if (cacheTags.length) {
         const registry = getCacheTagRegistry(event)
         if (registry) {

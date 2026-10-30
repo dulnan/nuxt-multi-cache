@@ -34,6 +34,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
 function buildEventWithStorage(
   storage: Record<string, CacheItem>,
   date?: Date,
+  ttls?: Record<string, number | undefined>,
 ): H3Event {
   return {
     node: {
@@ -56,8 +57,11 @@ function buildEventWithStorage(
                 }
                 return Promise.resolve(storage[key])
               },
-              setItem: (key: string, data: any) => {
+              setItem: (key: string, data: any, options?: { ttl?: number }) => {
                 storage[key] = data
+                if (ttls) {
+                  ttls[key] = options?.ttl
+                }
                 return Promise.resolve()
               },
             },
@@ -204,6 +208,41 @@ describe('useDataCache composable', () => {
     await addToCache('Hello')
 
     expect(storage.permanent?.expires).toEqual(-1)
+  })
+
+  test.each([
+    [undefined, undefined, undefined],
+    [60, undefined, 60],
+    [60, 3600, 3600],
+    [60, 'permanent' as const, undefined],
+    [0, 3600, 3600],
+  ])(
+    'Puts data in cache with max age %j and stale-if-error %j for a TTL of %j',
+    async (maxAge, staleIfError, expectedTtl) => {
+      setIsServer(true)
+      const storage: Record<string, CacheItem> = {}
+      const ttls: Record<string, number | undefined> = {}
+      const event = buildEventWithStorage(storage, new Date(), ttls)
+
+      const { addToCache } = await useDataCache('with_ttl', event)
+      await addToCache('Hello', [], maxAge, staleIfError)
+
+      expect(storage.with_ttl).toBeDefined()
+      expect(ttls.with_ttl).toEqual(expectedTtl)
+    },
+  )
+
+  test('Returns a stale value for max age 0 with stale-if-error', async () => {
+    setIsServer(true)
+    const storage: Record<string, CacheItem> = {}
+    const event = buildEventWithStorage(storage)
+
+    const { addToCache } = await useDataCache('stale_only', event)
+    await addToCache('Hello', [], 0, '1d')
+
+    const cached = await useDataCache('stale_only', event)
+    expect(cached.value).toBeUndefined()
+    expect(cached.staleValue).toEqual('Hello')
   })
 
   test('Returns dummy if SSR context not found', async () => {

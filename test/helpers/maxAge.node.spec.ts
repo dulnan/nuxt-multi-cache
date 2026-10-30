@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
+  getStorageTtl,
   maxAgeToExpires,
   parseMaxAge,
   toTimestamp,
@@ -371,4 +372,30 @@ describe('maxAgeToExpires', () => {
   ] as const)('returns the expires timestamp for %j', (maxAge, expected) => {
     expect(maxAgeToExpires(maxAge, mockDateTimestamp)).toBe(expected)
   })
+})
+
+describe('getStorageTtl', () => {
+  const now = mockDateTimestamp
+
+  it.each([
+    ['permanent', -1, 0, false, undefined],
+    ['a max age', now + 60, 0, false, 60],
+    ['a longer stale-if-error', now + 60, now + 3600, false, 3600],
+    ['a permanent stale-if-error', now + 60, -1, false, undefined],
+    ['max age 0 with stale-if-error', 0, now + 9000, false, 9000],
+    ['max age 0 with SWR', 0, 0, true, undefined],
+    ['a max age with SWR', now + 60, 0, true, undefined],
+    ['max age 0', 0, 0, false, 0],
+    ['an expired item', now - 10, now - 5, false, 0],
+  ])(
+    'returns the TTL for %s',
+    (_label, expires, staleIfErrorExpires, staleWhileRevalidate, expected) => {
+      expect(
+        getStorageTtl(
+          { expires, staleIfErrorExpires, staleWhileRevalidate },
+          now,
+        ),
+      ).toBe(expected)
+    },
+  )
 })

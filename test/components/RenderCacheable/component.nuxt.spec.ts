@@ -150,6 +150,41 @@ describe('RenderCacheable', () => {
     )
   })
 
+  test.each([
+    ['', undefined],
+    [':max-age="1800"', 1800],
+    [':max-age="60" :stale-if-error="3600"', 3600],
+    [':max-age="0" :stale-if-error="3600"', 3600],
+    [':max-age="0"', null],
+  ])('Puts markup in cache with %j for a TTL of %j', async (props, ttl) => {
+    setIsServer(true)
+    vi.setSystemTime(new Date(2022, 11, 1))
+    const { app, ssrContext, storage, ttls } = createTestApp(
+      `cache-key="ttl" ${props}`,
+    )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+
+    const markup = await renderToString(app, ssrContext)
+    expect(markup).toContain('Hello world')
+
+    if (ttl === null) {
+      // Never served from cache, so it's not stored.
+      expect(storage).not.toHaveProperty('InnerComponent::ttl')
+    } else {
+      expect(storage).toHaveProperty('InnerComponent::ttl')
+      expect(ttls['InnerComponent::ttl']).toEqual(ttl)
+    }
+  })
+
   test('Returns cached markup if available.', async () => {
     setIsServer(true)
     const { app, ssrContext, storage } = createTestApp()

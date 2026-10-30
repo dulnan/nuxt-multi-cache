@@ -17,7 +17,12 @@ import {
   ComponentCacheHelper,
   INJECT_COMPONENT_CACHE_CONTEXT,
 } from '../../../helpers/ComponentCacheHelper'
-import { isExpired } from '../../../helpers/maxAge'
+import {
+  CACHE_NEVER,
+  CACHE_PERMANENT,
+  getStorageTtl,
+  isExpired,
+} from '../../../helpers/maxAge'
 import type { ComponentCacheItem } from '../../../types'
 import { bubbleCacheability } from './../../../helpers/bubbleCacheability'
 
@@ -278,8 +283,13 @@ export default defineComponent<Props>({
 
     bubbleCacheability(helper, event, props.bubbleCacheability)
 
-    // Not cacheable, return.
-    if (!helper.isCacheable()) {
+    const expires = helper.getExpires('maxAge') ?? CACHE_PERMANENT
+    const staleIfErrorExpires = helper.getExpires('staleIfError') ?? CACHE_NEVER
+    const ttl = getStorageTtl({ expires, staleIfErrorExpires }, now)
+
+    // Not cacheable, or can never be served from cache (e.g. a max age of 0
+    // without stale-if-error), return.
+    if (!helper.isCacheable() || ttl === CACHE_NEVER) {
       return renderMarkup(renderResult)
     }
 
@@ -290,8 +300,6 @@ export default defineComponent<Props>({
       // The cache tags for this component.
       const cacheTags = helper.tags
 
-      const maxAge = helper.maxAge
-
       // Extract the payload relevant to the component.
       const payload: Record<string, any> = helper.payloadKeys.reduce<
         Record<string, string>
@@ -299,9 +307,6 @@ export default defineComponent<Props>({
         acc[key] = nuxtApp.payload.data[key]
         return acc
       }, {})
-
-      const expires = helper.getExpires('maxAge')
-      const staleIfErrorExpires = helper.getExpires('staleIfError')
 
       // Store in cache.
       await componentCache.storage.setItemRaw(
@@ -314,7 +319,7 @@ export default defineComponent<Props>({
           ssrModules,
           staleIfErrorExpires,
         ),
-        { ttl: maxAge },
+        { ttl },
       )
       if (cacheTags.length) {
         const registry = getCacheTagRegistry(event)
