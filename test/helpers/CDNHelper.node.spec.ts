@@ -154,6 +154,26 @@ describe('The CDNHelper', () => {
     expect(helper._tags).toEqual(['product', 'user', 'settings'])
   })
 
+  test('mergeFromResponse skips empty cache tags', () => {
+    const helper = new NuxtMultiCacheCDNHelper(
+      mockDateTimestamp,
+      DEFAULT_CDN_CONTROL_HEADER,
+      DEFAULT_CDN_TAG_HEADER,
+    )
+
+    const mockResponse = {
+      headers: {
+        get: (header: string) => {
+          if (header === DEFAULT_CDN_TAG_HEADER) return ' product  user '
+          return null
+        },
+      },
+    }
+
+    helper.mergeFromResponse(mockResponse as any)
+    expect(helper._tags).toEqual(['product', 'user'])
+  })
+
   test('mergeFromResponse calls mergeCacheControlHeader with correct value', () => {
     const helper = new NuxtMultiCacheCDNHelper(
       mockDateTimestamp,

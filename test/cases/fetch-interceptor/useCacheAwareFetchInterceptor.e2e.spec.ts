@@ -64,6 +64,16 @@ describe('The useCacheAwareFetchInterceptor', () => {
     `)
   })
 
+  test('adds no empty cache tag if the API route has no route cache tags', async () => {
+    await fetch('/route-cache-api-without-tags')
+
+    const rows = await getRouteCacheItems()
+    const itemPage = rows.find(
+      (v) => v.key === 'route-cache-api-without-tags',
+    )!.item
+    expect(itemPage.cacheTags).toEqual(['tag-from-page'])
+  })
+
   test('merges both route cache cacheability and CDN headers', async () => {
     const response = await fetch('/route-and-cdn')
 

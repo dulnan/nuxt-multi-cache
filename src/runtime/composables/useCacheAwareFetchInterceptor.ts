@@ -34,7 +34,8 @@ type UseCacheAwareFetchInterceptor = {
  * to the current request and merge them.
  *
  * If the route cache is enabled, the onResponse interceptor will also bubble
- * maxAge and cacheTags from route-cached API routes to the current request.
+ * the cache tags from route-cached API routes to the current request. Their
+ * max age is not bubbled to the route cache.
  *
  * The onRequest interceptor adds a special request header to indicate that
  * this is an internal request originating from Nuxt during SSR.
@@ -75,9 +76,13 @@ export function useCacheAwareFetchInterceptor(
           config.multiCache.route &&
           (bubbleCacheability === true || bubbleCacheability === 'route')
         ) {
+          // The header is missing if the API route doesn't use the route
+          // cache, so there may be no tags at all.
           const routeCacheTags = (
             ctx.response.headers.get(ROUTE_CACHE_TAGS_HEADER) || ''
-          ).split(' ')
+          )
+            .split(' ')
+            .filter(Boolean)
 
           if (routeCacheTags.length) {
             useRouteCache((helper) => {

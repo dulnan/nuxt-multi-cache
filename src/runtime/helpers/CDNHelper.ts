@@ -159,7 +159,7 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   public mergeFromResponse(arg: FetchResponse<any>): NuxtMultiCacheCDNHelper {
     const tagsHeaderValue = arg.headers.get(this.cacheTagsHeader)
     if (tagsHeaderValue) {
-      const tags = tagsHeaderValue.split(' ')
+      const tags = tagsHeaderValue.split(' ').filter(Boolean)
       this._tags.push(...tags)
     }
 
