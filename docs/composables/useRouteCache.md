@@ -101,6 +101,9 @@ If the new response is not cached (for example because its status code is not
 200 or it was marked as uncacheable), the stale response is no longer served
 once the first request is finished. The next request renders the route again.
 
+If the first request takes longer than 60 seconds, the next request renders the
+route again too, instead of receiving the stale response.
+
 ### addTags(tags: string[])
 
 Add cache tags for the cache entry. They can be later used to purge specific
