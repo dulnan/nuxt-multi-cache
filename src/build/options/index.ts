@@ -127,6 +127,10 @@ export interface ModuleOptions {
      * fixed and starts when the first invalidation request comes in, then all
      * requests are added to the buffer. Once the delay is over, the cache
      * entries for all the tags are purged and the timeout is reset.
+     *
+     * Set it to 0 to purge right after the request.
+     *
+     * @default 60000
      */
     cacheTagInvalidationDelay?: number
   }

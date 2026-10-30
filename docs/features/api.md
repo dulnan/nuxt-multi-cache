@@ -215,7 +215,9 @@ items are purged. This is because cache tags are stored together with the items.
 This means that every item needs to be loaded from the cache and its tags
 checked.
 
-The delay is configurable via the `api.cacheTagInvalidationDelay` option.
+The delay is configurable via the `api.cacheTagInvalidationDelay` option (in
+milliseconds). Set it to `0` to purge the items right after the request, without
+collecting tags.
 
 :::
 
