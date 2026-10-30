@@ -10,10 +10,9 @@ Create a file called `multiCache.serverOptions.ts` (or js/mjs) inside the
 ::: info
 
 In previous versions the file was located in
-`~/app/multiCache.serverOptions.ts`. For future compatibility with Nuxt 4 the
-path has been changed to the _server dir_, which defaults to `<root>/server`.
-The legacy file location is still supported but will be removed in the next
-major release.
+`~/app/multiCache.serverOptions.ts`. It must now be placed in the _server dir_,
+which defaults to `<root>/server`. If the file is only found in a previous
+location, Nuxt stops with an error that shows where to move it.
 
 :::
 
