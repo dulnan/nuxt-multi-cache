@@ -14,8 +14,6 @@ This module provides several layers of server-side caching for your Nuxt app:
 **[Documentation](https://nuxt-multi-cache.dulnan.net)** -
 **[NPM](https://www.npmjs.com/package/nuxt-multi-cache)**
 
-It is compatible with Nuxt 3 and Nuxt 4.
-
 ## Features
 
 ### [Data Cache](https://nuxt-multi-cache.dulnan.net/features/data-cache)

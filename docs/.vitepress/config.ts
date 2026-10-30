@@ -164,7 +164,7 @@ export default defineConfig({
       ],
     ])
   },
-  description: 'Component, route and data cache for Nuxt 3.',
+  description: 'Component, route and data cache for Nuxt.',
   locales: {
     '/': {
       lang: 'en-US',

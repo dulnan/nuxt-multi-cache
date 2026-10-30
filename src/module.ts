@@ -44,7 +44,7 @@ export default defineNuxtModule<ModuleOptions>({
     version,
     configKey: 'multiCache',
     compatibility: {
-      nuxt: '>=3.17.0',
+      nuxt: '^4.0.0',
     },
   },
   setup(passedOptions, nuxt) {
