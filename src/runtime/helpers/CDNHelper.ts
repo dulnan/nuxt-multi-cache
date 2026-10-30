@@ -383,6 +383,13 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     }
 
     this.addTags(cacheability.getTags())
+
+    // Something that is not cacheable must not be cached by the CDN either,
+    // like a max age of 0.
+    if (cacheability.getCacheable() === false) {
+      this.setNumeric('maxAge', 0)
+    }
+
     return this
   }
 
@@ -396,5 +403,12 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
 
   public getTags(): string[] {
     return this._tags
+  }
+
+  /**
+   * The CDN helper doesn't track whether the response is cacheable.
+   */
+  public getCacheable(): boolean | null {
+    return null
   }
 }

@@ -233,6 +233,28 @@ describe('useDataCacheCallback composable', () => {
     },
   )
 
+  test('Does not cache data marked as uncacheable', async () => {
+    isServerValue = true
+    const event = buildEventWithStorage({})
+
+    let calls = 0
+    async function getValue() {
+      return await useDataCacheCallback(
+        'uncacheable',
+        (helper) => {
+          calls++
+          helper?.setUncacheable()
+          return 'Foobar'
+        },
+        event,
+      )
+    }
+
+    expect(await getValue()).toEqual('Foobar')
+    expect(await getValue()).toEqual('Foobar')
+    expect(calls).toEqual(2)
+  })
+
   test('Returns stale data if permanent age defined', async () => {
     isServerValue = true
     const event = buildEventWithStorage({

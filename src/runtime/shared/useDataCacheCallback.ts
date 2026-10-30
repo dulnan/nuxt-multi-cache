@@ -29,6 +29,14 @@ export async function useDataCacheCallbackImplementation<T>(
 
   try {
     const result = await cb(helper)
+
+    // Marked as uncacheable in the callback: Not stored, but its cacheability
+    // still bubbles, e.g. making the route uncacheable.
+    if (helper.cacheable === false) {
+      bubbleCacheability(helper, event, options?.bubbleCacheability)
+      return result
+    }
+
     await fromCache.addToCache(
       result,
       helper.tags,

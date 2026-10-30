@@ -185,6 +185,10 @@ export class CacheHelper implements CacheabilityInterface {
     return this.tags
   }
 
+  public getCacheable(): boolean | null {
+    return this.cacheable
+  }
+
   public mergeFromCacheability(cacheability: CacheabilityInterface): this {
     const maxAge = cacheability.getMaxAge()
     if (maxAge !== null) {
@@ -199,6 +203,13 @@ export class CacheHelper implements CacheabilityInterface {
     }
 
     this.addTags(cacheability.getTags())
+
+    // Something that is not cacheable makes this uncacheable too, e.g. a
+    // component that renders data specific to the request.
+    if (cacheability.getCacheable() === false) {
+      this.setUncacheable()
+    }
+
     return this
   }
 }

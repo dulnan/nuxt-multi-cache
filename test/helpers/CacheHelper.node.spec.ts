@@ -412,6 +412,25 @@ describe('CacheHelper', () => {
     })
   })
 
+  describe('merging cacheable', () => {
+    it('should become uncacheable when merging something uncacheable', () => {
+      cache.setCacheable()
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setUncacheable(),
+      )
+      expect(cache.cacheable).toBe(false)
+    })
+
+    it('should stay cacheable when merging something cacheable or unset', () => {
+      cache.setCacheable()
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setCacheable(),
+      )
+      cache.mergeFromCacheability(new CacheHelper(mockDateTimestamp))
+      expect(cache.cacheable).toBe(true)
+    })
+  })
+
   describe('merging stale-if-error', () => {
     it('should keep the stale-if-error when merging an item without one', () => {
       cache.setStaleIfError(18000)

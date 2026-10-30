@@ -100,6 +100,15 @@ describe('The "bubble cacheability" feature', () => {
     ])
   })
 
+  test.each(['/component-uncacheable', '/use-data-cache-callback-uncacheable'])(
+    'Makes the route uncacheable if an item is uncacheable (%s)',
+    async (url) => {
+      const response = await fetch(url)
+      expect(response.headers.get('surrogate-control')).toEqual('max-age=0')
+      expect(await getRouteCacheItems()).toHaveLength(0)
+    },
+  )
+
   test('Keeps max age and stale-if-error when merging a data cache item without them', async () => {
     // The first request stores the data cache item, the second one loads it.
     for (const request of ['miss', 'hit']) {

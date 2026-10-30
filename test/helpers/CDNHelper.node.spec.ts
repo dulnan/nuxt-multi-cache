@@ -65,6 +65,7 @@ describe('The CDNHelper', () => {
         "getMaxAge",
         "getStaleIfError",
         "getTags",
+        "getCacheable",
       ]
     `)
 
@@ -452,6 +453,25 @@ describe('The Cache-Control header of the CDNHelper', () => {
         helper.setNumeric('maxAge', 60).mergeFromCacheability(permanent),
       ),
     ).toBe('max-age=60')
+  })
+
+  test('sets max-age=0 when merging something uncacheable', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 3600)
+          .mergeFromCacheability(
+            new CacheHelper(mockDateTimestamp).setUncacheable(),
+          ),
+      ),
+    ).toBe('max-age=0')
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 3600)
+          .mergeFromCacheability(new CacheHelper(mockDateTimestamp)),
+      ),
+    ).toBe('max-age=3600')
   })
 
   test('keeps stale-if-error when merging an item without one', () => {
