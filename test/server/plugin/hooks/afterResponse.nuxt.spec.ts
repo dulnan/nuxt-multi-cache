@@ -355,4 +355,89 @@ describe('afterResponse nitro hook handler', () => {
       mocks.useNitroApp.mockRestore()
     },
   )
+
+  test.each([
+    ['no body', 200, true, undefined, false],
+    ['status 404', 404, true, '<html></html>', false],
+    ['not cacheable', 200, false, '<html></html>', false],
+    ['store failed with bubbleError', 200, true, '<html></html>', true],
+  ])(
+    'Releases the revalidation key if the response is not stored (%s)',
+    async (_label, statusCode, cacheable, body, failToStore) => {
+      vi.setSystemTime(mockDate)
+
+      const removeKeyBeingRevalidated = vi.fn()
+
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+          serverOptions: {},
+          state: {
+            removeKeyBeingRevalidated,
+          },
+          config: {
+            cdn: {},
+          },
+        },
+      })
+
+      const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
+        .setMaxAge(60)
+        .allowStaleWhileRevalidate()
+      if (cacheable) {
+        helper.setCacheable()
+      } else {
+        helper.setUncacheable()
+      }
+
+      const event = {
+        path: '/foobar',
+        context: {
+          multiCacheApp: {
+            cache: {
+              route: {
+                bubbleError: true,
+                storage: {
+                  setItemRaw() {
+                    return failToStore
+                      ? Promise.reject(new Error('Failed to store.'))
+                      : Promise.resolve()
+                  },
+                },
+              },
+            },
+          },
+          multiCache: {
+            route: helper,
+            routeRevalidationkey: '/foobar',
+          },
+        },
+        node: {
+          res: {
+            statusCode,
+            getHeaders() {
+              return {}
+            },
+          },
+          req: {
+            originalUrl: '/foobar',
+            headers: {},
+          },
+        },
+      } as any
+
+      const result = onAfterResponse(event, { body } as any)
+      if (failToStore) {
+        await expect(result).rejects.toThrow('Failed to store.')
+      } else {
+        await result
+      }
+
+      expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
+
+      mocks.useNitroApp.mockRestore()
+    },
+  )
 })

@@ -97,6 +97,10 @@ the same time, you would trigger 10 API calls. By setting
 and the other 9 would receive a the stale response. Once the first request is
 finished, every subsequent request would then receive the new, fresh response.
 
+If the new response is not cached (for example because its status code is not
+200 or it was marked as uncacheable), the stale response is no longer served
+once the first request is finished. The next request renders the route again.
+
 ### addTags(tags: string[])
 
 Add cache tags for the cache entry. They can be later used to purge specific

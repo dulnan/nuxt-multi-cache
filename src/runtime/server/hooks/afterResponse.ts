@@ -52,9 +52,9 @@ function stringify(value: any): string | undefined {
 }
 
 /**
- * Callback for the 'afterResponse' nitro hook.
+ * Store the response in the route cache, if it's cacheable.
  */
-export async function onAfterResponse(
+async function storeResponse(
   event: H3Event,
   response: { body?: unknown } | undefined,
 ) {
@@ -89,7 +89,7 @@ export async function onAfterResponse(
     return
   }
 
-  const { serverOptions, state } = useMultiCacheApp()
+  const { serverOptions } = useMultiCacheApp()
 
   let responseHeaders = getResponseHeaders(event)
 
@@ -161,10 +161,25 @@ export async function onAfterResponse(
       }
     }
   }
+}
 
-  if (event.context.multiCache?.routeRevalidationkey) {
-    state.removeKeyBeingRevalidated(
-      event.context.multiCache.routeRevalidationkey,
-    )
+/**
+ * Callback for the 'afterResponse' nitro hook.
+ */
+export async function onAfterResponse(
+  event: H3Event,
+  response: { body?: unknown } | undefined,
+) {
+  try {
+    await storeResponse(event, response)
+  } finally {
+    // If this request revalidated a stale route, it's no longer being
+    // revalidated. This must also happen when the response was not stored
+    // (e.g. a status other than 200, or not cacheable), or else the stale
+    // route would be served until it's purged.
+    const revalidationKey = event.context?.multiCache?.routeRevalidationkey
+    if (revalidationKey) {
+      useMultiCacheApp().state.removeKeyBeingRevalidated(revalidationKey)
+    }
   }
 }
