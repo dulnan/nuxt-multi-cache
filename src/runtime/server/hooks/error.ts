@@ -4,6 +4,7 @@ import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { sendWebResponse } from 'h3'
 import { logger } from '../../helpers/multi-cache-logger'
 import { getRequestTimestamp } from '../../helpers/server'
+import { isExpired } from '../../helpers/maxAge'
 
 /**
  * Callback for the 'error' nitro hook.
@@ -32,14 +33,12 @@ export function onError(_error: Error, ctx: CapturedErrorContext) {
       return
     }
 
-    // Check whether we may serve a stale item for this route.
-    if (!decoded.staleIfErrorExpires) {
-      return
-    }
-
-    // If we reached the expiry date, return.
-    const now = getRequestTimestamp(ctx.event)
-    if (now >= decoded.staleIfErrorExpires) {
+    // Check whether we may serve a stale item for this route: It must have a
+    // stale-if-error that is permanent (-1) or not yet expired.
+    if (
+      !decoded.staleIfErrorExpires ||
+      isExpired(decoded.staleIfErrorExpires, getRequestTimestamp(ctx.event))
+    ) {
       return
     }
 
