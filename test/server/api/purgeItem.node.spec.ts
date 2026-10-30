@@ -49,7 +49,9 @@ describe('purgeItem API handler', () => {
           },
         },
         config: {
-          api: {},
+          api: {
+            enabled: true,
+          },
         },
       },
     })

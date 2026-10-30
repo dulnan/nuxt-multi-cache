@@ -62,7 +62,9 @@ describe('stats API handler', () => {
           },
         },
         config: {
-          api: {},
+          api: {
+            enabled: true,
+          },
         },
       },
     })

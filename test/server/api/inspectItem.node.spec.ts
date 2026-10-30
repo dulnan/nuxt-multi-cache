@@ -46,7 +46,9 @@ async function doInspect(storage: any, cache: string, key: string) {
         },
       },
       config: {
-        api: {},
+        api: {
+          enabled: true,
+        },
       },
     },
   })

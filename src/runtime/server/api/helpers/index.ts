@@ -32,10 +32,20 @@ export function getCacheInstance(event: H3Event): {
 /**
  * Check the authorization for API endpoints.
  *
- * Throws an error if authorization failed.
+ * Throws an error if the API is disabled via runtime config or if
+ * authorization failed.
  */
 export async function checkAuth(event: H3Event) {
   const app = useMultiCacheApp()
+
+  // The API can be disabled via runtime config. Respond as if the endpoints
+  // didn't exist, before checking any authorization.
+  if (!app.config.api.enabled) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+    })
+  }
 
   // Allow if authorization is explicitly disabled.
   if (app.config.api.authorizationDisabled) {

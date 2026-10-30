@@ -87,6 +87,7 @@ describe('purgeTags API handler', () => {
         },
         config: {
           api: {
+            enabled: true,
             cacheTagInvalidationDelay: 800,
           },
         },

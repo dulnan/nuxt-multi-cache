@@ -35,7 +35,9 @@ describe('/api/purge/all', () => {
           },
         },
         config: {
-          api: {},
+          api: {
+            enabled: true,
+          },
         },
       },
     })
@@ -68,7 +70,9 @@ describe('/api/purge/all', () => {
           },
         },
         config: {
-          api: {},
+          api: {
+            enabled: true,
+          },
         },
       },
     })

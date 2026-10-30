@@ -60,6 +60,8 @@ NUXT_MULTI_CACHE_API_ENABLED=true
 ```
 
 Set to `true` to enable the purge/stats API endpoints, `false` to disable them.
+Disabled endpoints respond with a 404 status code, before any authorization
+check.
 
 ## API Authorization Token
 
