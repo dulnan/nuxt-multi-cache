@@ -58,31 +58,36 @@ describe('The route cache feature', () => {
   test('handles the request path correctly', async () => {
     await purgeAll()
 
-    // Get the "magic" _payload.json response.
+    // Get the "magic" _payload.json response. Nuxt only renders it for pages
+    // with payload extraction, which this page enables using an `isr` route
+    // rule. While rendering it, Nuxt rewrites the request path to the page
+    // path, which must not be used for the cache key (#92).
     const payloadResponseFirst = await $fetch(
-      '/cachedPageWithRandomNumber/_payload.json',
+      '/cachedPageWithPayload/_payload.json',
       {
         method: 'get',
       },
     )
 
     const payloadResponseSecond = await $fetch(
-      '/cachedPageWithRandomNumber/_payload.json',
+      '/cachedPageWithPayload/_payload.json',
       {
         method: 'get',
       },
     )
+    expect(Array.isArray(payloadResponseFirst)).toBe(true)
     expect(payloadResponseFirst).toEqual(payloadResponseSecond)
 
     // Get the actual page.
-    const pageResponseFirst = await $fetch('/cachedPageWithRandomNumber', {
+    const pageResponseFirst = await $fetch<string>('/cachedPageWithPayload', {
       method: 'get',
     })
 
-    const pageResponseSecond = await $fetch('/cachedPageWithRandomNumber', {
+    const pageResponseSecond = await $fetch<string>('/cachedPageWithPayload', {
       method: 'get',
     })
 
+    expect(pageResponseFirst).toMatch(/^<!DOCTYPE html>/i)
     expect(pageResponseFirst).toEqual(pageResponseSecond)
 
     // The payload and page responses must be different.
