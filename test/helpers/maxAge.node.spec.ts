@@ -28,14 +28,26 @@ describe('parseMaxAge', () => {
       expect(parseMaxAge(0, mockDateTimestamp)).toBe(0)
     })
 
-    it('should return the number directly for negative numbers', () => {
+    it('should return -1 for -1 and Infinity', () => {
       expect(parseMaxAge(-1, mockDateTimestamp)).toBe(-1)
-      expect(parseMaxAge(-100, mockDateTimestamp)).toBe(-1)
+      expect(parseMaxAge(Infinity, mockDateTimestamp)).toBe(-1)
+    })
+
+    it('should return 0 for other negative numbers', () => {
+      expect(parseMaxAge(-100, mockDateTimestamp)).toBe(0)
+      expect(parseMaxAge(-1.5, mockDateTimestamp)).toBe(0)
+      expect(parseMaxAge(-0.5, mockDateTimestamp)).toBe(0)
+      expect(parseMaxAge(-Infinity, mockDateTimestamp)).toBe(0)
+    })
+
+    it('should return 0 for NaN', () => {
+      expect(parseMaxAge(NaN, mockDateTimestamp)).toBe(0)
     })
 
     it('should return a rounded number for floating point numbers', () => {
       expect(parseMaxAge(3.14, mockDateTimestamp)).toBe(3)
       expect(parseMaxAge(100.5, mockDateTimestamp)).toBe(100)
+      expect(parseMaxAge(0.5, mockDateTimestamp)).toBe(0)
     })
   })
 

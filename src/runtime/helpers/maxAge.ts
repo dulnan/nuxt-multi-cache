@@ -96,10 +96,17 @@ function calculateInterval(v: NamedInterval, providedNow: number): number {
 
 export function parseMaxAge(v: MaxAge, now: number): number {
   if (typeof v === 'number') {
-    if (v === CACHE_PERMANENT || v === CACHE_NEVER) {
-      return v
+    if (v === CACHE_PERMANENT || v === Infinity) {
+      return CACHE_PERMANENT
     }
-    return Math.max(Math.floor(v), -1)
+
+    // Other negative numbers (e.g. a computed max age that is already in the
+    // past), fractions below 1 and NaN must never cache.
+    if (!(v >= 1)) {
+      return CACHE_NEVER
+    }
+
+    return Math.floor(v)
   } else if (
     v === 'next-hour' ||
     v === 'midnight' ||

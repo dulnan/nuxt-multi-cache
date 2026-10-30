@@ -47,6 +47,9 @@ The following two numbers have a "special" (but intuitive) meaning:
   setting no max age at all.
 - `0` - Will not cache at all. Equal to setting `'never'`.
 
+Any other negative number, for example a max age calculated from a date that is
+already in the past, is treated like `0` and will not cache at all.
+
 ## Calculating the Expires Time
 
 The module uses a single timestamp to calculate the exact time a cache item will

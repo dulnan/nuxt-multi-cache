@@ -308,26 +308,29 @@ describe('CacheHelper', () => {
       expect(cache.maxAge).toBe(0)
     })
 
-    it('should handle negative numbers', () => {
+    it('should treat negative numbers other than -1 as never', () => {
       cache.setMaxAge(-100)
-      expect(cache.maxAge).toBe(-1)
+      expect(cache.maxAge).toBe(0)
 
-      // Setting permanent should still work since -1 < -100
-      cache.setMaxAge('permanent')
-      expect(cache.maxAge).toBe(-1)
+      // A higher max age can't override "never".
+      cache.setMaxAge(60)
+      expect(cache.maxAge).toBe(0)
     })
 
-    it('should handle special numeric values', () => {
+    it('should treat Infinity as permanent', () => {
       cache.setMaxAge(Infinity)
-      expect(cache.maxAge).toBe(Infinity)
+      expect(cache.maxAge).toBe(-1)
 
       cache.setMaxAge(100)
-      expect(cache.maxAge).toBe(100) // Should update since 100 < Infinity
+      expect(cache.maxAge).toBe(100)
     })
 
-    it('should handle NaN by rounding to NaN', () => {
+    it('should treat NaN as never', () => {
       cache.setMaxAge(NaN)
-      expect(cache.maxAge).toBeNaN()
+      expect(cache.maxAge).toBe(0)
+
+      cache.setMaxAge(60)
+      expect(cache.maxAge).toBe(0)
     })
   })
 
