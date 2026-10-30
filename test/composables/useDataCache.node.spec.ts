@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
-import type { CacheItem } from './../../src/runtime/types'
+import type { DataCacheItem } from './../../src/runtime/types'
 import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 import { TEST_MODE_DATE_OVERRIDE_HEADER } from '~/src/runtime/helpers/constants'
@@ -32,7 +32,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
 })
 
 function buildEventWithStorage(
-  storage: Record<string, CacheItem>,
+  storage: Record<string, DataCacheItem>,
   date?: Date,
   ttls?: Record<string, number | undefined>,
 ): H3Event {
@@ -189,7 +189,7 @@ describe('useDataCache composable', () => {
     'Does not put data in cache with a max age of %s',
     async (maxAge) => {
       setIsServer(true)
-      const storage: Record<string, CacheItem> = {}
+      const storage: Record<string, DataCacheItem> = {}
       const event = buildEventWithStorage(storage)
 
       const { addToCache } = await useDataCache('never_cached', event)
@@ -201,7 +201,7 @@ describe('useDataCache composable', () => {
 
   test('Puts data in cache permanently without a max age', async () => {
     setIsServer(true)
-    const storage: Record<string, CacheItem> = {}
+    const storage: Record<string, DataCacheItem> = {}
     const event = buildEventWithStorage(storage)
 
     const { addToCache } = await useDataCache('permanent', event)
@@ -220,7 +220,7 @@ describe('useDataCache composable', () => {
     'Puts data in cache with max age %j and stale-if-error %j for a TTL of %j',
     async (maxAge, staleIfError, expectedTtl) => {
       setIsServer(true)
-      const storage: Record<string, CacheItem> = {}
+      const storage: Record<string, DataCacheItem> = {}
       const ttls: Record<string, number | undefined> = {}
       const event = buildEventWithStorage(storage, new Date(), ttls)
 
@@ -234,7 +234,7 @@ describe('useDataCache composable', () => {
 
   test('Returns a stale value for max age 0 with stale-if-error', async () => {
     setIsServer(true)
-    const storage: Record<string, CacheItem> = {}
+    const storage: Record<string, DataCacheItem> = {}
     const event = buildEventWithStorage(storage)
 
     const { addToCache } = await useDataCache('stale_only', event)
@@ -283,7 +283,7 @@ describe('useDataCache composable', () => {
 
   test('Uses provided event to get data cache.', async () => {
     setIsServer(true)
-    const storage: Record<string, CacheItem> = {
+    const storage: Record<string, DataCacheItem> = {
       foobar: {
         data: 'More cached data.',
         expires: -1,

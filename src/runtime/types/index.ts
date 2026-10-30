@@ -34,8 +34,13 @@ export interface MultiCacheInstances {
   route?: MultiCacheInstance
 }
 
-export interface CacheItem {
-  data: string
+/**
+ * A cache item.
+ *
+ * The data of route and component cache items is the rendered markup.
+ */
+export interface CacheItem<T = string> {
+  data: T
   expires: number
   staleIfErrorExpires: number
   cacheTags?: string[]
@@ -53,8 +58,11 @@ export interface RouteCacheItem extends CacheItem {
   staleWhileRevalidate: boolean
 }
 
+/**
+ * A data cache item. The data can be any value that can be stored.
+ */
 // oxlint-disable-next-line typescript/no-empty-object-type
-export interface DataCacheItem extends CacheItem {}
+export interface DataCacheItem<T = unknown> extends CacheItem<T> {}
 
 export interface ComponentCacheItem extends CacheItem {
   payload?: Record<string, any>

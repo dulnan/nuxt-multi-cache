@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import type {
   DataCacheAddToCacheMethod,
   DataCacheCallbackContext,
-  CacheItem,
+  DataCacheItem,
   BubbleCacheability,
 } from './../types'
 import {
@@ -87,8 +87,8 @@ export async function useDataCacheImplementation<T>(
 
     const cacheTags = helper.getTags()
 
-    const item: CacheItem = {
-      data: data as any,
+    const item: DataCacheItem<T> = {
+      data,
       cacheTags,
       expires: helper.getExpires('maxAge') ?? CACHE_PERMANENT,
       staleIfErrorExpires: helper.getExpires('staleIfError') ?? CACHE_NEVER,
@@ -123,13 +123,14 @@ export async function useDataCacheImplementation<T>(
   }
 
   try {
-    const item = await multiCache.data.storage.getItem<CacheItem>(fullKey)
+    const item =
+      await multiCache.data.storage.getItem<DataCacheItem<T>>(fullKey)
 
     const staleValue =
       item &&
       item.staleIfErrorExpires &&
       !isExpired(item.staleIfErrorExpires, now)
-        ? (item.data as T)
+        ? item.data
         : undefined
 
     if (item) {
@@ -145,7 +146,7 @@ export async function useDataCacheImplementation<T>(
           addToCache,
           // Extract the value. If the item was stored along its cache tags, it
           // will be an object with a cacheTags property.
-          value: item.data as T,
+          value: item.data,
           staleValue,
           cacheTags: item.cacheTags || [],
           expires: item.expires,

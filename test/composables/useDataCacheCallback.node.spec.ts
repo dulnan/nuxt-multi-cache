@@ -214,9 +214,7 @@ describe('useDataCacheCallback composable', () => {
       isServerValue = true
       const event = buildEventWithStorage({
         falsy: {
-          // CacheItem.data is typed as string, but the data cache stores any
-          // value.
-          data: staleValue as any,
+          data: staleValue,
           // Expired a long time ago.
           expires: 1,
           staleIfErrorExpires: -1,
