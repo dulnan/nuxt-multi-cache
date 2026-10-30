@@ -87,6 +87,10 @@ NUXT_MULTI_CACHE_API_AUTHORIZATION_TOKEN=PtSR0mDATQpNlvNgqRf
 
 You can also implement your own
 [authorization check via the server options](/overview/server-options#custom-api-authorization).
+In this case, leave out the `api.authorization` module option.
+
+If no authorization is configured at all, the endpoints respond with a 500
+error.
 
 #### Disabled
 

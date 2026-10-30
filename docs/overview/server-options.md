@@ -74,6 +74,10 @@ This method will be called for each request to the API. The function receives
 the `H3Event` object as an argument and can then decide if authorization is
 granted by returning a Promise that resolves to `true` or `false`.
 
+The method is only used if no token is set (via the `api.authorization` module
+option or runtime config) and authorization is not disabled. So leave out the
+`api.authorization` module option in this case.
+
 ::: code-group
 
 ```typescript [~/server/multiCache.serverOptions.ts]

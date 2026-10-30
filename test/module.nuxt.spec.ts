@@ -31,6 +31,33 @@ describe('Module setup', () => {
     await nuxt.close()
   })
 
+  test('Does not require the API authorization option', async () => {
+    const nuxt = await loadNuxt({
+      defaults: {
+        devtools: {
+          enabled: false,
+        },
+      },
+    })
+
+    // The token can be set via runtime config, or the authorization callback
+    // in the server options is used.
+    await nuxtMultiCache(
+      {
+        api: {
+          enabled: true,
+        },
+      },
+      nuxt,
+    )
+    expect(nuxt.options.runtimeConfig.multiCache.api).toEqual({
+      enabled: true,
+      authorizationToken: '',
+      authorizationDisabled: false,
+    })
+    await nuxt.close()
+  })
+
   test('Should only add API handlers if feature is enabled', async () => {
     const nuxt = await loadNuxt({
       defaults: {

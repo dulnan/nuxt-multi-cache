@@ -111,8 +111,12 @@ export interface ModuleOptions {
      * this if you made sure that the API endpoints are not public, since this
      * can potentially leak sensitive information via cached data or allow
      * anyone to purge cache entries!
+     *
+     * If not provided, the token from runtime config is used, or else the
+     * `api.authorization` callback from the server options. If neither is
+     * set, the API endpoints respond with an error.
      */
-    authorization: string | false
+    authorization?: string | false
 
     /**
      * Delay for invalidating cache tags.
