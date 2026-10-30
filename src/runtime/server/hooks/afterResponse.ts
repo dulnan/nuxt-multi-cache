@@ -5,12 +5,11 @@ import {
   getRequestURL,
 } from 'h3'
 import {
-  encodeRouteCacheKey,
-  getCacheKeyWithPrefix,
   getCacheTagRegistry,
   getMultiCacheContext,
   getMultiCacheRouteHelper,
 } from '../../helpers/server'
+import { getRouteCacheKey } from '../../helpers/routeCache'
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/multi-cache-logger'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
@@ -99,9 +98,7 @@ export async function onAfterResponse(
     responseHeaders = serverOptions.route.alterCachedHeaders(responseHeaders)
   }
 
-  const cacheKey = serverOptions?.route?.buildCacheKey
-    ? await serverOptions.route.buildCacheKey(event)
-    : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
+  const cacheKey = await getRouteCacheKey(event)
 
   const expires = routeHelper.getExpires('maxAge')
   const staleIfErrorExpires = routeHelper.getExpires('staleIfError')

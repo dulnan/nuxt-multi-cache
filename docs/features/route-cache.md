@@ -93,12 +93,16 @@ export default defineMultiCacheOptions(() => {
 :::
 
 With that all the following requests will be only handled initially and then
-served from cache by the cached item `api_query_products_1`:
+served from cache by the cached item `api_query_products_123`:
 
 - /api/query/products?id=123
 - /api/query/products?id=123&foobar=456
 - /api/query/products?foobar=456&id=123
 - /api/query/products?foobar=456&id=123&whatever=string&does=not&matter=at-all
+
+The root path `/` is stored with the key `{root}`, because the storage
+normalizes `/` to an empty key, which it doesn't allow. The same applies if
+`buildCacheKey` returns such a key.
 
 ### Alter which headers are cached
 

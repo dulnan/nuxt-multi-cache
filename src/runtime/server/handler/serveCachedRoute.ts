@@ -2,8 +2,6 @@ import { type H3Event, getRequestURL } from 'h3'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import {
   enabledForRequest,
-  encodeRouteCacheKey,
-  getCacheKeyWithPrefix,
   getMultiCacheContext,
   getRequestTimestamp,
 } from '../../helpers/server'
@@ -14,9 +12,8 @@ import {
 import type { RouteCacheItem } from '../../types'
 import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/multi-cache-logger'
-import { setCachedResponse } from '../../helpers/routeCache'
+import { getRouteCacheKey, setCachedResponse } from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
-import { serverOptions } from '#nuxt-multi-cache/server-options'
 import { isExpired } from '../../helpers/maxAge'
 
 function canBeServedFromCache(
@@ -57,9 +54,7 @@ export async function serveCachedHandler(event: H3Event) {
 
   try {
     // Build the cache key.
-    const fullKey = serverOptions.route?.buildCacheKey
-      ? await serverOptions.route.buildCacheKey(event)
-      : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
+    const fullKey = await getRouteCacheKey(event)
 
     // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(
