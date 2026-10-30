@@ -59,6 +59,7 @@ describe('onRequest nitro hook handler', () => {
       },
     })
     const event: any = {
+      method: 'GET',
       path: '/test.jpg',
       node: {
         res: {},
@@ -84,6 +85,7 @@ describe('onRequest nitro hook handler', () => {
       },
     })
     const event: any = {
+      method: 'GET',
       path: '/test',
       node: {
         res: {},
@@ -103,6 +105,49 @@ describe('onRequest nitro hook handler', () => {
     mocks.serverOptions.route.applies.mockRestore()
   })
 
+  test.each([
+    ['GET', true],
+    ['HEAD', true],
+    ['POST', false],
+    ['PUT', false],
+    ['PATCH', false],
+    ['DELETE', false],
+  ])(
+    'Only adds the route cache helper for GET and HEAD requests (%s)',
+    async (method, expected) => {
+      mocks.serverOptions.route.applies.mockReturnValue(true)
+      mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+        },
+      })
+      const event: any = {
+        method,
+        path: '/test',
+        node: {
+          res: {},
+          req: {
+            originalUrl: '/test',
+            headers: {},
+          },
+        },
+        context: {},
+      }
+
+      await onRequest(event)
+
+      // Without the helper, the response is never stored in the route cache.
+      expect(!!event.context.multiCache?.route).toBe(expected)
+
+      mocks.useNitroApp.mockRestore()
+      mocks.serverOptions.route.applies.mockRestore()
+      mocks.serverOptions.enabledForRequest.mockRestore()
+    },
+  )
+
   test('Calls a custom enabledForRequest method', async () => {
     mocks.serverOptions.route.applies.mockReturnValue(true)
     mocks.serverOptions.enabledForRequest.mockResolvedValue(false)
@@ -114,6 +159,7 @@ describe('onRequest nitro hook handler', () => {
       },
     })
     const event: any = {
+      method: 'GET',
       path: '/test',
       node: {
         res: {},

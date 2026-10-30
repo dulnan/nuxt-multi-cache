@@ -1,6 +1,7 @@
 import { type H3Event, getRequestURL } from 'h3'
 import { enabledForRequest, getRequestTimestamp } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
+import { isRouteCacheMethod } from '../../helpers/routeCache'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
 
@@ -38,6 +39,11 @@ export async function onRequest(event: H3Event) {
 
   // Route cache is disabled.
   if (!app.cache.route) {
+    return
+  }
+
+  // Responses to other methods (e.g. POST) are never stored.
+  if (!isRouteCacheMethod(event)) {
     return
   }
 

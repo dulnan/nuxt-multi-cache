@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { setup, $fetch } from '@nuxt/test-utils/e2e'
+import { setup, $fetch, fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
 import type { ModuleOptions } from '../src/build/options'
 import { decodeRouteCacheItem } from '../src/runtime/helpers/cacheItem'
@@ -53,6 +53,49 @@ describe('The route cache feature', () => {
     })
 
     expect(first).toEqual(second)
+  })
+
+  test('only serves and stores GET and HEAD requests', async () => {
+    await purgeAll()
+
+    const getStats = () =>
+      $fetch<CacheStatsResponse<string>>(`/__nuxt_multi_cache/stats/route`, {
+        headers: {
+          'x-nuxt-multi-cache-token': 'hunter2',
+        },
+      })
+
+    // Put the page into cache.
+    const get = await $fetch('/cachedPageWithRandomNumber', {
+      method: 'get',
+    })
+
+    // A POST request to the same path must reach the handler instead of
+    // getting the cached GET response.
+    const post = await $fetch('/cachedPageWithRandomNumber', {
+      method: 'post',
+    })
+    expect(post).not.toEqual(get)
+
+    // HEAD requests still work for a cached path.
+    const head = await fetch('/cachedPageWithRandomNumber', {
+      method: 'head',
+    })
+    expect(head.status).toEqual(200)
+
+    await purgeAll()
+
+    // The response to a POST request is not stored.
+    await $fetch('/cachedPageWithRandomNumber', {
+      method: 'post',
+    })
+    expect((await getStats()).rows).toHaveLength(0)
+
+    // The response to a GET request is.
+    await $fetch('/cachedPageWithRandomNumber', {
+      method: 'get',
+    })
+    expect((await getStats()).rows).toHaveLength(1)
   })
 
   test('handles the request path correctly', async () => {

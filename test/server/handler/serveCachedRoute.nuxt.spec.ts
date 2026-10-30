@@ -72,6 +72,7 @@ describe('serveCachedRoute event handler', () => {
 
     const setHeaders: Record<string, string> = {}
     const event = {
+      method: 'GET',
       path: '/',
       headers: {},
       node: {
@@ -129,8 +130,80 @@ describe('serveCachedRoute event handler', () => {
     mocks.useNitroApp.mockRestore()
   })
 
+  test.each([
+    ['GET', '<html></html>'],
+    ['HEAD', '<html></html>'],
+    ['POST', undefined],
+    ['PUT', undefined],
+    ['PATCH', undefined],
+    ['DELETE', undefined],
+  ])(
+    'Only serves GET and HEAD requests from cache (%s).',
+    async (method, expected) => {
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {},
+          serverOptions: {},
+          config: {
+            cdn: {},
+          },
+        },
+      })
+
+      const getItemRaw = vi.fn(() =>
+        Promise.resolve(
+          encodeRouteCacheItem(
+            '<html></html>',
+            {},
+            200,
+            undefined,
+            undefined,
+            undefined,
+            [],
+          ),
+        ),
+      )
+      const event = {
+        method,
+        path: '/',
+        headers: {},
+        node: {
+          res: {
+            setHeader() {},
+            statusCode: null,
+          },
+          req: {
+            originalUrl: '/',
+            headers: {},
+          },
+        },
+        context: {
+          multiCache: {
+            enabledForRequest: true,
+          },
+          [MULTI_CACHE_CONTEXT_KEY]: {
+            cache: {
+              route: {
+                storage: {
+                  getItemRaw,
+                },
+              },
+            },
+          },
+        },
+      }
+
+      expect(await serveCachedHandler(event as any)).toEqual(expected)
+
+      // Other methods don't even look up the cache.
+      expect(getItemRaw).toHaveBeenCalledTimes(expected ? 1 : 0)
+      mocks.useNitroApp.mockRestore()
+    },
+  )
+
   test('Does not return a route from cache if not enabled.', async () => {
     const event = {
+      method: 'GET',
       path: '/',
       headers: {},
       context: {
@@ -162,6 +235,7 @@ describe('serveCachedRoute event handler', () => {
 
     const setHeaders: Record<string, string> = {}
     const event = {
+      method: 'GET',
       path: '/',
       headers: {},
       node: {
@@ -238,6 +312,7 @@ describe('serveCachedRoute event handler', () => {
     })
 
     const event = {
+      method: 'GET',
       path: '/',
       node: {
         req: {

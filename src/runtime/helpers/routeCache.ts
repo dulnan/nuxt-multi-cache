@@ -24,6 +24,17 @@ import { serverOptions } from '#nuxt-multi-cache/server-options'
 export const ROOT_ROUTE_CACHE_KEY = '{root}'
 
 /**
+ * Whether the request method can use the route cache.
+ *
+ * Only GET and HEAD requests are served from or stored in the route cache.
+ * Other methods must always reach their handler, even if a GET request to the
+ * same path has been cached.
+ */
+export function isRouteCacheMethod(event: H3Event): boolean {
+  return event.method === 'GET' || event.method === 'HEAD'
+}
+
+/**
  * Build the cache key for the route of the given event.
  */
 export async function getRouteCacheKey(event: H3Event): Promise<string> {

@@ -12,7 +12,11 @@ import {
 import type { RouteCacheItem } from '../../types'
 import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/multi-cache-logger'
-import { getRouteCacheKey, setCachedResponse } from '../../helpers/routeCache'
+import {
+  getRouteCacheKey,
+  isRouteCacheMethod,
+  setCachedResponse,
+} from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
 import { isExpired } from '../../helpers/maxAge'
 
@@ -38,6 +42,11 @@ function canBeServedFromCache(
 }
 
 export async function serveCachedHandler(event: H3Event) {
+  // Other methods (e.g. POST) are never served from cache.
+  if (!isRouteCacheMethod(event)) {
+    return
+  }
+
   const isEnabled = await enabledForRequest(event)
 
   if (!isEnabled) {
