@@ -86,7 +86,7 @@
     "@vitest/coverage-v8": "^5.0.5",
     "@vue/test-utils": "^2.5.1",
     "glob": "^11.0.3",
-    "h3-compression": "^0.3.2",
+    "h3-compression": "^1.1.0",
     "h3-fast-compression": "^1.0.1",
     "happy-dom": "^21.0.4",
     "nuxt": "^4.6.3",
