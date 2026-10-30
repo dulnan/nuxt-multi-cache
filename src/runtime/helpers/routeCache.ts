@@ -6,8 +6,12 @@ import {
 } from 'h3'
 import { normalizeKey } from 'unstorage'
 import { joinURL, withTrailingSlash } from 'ufo'
-import type { RouteCacheItem } from '../types'
-import { ROUTE_CACHE_TAGS_HEADER } from './constants'
+import type { CacheableItemInterface, RouteCacheItem } from '../types'
+import {
+  ROUTE_CACHE_EXPIRES_HEADER,
+  ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
+  ROUTE_CACHE_TAGS_HEADER,
+} from './constants'
 import {
   encodeRouteCacheKey,
   getCacheKeyWithPrefix,
@@ -74,14 +78,43 @@ export async function getRouteCacheKey(event: H3Event): Promise<string> {
   return normalizeKey(key) ? key : ROOT_ROUTE_CACHE_KEY
 }
 
-export function setCachedResponse(event: H3Event, decoded: RouteCacheItem) {
-  if (isInternalServerRequest(event) && decoded.cacheTags) {
+/**
+ * Set the route cacheability as headers for internal requests from the Nuxt
+ * app during SSR, so useCacheAwareFetchInterceptor can merge it into the
+ * route of the page.
+ */
+export function setInternalRouteCacheHeaders(
+  event: H3Event,
+  item: CacheableItemInterface,
+) {
+  if (!isInternalServerRequest(event)) {
+    return
+  }
+
+  setResponseHeader(
+    event,
+    ROUTE_CACHE_TAGS_HEADER,
+    (item.cacheTags ?? []).join(' '),
+  )
+
+  if (item.expires !== null && item.expires !== undefined) {
+    setResponseHeader(event, ROUTE_CACHE_EXPIRES_HEADER, item.expires)
+  }
+
+  if (
+    item.staleIfErrorExpires !== null &&
+    item.staleIfErrorExpires !== undefined
+  ) {
     setResponseHeader(
       event,
-      ROUTE_CACHE_TAGS_HEADER,
-      decoded.cacheTags.join(' '),
+      ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
+      item.staleIfErrorExpires,
     )
   }
+}
+
+export function setCachedResponse(event: H3Event, decoded: RouteCacheItem) {
+  setInternalRouteCacheHeaders(event, decoded)
 
   // Set the cached headers. The name suggests otherwise, but this appends
   // headers (e.g. does not override existing headers.)

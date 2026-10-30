@@ -3,6 +3,7 @@ import { setup, fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test, beforeEach } from 'vitest'
 import purgeAll from './../../__helpers__/purgeAll'
 import getRouteCacheItems from '~/test/__helpers__/getRouteCacheItems'
+import purgeByKey from '~/test/__helpers__/purgeByKey'
 
 await setup({
   server: true,
@@ -62,6 +63,29 @@ describe('The useCacheAwareFetchInterceptor', () => {
         "tag-from-page",
       ]
     `)
+  })
+
+  test('merges the route cache max age and stale-if-error of the API route', async () => {
+    // The first request renders the API route, the second one serves it from
+    // the route cache.
+    for (const request of ['rendered', 'cached']) {
+      await fetch('/route-cache-max-age')
+
+      const rows = await getRouteCacheItems()
+      const itemApi = rows.find(
+        (v) => v.key === 'api:handler-with-route-max-age',
+      )!.item
+      const itemPage = rows.find((v) => v.key === 'route-cache-max-age')!.item
+
+      expect(itemPage.expires, request).toEqual(itemApi.expires)
+      expect(itemPage.staleIfErrorExpires, request).toEqual(
+        itemApi.staleIfErrorExpires,
+      )
+      expect(itemPage.cacheTags, request).toContain('route-cache-tag-from-api')
+
+      // So that the page is rendered again.
+      await purgeByKey('route', 'route-cache-max-age')
+    }
   })
 
   test('does not store or serve the internal headers of the API route', async () => {

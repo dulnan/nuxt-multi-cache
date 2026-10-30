@@ -52,5 +52,7 @@ set, the **lowest wins**. In our case, the rendered page response header would
 be `Cache-Control: max-age=3600`, because that's the max age defined in the
 event handler.
 
-The same also works when using the route cache: In this case, the cache tags
-from the API route would be merged with the cache tags of the SSR request.
+The same also works when using the route cache: In this case, the cache tags,
+the max age and the stale if error duration of the API route are merged with the
+route cache of the SSR request. A cached page then never outlives the data of
+the API route it shows.
