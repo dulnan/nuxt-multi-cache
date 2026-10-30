@@ -29,6 +29,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
     cdnCacheControlHeader: 'Surrogate-Control',
     cdnCacheTagHeader: 'Cache-Tag',
     isTestMode: true,
+    apiPrefix: '/__nuxt_multi_cache',
   }
 })
 
@@ -201,11 +202,82 @@ describe('serveCachedRoute event handler', () => {
     },
   )
 
+  test.each([
+    ['/__nuxt_multi_cache/stats/route', undefined],
+    ['/__nuxt_multi_cache/inspect/route?key=foo', undefined],
+    ['/_nuxt/entry.js', undefined],
+    ['/__nuxt_multi_cache_page', '<html></html>'],
+  ])('Never serves excluded paths from cache (%s).', async (path, expected) => {
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: {},
+        serverOptions: {},
+        config: {
+          cdn: {},
+        },
+      },
+    })
+
+    // An item exists in the cache, e.g. stored by a previous version.
+    const getItemRaw = vi.fn(() =>
+      Promise.resolve(
+        encodeRouteCacheItem(
+          '<html></html>',
+          {},
+          200,
+          undefined,
+          undefined,
+          undefined,
+          [],
+        ),
+      ),
+    )
+    const event = {
+      method: 'GET',
+      path,
+      headers: {},
+      node: {
+        res: {
+          setHeader() {},
+          statusCode: null,
+        },
+        req: {
+          originalUrl: path,
+          headers: {},
+        },
+      },
+      context: {
+        multiCache: {
+          enabledForRequest: true,
+        },
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          cache: {
+            route: {
+              storage: {
+                getItemRaw,
+              },
+            },
+          },
+        },
+      },
+    }
+
+    expect(await serveCachedHandler(event as any)).toEqual(expected)
+    expect(getItemRaw).toHaveBeenCalledTimes(expected ? 1 : 0)
+    mocks.useNitroApp.mockRestore()
+  })
+
   test('Does not return a route from cache if not enabled.', async () => {
     const event = {
       method: 'GET',
       path: '/',
       headers: {},
+      node: {
+        req: {
+          originalUrl: '/',
+          headers: {},
+        },
+      },
       context: {
         multiCache: {
           enabledForRequest: false,

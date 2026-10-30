@@ -14,10 +14,12 @@ import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/multi-cache-logger'
 import {
   getRouteCacheKey,
+  isExcludedRoutePath,
   isRouteCacheMethod,
   setCachedResponse,
 } from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
+import { useRuntimeConfig } from '#imports'
 import { isExpired } from '../../helpers/maxAge'
 
 function canBeServedFromCache(
@@ -44,6 +46,14 @@ function canBeServedFromCache(
 export async function serveCachedHandler(event: H3Event) {
   // Other methods (e.g. POST) are never served from cache.
   if (!isRouteCacheMethod(event)) {
+    return
+  }
+
+  // Neither are the module's own API or Nuxt's assets, even if an item for
+  // the path exists in the cache.
+  if (
+    isExcludedRoutePath(getRequestURL(event).pathname, useRuntimeConfig().app)
+  ) {
     return
   }
 

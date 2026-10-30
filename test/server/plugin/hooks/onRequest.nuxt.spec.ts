@@ -9,6 +9,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
     },
     debug: false,
     isTestMode: true,
+    apiPrefix: '/__nuxt_multi_cache',
   }
 })
 
@@ -140,6 +141,48 @@ describe('onRequest nitro hook handler', () => {
       await onRequest(event)
 
       // Without the helper, the response is never stored in the route cache.
+      expect(!!event.context.multiCache?.route).toBe(expected)
+
+      mocks.useNitroApp.mockRestore()
+      mocks.serverOptions.route.applies.mockRestore()
+      mocks.serverOptions.enabledForRequest.mockRestore()
+    },
+  )
+
+  test.each([
+    ['/__nuxt_multi_cache/stats/route', false],
+    ['/__nuxt_multi_cache/inspect/route?key=foo', false],
+    ['/_nuxt/entry.js', false],
+    ['/__nuxt_error', false],
+    ['/__nuxt_multi_cache_page', true],
+  ])(
+    'Never adds the route cache helper for excluded paths (%s)',
+    async (path, expected) => {
+      // Even if a custom applies method allows it.
+      mocks.serverOptions.route.applies.mockReturnValue(true)
+      mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+        },
+      })
+      const event: any = {
+        method: 'GET',
+        path,
+        node: {
+          res: {},
+          req: {
+            originalUrl: path,
+            headers: {},
+          },
+        },
+        context: {},
+      }
+
+      await onRequest(event)
+
       expect(!!event.context.multiCache?.route).toBe(expected)
 
       mocks.useNitroApp.mockRestore()

@@ -1,4 +1,5 @@
 import {
+  DEFAULT_API_PREFIX,
   DEFAULT_CACHE_TAG_INVALIDATION_DELAY,
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
@@ -31,6 +32,7 @@ export const componentCacheEnabled = ${JSON.stringify(componentCacheEnabled)}
 export const dataCacheEnabled = ${JSON.stringify(dataCacheEnabled)}
 export const shouldLogCacheOverview = ${JSON.stringify(!helper.options.disableCacheOverviewLogMessage)}
 export const cacheTagInvalidationDelay = ${JSON.stringify(helper.options.api?.cacheTagInvalidationDelay || DEFAULT_CACHE_TAG_INVALIDATION_DELAY)}
+export const apiPrefix = ${JSON.stringify(helper.options.api?.prefix ?? DEFAULT_API_PREFIX)}
 export const isTestMode = ${JSON.stringify(!!helper.options.enableTestMode)}
 export const isServer = import.meta.server
 `
@@ -84,6 +86,11 @@ export declare const dataCacheEnabled: boolean
  * The delay in milliseconds before invalidating cache tags.
  */
 export declare const cacheTagInvalidationDelay: number
+
+/**
+ * The prefix of the API endpoints.
+ */
+export declare const apiPrefix: string
 
 /**
  * Whether the cache overview should be logged to the console.

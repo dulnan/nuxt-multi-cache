@@ -1,15 +1,19 @@
 import { type H3Event, getRequestURL } from 'h3'
 import { enabledForRequest, getRequestTimestamp } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
-import { isRouteCacheMethod } from '../../helpers/routeCache'
+import {
+  isExcludedRoutePath,
+  isRouteCacheMethod,
+} from '../../helpers/routeCache'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
+import { useRuntimeConfig } from '#imports'
 
 /**
  * Method to check whether route caching is generally applicable to the given path.
  */
 function applies(path: string): boolean {
-  if (path.startsWith('/_nuxt') || path.startsWith('/__nuxt_error')) {
+  if (isExcludedRoutePath(path, useRuntimeConfig().app)) {
     return false
   }
 

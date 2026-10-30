@@ -5,6 +5,7 @@ import {
   type H3Event,
 } from 'h3'
 import { normalizeKey } from 'unstorage'
+import { joinURL, withTrailingSlash } from 'ufo'
 import type { RouteCacheItem } from '../types'
 import { ROUTE_CACHE_TAGS_HEADER } from './constants'
 import {
@@ -13,6 +14,7 @@ import {
   isInternalServerRequest,
 } from './server'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
+import { apiPrefix } from '#nuxt-multi-cache/config'
 
 /**
  * The cache key for routes whose key would otherwise be empty, such as the
@@ -32,6 +34,32 @@ export const ROOT_ROUTE_CACHE_KEY = '{root}'
  */
 export function isRouteCacheMethod(event: H3Event): boolean {
   return event.method === 'GET' || event.method === 'HEAD'
+}
+
+/**
+ * Whether the path must never be served from or stored in the route cache.
+ *
+ * This applies to Nuxt's build assets and error page and to the module's own
+ * API, whose responses must never be served without authorization. All of
+ * them are served below the app's base URL.
+ *
+ * @param path - The request path, including the base URL.
+ * @param app - The app runtime config.
+ */
+export function isExcludedRoutePath(
+  path: string,
+  app: { baseURL: string; buildAssetsDir: string },
+): boolean {
+  const prefixes = [
+    joinURL(app.baseURL, app.buildAssetsDir),
+    joinURL(app.baseURL, '/__nuxt_error'),
+  ]
+
+  if (apiPrefix) {
+    prefixes.push(withTrailingSlash(joinURL(app.baseURL, apiPrefix)))
+  }
+
+  return prefixes.some((prefix) => path.startsWith(prefix))
 }
 
 /**
