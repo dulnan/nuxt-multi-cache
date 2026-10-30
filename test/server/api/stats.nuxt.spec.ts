@@ -23,8 +23,12 @@ vi.mock('h3', async () => {
   }
 })
 
-vi.mock('./../../../src/runtime/serverHandler/api/helpers', () => {
+// Authorization is tested separately.
+vi.mock('./../../../src/runtime/server/api/helpers', async (importOriginal) => {
   return {
+    ...(await importOriginal<
+      typeof import('./../../../src/runtime/server/api/helpers')
+    >()),
     checkAuth: () => {
       return Promise.resolve()
     },
@@ -62,9 +66,7 @@ describe('stats API handler', () => {
           },
         },
         config: {
-          api: {
-            enabled: true,
-          },
+          api: {},
         },
       },
     })
