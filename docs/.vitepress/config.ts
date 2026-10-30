@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 import fs from 'fs'
 import path from 'path'
-import simpleGit from 'simple-git'
+import { simpleGit } from 'simple-git'
 
 const getCurrentBranch = async () => {
   try {
