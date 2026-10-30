@@ -134,6 +134,12 @@ example Netlify's `durable` directive.
 Pass `true` (the default) for a valueless boolean directive, or a `string` /
 `number` for a directive with a value.
 
+Directive names are case-insensitive and are added in lowercase. Adding the same
+directive again replaces its value. Standard directives such as `public` or
+`max-age` can't be added this way; use the other methods instead. Invalid names
+and values that can't be represented in a header (such as negative numbers or
+strings containing line breaks) are skipped and a warning is logged.
+
 ```typescript
 useCDNHeaders((helper) => {
   helper

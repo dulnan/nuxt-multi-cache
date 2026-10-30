@@ -3,6 +3,7 @@ import { setResponseHeader, type H3Event } from 'h3'
 import type { FetchResponse } from 'ofetch'
 import { onlyUnique } from './server'
 import { expiresToMaxAge, parseMaxAge, type MaxAge } from './maxAge'
+import { logger } from './multi-cache-logger'
 import {
   cdnCacheControlHeader,
   cdnCacheTagHeader,
@@ -30,6 +31,68 @@ const booleanProperties = [
   'proxyRevalidate',
 ] as const
 
+/**
+ * The directives managed by CacheControl, which can't be added as custom
+ * directives.
+ */
+const standardDirectives = new Set([
+  'immutable',
+  'max-age',
+  'max-stale',
+  'min-fresh',
+  'must-revalidate',
+  'no-cache',
+  'no-store',
+  'no-transform',
+  'only-if-cached',
+  'private',
+  'proxy-revalidate',
+  'public',
+  's-maxage',
+  'stale-if-error',
+  'stale-while-revalidate',
+])
+
+/**
+ * A token as defined in RFC 9110, section 5.6.2.
+ */
+const tokenRegex = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/
+
+/**
+ * The characters allowed in a quoted-string (RFC 9110, section 5.6.4), which
+ * are also the only characters allowed in a header value.
+ */
+const quotableRegex = /^[\t\x20-\x7E\x80-\xFF]*$/
+
+/**
+ * Format a custom directive.
+ *
+ * Returns null if the value can't be represented in a header.
+ */
+function formatCustomDirective(name: string, value: unknown): string | null {
+  if (value === true) {
+    return name
+  }
+
+  if (typeof value === 'number') {
+    const integer = Math.floor(value)
+    return integer >= 0 && Number.isSafeInteger(integer)
+      ? `${name}=${integer}`
+      : null
+  }
+
+  if (typeof value === 'string') {
+    if (tokenRegex.test(value)) {
+      return `${name}=${value}`
+    }
+    if (quotableRegex.test(value)) {
+      return `${name}="${value.replace(/[\\"]/g, '\\$&')}"`
+    }
+  }
+
+  return null
+}
+
 type CacheControlProperties = keyof Omit<CacheControl, 'private' | 'public'>
 type CacheControlNumericProperties = keyof Pick<
   CacheControl,
@@ -44,7 +107,7 @@ type CacheControlBooleanProperties = keyof Pick<
 export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   _tags: string[]
   _control: CacheControl
-  _customDirectives: Map<string, string | number | true>
+  _customDirectives: Map<string, string>
   constructor(
     private readonly now: number,
     public readonly cacheControlHeader = cdnCacheControlHeader,
@@ -69,15 +132,12 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
       setResponseHeader(event, this.cacheTagsHeader, cacheTagsValue)
     }
 
-    const parts: string[] = []
-    const standardValue = this._control.format()
-    if (standardValue) {
-      parts.push(standardValue)
-    }
-    for (const [name, value] of this._customDirectives) {
-      parts.push(value === true ? name : `${name}=${value}`)
-    }
-    const cacheControlValue = parts.join(', ')
+    const cacheControlValue = [
+      this._control.format(),
+      ...this._customDirectives.values(),
+    ]
+      .filter(Boolean)
+      .join(', ')
     if (cacheControlValue) {
       setResponseHeader(event, this.cacheControlHeader, cacheControlValue)
     }
@@ -199,6 +259,14 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
    * Pass `true` as the value for a boolean (valueless) directive, or a string
    * or number for a directive with a value.
    *
+   * Directive names are case-insensitive and are added in lowercase. Adding
+   * the same directive again replaces its value. Strings that are not a valid
+   * token are added as a quoted string and numbers are rounded down.
+   *
+   * Standard directives such as `public` or `max-age`, invalid names and
+   * values that can't be represented in a header (such as negative numbers or
+   * strings containing line breaks) are skipped and a warning is logged.
+   *
    * @param name - The directive name.
    * @param value - The directive value. Use `true` for a valueless directive.
    */
@@ -206,7 +274,31 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     name: string,
     value: string | number | true = true,
   ): NuxtMultiCacheCDNHelper {
-    this._customDirectives.set(name, value)
+    const key = name.toLowerCase()
+
+    if (!tokenRegex.test(key)) {
+      logger.warn(
+        `Skipped custom directive ${JSON.stringify(name)}: Not a valid directive name.`,
+      )
+      return this
+    }
+
+    if (standardDirectives.has(key)) {
+      logger.warn(
+        `Skipped custom directive "${key}": Standard directives can't be added as custom directives. Use set(), setNumeric(), setBoolean(), public() or private() instead.`,
+      )
+      return this
+    }
+
+    const directive = formatCustomDirective(key, value)
+    if (directive === null) {
+      logger.warn(
+        `Skipped custom directive "${key}": Invalid value ${typeof value === 'string' ? JSON.stringify(value) : String(value)}.`,
+      )
+      return this
+    }
+
+    this._customDirectives.set(key, directive)
     return this
   }
 

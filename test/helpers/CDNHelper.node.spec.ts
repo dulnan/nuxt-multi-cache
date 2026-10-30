@@ -6,9 +6,27 @@ import {
   DEFAULT_CDN_TAG_HEADER,
 } from './../../src/build/options/defaults'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+import { logger } from '~/src/runtime/helpers/multi-cache-logger'
 
 const mockDate = new Date('2024-03-15T10:30:00.000Z')
 const mockDateTimestamp = toTimestamp(mockDate)
+
+function getAppliedHeaders(
+  helper: NuxtMultiCacheCDNHelper,
+): Record<string, string> {
+  const headers: Record<string, string> = {}
+  const event = {
+    node: {
+      res: {
+        setHeader: (name: string, value: string) => {
+          headers[name] = value
+        },
+      },
+    },
+  }
+  helper.applyToEvent(event as any)
+  return headers
+}
 
 describe('The CDNHelper', () => {
   test('can be instanciated correctly', () => {
@@ -244,4 +262,96 @@ describe('The CDNHelper', () => {
     expect(helper._control.noStore).toEqual(true)
     expect(helper._control.mustRevalidate).toEqual(true)
   })
+
+  test('addCustomDirective adds directives after the standard directives', () => {
+    const helper = new NuxtMultiCacheCDNHelper(
+      mockDateTimestamp,
+      DEFAULT_CDN_CONTROL_HEADER,
+      DEFAULT_CDN_TAG_HEADER,
+    )
+    helper
+      .public()
+      .setNumeric('maxAge', 3600)
+      .addCustomDirective('durable')
+      .addCustomDirective('cdn-ttl', 7200)
+
+    expect(getAppliedHeaders(helper)).toEqual({
+      [DEFAULT_CDN_CONTROL_HEADER]:
+        'max-age=3600, public, durable, cdn-ttl=7200',
+    })
+  })
+
+  test('addCustomDirective works without standard directives', () => {
+    const helper = new NuxtMultiCacheCDNHelper(
+      mockDateTimestamp,
+      DEFAULT_CDN_CONTROL_HEADER,
+      DEFAULT_CDN_TAG_HEADER,
+    )
+    helper.addCustomDirective('durable')
+
+    expect(getAppliedHeaders(helper)).toEqual({
+      [DEFAULT_CDN_CONTROL_HEADER]: 'durable',
+    })
+  })
+
+  test('addCustomDirective handles names case-insensitively and replaces existing values', () => {
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
+    helper
+      .addCustomDirective('Durable')
+      .addCustomDirective('durable', 'yes')
+      .addCustomDirective('CDN-TTL', 60)
+      .addCustomDirective('cdn-ttl', 120)
+
+    expect([...helper._customDirectives.values()]).toEqual([
+      'durable=yes',
+      'cdn-ttl=120',
+    ])
+  })
+
+  test('addCustomDirective formats values', () => {
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
+    helper
+      .addCustomDirective('token', 'abc')
+      .addCustomDirective('list', 'a, b')
+      .addCustomDirective('escaped', 'say "hi" \\o/')
+      .addCustomDirective('empty', '')
+      .addCustomDirective('fraction', 7.9)
+      .addCustomDirective('zero', 0)
+
+    expect([...helper._customDirectives.values()]).toEqual([
+      'token=abc',
+      'list="a, b"',
+      'escaped="say \\"hi\\" \\\\o/"',
+      'empty=""',
+      'fraction=7',
+      'zero=0',
+    ])
+  })
+
+  test.each([
+    { reason: 'an empty name', name: '' },
+    { reason: 'a name with a comma', name: 'durable, public' },
+    { reason: 'a name with an equals sign', name: 'foo=bar' },
+    { reason: 'a name with a line break', name: 'foo\r\nbar' },
+    { reason: 'a standard directive', name: 'public' },
+    { reason: 'a standard directive in uppercase', name: 'Max-Age', value: 1 },
+    { reason: 'NaN', name: 'cdn-ttl', value: Number.NaN },
+    { reason: 'Infinity', name: 'cdn-ttl', value: Number.POSITIVE_INFINITY },
+    { reason: 'a negative number', name: 'cdn-ttl', value: -1 },
+    { reason: 'a line break in the value', name: 'foo', value: 'a\r\nb: c' },
+    { reason: 'false as the value', name: 'durable', value: false },
+  ])(
+    'addCustomDirective skips $reason and logs a warning',
+    ({ name, value }) => {
+      const warn = vi
+        .spyOn(logger as typeof console, 'warn')
+        .mockImplementation(() => {})
+      const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
+      helper.addCustomDirective(name, value as any)
+
+      expect(helper._customDirectives.size).toEqual(0)
+      expect(warn).toHaveBeenCalledOnce()
+      warn.mockRestore()
+    },
+  )
 })
