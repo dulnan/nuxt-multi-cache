@@ -1,7 +1,7 @@
 import { defineConfig } from 'vitepress'
 import fs from 'fs'
 import path from 'path'
-import simpleGit from 'simple-git'
+import { simpleGit } from 'simple-git'
 
 const getCurrentBranch = async () => {
   try {
@@ -164,7 +164,7 @@ export default defineConfig({
       ],
     ])
   },
-  description: 'Component, route and data cache for Nuxt 3.',
+  description: 'Component, route and data cache for Nuxt.',
   locales: {
     '/': {
       lang: 'en-US',

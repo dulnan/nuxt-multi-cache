@@ -117,6 +117,9 @@ export function useCachedAsyncData<
   | undefined
 >
 
+// The overloads only differ in the default of DefaultT, like the overloads of
+// useAsyncData in Nuxt, so they can't be combined.
+// oxlint-disable-next-line typescript/unified-signatures
 export function useCachedAsyncData<
   ResT,
   NuxtErrorDataT = unknown,

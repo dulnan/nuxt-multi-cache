@@ -6,9 +6,11 @@ import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
 import { logger } from '../../../src/runtime/helpers/multi-cache-logger'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 
-mockNuxtImport('useRuntimeConfig', () => {
+mockNuxtImport('useRuntimeConfig', (original) => {
   return () => {
     return {
+      // Keep the real config, e.g. app.baseURL is needed by Nuxt's router plugin.
+      ...original(),
       multiCache: {
         cdn: {
           cacheTagHeader: 'Cache-Tag',

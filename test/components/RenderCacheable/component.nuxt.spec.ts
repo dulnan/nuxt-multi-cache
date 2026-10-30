@@ -1,4 +1,3 @@
-/* eslint-disable vue/one-component-per-file */
 import { defineComponent, nextTick } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'

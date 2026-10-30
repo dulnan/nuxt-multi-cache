@@ -334,6 +334,7 @@ describe('The CDNHelper', () => {
     { reason: 'a name with an equals sign', name: 'foo=bar' },
     { reason: 'a name with a line break', name: 'foo\r\nbar' },
     { reason: 'a standard directive', name: 'public' },
+    { reason: 'must-understand', name: 'must-understand' },
     { reason: 'a standard directive in uppercase', name: 'Max-Age', value: 1 },
     { reason: 'NaN', name: 'cdn-ttl', value: Number.NaN },
     { reason: 'Infinity', name: 'cdn-ttl', value: Number.POSITIVE_INFINITY },
@@ -354,4 +355,140 @@ describe('The CDNHelper', () => {
       warn.mockRestore()
     },
   )
+})
+
+/**
+ * Returns the Cache-Control header the helper sets after calling the callback.
+ */
+function getCacheControlHeader(
+  cb: (helper: NuxtMultiCacheCDNHelper) => void,
+): string | undefined {
+  const helper = new NuxtMultiCacheCDNHelper(
+    mockDateTimestamp,
+    DEFAULT_CDN_CONTROL_HEADER,
+    DEFAULT_CDN_TAG_HEADER,
+  )
+  cb(helper)
+  return getAppliedHeaders(helper)[DEFAULT_CDN_CONTROL_HEADER]
+}
+
+describe('The Cache-Control header of the CDNHelper', () => {
+  test.each([
+    ['maxAge', 'max-age=60'],
+    ['sharedMaxAge', 's-maxage=60'],
+    ['minFresh', 'min-fresh=60'],
+    ['staleWhileRevalidate', 'stale-while-revalidate=60'],
+    ['staleIfError', 'stale-if-error=60'],
+  ] as const)('contains numeric property %s', (key, expected) => {
+    expect(getCacheControlHeader((helper) => helper.setNumeric(key, 60))).toBe(
+      expected,
+    )
+  })
+
+  test.each([
+    ['immutable', 'immutable'],
+    ['maxStale', 'max-stale'],
+    ['mustRevalidate', 'must-revalidate'],
+    ['mustUnderstand', 'must-understand'],
+    ['noCache', 'no-cache'],
+    ['noStore', 'no-store'],
+    ['noTransform', 'no-transform'],
+    ['onlyIfCached', 'only-if-cached'],
+    ['proxyRevalidate', 'proxy-revalidate'],
+  ] as const)('contains boolean property %s', (key, expected) => {
+    expect(getCacheControlHeader((helper) => helper.setBoolean(key))).toBe(
+      expected,
+    )
+  })
+
+  test('contains public and private', () => {
+    expect(getCacheControlHeader((helper) => helper.public())).toBe('public')
+    expect(getCacheControlHeader((helper) => helper.private())).toBe('private')
+  })
+
+  test('contains max-stale with a duration only if max-stale is set', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setBoolean('maxStale').setNumeric('maxStaleDuration', 60),
+      ),
+    ).toBe('max-stale=60')
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setNumeric('maxStaleDuration', 60),
+      ),
+    ).toBeUndefined()
+  })
+
+  test('contains the directives in a fixed order', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('staleIfError', 7)
+          .setNumeric('staleWhileRevalidate', 6)
+          .public()
+          .setBoolean('proxyRevalidate')
+          .setBoolean('onlyIfCached')
+          .setBoolean('noTransform')
+          .setBoolean('noStore')
+          .setBoolean('noCache')
+          .setBoolean('mustUnderstand')
+          .setBoolean('mustRevalidate')
+          .setBoolean('immutable')
+          .setNumeric('minFresh', 5)
+          .setNumeric('maxStaleDuration', 4)
+          .setBoolean('maxStale')
+          .setNumeric('sharedMaxAge', 2)
+          .setNumeric('maxAge', 1),
+      ),
+    ).toBe(
+      'max-age=1, s-maxage=2, max-stale=4, min-fresh=5, immutable, must-revalidate, must-understand, no-cache, no-store, no-transform, only-if-cached, proxy-revalidate, public, stale-while-revalidate=6, stale-if-error=7',
+    )
+  })
+
+  test.each([
+    'max-age=60',
+    's-maxage=60',
+    'max-stale',
+    'max-stale=60',
+    'min-fresh=60',
+    'immutable',
+    'must-revalidate',
+    'must-understand',
+    'no-cache',
+    'no-store',
+    'no-transform',
+    'only-if-cached',
+    'private',
+    'proxy-revalidate',
+    'stale-while-revalidate=60',
+    'stale-if-error=60',
+  ])('merges %s from a Cache-Control header', (header) => {
+    expect(
+      getCacheControlHeader((helper) => helper.mergeCacheControlHeader(header)),
+    ).toBe(header)
+  })
+
+  test.each([
+    // Public is never merged, only set explicitly.
+    ['public', undefined],
+    // Directive names are case-insensitive.
+    ['MAX-AGE=60, No-Store', 'max-age=60, no-store'],
+    ['max-age=60,no-store', 'max-age=60, no-store'],
+    ['no-store , max-age=60', 'max-age=60, no-store'],
+    ['max-age=1.5', 'max-age=1'],
+    ['max-age=abc', undefined],
+    ['max-age=-1', undefined],
+    // Unknown directives are dropped.
+    ['durable, max-age=60', 'max-age=60'],
+    ['', undefined],
+    ['max-age="60"', 'max-age=60'],
+    ['max-stale=0', 'max-stale=0'],
+    // Field names are dropped, the whole response is private or no-cache.
+    ['private="Set-Cookie"', 'private'],
+    ['no-cache="Set-Cookie"', 'no-cache'],
+  ])('merges %j as %j', (header, expected) => {
+    expect(
+      getCacheControlHeader((helper) => helper.mergeCacheControlHeader(header)),
+    ).toBe(expected)
+  })
 })

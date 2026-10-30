@@ -8,9 +8,11 @@ import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 const mockDate = new Date('2024-03-15T10:30:00.000Z')
 const mockDateTimestamp = toTimestamp(mockDate)
 
-mockNuxtImport('useRuntimeConfig', () => {
+mockNuxtImport('useRuntimeConfig', (original) => {
   return () => {
     return {
+      // Keep the real config, e.g. app.baseURL is needed by Nuxt's router plugin.
+      ...original(),
       multiCache: {
         cdn: {
           cacheTagHeader: 'Cache-Tag',

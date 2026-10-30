@@ -23,28 +23,28 @@ function getCacheKeyPrefix(event: H3Event): string {
 
 export default defineMultiCacheOptions(() => {
   const customDriver = defineDriver(function () {
-    let cache: Record<string, string> = {}
+    const cache = new Map<string, string>()
     return {
       hasItem(key: string) {
-        return !!cache[key]
+        return !!cache.get(key)
       },
       getItem(key: string) {
         if (key.includes('static_item_for_test')) {
           return JSON.stringify({ data: 'just_an_example_value' })
         }
-        return cache[key] || null
+        return cache.get(key) || null
       },
       setItem(key, value) {
-        cache[key] = value
+        cache.set(key, value)
       },
       removeItem(key) {
-        delete cache[key]
+        cache.delete(key)
       },
       getKeys() {
-        return Object.keys(cache)
+        return [...cache.keys()]
       },
       clear() {
-        cache = {}
+        cache.clear()
       },
       dispose() {},
     }
@@ -55,7 +55,7 @@ export default defineMultiCacheOptions(() => {
   // custom build plugin added by the module.
   // If it would be included, the build would fail, because the FS driver has
   // imports on stuff that does not exist in the browser.
-  const foobar = fsDriver.default({
+  const _fsDriver = fsDriver.default({
     base: './__cache__/data',
   })
 

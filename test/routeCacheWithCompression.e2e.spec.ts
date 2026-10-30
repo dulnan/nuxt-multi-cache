@@ -69,6 +69,8 @@ async function testResponse(path: string) {
   // The encoding should be the same, because the compression feature was
   // able to compress the cached response again.
   expect(secondEncoding).toEqual(firstEncoding)
+
+  return { first, second, responseSecond }
 }
 
 describe('The route cache with compression enabled', () => {
@@ -80,5 +82,23 @@ describe('The route cache with compression enabled', () => {
   test('caches the result of an API handler', async () => {
     await purgeAll()
     await testResponse('/api/testApiCompression')
+  })
+
+  test('caches the JSON result of an API handler', async () => {
+    await purgeAll()
+    const { first, second, responseSecond } = await testResponse(
+      '/api/testApiCompressionJson',
+    )
+
+    // The cached response must still be served as JSON.
+    expect(first.headers.get('content-type')).toContain('application/json')
+    expect(second.headers.get('content-type')).toContain('application/json')
+
+    // The response served from cache decodes to the original object, so the
+    // uncompressed JSON was stored in the cache, not the compressed bytes.
+    expect(JSON.parse(responseSecond)).toEqual({
+      message: 'This is a compressed JSON API response',
+      number: expect.any(Number),
+    })
   })
 })

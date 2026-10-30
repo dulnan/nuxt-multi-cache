@@ -25,9 +25,9 @@ jobs:
           npx playwright-core install chromium
           npm run dev:prepare
 
-      - name: Prettier/ESLint
+      - name: oxfmt/oxlint
         run: |
-          npm run prettier
+          npm run format
           npm run lint
 
       - name: TypeScript

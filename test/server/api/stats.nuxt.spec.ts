@@ -3,9 +3,11 @@ import { describe, expect, test, vi } from 'vitest'
 import { createStorage } from 'unstorage'
 import stats from './../../../src/runtime/server/api/stats'
 
-mockNuxtImport('useRuntimeConfig', () => {
+mockNuxtImport('useRuntimeConfig', (original) => {
   return () => {
     return {
+      // Keep the real config, e.g. app.baseURL is needed by Nuxt's router plugin.
+      ...original(),
       multiCache: {},
     }
   }

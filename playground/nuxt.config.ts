@@ -7,6 +7,9 @@ export default defineNuxtConfig({
     '/spaDataCache': { ssr: false },
     '/spaPageWithException': { ssr: false },
     '/nitro-swr': { swr: 3 },
+    // Enables payload extraction (`_payload.json`) for this page. Unlike
+    // `cache` or `swr` this does not enable Nitro's cache on the node preset.
+    '/cachedPageWithPayload': { isr: true },
     '/api/routeCacheWithRouteRules': {
       headers: {
         'x-route-rules-header': 'Set via routeRules',
@@ -19,7 +22,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: [NuxtMultiCache, '@nuxt/eslint'],
+  modules: [NuxtMultiCache],
 
   imports: {
     autoImport: true,

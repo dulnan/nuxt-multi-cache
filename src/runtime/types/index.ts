@@ -53,7 +53,7 @@ export interface RouteCacheItem extends CacheItem {
   staleWhileRevalidate: boolean
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+// oxlint-disable-next-line typescript/no-empty-object-type
 export interface DataCacheItem extends CacheItem {}
 
 export interface ComponentCacheItem extends CacheItem {
@@ -333,7 +333,18 @@ export type MultiCacheEventContext = {
   route?: NuxtMultiCacheRouteCacheHelper
 }
 
+// Augment both entry points, like Nuxt does: Since nitropack 2.13 the
+// augmentation of 'nitropack/types' alone no longer applies to NitroApp.
 declare module 'nitropack/types' {
+  export interface NitroApp {
+    /**
+     * The nuxt-multi-cache cache context.
+     */
+    multiCache: MultiCacheApp
+  }
+}
+
+declare module 'nitropack' {
   export interface NitroApp {
     /**
      * The nuxt-multi-cache cache context.

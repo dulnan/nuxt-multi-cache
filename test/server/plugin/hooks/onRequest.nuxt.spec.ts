@@ -12,9 +12,11 @@ vi.mock('#nuxt-multi-cache/config', () => {
   }
 })
 
-mockNuxtImport('useRuntimeConfig', () => {
+mockNuxtImport('useRuntimeConfig', (original) => {
   return () => {
     return {
+      // Keep the real config, e.g. app.baseURL is needed by Nuxt's router plugin.
+      ...original(),
       multiCache: {
         cdn: {
           cacheTagHeader: 'Cache-Tag',
@@ -73,7 +75,7 @@ describe('onRequest nitro hook handler', () => {
   })
 
   test('Calls a custom applies method', async () => {
-    mocks.serverOptions.route.applies.mockResolvedValue(false)
+    mocks.serverOptions.route.applies.mockReturnValue(false)
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {
@@ -102,6 +104,7 @@ describe('onRequest nitro hook handler', () => {
   })
 
   test('Calls a custom enabledForRequest method', async () => {
+    mocks.serverOptions.route.applies.mockReturnValue(true)
     mocks.serverOptions.enabledForRequest.mockResolvedValue(false)
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
@@ -127,6 +130,7 @@ describe('onRequest nitro hook handler', () => {
     expect(mocks.serverOptions.enabledForRequest).toHaveBeenCalledOnce()
 
     mocks.useNitroApp.mockRestore()
+    mocks.serverOptions.route.applies.mockRestore()
     mocks.serverOptions.enabledForRequest.mockRestore()
   })
 })

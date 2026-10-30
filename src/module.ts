@@ -13,13 +13,38 @@ export type { CacheTagRegistry } from './runtime/types/CacheTagRegistry'
 export type { CacheType } from './runtime/types/index'
 export type { ModuleOptions }
 
+/**
+ * Server-only modules imported by composables that are never called on the
+ * client. In client builds they are replaced with these stubs, so that the
+ * server code isn't bundled.
+ */
+const CLIENT_STUBS: Record<string, string> = {
+  'runtime/shared/useDataCache':
+    'export function useDataCacheImplementation() {}',
+  'runtime/shared/useDataCacheCallback':
+    'export function useDataCacheCallbackImplementation() {}',
+  'runtime/shared/useCDNHeaders':
+    'export function useCDNHeadersImplementation() {}',
+  'runtime/server/utils/useRouteCache': 'export function useRouteCache() {}',
+}
+
+function getModulePath(id: string): string {
+  return parseURL(decodeURIComponent(pathToFileURL(id).href)).pathname
+}
+
+function getClientStub(id: string): string | undefined {
+  const path = getModulePath(id).replace(/\.[cm]?[jt]s$/, '')
+  const key = Object.keys(CLIENT_STUBS).find((key) => path.endsWith(key))
+  return key ? CLIENT_STUBS[key] : undefined
+}
+
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name,
     version,
     configKey: 'multiCache',
     compatibility: {
-      nuxt: '>=3.17.0',
+      nuxt: '^4.0.0',
     },
   },
   setup(passedOptions, nuxt) {
@@ -108,6 +133,12 @@ export default defineNuxtModule<ModuleOptions>({
 
     helper.applyBuildConfig()
 
+    // These composables don't do anything on the client, so their calls (and
+    // the callbacks passed to them) are removed from client bundles.
+    nuxt.options.optimization.treeShake.composables.client[
+      helper.resolvers.module.resolve('./runtime/composables')
+    ] = ['useRouteCache', 'useCDNHeaders', 'useComponentCache']
+
     // Add a build plugin to make sure we don't ever include the server
     // options or other server-only code in a client build.
     addBuildPlugin(
@@ -116,18 +147,20 @@ export default defineNuxtModule<ModuleOptions>({
           name: 'nuxt-multi-cache:server-only',
           enforce: 'pre',
           transformInclude(id) {
-            const path = parseURL(
-              decodeURIComponent(pathToFileURL(id).href),
-            ).pathname
+            const path = getModulePath(id)
 
             return (
               path.includes('runtime/helpers/multi-cache-logger') ||
               path.includes('server/multiCache.serverOptions') ||
-              path.includes('nuxt-multi-cache/server-options')
+              path.includes('nuxt-multi-cache/server-options') ||
+              !!getClientStub(id)
             )
           },
           transform(_source, id) {
-            if (id.includes('multiCache.serverOptions')) {
+            const stub = getClientStub(id)
+            if (stub) {
+              return stub
+            } else if (id.includes('multiCache.serverOptions')) {
               // The userland file exporting `defineMultiCacheOptions`.
               return 'export default function() { return {}; }'
             } else if (id.includes('multi-cache-logger')) {

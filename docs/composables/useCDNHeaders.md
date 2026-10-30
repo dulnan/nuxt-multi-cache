@@ -71,6 +71,7 @@ This method works for the following boolean properties:
 - immutable
 - maxStale
 - mustRevalidate
+- mustUnderstand
 - noCache
 - noStore
 - noTransform

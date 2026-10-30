@@ -91,13 +91,11 @@ thing.
 <script>
 export default {
   name: 'ProductTeaser',
-
   props: {
     productId: String,
     isHighlighted: Boolean,
     title: String,
   },
-
   serverCacheKey(props) {
     const variant = props.isHighlighted ? 'highlighted' : 'default'
     return `${props.productId}_${variant}`
