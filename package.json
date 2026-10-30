@@ -96,10 +96,13 @@
     "nuxt": "^4.6.3",
     "playwright-core": "^1.64.1",
     "prettier": "^3.6.2",
+    "simple-git": "^3.28.0",
+    "unbuild": "^3.6.1",
     "vite": "^8.3.5",
     "vite-plugin-css-injected-by-js": "^3.5.2",
     "vitepress": "^1.6.4",
     "vitest": "^5.0.5",
+    "vue": "^3.5.44",
     "vue-json-pretty": "^2.5.0",
     "vue-tsc": "^3.3.14"
   }
