@@ -46,6 +46,16 @@ await setup({
 })
 
 describe('Caching with the file system driver', () => {
+  test('loads the server options from the server dir', async () => {
+    await purgeAll()
+    await createPageWithoutHydration('/cachedPageFromDisk', 'de')
+    const items = await getRouteCacheItems()
+
+    // The cache key prefix is defined in the server options. The playground
+    // has no app directory, so this also covers the "classic" folder structure.
+    expect(items[0]?.key).toMatch(/^de--/)
+  })
+
   test('correctly serves a cached page', async () => {
     await purgeAll()
     const page1 = await createPageWithoutHydration('/cachedPageFromDisk', 'en')
