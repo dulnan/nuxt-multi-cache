@@ -35,6 +35,7 @@ export function encodeRouteCacheItem(
   expires: number | undefined,
   staleIfErrorExpires: number | undefined,
   staleWhileRevalidate: boolean | undefined,
+  enableBackgroundRevalidation: boolean | undefined,
   cacheTags: string[],
 ): string {
   return encodeCacheItem(data, {
@@ -44,6 +45,7 @@ export function encodeRouteCacheItem(
     cacheTags,
     staleIfErrorExpires: staleIfErrorExpires ?? CACHE_NEVER,
     staleWhileRevalidate,
+    enableBackgroundRevalidation,
   })
 }
 

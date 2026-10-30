@@ -13,6 +13,10 @@ describe('The RouteCacheHelper', () => {
     expect(helper.tags, 'Defaults to empty array.').toEqual([])
     expect(helper.cacheable, 'Defaults to no choice.').toEqual(null)
     expect(helper.maxAge, 'Defaults to permanent.').toEqual(-1)
+    expect(helper.enableBackgroundRevalidation, 'Defaults to null.').toEqual(
+      null,
+    )
+    expect(helper.staleWhileRevalidate, 'Defaults to null.').toEqual(null)
   })
 
   test('Returns self in every method.', () => {
@@ -28,6 +32,7 @@ describe('The RouteCacheHelper', () => {
       [
         "constructor",
         "allowStaleWhileRevalidate",
+        "allowBackgroundRevalidation",
       ]
     `)
 
@@ -37,6 +42,8 @@ describe('The RouteCacheHelper', () => {
     expect(helper.setUncacheable()).toEqual(helper)
     expect(helper.setMaxAge(0)).toEqual(helper)
     expect(helper.setStaleIfError(0)).toEqual(helper)
+    expect(helper.allowStaleWhileRevalidate()).toEqual(helper)
+    expect(helper.allowBackgroundRevalidation()).toEqual(helper)
   })
 
   test('adds cache tags', () => {
@@ -77,5 +84,19 @@ describe('The RouteCacheHelper', () => {
     expect(helper.maxAge, 'Sets a lower max age value.').toEqual(5000)
     helper.setMaxAge(999999999)
     expect(helper.maxAge, 'Does not set a larger max age value.').toEqual(5000)
+  })
+
+  test('allows background revalidation', () => {
+    const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
+    expect(helper.enableBackgroundRevalidation).toEqual(null)
+    helper.allowBackgroundRevalidation()
+    expect(helper.enableBackgroundRevalidation).toEqual(true)
+  })
+
+  test('allows stale while revalidate', () => {
+    const helper = new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
+    expect(helper.staleWhileRevalidate).toEqual(null)
+    helper.allowStaleWhileRevalidate()
+    expect(helper.staleWhileRevalidate).toEqual(true)
   })
 })

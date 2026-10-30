@@ -183,6 +183,7 @@ describe('CacheTagInvalidator', () => {
         1000,
         500,
         true,
+        true,
         ['route-tag1', 'route-tag2'],
       )
 
@@ -357,6 +358,7 @@ describe('CacheTagInvalidator', () => {
         200,
         1000,
         500,
+        false,
         false,
         ['tag1', 'tag3'],
       )

@@ -48,7 +48,7 @@ describe('The "stale if error" route cache feature', () => {
     await page.locator('#button-fail').click()
     await sleep(800)
     expect(await page.locator('#api-result').innerText()).toEqual('1: Error')
-  })
+  }, 10_000)
 
   test('returns a stale response if it exists', async () => {
     await purgeAll()

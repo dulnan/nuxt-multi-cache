@@ -106,6 +106,7 @@ export async function onAfterResponse(
   const expires = routeHelper.getExpires('maxAge')
   const staleIfErrorExpires = routeHelper.getExpires('staleIfError')
   const staleWhileRevalidate = !!routeHelper.staleWhileRevalidate
+  const enableBackgroundRevalidation = routeHelper.enableBackgroundRevalidation
   const cacheTags = routeHelper.getTags()
 
   const cacheItem = encodeRouteCacheItem(
@@ -115,6 +116,7 @@ export async function onAfterResponse(
     expires,
     staleIfErrorExpires,
     staleWhileRevalidate,
+    enableBackgroundRevalidation,
     cacheTags,
   )
 
@@ -126,6 +128,7 @@ export async function onAfterResponse(
       staleIfErrorExpires,
       cacheTags,
       staleWhileRevalidate,
+      enableBackgroundRevalidation,
       statusCode,
     })
   }
