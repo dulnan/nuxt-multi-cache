@@ -71,11 +71,12 @@ export async function useDataCacheImplementation<T>(
   ) => {
     const helper = new DataCacheHelper(now)
 
-    if (providedMaxAge) {
+    // 0 is a valid value and means "never".
+    if (providedMaxAge !== undefined && providedMaxAge !== null) {
       helper.setMaxAge(providedMaxAge)
     }
 
-    if (providedStaleIfError) {
+    if (providedStaleIfError !== undefined && providedStaleIfError !== null) {
       helper.setStaleIfError(providedStaleIfError)
     }
 

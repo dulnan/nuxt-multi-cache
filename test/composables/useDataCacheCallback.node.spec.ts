@@ -158,6 +158,32 @@ describe('useDataCacheCallback composable', () => {
     ).toMatchInlineSnapshot('1638318600')
   })
 
+  test.each([[0], ['never' as const]])(
+    'Does not cache data with a max age of %s',
+    async (maxAge) => {
+      isServerValue = true
+      const event = buildEventWithStorage({})
+
+      let calls = 0
+      async function getValue() {
+        return await useDataCacheCallback(
+          'never_cached',
+          (helper) => {
+            calls++
+            helper?.setMaxAge(maxAge)
+            return 'Foobar'
+          },
+          event,
+        )
+      }
+
+      await getValue()
+      await getValue()
+
+      expect(calls).toEqual(2)
+    },
+  )
+
   test('Returns stale data if permanent age defined', async () => {
     isServerValue = true
     const event = buildEventWithStorage({

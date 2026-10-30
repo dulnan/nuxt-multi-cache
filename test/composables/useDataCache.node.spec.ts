@@ -181,6 +181,31 @@ describe('useDataCache composable', () => {
     ).toMatchInlineSnapshot('1638318600')
   })
 
+  test.each([[0], ['never' as const]])(
+    'Does not put data in cache with a max age of %s',
+    async (maxAge) => {
+      setIsServer(true)
+      const storage: Record<string, CacheItem> = {}
+      const event = buildEventWithStorage(storage)
+
+      const { addToCache } = await useDataCache('never_cached', event)
+      await addToCache('Hello', [], maxAge)
+
+      expect(storage).toEqual({})
+    },
+  )
+
+  test('Puts data in cache permanently without a max age', async () => {
+    setIsServer(true)
+    const storage: Record<string, CacheItem> = {}
+    const event = buildEventWithStorage(storage)
+
+    const { addToCache } = await useDataCache('permanent', event)
+    await addToCache('Hello')
+
+    expect(storage.permanent?.expires).toEqual(-1)
+  })
+
   test('Returns dummy if SSR context not found', async () => {
     setIsServer(true)
 

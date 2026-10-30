@@ -63,10 +63,10 @@ properties:
 
 #### clientMaxAge?: `number`
 
-By default, the composable will only cache server-side and will not do any
-client-side caching. This can be changed by providing a `clientMaxAge` value. In
-this case, the composable will store the result in `nuxtApp.static.data` and
-will return cached data for the given duration.
+By default, the composable does not do any client-side caching. This can be
+changed by providing a `clientMaxAge` value. In this case, the composable will
+store the result in `nuxtApp.static.data` and will return cached data for the
+given duration.
 
 ```typescript
 const { data } = await useCachedAsyncData(
@@ -99,12 +99,16 @@ async function createNewUser() {
 }
 ```
 
-#### serverMaxAge?: `((v: ResT) => number|undefined) | number`
+#### serverMaxAge?: `((v: ResT) => MaxAge|undefined) | MaxAge`
 
-The max age for the cache item. Can either be a method or a value.
+The [max age](/overview/max-age) for the cache item. Can either be a method or a
+value.
 
 When a method is defined, it receives the result of your handler as the first
-argument and should return a number.
+argument and should return a max age.
+
+If no `serverMaxAge` is provided, or if the method returns `undefined`, the data
+is not cached on the server.
 
 ```typescript
 const { data } = await useCachedAsyncData(

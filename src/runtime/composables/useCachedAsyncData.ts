@@ -39,7 +39,7 @@ type CachedAsyncDataOptions<
    * cached data (either from payload or from previous client-side
    * fetches) for the given duration.
    */
-  clientMaxAge: MaxAge
+  clientMaxAge?: MaxAge
 
   /**
    * The server-side max age in seconds.
@@ -49,7 +49,7 @@ type CachedAsyncDataOptions<
    *
    * If undefined or 0, nothing will be cached. To cache permanently, define 'permanent' or -1.
    */
-  serverMaxAge: ValueOrMethod<MaxAge, ResT>
+  serverMaxAge?: ValueOrMethod<MaxAge | undefined, ResT>
 
   /**
    * The server-side cache tags to use.
@@ -85,7 +85,7 @@ function getClientSideCachedData<DataT>(
 /**
  * Resolves the value for options that can either be a value or method.
  */
-function valueOrMethod<T extends number | string[] | MaxAge, ResT>(
+function valueOrMethod<T extends number | string[] | undefined | MaxAge, ResT>(
   value: ValueOrMethod<T, ResT> | undefined,
   result: ResT,
 ): T | undefined {
@@ -141,9 +141,8 @@ export function useCachedAsyncData<
 /**
  * Wrapper around useAsyncData and useDataCache.
  *
- * By default, the data is indefinitely cached on the server side. When the `
- * serverMaxAge` option is provided, you can define a max age for server-side
- * caching.
+ * The data is only cached on the server side if the `serverMaxAge` option is
+ * provided. It defines the max age for server-side caching.
  *
  * If you want to extend caching to the client-side, provide a `clientMaxAge`
  * value. This will cache the result in Nuxt's static data cache. The cache is
