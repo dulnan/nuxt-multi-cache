@@ -38,6 +38,7 @@ describe('The CDNHelper', () => {
         "addTags",
         "setNumeric",
         "setBoolean",
+        "addCustomDirective",
         "private",
         "public",
         "mergeFromCacheItem",
@@ -52,6 +53,8 @@ describe('The CDNHelper', () => {
     expect(helper.set('maxAge', 9000)).toEqual(helper)
     expect(helper.addTags([])).toEqual(helper)
     expect(helper.setNumeric('maxAge', 9000)).toEqual(helper)
+    expect(helper.setBoolean('noTransform')).toEqual(helper)
+    expect(helper.addCustomDirective('durable')).toEqual(helper)
     expect(helper.private()).toEqual(helper)
     expect(helper.public()).toEqual(helper)
   })
