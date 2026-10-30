@@ -18,7 +18,7 @@ import {
 import { getRouteCacheKey } from '../../helpers/routeCache'
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/multi-cache-logger'
-import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import { debug } from '#nuxt-multi-cache/config'
 
 function isPureObject(value: any) {
@@ -89,7 +89,7 @@ async function storeResponse(
     return
   }
 
-  const { serverOptions } = useMultiCacheApp()
+  const { serverOptions } = getMultiCacheApp()
 
   let responseHeaders = getResponseHeaders(event)
 
@@ -179,7 +179,7 @@ export async function onAfterResponse(
     // route would be served until it's purged.
     const revalidationKey = event.context?.multiCache?.routeRevalidationkey
     if (revalidationKey) {
-      useMultiCacheApp().state.removeKeyBeingRevalidated(revalidationKey)
+      getMultiCacheApp().state.removeKeyBeingRevalidated(revalidationKey)
     }
   }
 }

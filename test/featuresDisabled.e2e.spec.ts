@@ -36,6 +36,11 @@ await setup({
 })
 
 describe('With all features disabled', () => {
+  test('useMultiCacheApp() returns undefined', async () => {
+    // The server plugin is not registered, so there is no app.
+    expect(await $fetch('/api/multiCacheAppCaches')).toEqual({ caches: null })
+  })
+
   test('No CDN headers are present.', async () => {
     const response = await fetch('/api/cdnHeaders')
     expect(response.headers.get('surrogate-control')).toBeNull()

@@ -1,5 +1,5 @@
 import { type H3Event, getRequestURL } from 'h3'
-import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import {
   enabledForRequest,
   getMultiCacheContext,
@@ -69,7 +69,7 @@ export async function serveCachedHandler(event: H3Event) {
     return
   }
 
-  const { state } = useMultiCacheApp()
+  const { state } = getMultiCacheApp()
 
   try {
     // Build the cache key.

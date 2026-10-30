@@ -15,10 +15,10 @@ export default defineEventHandler(async (event) => {
   const multiCache = useMultiCacheApp()
 
   // Clear the route cache.
-  await multiCache.cache.route?.storage.clear()
+  await multiCache?.cache.route?.storage.clear()
 
   // Get all data cache item keys.
-  const dataCacheKeys = await app.multiCache.cache.data?.storage.getKeys()
+  const dataCacheKeys = await multiCache?.cache.data?.storage.getKeys()
 
   return {
     success: true,

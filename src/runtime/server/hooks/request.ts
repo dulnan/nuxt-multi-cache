@@ -5,7 +5,7 @@ import {
   isExcludedRoutePath,
   isRouteCacheMethod,
 } from '../../helpers/routeCache'
-import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
 import { useRuntimeConfig } from '#imports'
 
@@ -38,7 +38,7 @@ export async function onRequest(event: H3Event) {
     return
   }
 
-  const app = useMultiCacheApp()
+  const app = getMultiCacheApp()
   event.context.multiCacheApp = app
 
   // Route cache is disabled.

@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import { readBody, defineEventHandler, createError } from 'h3'
-import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import type { CachePurgeTagsResponse } from './../../types'
 import { checkAuth } from './helpers'
 
@@ -32,7 +32,7 @@ export default defineEventHandler<Promise<CachePurgeTagsResponse>>(
   async (event) => {
     await checkAuth(event)
     const tags = await getTagsToPurge(event)
-    const app = useMultiCacheApp()
+    const app = getMultiCacheApp()
 
     app.cacheTagInvalidator.add(tags)
 

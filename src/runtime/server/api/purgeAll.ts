@@ -1,5 +1,5 @@
 import { defineEventHandler, createError } from 'h3'
-import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import type { CachePurgeAllResponse, MultiCacheInstances } from './../../types'
 import { checkAuth } from './helpers'
 
@@ -7,7 +7,7 @@ export default defineEventHandler<Promise<CachePurgeAllResponse>>(
   async (event) => {
     await checkAuth(event)
 
-    const app = useMultiCacheApp()
+    const app = getMultiCacheApp()
 
     if (!app.cache) {
       throw createError({

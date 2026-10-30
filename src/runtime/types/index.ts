@@ -339,8 +339,11 @@ declare module 'nitropack/types' {
   export interface NitroApp {
     /**
      * The nuxt-multi-cache cache context.
+     *
+     * Undefined if the module's server plugin is not registered, which is the
+     * case if all features and the API are disabled.
      */
-    multiCache: MultiCacheApp
+    multiCache?: MultiCacheApp
   }
 }
 
@@ -348,8 +351,11 @@ declare module 'nitropack' {
   export interface NitroApp {
     /**
      * The nuxt-multi-cache cache context.
+     *
+     * Undefined if the module's server plugin is not registered, which is the
+     * case if all features and the API are disabled.
      */
-    multiCache: MultiCacheApp
+    multiCache?: MultiCacheApp
   }
 }
 
