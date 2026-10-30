@@ -143,6 +143,24 @@ The resulting keys of the cache entries will be something like:
 - `Navbar::de--chf`
 - `Navbar::fr--eur`
 
+### Wrapper Components
+
+`<RenderCacheable>` can also be used in a wrapper component that forwards its
+own slot:
+
+```vue
+<template>
+  <RenderCacheable :cache-key="cacheKey">
+    <slot />
+  </RenderCacheable>
+</template>
+```
+
+In this case, a cache key is required: Without one, the content is not cached.
+The wrapper can't know what is passed into its slot, so a key derived from props
+could be the same for different content. The key is built from the name of the
+first component in the forwarded slot and the cache key, e.g. `Navbar::en--usd`.
+
 ## Cache Tags
 
 You can provide custom cache tags that can later be used to remove components

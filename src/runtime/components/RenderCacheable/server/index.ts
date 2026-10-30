@@ -10,7 +10,12 @@ import {
   getRequestTimestamp,
   getCacheTagRegistry,
 } from './../../../helpers/server'
-import { getCacheKey, getCachedComponent, renderSlot } from './helper'
+import {
+  getCacheKey,
+  getCachedComponent,
+  getSlotVNode,
+  renderSlot,
+} from './helper'
 import { type Props, props } from '../shared'
 import { debug } from '#nuxt-multi-cache/config'
 import {
@@ -74,7 +79,7 @@ export default defineComponent<Props>({
     const defaultSlot = slots.default()
     const renderFallback = () => h(tag, defaultSlot)
 
-    const first = defaultSlot[0]
+    const first = getSlotVNode(props, defaultSlot)
 
     if (props.noCache || !first) {
       return renderFallback

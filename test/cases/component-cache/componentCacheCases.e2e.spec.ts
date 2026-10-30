@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { setup, createPage } from '@nuxt/test-utils/e2e'
+import { setup, createPage, $fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test, beforeEach } from 'vitest'
 import { expect as playwrightExpect } from '@nuxt/test-utils/playwright'
 import purgeAll from './../../__helpers__/purgeAll'
@@ -14,6 +14,11 @@ await setup({
   build: true,
   rootDir: path.resolve(__dirname, './nuxt'),
 })
+
+async function getForwardedSlotTimestamp(query: string) {
+  const html = await $fetch<string>('/forwarded-slot' + query)
+  return html.match(/id="timestamp">(\d+)</)?.[1]
+}
 
 describe('The RenderCacheable component', () => {
   beforeEach(async () => {
@@ -52,6 +57,25 @@ describe('The RenderCacheable component', () => {
       diff,
       'The component sets a max age of 10, so the number of seconds until it expires should be less than the defined max age',
     ).toBeLessThan(15)
+  })
+
+  test('caches the content of a forwarded slot with a cache key', async () => {
+    // The wrapper component renders <RenderCacheable> with a <slot />.
+    const timestamp1 = await getForwardedSlotTimestamp('?key=forwarded-slot')
+    const timestamp2 = await getForwardedSlotTimestamp('?key=forwarded-slot')
+
+    expect(timestamp1).toBeTruthy()
+    expect(timestamp1).toEqual(timestamp2)
+    expect(await getComponentCacheItem()).toHaveLength(1)
+  })
+
+  test('does not cache the content of a forwarded slot without a cache key', async () => {
+    const timestamp1 = await getForwardedSlotTimestamp('')
+    const timestamp2 = await getForwardedSlotTimestamp('')
+
+    expect(timestamp1).toBeTruthy()
+    expect(timestamp1).not.toEqual(timestamp2)
+    expect(await getComponentCacheItem()).toHaveLength(0)
   })
 
   test('sets max age of "0" correctly on component', async () => {

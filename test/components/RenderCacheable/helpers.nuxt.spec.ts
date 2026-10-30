@@ -1,10 +1,12 @@
 import { describe, expect, test } from 'vitest'
+import { Fragment, defineComponent, h } from 'vue'
 import { createStorage } from 'unstorage'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import {
   getCacheKey,
   getComponentName,
   getCachedComponent,
+  getSlotVNode,
 } from './../../../src/runtime/components/RenderCacheable/server/helper'
 
 describe('getCacheKey', () => {
@@ -41,6 +43,38 @@ describe('getCacheKey', () => {
     ).toMatchInlineSnapshot(
       `"MyComponent::AKu9ti69MYahEcv8PwEZFe0Ycb8YyUY_-RWGnNH8zws"`,
     )
+  })
+})
+
+describe('getSlotVNode', () => {
+  const Inner = defineComponent({ name: 'Inner', render: () => null })
+
+  test('Returns the first vnode of the slot.', () => {
+    const inner = h(Inner)
+    expect(getSlotVNode({}, [inner, h('div')])).toBe(inner)
+  })
+
+  test('Returns the first child of a forwarded slot if a cache key is provided.', () => {
+    const inner = h(Inner)
+    expect(getSlotVNode({ cacheKey: 'foo' }, [h(Fragment, [inner])])).toBe(
+      inner,
+    )
+  })
+
+  test('Returns the first child of a slot that was forwarded twice.', () => {
+    const inner = h(Inner)
+    expect(
+      getSlotVNode({ cacheKey: 'foo' }, [h(Fragment, [h(Fragment, [inner])])]),
+    ).toBe(inner)
+  })
+
+  test('Returns nothing for a forwarded slot without a cache key.', () => {
+    expect(getSlotVNode({}, [h(Fragment, [h(Inner)])])).toBeUndefined()
+  })
+
+  test('Returns nothing for an empty slot.', () => {
+    expect(getSlotVNode({}, [])).toBeUndefined()
+    expect(getSlotVNode({ cacheKey: 'foo' }, [h(Fragment, [])])).toBeUndefined()
   })
 })
 

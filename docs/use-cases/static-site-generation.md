@@ -16,7 +16,9 @@ components across multiple SSG executions.
 It's also possible to use [`<RenderCacheable>`](/features/component-cache) to
 cache the markup of entire pages when used inside a layout component. This means
 that if you need to regenerate the pages you only have to generate the ones that
-have actually changed.
+have actually changed. The cache key must then be unique for each page, for
+example the route path (see
+[wrapper components](/features/component-cache#wrapper-components)).
 
 Depending on your project this can significantly improve the time it takes to
 generate pages.
