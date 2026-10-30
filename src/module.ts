@@ -109,7 +109,7 @@ export default defineNuxtModule<ModuleOptions>({
     helper.applyBuildConfig()
 
     // Add a build plugin to make sure we don't ever include the server
-    // options in a client build.
+    // options or other server-only code in a client build.
     addBuildPlugin(
       createUnplugin(() => {
         return {
@@ -121,14 +121,20 @@ export default defineNuxtModule<ModuleOptions>({
             ).pathname
 
             return (
+              path.includes('runtime/helpers/multi-cache-logger') ||
               path.includes('server/multiCache.serverOptions') ||
               path.includes('nuxt-multi-cache/server-options')
             )
           },
           transform(_source, id) {
-            // The userland file exporting `defineMultiCacheOptions`.
             if (id.includes('multiCache.serverOptions')) {
+              // The userland file exporting `defineMultiCacheOptions`.
               return 'export default function() { return {}; }'
+            } else if (id.includes('multi-cache-logger')) {
+              // We do this so that the consola package is not bundled in the
+              // client, which for some reason happens even if it's supposed
+              // to only be used on server bundles.
+              return `export const logger = console;`
             }
 
             // The server-options template provided by the module.

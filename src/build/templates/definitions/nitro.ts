@@ -7,7 +7,7 @@ export default defineTemplate(
   { path: 'nuxt-multi-cache/nitro' },
   null,
   (helper) => {
-    const serverApiPrefix = helper.options.api.prefix
+    const serverApiPrefix = helper.options.api?.prefix
     const endpoints: string[] = []
 
     const caches = ['data', 'route', 'component']

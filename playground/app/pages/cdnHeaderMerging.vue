@@ -10,7 +10,9 @@ const event = useRequestEvent()
 
 const { data } = await useFetch('/api/cdnHeaders', {
   onResponse(ctx) {
-    useCDNHeaders((cdn) => cdn.mergeFromResponse(ctx.response), event)
+    useCDNHeaders((cdn) => {
+      cdn.mergeFromResponse(ctx.response)
+    }, event)
   },
 })
 

@@ -13,14 +13,26 @@ function buildEvent(): H3Event {
       multiCache: {
         cdn: new NuxtMultiCacheCDNHelper(nowTimestamp),
       },
+      multiCacheApp: {
+        config: {
+          cdn: true,
+        },
+      },
     },
   } as H3Event
 }
 
+let returnEvent = true
+
 vi.mock('#imports', () => {
   return {
-    useRequestEvent: () => {
-      return buildEvent()
+    get useRequestEvent() {
+      return () => {
+        if (returnEvent) {
+          return buildEvent()
+        }
+        return undefined
+      }
     },
     useRuntimeConfig: () => {
       return {
@@ -43,12 +55,14 @@ vi.mock('#nuxt-multi-cache/config', () => {
     cdnEnabled: true,
     cdnCacheControlHeader: 'Surrogate-Control',
     cdnCacheTagHeader: 'Cache-Tag',
+    isTestMode: true,
   }
 })
 
 describe('useCDNHeaders composable', () => {
   beforeEach(() => {
     isServerValue = false
+    returnEvent = true
   })
   test('Does not call callback in client', () => {
     const params = {
@@ -99,6 +113,7 @@ describe('useCDNHeaders composable', () => {
 
   test('Does not call callback if event is missing.', () => {
     isServerValue = true
+    returnEvent = false
 
     const params = {
       cb() {},

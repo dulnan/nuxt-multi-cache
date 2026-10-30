@@ -23,6 +23,10 @@ export default defineNuxtConfig({
     inlineStyles: true,
   },
 
+  future: {
+    compatibilityVersion: 4,
+  },
+
   vite: {
     plugins: [cssInjectedByJsPlugin()],
   },

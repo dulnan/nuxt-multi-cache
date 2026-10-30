@@ -126,19 +126,21 @@ describe('The component cache feature', () => {
     await purgeAll()
 
     const first = await createPage('/payloadData')
-    const NUXT_FIRST = await first
-      .evaluateHandle(() => window.__NUXT__)
+    const firstValue = await first
+      .evaluateHandle(
+        () => (window.useNuxtApp as any)().payload.data.withAsyncData?.api,
+      )
       .then((v) => v.jsonValue())
-    const firstValue = NUXT_FIRST?.data.withAsyncData.api
 
     expect(firstValue).toMatchInlineSnapshot('"This is data from the API."')
 
     // Even after caching the page contains the payload.
     const second = await createPage('/payloadData')
-    const NUXT_SECOND = await second
-      .evaluateHandle(() => window.__NUXT__)
+    const secondValue = await second
+      .evaluateHandle(
+        () => (window.useNuxtApp as any)().payload.data.withAsyncData?.api,
+      )
       .then((v: any) => v.jsonValue())
-    const secondValue = NUXT_SECOND?.data.withAsyncData.api
     expect(secondValue).toMatchInlineSnapshot('"This is data from the API."')
   })
 

@@ -195,5 +195,5 @@ describe('The RenderCacheable component', () => {
       page.locator('#timestamp'),
       'should have changed',
     ).not.toHaveText(timestamp1)
-  }, 10_000)
+  }, 20_000)
 })

@@ -61,7 +61,7 @@ function createMultiCacheApp(): MultiCacheApp {
   const cacheTagRegistry =
     serverOptions.cacheTagRegistry === 'in-memory'
       ? new InMemoryCacheTagRegistry()
-      : serverOptions.cacheTagRegistry ?? null
+      : (serverOptions.cacheTagRegistry ?? null)
 
   const cacheTagInvalidator = new CacheTagInvalidator(
     cacheContext,

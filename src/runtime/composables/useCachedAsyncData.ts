@@ -1,9 +1,5 @@
 import type { NuxtApp, AsyncDataOptions, AsyncData, NuxtError } from 'nuxt/app'
 import type { MaybeRefOrGetter } from 'vue'
-import type {
-  DefaultAsyncDataErrorValue,
-  DefaultAsyncDataValue,
-} from '#app/defaults'
 import type { PickFrom } from '#app/composables/asyncData'
 import {
   useAsyncData,
@@ -32,7 +28,7 @@ type CachedAsyncDataOptions<
   ResT,
   DataT = ResT,
   PickKeys extends KeysOf<DataT> = KeysOf<DataT>,
-  DefaultT = DefaultAsyncDataValue,
+  DefaultT = undefined,
 > = Omit<AsyncDataOptions<ResT, DataT, PickKeys, DefaultT>, 'getCachedData'> & {
   /**
    * The client-side max age in seconds.
@@ -118,7 +114,7 @@ export function useCachedAsyncData<
   | (NuxtErrorDataT extends Error | NuxtError
       ? NuxtErrorDataT
       : NuxtError<NuxtErrorDataT>)
-  | DefaultAsyncDataErrorValue
+  | undefined
 >
 
 export function useCachedAsyncData<
@@ -136,7 +132,7 @@ export function useCachedAsyncData<
   | (NuxtErrorDataT extends Error | NuxtError
       ? NuxtErrorDataT
       : NuxtError<NuxtErrorDataT>)
-  | DefaultAsyncDataErrorValue
+  | undefined
 >
 
 /**
@@ -172,7 +168,7 @@ export function useCachedAsyncData<
   | (NuxtErrorDataT extends Error | NuxtError
       ? NuxtErrorDataT
       : NuxtError<NuxtErrorDataT>)
-  | DefaultAsyncDataErrorValue
+  | undefined
 > {
   const reactiveKey = computed(() => toValue(_key))
 

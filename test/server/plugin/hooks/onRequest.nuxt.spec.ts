@@ -8,6 +8,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
       return true
     },
     debug: false,
+    isTestMode: true,
   }
 })
 
