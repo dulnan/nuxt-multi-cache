@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
+  maxAgeToExpires,
   parseMaxAge,
   toTimestamp,
   type MaxAge,
@@ -355,5 +356,19 @@ describe('parseMaxAge', () => {
       expect(result1).toBe(result2)
       expect(result2).toBe(result3)
     })
+  })
+})
+
+describe('maxAgeToExpires', () => {
+  it.each([
+    [60, mockDateTimestamp + 60],
+    ['5m', mockDateTimestamp + 300],
+    ['permanent', -1],
+    [-1, -1],
+    ['never', 0],
+    [0, 0],
+    [-100, 0],
+  ] as const)('returns the expires timestamp for %j', (maxAge, expected) => {
+    expect(maxAgeToExpires(maxAge, mockDateTimestamp)).toBe(expected)
   })
 })

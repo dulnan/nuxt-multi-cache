@@ -9,8 +9,9 @@ import {
   computed,
 } from '#imports'
 import {
-  CACHE_PERMANENT,
   CACHE_NEVER,
+  isExpired,
+  maxAgeToExpires,
   parseMaxAge,
   type MaxAge,
   toTimestamp,
@@ -35,9 +36,8 @@ type CachedAsyncDataOptions<
    *
    * If undefined or 0, nothing will be cached. To cache permanently, define 'permanent' or -1.
    *
-   * If a positive integer value is provided, the composable will return
-   * cached data (either from payload or from previous client-side
-   * fetches) for the given duration.
+   * Otherwise the composable will return cached data (either from payload or
+   * from previous client-side fetches) for the given duration.
    */
   clientMaxAge?: MaxAge
 
@@ -70,7 +70,8 @@ type ClientSideCachedAsyncData<DataT> = {
   data: DataT
 
   /**
-   * The timestamp in milliseconds when the cache item will expire.
+   * The timestamp in seconds when the cache item will expire, or -1 if it
+   * never expires.
    */
   expires: number
 }
@@ -93,10 +94,6 @@ function valueOrMethod<T extends number | string[] | undefined | MaxAge, ResT>(
     return value(result)
   }
   return value
-}
-
-function isValidMaxAge(v?: unknown): v is number {
-  return typeof v === 'number' && (v >= 1 || v === CACHE_PERMANENT)
 }
 
 export function useCachedAsyncData<
@@ -196,15 +193,16 @@ export function useCachedAsyncData<
           ? await options.transform(result)
           : (result as DataT)
 
-        const maxAge = options.clientMaxAge
-          ? parseMaxAge(options.clientMaxAge, now)
-          : null
+        const expires = maxAgeToExpires(
+          options.clientMaxAge ?? CACHE_NEVER,
+          now,
+        )
 
-        // If a value is provided, we may also cache it client side.
-        if (isValidMaxAge(maxAge)) {
+        // If a max age is provided, we may also cache it client side.
+        if (expires !== CACHE_NEVER) {
           const cacheItem: ClientSideCachedAsyncData<DataT> = {
             data,
-            expires: Date.now() + maxAge * 1000,
+            expires,
           }
           app.static.data[reactiveKey.value] = cacheItem
         }
@@ -239,8 +237,11 @@ export function useCachedAsyncData<
             return payloadData
           }
 
-          // No valid clientMaxAge is provided: Nothing is returned from client cache.
-          if (!isValidMaxAge(options.clientMaxAge)) {
+          const now = toTimestamp(new Date())
+          const clientMaxAge = options.clientMaxAge ?? CACHE_NEVER
+
+          // No clientMaxAge is provided: Nothing is returned from client cache.
+          if (parseMaxAge(clientMaxAge, now) === CACHE_NEVER) {
             return
           }
 
@@ -248,27 +249,25 @@ export function useCachedAsyncData<
           if (payloadData) {
             // The expires date for payload items is determined by the time
             // the page was first hydrated.
-            const firstHydrationTime: number =
-              nuxtApp.static.data.__firstHydrationTime
+            const firstHydrationTime = toTimestamp(
+              new Date(nuxtApp.static.data.__firstHydrationTime),
+            )
 
             // The expire value has to be calculated dynamically.
-            const expires = firstHydrationTime + options.clientMaxAge * 1000
+            const expires = maxAgeToExpires(clientMaxAge, firstHydrationTime)
 
             // Payload data is not yet expired.
-            if (expires > Date.now()) {
+            if (!isExpired(expires, now)) {
               return payloadData
             }
           }
 
           // Check whether we have something in the static cache.
           const staticCache = getClientSideCachedData(key, app)
-          if (staticCache) {
-            const expires = staticCache.expires
 
-            // Static cached data not expired, return it.
-            if (expires > Date.now()) {
-              return staticCache.data
-            }
+          // Static cached data not expired, return it.
+          if (staticCache && !isExpired(staticCache.expires, now)) {
+            return staticCache.data
           }
 
           return undefined as any

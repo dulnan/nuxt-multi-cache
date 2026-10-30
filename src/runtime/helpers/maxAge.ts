@@ -143,6 +143,21 @@ export function toTimestamp(date: Date): number {
   return Math.floor(date.getTime() / 1000)
 }
 
+/**
+ * Convert a max age to an expires timestamp.
+ *
+ * Returns CACHE_PERMANENT or CACHE_NEVER for these special values, so the
+ * result can be checked with isExpired().
+ */
+export function maxAgeToExpires(v: MaxAge, now: number): number {
+  const maxAge = parseMaxAge(v, now)
+  if (maxAge === CACHE_PERMANENT || maxAge === CACHE_NEVER) {
+    return maxAge
+  }
+
+  return now + maxAge
+}
+
 export function expiresToMaxAge(expires: number, now: number): number {
   if (expires === CACHE_PERMANENT) {
     return CACHE_PERMANENT

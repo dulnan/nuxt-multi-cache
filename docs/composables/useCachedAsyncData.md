@@ -61,12 +61,12 @@ cached.
 The type extends `AsyncDataOptions` from Nuxt and adds three additional
 properties:
 
-#### clientMaxAge?: `number`
+#### clientMaxAge?: `MaxAge`
 
 By default, the composable does not do any client-side caching. This can be
-changed by providing a `clientMaxAge` value. In this case, the composable will
-store the result in `nuxtApp.static.data` and will return cached data for the
-given duration.
+changed by providing a `clientMaxAge` value, which can be any
+[max age](/overview/max-age). In this case, the composable will store the result
+in `nuxtApp.static.data` and will return cached data for the given duration.
 
 ```typescript
 const { data } = await useCachedAsyncData(

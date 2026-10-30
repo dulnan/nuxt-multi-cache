@@ -125,6 +125,22 @@ describe('The useCachedAsyncData composable', () => {
     },
   )
 
+  test.each(['5', '5m', 'permanent', '-1'])(
+    'caches on the client with a clientMaxAge of %s',
+    async (maxAge) => {
+      await purgeAll()
+
+      const page = await createPage(`/cachedAsyncDataMaxAge?client=${maxAge}`)
+      const time1 = await page.locator('#time').innerText()
+
+      await page.locator('#go-to-home').click()
+      await page.waitForURL((url) => url.pathname === '/')
+      await page.goBack()
+
+      await playwrightExpect(page.locator('#time')).toHaveText(time1)
+    },
+  )
+
   test('works using a reactive key', async () => {
     await purgeAll()
 
