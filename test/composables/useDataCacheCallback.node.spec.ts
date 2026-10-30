@@ -184,6 +184,57 @@ describe('useDataCacheCallback composable', () => {
     },
   )
 
+  test.each([[0], [false], [''], [null]])(
+    'Returns the falsy cached value %j',
+    async (cachedValue) => {
+      isServerValue = true
+      const event = buildEventWithStorage({})
+
+      let calls = 0
+      async function getValue() {
+        return await useDataCacheCallback(
+          'falsy',
+          () => {
+            calls++
+            return cachedValue
+          },
+          event,
+        )
+      }
+
+      expect(await getValue()).toEqual(cachedValue)
+      expect(await getValue()).toEqual(cachedValue)
+      expect(calls).toEqual(1)
+    },
+  )
+
+  test.each([[0], [false], [''], [null]])(
+    'Returns the falsy stale value %j',
+    async (staleValue) => {
+      isServerValue = true
+      const event = buildEventWithStorage({
+        falsy: {
+          // CacheItem.data is typed as string, but the data cache stores any
+          // value.
+          data: staleValue as any,
+          // Expired a long time ago.
+          expires: 1,
+          staleIfErrorExpires: -1,
+        },
+      })
+
+      const data = await useDataCacheCallback(
+        'falsy',
+        () => {
+          throw new Error('Error loading data')
+        },
+        event,
+      )
+
+      expect(data).toEqual(staleValue)
+    },
+  )
+
   test('Returns stale data if permanent age defined', async () => {
     isServerValue = true
     const event = buildEventWithStorage({

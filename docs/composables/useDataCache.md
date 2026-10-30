@@ -57,6 +57,10 @@ calling `useDataCache`:
 const { value } = await useDataCache<WeatherResponse>('weather')
 ```
 
+If the cached value can be falsy (such as `0`, `false`, `''` or `null`), check
+for `value !== undefined` instead of `if (value)`, so that a cached falsy value
+is returned from cache.
+
 ### addToCache: `(data: any, tags?: string[], maxAge?: MaxAge, staleIfError?: MaxAge)`
 
 Use this method to add data to the cache for the given key. The data should be a

@@ -1,5 +1,5 @@
 import path from 'path'
-import { setup, createPage } from '@nuxt/test-utils/e2e'
+import { setup, createPage, $fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
 import { expect as playwrightExpect } from '@nuxt/test-utils/playwright'
 import type { ModuleOptions } from '../src/build/options'
@@ -140,6 +140,24 @@ describe('The useCachedAsyncData composable', () => {
       await playwrightExpect(page.locator('#time')).toHaveText(time1)
     },
   )
+
+  test('caches a falsy value', async () => {
+    await purgeAll()
+
+    const getCount = () =>
+      $fetch<{ count: number }>('/api/falsyCounter?read=1').then((v) => v.count)
+    const before = await getCount()
+
+    for (let i = 0; i < 2; i++) {
+      const page = await createPage('/cachedAsyncDataFalsy')
+      await playwrightExpect(page.locator('#value')).toHaveText('0')
+      await page.waitForLoadState('networkidle')
+    }
+
+    // Only the first server render ran the handler. The second one loaded the
+    // value from the data cache, and both pages hydrated from the payload.
+    expect((await getCount()) - before).toEqual(1)
+  })
 
   test('works using a reactive key', async () => {
     await purgeAll()

@@ -245,6 +245,19 @@ describe('useDataCache composable', () => {
     expect(cached.staleValue).toEqual('Hello')
   })
 
+  test.each([[0], [false], [''], [null]])(
+    'Returns the falsy cached value %j',
+    async (cachedValue) => {
+      setIsServer(true)
+      const event = buildEventWithStorage({})
+
+      const { addToCache } = await useDataCache('falsy', event)
+      await addToCache(cachedValue)
+
+      expect((await useDataCache('falsy', event)).value).toEqual(cachedValue)
+    },
+  )
+
   test('Returns dummy if SSR context not found', async () => {
     setIsServer(true)
 

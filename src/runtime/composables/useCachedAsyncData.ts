@@ -232,8 +232,9 @@ export function useCachedAsyncData<
           const payloadData: DataT | undefined = nuxtApp.payload.data[key]
 
           // Replicate the default behaviour from Nuxt: The data from the
-          // payload is always used during hydration.
-          if (payloadData && app.isHydrating) {
+          // payload is always used during hydration. Like in Nuxt, only
+          // undefined means there is no data.
+          if (payloadData !== undefined && app.isHydrating) {
             return payloadData
           }
 
@@ -246,7 +247,7 @@ export function useCachedAsyncData<
           }
 
           // We have a payload, but are not hydrating.
-          if (payloadData) {
+          if (payloadData !== undefined) {
             // The expires date for payload items is determined by the time
             // the page was first hydrated.
             const firstHydrationTime = toTimestamp(
@@ -285,7 +286,8 @@ export function useCachedAsyncData<
         app?.ssrContext?.event,
       )
 
-      if (value) {
+      // Falsy values such as 0 or false are valid cached values.
+      if (value !== undefined) {
         // We have to cast it to this type, because normally we would be
         // returning ResT here. Because we removed the `transform` method
         // from the options, this value is not transformed anymore, which
