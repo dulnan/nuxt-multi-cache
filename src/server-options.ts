@@ -21,7 +21,7 @@ export function defineMultiCacheOptions(
  * ```
  */
 export function defineMultiCacheOptions(
-  // eslint-disable-next-line @typescript-eslint/unified-signatures
+  // oxlint-disable-next-line typescript/unified-signatures
   options: MultiCacheServerOptions,
 ): () => MultiCacheServerOptions
 

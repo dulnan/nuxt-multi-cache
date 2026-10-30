@@ -17,7 +17,7 @@ import { debug } from '#nuxt-multi-cache/config'
 
 function isPureObject(value: any) {
   const proto = Object.getPrototypeOf(value)
-  // eslint-disable-next-line no-prototype-builtins
+  // oxlint-disable-next-line no-prototype-builtins
   return !proto || proto.isPrototypeOf(Object)
 }
 

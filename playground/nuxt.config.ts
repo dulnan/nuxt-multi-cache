@@ -22,7 +22,7 @@ export default defineNuxtConfig({
     },
   },
 
-  modules: [NuxtMultiCache, '@nuxt/eslint'],
+  modules: [NuxtMultiCache],
 
   imports: {
     autoImport: true,

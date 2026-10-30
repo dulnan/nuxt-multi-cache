@@ -381,13 +381,8 @@ curl -i \
   },
   "statusCode": 200,
   "expires": 1672474074,
-  "cacheTags": [
-    "page:1",
-    "image:234",
-    "user:32",
-    "language",
-    "translations"
-  ]
+  "cacheTags": ["page:1", "image:234", "user:32", "language", "translations"]
 }
-:::
 ```
+
+:::

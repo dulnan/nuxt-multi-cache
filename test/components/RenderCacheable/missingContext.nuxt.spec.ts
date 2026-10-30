@@ -70,7 +70,7 @@ describe('RenderCacheable with missing context', () => {
 
     const loggerSpy = vi.spyOn(logger, 'warn')
 
-    const vue = await import('vue')
+    const vue: any = await import('vue')
     vue.getCurrentInstance = vi.fn().mockReturnValue(null)
     vue.useSSRContext = vi.fn().mockReturnValue({ event: {} })
 
@@ -109,7 +109,7 @@ describe('RenderCacheable with missing context', () => {
     setIsServer(true)
 
     const loggerSpy = vi.spyOn(logger, 'warn')
-    const vue = await import('vue')
+    const vue: any = await import('vue')
     vue.getCurrentInstance = vi.fn().mockReturnValue({ parent: {}, type: {} })
 
     // App with storage containing a cached component.
