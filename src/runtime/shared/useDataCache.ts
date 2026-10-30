@@ -14,8 +14,12 @@ import {
 } from './../helpers/server'
 import { logger } from './../helpers/multi-cache-logger'
 import { debug } from '#nuxt-multi-cache/config'
-import { CACHE_NEVER, CACHE_PERMANENT, type MaxAge } from './../helpers/maxAge'
-import { isExpired } from './../helpers/maxAge'
+import {
+  CACHE_NEVER,
+  CACHE_PERMANENT,
+  isExpired,
+  type MaxAge,
+} from './../helpers/maxAge'
 import { DataCacheHelper } from './../helpers/DataCacheHelper'
 import { bubbleCacheability } from './../helpers/bubbleCacheability'
 

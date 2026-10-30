@@ -2,23 +2,6 @@ import { loadNuxt } from 'nuxt'
 import { describe, expect, test } from 'vitest'
 import nuxtMultiCache from './../src/module'
 
-async function testServerHandlerAdded(search: string, config: any) {
-  const nuxt = await loadNuxt({
-    defaults: {
-      devtools: {
-        enabled: false,
-      },
-    },
-  })
-
-  await nuxtMultiCache(config, nuxt)
-  const handler = nuxt.options.serverHandlers.find((v) => {
-    return v.handler?.includes(search)
-  })
-  expect(handler).toBeDefined()
-  await nuxt.close()
-}
-
 describe('Module setup', () => {
   test('Should only add components if feature is enabled', async () => {
     const nuxt = await loadNuxt({
