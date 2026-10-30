@@ -4,7 +4,7 @@ import nuxtMultiCache from './../src/module'
 
 async function testServerHandlerAdded(search: string, config: any) {
   const nuxt = await loadNuxt({
-    defaultConfig: {
+    defaults: {
       devtools: {
         enabled: false,
       },
@@ -22,7 +22,7 @@ async function testServerHandlerAdded(search: string, config: any) {
 describe('Module setup', () => {
   test('Should only add components if feature is enabled', async () => {
     const nuxt = await loadNuxt({
-      defaultConfig: {
+      defaults: {
         devtools: {
           enabled: false,
         },
@@ -50,7 +50,7 @@ describe('Module setup', () => {
 
   test('Should only add API handlers if feature is enabled', async () => {
     const nuxt = await loadNuxt({
-      defaultConfig: {
+      defaults: {
         devtools: {
           enabled: false,
         },
@@ -78,7 +78,7 @@ describe('Module setup', () => {
 
   test('Should use provided API prefix.', async () => {
     const nuxt = await loadNuxt({
-      defaultConfig: {
+      defaults: {
         devtools: {
           enabled: false,
         },

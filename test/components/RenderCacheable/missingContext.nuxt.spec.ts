@@ -27,9 +27,11 @@ vi.mock('#nuxt-multi-cache/config', () => {
   }
 })
 
-mockNuxtImport('useRuntimeConfig', () => {
+mockNuxtImport('useRuntimeConfig', (original) => {
   return () => {
     return {
+      // Keep the real config, e.g. app.baseURL is needed by Nuxt's router plugin.
+      ...original(),
       multiCache: {
         component: true,
       },
