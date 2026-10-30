@@ -69,13 +69,13 @@
     "@nuxt/kit": "^4.6.3",
     "@tusbar/cache-control": "^3.0.1",
     "consola": "^3.4.2",
-    "defu": "^6.1.4",
-    "h3": "^1.15.4",
-    "ohash": "^2.0.11",
+    "defu": "^6.1.7",
+    "h3": "^1.15.11",
+    "ohash": "^2.0.12",
     "pathe": "^2.0.3",
-    "ufo": "^1.6.1",
+    "ufo": "^1.6.4",
     "unplugin": "^3.4.0",
-    "unstorage": "^1.17.1"
+    "unstorage": "^1.17.6"
   },
   "devDependencies": {
     "@nuxt/module-builder": "^1.0.3",
