@@ -100,17 +100,20 @@ describe('The "bubble cacheability" feature', () => {
     ])
   })
 
-  test('Keeps the max age when merging a data cache item without max age', async () => {
+  test('Keeps max age and stale-if-error when merging a data cache item without them', async () => {
     // The first request stores the data cache item, the second one loads it.
     for (const request of ['miss', 'hit']) {
       const response = await fetch('/use-data-cache-permanent')
       const control = response.headers.get('surrogate-control') ?? ''
       expect(control, request).toContain('max-age=9000')
+      expect(control, request).toContain('stale-if-error=18000')
 
       const items = await getRouteCacheItems()
       expect(items, request).toHaveLength(1)
-      const expires = items[0]!.item.expires
-      expect(expires - toTimestamp(new Date()), request).toBeGreaterThan(8990)
+      const { expires, staleIfErrorExpires } = items[0]!.item
+      const now = toTimestamp(new Date())
+      expect(expires - now, request).toBeGreaterThan(8990)
+      expect(staleIfErrorExpires - now, request).toBeGreaterThan(17990)
 
       // So that the next request is not served from the route cache.
       await purgeByKey('route', items[0]!.key)

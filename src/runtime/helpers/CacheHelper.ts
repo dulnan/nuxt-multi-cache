@@ -162,7 +162,12 @@ export class CacheHelper implements CacheabilityInterface {
       item.staleIfErrorExpires !== null &&
       item.staleIfErrorExpires !== undefined
     ) {
-      this.setStaleIfError(expiresToMaxAge(item.staleIfErrorExpires, this.now))
+      // Items without stale-if-error are stored with 0, so 0 must not lower
+      // the current value.
+      const staleIfError = expiresToMaxAge(item.staleIfErrorExpires, this.now)
+      if (staleIfError !== CACHE_NEVER) {
+        this.setStaleIfError(staleIfError)
+      }
     }
 
     return this
@@ -186,8 +191,10 @@ export class CacheHelper implements CacheabilityInterface {
       this.setMaxAge(maxAge)
     }
 
+    // Like in mergeFromCacheItem(), a stale-if-error of 0 doesn't lower the
+    // current value.
     const staleIfError = cacheability.getStaleIfError()
-    if (staleIfError !== null) {
+    if (staleIfError !== null && staleIfError !== CACHE_NEVER) {
       this.setStaleIfError(staleIfError)
     }
 

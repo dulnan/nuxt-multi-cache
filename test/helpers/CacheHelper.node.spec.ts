@@ -412,6 +412,33 @@ describe('CacheHelper', () => {
     })
   })
 
+  describe('merging stale-if-error', () => {
+    it('should keep the stale-if-error when merging an item without one', () => {
+      cache.setStaleIfError(18000)
+      // Items without stale-if-error are stored with 0.
+      cache.mergeFromCacheItem({ expires: -1, staleIfErrorExpires: 0 })
+      expect(cache.staleIfError).toBe(18000)
+    })
+
+    it('should keep the stale-if-error when merging a cacheability of 0', () => {
+      cache.setStaleIfError(18000)
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setStaleIfError(0),
+      )
+      expect(cache.staleIfError).toBe(18000)
+    })
+
+    it('should merge a lower stale-if-error', () => {
+      cache.setStaleIfError(18000)
+      cache.mergeFromCacheItem({ staleIfErrorExpires: mockDateTimestamp + 60 })
+      expect(cache.staleIfError).toBe(60)
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setStaleIfError(30),
+      )
+      expect(cache.staleIfError).toBe(30)
+    })
+  })
+
   describe('complex scenarios', () => {
     it('should handle competing maxAge settings correctly', () => {
       cache.setMaxAge(1000)

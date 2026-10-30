@@ -3,6 +3,7 @@ import { setResponseHeader, type H3Event } from 'h3'
 import type { FetchResponse } from 'ofetch'
 import { onlyUnique } from './server'
 import {
+  CACHE_NEVER,
   CACHE_PERMANENT,
   expiresToMaxAge,
   parseMaxAge,
@@ -355,10 +356,12 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
       item.staleIfErrorExpires !== null &&
       item.staleIfErrorExpires !== undefined
     ) {
-      this.setNumeric(
-        'staleIfError',
-        expiresToMaxAge(item.staleIfErrorExpires, this.now),
-      )
+      // Items without stale-if-error are stored with 0, so 0 must not lower
+      // the current value.
+      const staleIfError = expiresToMaxAge(item.staleIfErrorExpires, this.now)
+      if (staleIfError !== CACHE_NEVER) {
+        this.setNumeric('staleIfError', staleIfError)
+      }
     }
 
     return this
@@ -372,8 +375,10 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
       this.setNumeric('maxAge', maxAge)
     }
 
+    // Like in mergeFromCacheItem(), a stale-if-error of 0 doesn't lower the
+    // current value.
     const staleIfError = cacheability.getStaleIfError()
-    if (staleIfError !== null) {
+    if (staleIfError !== null && staleIfError !== CACHE_NEVER) {
       this.setNumeric('staleIfError', staleIfError)
     }
 

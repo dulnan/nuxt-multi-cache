@@ -434,6 +434,31 @@ describe('The Cache-Control header of the CDNHelper', () => {
     ).toBe('max-age=60')
   })
 
+  test('keeps stale-if-error when merging an item without one', () => {
+    // Items without stale-if-error are stored with 0.
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('staleIfError', 18000)
+          .mergeFromCacheItem({ expires: -1, staleIfErrorExpires: 0 }),
+      ),
+    ).toBe('stale-if-error=18000')
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.mergeFromCacheItem({ staleIfErrorExpires: 0 }),
+      ),
+    ).toBeUndefined()
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('staleIfError', 18000)
+          .mergeFromCacheability(
+            new CacheHelper(mockDateTimestamp).setStaleIfError(0),
+          ),
+      ),
+    ).toBe('stale-if-error=18000')
+  })
+
   test.each([
     ['immutable', 'immutable'],
     ['maxStale', 'max-stale'],
