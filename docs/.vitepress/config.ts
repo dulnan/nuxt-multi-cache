@@ -194,6 +194,10 @@ export default defineConfig({
           { text: 'Cache Tags', link: '/overview/cache-tags' },
           { text: 'Max Age', link: '/overview/max-age' },
           { text: 'Stale if Error', link: '/overview/stale-if-error' },
+          {
+            text: 'Bubbling Cacheability',
+            link: '/overview/bubble-cacheability',
+          },
           { text: 'Migrating from V1', link: '/overview/migrating-from-v1' },
         ],
       },

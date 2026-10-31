@@ -43,6 +43,18 @@ in a Nuxt app context (e.g. plugin, other composables, component).
 
 When called in a Nitro server context, the argument is required.
 
+### options?: `{ bubbleCacheability?: BubbleCacheability }`
+
+Set `bubbleCacheability` to merge the max age, stale if error duration and cache
+tags of the item into the route cache and/or the CDN headers of the current
+request. See [Bubbling Cacheability](/overview/bubble-cacheability).
+
+```typescript
+const { value, addToCache } = await useDataCache('weather', null, {
+  bubbleCacheability: true,
+})
+```
+
 ## Return Value
 
 The composable returns a Promise that resolves to an object with the following

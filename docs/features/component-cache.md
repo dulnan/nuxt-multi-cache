@@ -209,6 +209,24 @@ Here the component will be rendered again once 1 hour passes. Note that cache
 entries are not automatically removed when they expire. They will be overwritten
 the next time they're rendered.
 
+## Bubbling Cacheability
+
+By default, the max age and cache tags of a cached component don't affect the
+route cache or the CDN headers of the page that renders it. To merge them, set
+the `bubble-cacheability` prop:
+
+```vue
+<template>
+  <div>
+    <RenderCacheable max-age="1h" :cache-tags="['navbar']" bubble-cacheability>
+      <Navbar />
+    </RenderCacheable>
+  </div>
+</template>
+```
+
+See [Bubbling Cacheability](/overview/bubble-cacheability) for details.
+
 ## Payload Extraction
 
 If the cached component fetches data using useAsyncData or useFetch you have to
@@ -296,6 +314,11 @@ Provide the async data keys used by the cached component. If provided, the
 payload data will be cached alongside the component. If the component uses
 asyncData and the keys are not provided, you will receive a hydration mismatch
 error in the client.
+
+### `bubbleCacheability (boolean | 'route' | 'cdn', default: false)`
+
+Merge the cacheability of the component into the route cache and/or the CDN
+headers. See [Bubbling Cacheability](/overview/bubble-cacheability).
 
 ## Caveats
 

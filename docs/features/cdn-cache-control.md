@@ -180,3 +180,6 @@ const { data } = await useFetch('/api/load-users', {
 The module also provides a
 [useCacheAwareFetchInterceptor](/composables/useCacheAwareFetchInterceptor)
 composable that handles "bubbling" cacheability from a request to an API route.
+
+The cacheability of data cache items and cached components can be bubbled to the
+CDN headers too. See [Bubbling Cacheability](/overview/bubble-cacheability).

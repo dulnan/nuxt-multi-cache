@@ -86,6 +86,13 @@ in a Nuxt app context (e.g. plugin, other composables, component).
 
 When called in a Nitro server context, the argument is required.
 
+### options?: `{ bubbleCacheability?: BubbleCacheability }`
+
+Set `bubbleCacheability` to merge the cacheability of the item into the route
+cache and/or the CDN headers of the current request. This includes marking the
+item as uncacheable with `setUncacheable()` on the helper. See
+[Bubbling Cacheability](/overview/bubble-cacheability).
+
 ## Return Value
 
 The method will return the value from your callback.

@@ -92,6 +92,20 @@ const user = await useDataCacheCallback(key.value, async (cache) => {
 })
 ```
 
+## Bubbling Cacheability
+
+By default, the max age and cache tags of data cache items don't affect the
+route cache or the CDN headers of the page that uses them. To merge them, set
+the `bubbleCacheability` option:
+
+```typescript
+const { value, addToCache } = await useDataCache('weather', null, {
+  bubbleCacheability: true,
+})
+```
+
+See [Bubbling Cacheability](/overview/bubble-cacheability) for details.
+
 ## Using `useCachedAsyncData`
 
 The example above can be simplified by using the

@@ -13,6 +13,26 @@ const interceptor = useCacheAwareFetchInterceptor()
 const { data } = await useFetch('/api/load-users', interceptor)
 ```
 
+## Arguments
+
+### bubbleCacheability?: `BubbleCacheability`
+
+Which cacheability of the API route to bubble. Defaults to `true`.
+
+- `true` - Bubble to the route cache and the CDN headers
+- `'route'` - Only bubble to the route cache
+- `'cdn'` - Only bubble to the CDN headers
+- `false` - Don't bubble
+
+```typescript
+const { data } = await useFetch(
+  '/api/load-users',
+  useCacheAwareFetchInterceptor('cdn'),
+)
+```
+
+See [Bubbling Cacheability](/overview/bubble-cacheability) for details.
+
 ## Full example
 
 Let's assume you have an API route at `/api/load-users` that loads some users.
