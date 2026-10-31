@@ -109,9 +109,9 @@ The method receives the path of the request (including the query string) and
 returns whether the route cache is used for it. If the method returns `false`,
 the route is neither served from nor stored in the route cache.
 
-By default, paths that end in one of these file extensions are excluded: `ico`,
-`png`, `jpg`, `js`, `css`, `html`, `woff`, `woff2`, `ttf`, `otf`, `eot`, `svg`.
-Providing a method replaces this default.
+By default, paths that end in one of these file extensions are excluded, also if
+they have a query string: `ico`, `png`, `jpg`, `js`, `css`, `html`, `woff`,
+`woff2`, `ttf`, `otf`, `eot`, `svg`. Providing a method replaces this default.
 
 ::: code-group
 

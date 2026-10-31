@@ -53,28 +53,50 @@ vi.mock('#nuxt-multi-cache/server-options', () => {
 })
 
 describe('onRequest nitro hook handler', () => {
-  test('does not apply for common asset file extensions', async () => {
-    mocks.useNitroApp.mockReturnValue({
-      multiCache: {
-        cache: {},
-      },
-    })
-    const event: any = {
-      method: 'GET',
-      path: '/test.jpg',
-      node: {
-        res: {},
-        req: {
-          originalUrl: '/test.jpg',
-          headers: {},
+  test.each([
+    ['/test.jpg', false],
+    ['/assets/style.css?v=2', false],
+    ['/fonts/font.woff2?v=1#x', false],
+    ['/test', true],
+    ['/test?file=style.css', true],
+  ])(
+    'Excludes common asset file extensions by default (%s)',
+    async (path, expected) => {
+      const { applies } = mocks.serverOptions.route
+      // @ts-expect-error Removed to test the default.
+      delete mocks.serverOptions.route.applies
+      mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
         },
-      },
-      context: {},
-    }
+      })
+      const event: any = {
+        method: 'GET',
+        path,
+        node: {
+          res: {},
+          req: {
+            originalUrl: path,
+            headers: {},
+          },
+        },
+        context: {},
+      }
 
-    expect(await onRequest(event)).toBeUndefined()
-    mocks.useNitroApp.mockRestore()
-  })
+      try {
+        await onRequest(event)
+
+        expect(!!event.context.multiCache?.route).toBe(expected)
+      } finally {
+        mocks.serverOptions.route.applies = applies
+        mocks.useNitroApp.mockRestore()
+        mocks.serverOptions.enabledForRequest.mockRestore()
+      }
+    },
+  )
 
   test('Calls a custom applies method', async () => {
     mocks.serverOptions.route.applies.mockReturnValue(false)

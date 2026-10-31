@@ -10,9 +10,11 @@ import { serverOptions } from '#nuxt-multi-cache/server-options'
 import { useRuntimeConfig } from '#imports'
 
 /**
- * Method to check whether route caching is generally applicable to the given path.
+ * Method to check whether route caching is generally applicable to the given URL.
  */
-function applies(path: string): boolean {
+function applies(url: URL): boolean {
+  const path = url.pathname + url.search
+
   if (isExcludedRoutePath(path, useRuntimeConfig().app)) {
     return false
   }
@@ -21,8 +23,11 @@ function applies(path: string): boolean {
     return serverOptions.route.applies(path)
   }
 
-  // Exclude common files.
-  return !/.\.(ico|png|jpg|js|css|html|woff|woff2|ttf|otf|eot|svg)$/.test(path)
+  // Exclude common files. Only the pathname is checked, so that a query
+  // string (e.g. "/style.css?v=2") doesn't prevent the exclusion.
+  return !/.\.(ico|png|jpg|js|css|html|woff|woff2|ttf|otf|eot|svg)$/.test(
+    url.pathname,
+  )
 }
 
 /**
@@ -52,7 +57,7 @@ export async function onRequest(event: H3Event) {
   }
 
   // Path is generally not cacheable, so we can skip it.
-  if (!applies(path)) {
+  if (!applies(url)) {
     return
   }
 
