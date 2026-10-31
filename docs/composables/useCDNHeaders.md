@@ -117,9 +117,10 @@ by default `Cache-Tag`). Duplicates will be automatically removed.
 
 Merges the cache tags and cache control from the given fetch response.
 
-Note that internally the method will only call setNumeric(), setBoolean() and
-private(), meaning that merging will never set a higher max age than currently
-or mark the response as public.
+Merging never sets a higher max age than currently or marks the response as
+public. A merged `s-maxage` never exceeds the lifetime the response has for
+shared caches either (see
+[Bubbling Cacheability](/overview/bubble-cacheability#what-bubbles)).
 
 ```typescript
 const event = useRequestEvent()

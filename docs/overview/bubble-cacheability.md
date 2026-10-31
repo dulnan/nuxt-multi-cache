@@ -25,7 +25,7 @@ Bubbling only has an effect if the route cache or the CDN feature is enabled.
 
 | Value          | Route cache                   | CDN headers                                     |
 | -------------- | ----------------------------- | ----------------------------------------------- |
-| Max age        | Lowest value wins             | `max-age`, lowest value wins                    |
+| Max age        | Lowest value wins             | `max-age`, lowest value wins, caps `s-maxage`   |
 | Stale if error | Lowest value wins, except `0` | `stale-if-error`, lowest value wins, except `0` |
 | Cache tags     | Added                         | Added to the cache tag header                   |
 | Uncacheable    | The route becomes uncacheable | `max-age=0, no-store`, `s-maxage` lowered to 0  |
@@ -35,6 +35,12 @@ Bubbling only has an effect if the route cache or the CDN feature is enabled.
   doesn't lower the value either.
 - If a part is returned from cache, the remaining time until it expires bubbles,
   not its original max age.
+- Shared caches use `s-maxage` instead of `max-age`. If the page or a merged API
+  response sets an `s-maxage`, the header gets the lowest lifetime for shared
+  caches of all sources: Their `s-maxage` or, without one, their `max-age`. A
+  page with `s-maxage=86400` and a part with a max age of 60 seconds gets
+  `s-maxage=60`, and a page with `max-age=0` doesn't get the `s-maxage=3600` of
+  an API route.
 - Bubbling never makes a route cacheable. The route must still be marked as
   cacheable using [useRouteCache](/composables/useRouteCache).
 

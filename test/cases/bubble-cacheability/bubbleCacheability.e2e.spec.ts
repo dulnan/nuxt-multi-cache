@@ -111,6 +111,13 @@ describe('The "bubble cacheability" feature', () => {
     },
   )
 
+  test('Lowers the s-maxage of the page to the max age of a component', async () => {
+    const response = await fetch('/component-shared-max-age')
+    const control = response.headers.get('surrogate-control') ?? ''
+    expect(control).toContain('max-age=1000')
+    expect(control).toContain('s-maxage=1000')
+  })
+
   test('Keeps max age and stale-if-error when merging a data cache item without them', async () => {
     // The first request stores the data cache item, the second one loads it.
     for (const request of ['miss', 'hit']) {

@@ -32,6 +32,13 @@ describe('The useCacheAwareFetchInterceptor', () => {
     ).toMatchInlineSnapshot(`"cdn-cache-tag-from-api cdn-cache-tag-from-page"`)
   })
 
+  test('does not merge an s-maxage longer than the max age of the page', async () => {
+    const response = await fetch('/cdn-shared-max-age')
+    const control = response.headers.get('surrogate-control') ?? ''
+    expect(control).toContain('max-age=0')
+    expect(control).not.toContain('s-maxage=3600')
+  })
+
   test('merges route cache cacheability', async () => {
     await fetch('/route-cache')
 

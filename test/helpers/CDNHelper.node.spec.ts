@@ -51,6 +51,8 @@ describe('The CDNHelper', () => {
       [
         "constructor",
         "applyToEvent",
+        "formatControl",
+        "mergeMaxAge",
         "mergeFromResponse",
         "mergeCacheControlHeader",
         "set",
@@ -233,9 +235,9 @@ describe('The CDNHelper', () => {
 
     helper.mergeCacheControlHeader('s-maxage=1800')
     expect(
-      helper._control.sharedMaxAge,
+      getAppliedHeaders(helper)[helper.cacheControlHeader],
       'Should set a previously unset property',
-    ).toEqual(1800)
+    ).toContain('s-maxage=1800')
   })
 
   test('mergeCacheControlHeader handles boolean properties correctly', () => {
@@ -488,6 +490,102 @@ describe('The Cache-Control header of the CDNHelper', () => {
     expect(control).toContain('no-store')
     expect(control).toContain('s-maxage=0')
     expect(control).not.toContain('s-maxage=86400')
+  })
+
+  test.each([
+    [
+      'before',
+      (helper: NuxtMultiCacheCDNHelper) =>
+        helper
+          .setNumeric('maxAge', 0)
+          .mergeCacheControlHeader('public, max-age=600, s-maxage=3600'),
+    ],
+    [
+      'after',
+      (helper: NuxtMultiCacheCDNHelper) =>
+        helper
+          .mergeCacheControlHeader('public, max-age=600, s-maxage=3600')
+          .setNumeric('maxAge', 0),
+    ],
+  ])('caps a merged s-maxage at the max age set %s merging', (_label, cb) => {
+    // Shared caches use s-maxage instead of max-age.
+    const control = getCacheControlHeader(cb)
+    expect(control).toContain('max-age=0')
+    expect(control).toContain('s-maxage=0')
+    expect(control).not.toContain('s-maxage=3600')
+  })
+
+  test('caps a merged s-maxage at the s-maxage of the page', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 0)
+          .setNumeric('sharedMaxAge', 3600)
+          .mergeCacheControlHeader('s-maxage=7200'),
+      ),
+    ).toBe('max-age=0, s-maxage=3600')
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 0)
+          .setNumeric('sharedMaxAge', 3600)
+          .mergeCacheControlHeader('s-maxage=600'),
+      ),
+    ).toBe('max-age=0, s-maxage=600')
+  })
+
+  test('lowers the s-maxage of the page to a bubbled max age', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 600)
+          .setNumeric('sharedMaxAge', 3600)
+          .mergeFromCacheability(
+            new CacheHelper(mockDateTimestamp).setMaxAge(60),
+          ),
+      ),
+    ).toBe('max-age=60, s-maxage=60')
+  })
+
+  test('lowers the s-maxage of the page to a merged max age', () => {
+    // A response without s-maxage counts with its max age for shared caches.
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 600)
+          .setNumeric('sharedMaxAge', 3600)
+          .mergeCacheControlHeader('max-age=60'),
+      ),
+    ).toBe('max-age=60, s-maxage=60')
+  })
+
+  test('adds no s-maxage if no source has one', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 604800)
+          .mergeCacheControlHeader('max-age=3600')
+          .mergeFromCacheability(
+            new CacheHelper(mockDateTimestamp).setMaxAge(60),
+          ),
+      ),
+    ).toBe('max-age=60')
+  })
+
+  test('keeps the s-maxage of the page without a merged one', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setNumeric('maxAge', 0).setNumeric('sharedMaxAge', 3600),
+      ),
+    ).toBe('max-age=0, s-maxage=3600')
+  })
+
+  test('merges an s-maxage if the page has no max age', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.mergeCacheControlHeader('max-age=600, s-maxage=3600'),
+      ),
+    ).toBe('max-age=600, s-maxage=3600')
   })
 
   test('keeps stale-if-error when merging an item without one', () => {
