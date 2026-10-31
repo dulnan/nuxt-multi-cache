@@ -11,8 +11,8 @@ that you have to use an external cache backend.
 ## Example using Redis
 
 This minimal example uses the
-[Redis driver](https://github.com/unjs/unstorage/blob/main/src/drivers/redis.ts)
-provided by unstorage.
+[Redis driver](https://unstorage.unjs.io/drivers/redis) provided by unstorage.
+The driver requires the `ioredis` package to be installed.
 
 ::: code-group
 
@@ -48,13 +48,19 @@ expiration (such as Redis) remove items once they can no longer be served:
 - Items with a max age of `0` are only stored if they have a stale if error
   duration (or, for routes, allow stale-while-revalidate).
 
+## Storage Errors
+
+If the cache backend is not available, the route and component cache log the
+error and continue without the cache. The data cache throws the error by
+default. This can be changed per cache with the
+[bubbleError](/overview/server-options#storage-errors) server option.
+
 ## Custom Driver
 
 Checkout the full example on
-[how to create a custom driver](https://github.com/unjs/unstorage#making-custom-drivers).
+[how to create a custom driver](https://unstorage.unjs.io/guide/custom-driver).
 
-This example recreates the default storage (in-memory) using a simple `cache`
-object.
+This example recreates the default storage (in-memory) using a `Map`.
 
 ::: code-group
 
@@ -62,26 +68,26 @@ object.
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { defineDriver } from 'unstorage'
 
-const customDriver = defineDriver((_opts) => {
-  let cache = {}
+const customDriver = defineDriver(() => {
+  const cache = new Map<string, string>()
   return {
-    hasItem(key: string) {
-      return !!cache[key]
+    hasItem(key) {
+      return cache.has(key)
     },
-    getItem(key: string) {
-      return cache[key]
+    getItem(key) {
+      return cache.get(key) ?? null
     },
     setItem(key, value) {
-      return (cache[key] = value)
+      cache.set(key, value)
     },
     removeItem(key) {
-      cache[key] = undefined
+      cache.delete(key)
     },
     getKeys() {
-      return Object.keys(cache)
+      return [...cache.keys()]
     },
     clear() {
-      cache = {}
+      cache.clear()
     },
     dispose() {},
   }
