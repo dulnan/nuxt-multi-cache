@@ -126,6 +126,12 @@ export type MultiCacheServerOptions = {
    * authenticated users to make it impossible to cache sensitive data.
    * Or to offer a quick way to disable caching based on local or remote
    * configuration.
+   *
+   * The method can be called at the very beginning of the request (Nitro's
+   * `request` hook), before server middleware and route handlers. Only the
+   * request itself (method, path, headers, cookies) is available, not values
+   * that a middleware puts on `event.context`. The result is kept for the
+   * whole request.
    */
   enabledForRequest?: (event: H3Event) => Promise<boolean>
 
@@ -143,6 +149,10 @@ export type MultiCacheServerOptions = {
    *
    * If the method returns an empty string, the prefix "{none}" is used, so
    * that these requests can't address the items of another prefix.
+   *
+   * Like `enabledForRequest`, the method can be called before server
+   * middleware, so it may only depend on the request itself. The prefix is
+   * determined once per request.
    */
   cacheKeyPrefix?: string | ((event: H3Event) => Promise<string>)
 
