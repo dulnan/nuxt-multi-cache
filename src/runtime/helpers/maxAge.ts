@@ -48,7 +48,8 @@ type NamedMaxAge = NamedDurations | NamedInterval
  * - 2d - Cache for 2 days.
  * - 7d - Cache for 7 days.
  * - permanent - Cache forever.
- * - never - Do not cache at all.
+ * - never - Never serve as a fresh item. Only stored as a stale copy, with
+ *   stale-if-error or (for routes) stale-while-revalidate.
  * - next-quarter-hour - Cache until the next x.15 hour (08:00, 08:15, 08:30, etc.).
  * - next-hour - Cache until the next full hour.
  * - midnight - Cache until midnight.

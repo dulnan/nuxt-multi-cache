@@ -116,6 +116,12 @@ once the first request is finished. The next request renders the route again.
 If the first request takes longer than 60 seconds, the next request renders the
 route again too, instead of receiving the stale response.
 
+With a [max age of `0`](/overview/max-age#max-age-0), every request renders the
+route again, and requests that arrive in the meantime receive the response of
+the previous request. If this is set for many routes, for example in a layout,
+mark routes with data specific to the request as uncacheable with
+`setUncacheable()`. A max age of `0` doesn't keep them out of the cache.
+
 ### addTags(tags: string | string[])
 
 Add cache tags for the cache entry. They can be later used to purge specific

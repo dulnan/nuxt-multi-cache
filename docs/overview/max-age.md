@@ -43,7 +43,8 @@ There are also two special strings that can be used:
 
 - `'permanent'` - Will cache without a max age. This is equal to setting no max
   age.
-- `'never'` - Will not cache at all.
+- `'never'` - Is never served from cache as a fresh item. See
+  [Max Age 0](#max-age-0).
 
 ## Special Numbers
 
@@ -51,10 +52,37 @@ The following two numbers have a "special" (but intuitive) meaning:
 
 - `-1` - Will cache without a max age. This is equal to setting `'permanent'` or
   setting no max age at all.
-- `0` - Will not cache at all. Equal to setting `'never'`.
+- `0` - Equal to setting `'never'`. See [Max Age 0](#max-age-0).
 
 Any other negative number, for example a max age calculated from a date that is
-already in the past, is treated like `0` and will not cache at all.
+already in the past, is treated like `0`.
+
+## Max Age 0
+
+An item with a max age of `0` (or `'never'`) is never served from cache as a
+fresh item:
+
+- Without a stale period, it isn't stored at all.
+- With a [stale if error](/overview/stale-if-error) duration, a stale copy is
+  stored, which is only served if an error happens. This applies to all three
+  caches.
+- For routes that
+  [allow stale while revalidate](/composables/useRouteCache#allowstalewhilerevalidate),
+  the response is stored and served to requests that arrive while another
+  request renders the route again.
+
+::: warning
+
+A max age of `0` doesn't keep a response out of the cache. If it contains data
+specific to the request, such as user data or tokens, mark it as uncacheable
+instead, for example with `setUncacheable()` in
+[useRouteCache](/composables/useRouteCache#setuncacheable),
+[useComponentCache](/composables/useComponentCache#setuncacheable) or the helper
+of [useDataCacheCallback](/composables/useDataCacheCallback). Uncacheable items
+are never stored, and when their cacheability
+[bubbles](/overview/bubble-cacheability), the route becomes uncacheable as well.
+
+:::
 
 ## Setting the Max Age Multiple Times
 

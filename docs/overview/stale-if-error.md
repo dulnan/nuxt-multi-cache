@@ -110,3 +110,6 @@ useRouteCache((helper) => {
   helper.setMaxAge(0).setStaleIfError('2h').setCacheable()
 })
 ```
+
+The stale copy is served to any request that fails, so this is not suited for
+responses with data specific to the request. Mark those as uncacheable instead.
