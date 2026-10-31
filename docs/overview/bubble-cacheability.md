@@ -23,18 +23,24 @@ Bubbling only has an effect if the route cache or the CDN feature is enabled.
 
 ## What Bubbles
 
-| Value          | Route cache                   | CDN headers                                     |
-| -------------- | ----------------------------- | ----------------------------------------------- |
-| Max age        | Lowest value wins             | `max-age`, lowest value wins                    |
-| Stale if error | Lowest value wins, except `0` | `stale-if-error`, lowest value wins, except `0` |
-| Cache tags     | Added                         | Added to the cache tag header                   |
-| Uncacheable    | The route becomes uncacheable | `max-age=0`                                     |
+| Value          | Route cache                   | CDN headers                                                              |
+| -------------- | ----------------------------- | ------------------------------------------------------------------------ |
+| Max age        | Lowest value wins             | `max-age`, lowest value wins, caps `s-maxage`                            |
+| Stale if error | Lowest value wins, except `0` | `stale-if-error`, lowest value wins, except `0`                          |
+| Cache tags     | Added                         | Added to the cache tag header                                            |
+| Uncacheable    | The route becomes uncacheable | `max-age=0, no-store`, `s-maxage` lowered to 0, `Cache-Control: private` |
 
 - A [max age](/overview/max-age) of `'permanent'` never lowers the max age.
 - A stale if error duration of `0` (for example a part that doesn't define one)
   doesn't lower the value either.
 - If a part is returned from cache, the remaining time until it expires bubbles,
   not its original max age.
+- Shared caches use `s-maxage` instead of `max-age`. If the page or a merged API
+  response sets an `s-maxage`, the header gets the lowest lifetime for shared
+  caches of all sources: Their `s-maxage` or, without one, their `max-age`. A
+  page with `s-maxage=86400` and a part with a max age of 60 seconds gets
+  `s-maxage=60`, and a page with `max-age=0` doesn't get the `s-maxage=3600` of
+  an API route.
 - Bubbling never makes a route cacheable. The route must still be marked as
   cacheable using [useRouteCache](/composables/useRouteCache).
 
@@ -106,3 +112,15 @@ const { data } = await useFetch(
   useCacheAwareFetchInterceptor(),
 )
 ```
+
+- **Route cache:** The values of the API route's route cache helper bubble,
+  including `setUncacheable()`. A page that fetches an uncacheable API route
+  becomes uncacheable as well. This only applies to
+  [relative URLs](/composables/useCacheAwareFetchInterceptor#relative-urls-only).
+- **CDN headers:** The CDN header of the API route is merged, including
+  `private` and `no-store`. Its route cache values don't affect the CDN headers.
+
+An API route that doesn't use the route cache, or is excluded from it with
+`route.applies` or `enabledForRequest`, has no route cache values to bubble. If
+such an API route returns data specific to the request, mark the page as
+uncacheable yourself.

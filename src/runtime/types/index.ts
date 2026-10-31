@@ -96,12 +96,14 @@ export type MultiCacheServerOptionsRouteCacheOptions =
     /**
      * A function to determine whether route caching is potentially possible.
      *
-     * Receives the path including the query string. If it returns false, the
-     * route is neither looked up in nor stored in the route cache.
+     * Receives the decoded path including the query string, e.g. "/checkout"
+     * for a request to "/%63heckout". If it returns false, the route is
+     * neither looked up in nor stored in the route cache.
      *
      * Replaces the default, which excludes static files such as .css, .js,
      * .png or .jpg. Nuxt's build assets, the error page and the module's API
-     * are always excluded.
+     * are always excluded, and so are paths with a double slash, a backslash
+     * or a dot segment, such as "//contact".
      */
     applies?: (path: string) => boolean
   }
@@ -124,6 +126,12 @@ export type MultiCacheServerOptions = {
    * authenticated users to make it impossible to cache sensitive data.
    * Or to offer a quick way to disable caching based on local or remote
    * configuration.
+   *
+   * The method can be called at the very beginning of the request (Nitro's
+   * `request` hook), before server middleware and route handlers. Only the
+   * request itself (method, path, headers, cookies) is available, not values
+   * that a middleware puts on `event.context`. The result is kept for the
+   * whole request.
    */
   enabledForRequest?: (event: H3Event) => Promise<boolean>
 
@@ -138,6 +146,13 @@ export type MultiCacheServerOptions = {
    * multi-domain setup you might have one instance per domain, but each
    * instance uses the same cache backend (e.g. redis). Setting a global prefix
    * will make sure that each instance is scoped.
+   *
+   * If the method returns an empty string, the prefix "{none}" is used, so
+   * that these requests can't address the items of another prefix.
+   *
+   * Like `enabledForRequest`, the method can be called before server
+   * middleware, so it may only depend on the request itself. The prefix is
+   * determined once per request.
    */
   cacheKeyPrefix?: string | ((event: H3Event) => Promise<string>)
 
@@ -237,6 +252,12 @@ export interface MultiCacheApp {
    * The debounced cache tag invalidator.
    */
   cacheTagInvalidator: CacheTagInvalidator
+
+  /**
+   * A random token, generated when the server starts, that marks internal
+   * requests from the Nuxt app during SSR (useCacheAwareFetchInterceptor).
+   */
+  internalRequestToken: string
 }
 
 export type CacheStatsResponse<T> = {

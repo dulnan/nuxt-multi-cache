@@ -28,6 +28,22 @@ export type CDNOptions = {
    * The header to use for the cache tags header.
    */
   cacheTagHeader?: string
+
+  /**
+   * Add `private` to the Cache-Control header if the CDN header is marked as
+   * `private` or `no-store`.
+   *
+   * Not every CDN honors these directives in its own header: Fastly, for
+   * example, ignores them in Surrogate-Control and only skips caching for
+   * `Cache-Control: private`. An existing Cache-Control header is merged:
+   * `public` is removed, all other directives are kept.
+   *
+   * Disable this only if you make sure yourself that private responses are not
+   * cached by your CDN.
+   *
+   * @default true
+   */
+  privateCacheControl?: boolean
 }
 
 export interface ModuleOptions {
@@ -109,7 +125,8 @@ export interface ModuleOptions {
      * If `false` is provided then authorization check is skipped. Only do
      * this if you made sure that the API endpoints are not public, since this
      * can potentially leak sensitive information via cached data or allow
-     * anyone to purge cache entries!
+     * anyone to purge cache entries! A token set via runtime config is still
+     * required.
      *
      * If not provided, the token from runtime config is used, or else the
      * `api.authorization` callback from the server options. If neither is
@@ -153,6 +170,10 @@ export interface ModuleOptions {
    *   "current time" for anything nuxt-multi-cache related. This allows
    *   you to write tests for cache-related behaviour.
    *   The date should be in the ISO format returned by date.toISOString().
+   *
+   * Never deploy a build with test mode enabled: Any request could make cache
+   * items expire or keep them cached far beyond their max age. The server
+   * logs a warning at startup if it's enabled.
    */
   enableTestMode?: boolean
 }

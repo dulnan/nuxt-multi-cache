@@ -96,6 +96,19 @@ error.
 You can disable authorization by setting the value of `api.authorization` to
 `false`. **Only do this if the endpoints are not accessible publicly!**
 
+A token always takes precedence: If a token is set via
+[runtime config](/overview/runtime-config#api-authorization-token), it is
+required, even if authorization is disabled. This way `api.authorization: false`
+can be used for local development, with a token provided for production.
+
+### Caching
+
+The responses of the API are never cached: They are excluded from the route
+cache and sent with `Cache-Control: private, no-store`. If the
+[CDN feature](/features/cdn-cache-control) is enabled, the CDN header is also
+marked as `private` and `no-store` with a max age of 0, even if a middleware
+made every response public.
+
 ## Purge Everything
 
 Purges everything from all caches.
@@ -317,7 +330,9 @@ data cache are stored as objects.
 Inspect a cache item. The key should be provided as a query param `key`. If no
 item exists for the key, the endpoint responds with a 404 status code.
 
-The item is returned as it is stored (see [Get Stats](#get-stats)).
+The item is returned as it is stored (see [Get Stats](#get-stats)). Route and
+component items are stored as strings and sent as plain text (`text/plain`), so
+that a browser doesn't render their content as HTML.
 
 ### Example: Get the cached component with key `Navbar::de--chf`
 

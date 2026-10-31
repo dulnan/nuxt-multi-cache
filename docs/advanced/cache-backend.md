@@ -48,6 +48,23 @@ expiration (such as Redis) remove items once they can no longer be served:
 - Items with a max age of `0` are only stored if they have a stale if error
   duration (or, for routes, allow stale-while-revalidate).
 
+## Cache Keys
+
+unstorage normalizes the keys of all items:
+
+- `/`, `\` and `:` are the same separator: `search/shoes`, `search:shoes` and
+  `search::shoes` are the same key. A leading or trailing separator is removed.
+- Keys with a `.` or `..` segment, such as `search:..`, are rejected with an
+  error.
+- Everything after a `?` would be dropped. The module therefore neither reads
+  nor stores items whose key contains a `?`, so that a key such as
+  `search:shoes?casino` can't replace the item of `search:shoes`. With the
+  [debug](/overview/configuration) option, this is logged.
+
+This applies to data cache keys, custom keys of the component cache and keys
+returned by `buildCacheKey`. If a key contains request input, such as a query
+value or a route param, validate it or use a hash of it.
+
 ## Storage Errors
 
 If the cache backend is not available, the route and component cache log the

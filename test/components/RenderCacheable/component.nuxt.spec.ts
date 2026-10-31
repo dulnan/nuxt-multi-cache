@@ -8,6 +8,7 @@ import {
   encodeComponentCacheItem,
 } from '../../../src/runtime/helpers/cacheItem'
 import { createTestApp } from './__helpers__'
+import { useComponentCache } from '../../../src/runtime/composables/useComponentCache'
 
 vi.mock('#imports', () => {
   return {
@@ -207,6 +208,29 @@ describe('RenderCacheable', () => {
     }
   })
 
+  test('Neither gets nor stores markup whose key contains "?"', async () => {
+    setIsServer(true)
+    const { app, ssrContext, storage } = createTestApp('cache-key="foobar?x"')
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+    storage['InnerComponent::foobar?x'] = encodeComponentCacheItem(
+      '<div>Markup from cache</div>',
+    )
+
+    const markup = await renderToString(app, ssrContext)
+    expect(markup).toContain('Hello world')
+    expect(Object.keys(storage)).toEqual(['InnerComponent::foobar?x'])
+    expect(storage['InnerComponent::foobar?x']).toContain('Markup from cache')
+  })
+
   test('Returns cached markup if available.', async () => {
     setIsServer(true)
     const { app, ssrContext, storage } = createTestApp()
@@ -398,6 +422,117 @@ describe('RenderCacheable', () => {
     ])
   })
 
+  describe('An instance containing a nested instance', () => {
+    const date = new Date(2022, 11, 1)
+    const now = date.getTime() / 1000
+
+    function render(innerProps: string, storage: Record<string, any> = {}) {
+      const { ssrContext } = createTestApp('', '', storage)
+      mocks.useNuxtApp.mockImplementation(() => {
+        return {
+          ssrContext,
+          event: ssrContext.event,
+          _asyncData: {},
+          payload: {
+            data: {},
+          },
+        }
+      })
+
+      const app = createSSRApp(
+        defineComponent({
+          components: {
+            RenderCacheable,
+            Outer: defineComponentWithModule(
+              'Outer',
+              `<div><RenderCacheable ${innerProps}><Inner /></RenderCacheable></div>`,
+            ),
+          },
+          template: `<RenderCacheable cache-key="outer" max-age="1h" stale-if-error="1d" :cache-tags="['outer']"><Outer /></RenderCacheable>`,
+        }),
+      )
+      app.component(
+        'Inner',
+        defineComponent({
+          name: 'Inner',
+          setup() {
+            // Only has an effect if the instance provides a helper.
+            useComponentCache((helper) => {
+              if (innerProps.includes('uncacheable')) {
+                helper.setUncacheable()
+              }
+            })
+          },
+          template: `<div>Inner</div>`,
+        }),
+      )
+      return renderToString(app, ssrContext)
+    }
+
+    beforeEach(() => {
+      setIsServer(true)
+      vi.setSystemTime(date)
+    })
+
+    test('is not stored if the nested instance has noCache.', async () => {
+      const storage: Record<string, any> = {}
+      const html = await render('no-cache', storage)
+
+      expect(html).toContain('<div>Inner</div>')
+      expect(Object.keys(storage)).toEqual([])
+    })
+
+    test('is not stored if the nested instance is uncacheable.', async () => {
+      const storage: Record<string, any> = {}
+      const html = await render('cache-key="uncacheable"', storage)
+
+      expect(html).toContain('<div>Inner</div>')
+      expect(Object.keys(storage)).toEqual([])
+    })
+
+    test('gets the max age, stale if error and cache tags of the rendered nested instance.', async () => {
+      const storage: Record<string, any> = {}
+      await render(
+        `cache-key="inner" :max-age="60" :stale-if-error="120" :cache-tags="['inner']"`,
+        storage,
+      )
+
+      const outer = decodeComponentCacheItem(storage['Outer::outer'])!
+      expect(outer.expires).toEqual(now + 60)
+      expect(outer.staleIfErrorExpires).toEqual(now + 120)
+      expect(outer.cacheTags?.sort()).toEqual(['inner', 'outer'])
+    })
+
+    test('gets the max age, stale if error and cache tags of the nested instance returned from cache.', async () => {
+      const storage: Record<string, any> = {
+        'Inner::inner': encodeComponentCacheItem(
+          '<div>Inner from cache</div>',
+          undefined,
+          now + 60,
+          ['inner'],
+          [],
+          now + 120,
+        ),
+      }
+      const html = await render('cache-key="inner"', storage)
+
+      expect(html).toContain('<div>Inner from cache</div>')
+      const outer = decodeComponentCacheItem(storage['Outer::outer'])!
+      expect(outer.expires).toEqual(now + 60)
+      expect(outer.staleIfErrorExpires).toEqual(now + 120)
+      expect(outer.cacheTags?.sort()).toEqual(['inner', 'outer'])
+    })
+
+    test('stays cacheable if the nested instance renders uncached because it has no key.', async () => {
+      const storage: Record<string, any> = {}
+      await render('', storage)
+
+      const outer = decodeComponentCacheItem(storage['Outer::outer'])!
+      expect(outer.expires).toEqual(now + 3600)
+      expect(outer.data).toContain('<div>Inner</div>')
+    })
+  })
+
   test('Calculates expires value when maxAge is provided.', async () => {
     setIsServer(true)
     const date = new Date(2022, 11, 1)
@@ -540,6 +675,65 @@ describe('RenderCacheable', () => {
     })
     await renderToString(app, ssrContext)
     expect(storage).toMatchInlineSnapshot('{}')
+  })
+
+  describe('A component with slot content', () => {
+    // The slot content can be different for every request, e.g. the name of
+    // the current user.
+    function render(props: string, storage: Record<string, any>) {
+      const { ssrContext } = createTestApp('', '', storage)
+      mocks.useNuxtApp.mockImplementation(() => {
+        return {
+          ssrContext,
+          event: ssrContext.event,
+          _asyncData: {},
+          payload: {
+            data: {},
+          },
+        }
+      })
+
+      const app = createSSRApp(
+        defineComponent({
+          components: {
+            RenderCacheable,
+            Card: defineComponent({
+              name: 'Card',
+              props: { variant: String },
+              template: `<div><slot /></div>`,
+            }),
+          },
+          setup() {
+            return { name: 'Alice' }
+          },
+          template: `<RenderCacheable ${props}><Card variant="info">Hello {{ name }}</Card></RenderCacheable>`,
+        }),
+      )
+      return renderToString(app, ssrContext)
+    }
+
+    beforeEach(() => {
+      setIsServer(true)
+    })
+
+    test('is not cached without a cache key', async () => {
+      const storage: Record<string, any> = {}
+      const html = await render('', storage)
+
+      expect(html).toContain('Hello Alice')
+      expect(Object.keys(storage)).toEqual([])
+    })
+
+    test.each([
+      ['cache-key="alice"', 'Card::alice'],
+      ['cache-key=""', 'Card'],
+    ])('is cached with %s', async (props, key) => {
+      const storage: Record<string, any> = {}
+      await render(props, storage)
+
+      expect(Object.keys(storage)).toEqual([key])
+      expect(storage[key]).toContain('Hello Alice')
+    })
   })
 
   test('Handles errors when getting cache item.', async () => {

@@ -16,6 +16,10 @@ export type Props = {
    * The key to use for the cache entry. If left empty a key is automatically
    * generated based on the props passed to the child.
    *
+   * If the child receives slot content, a key is required: The slot content
+   * isn't part of the generated key. An empty string uses the same key for
+   * all instances.
+   *
    * The key is automatically prefixed by the component name.
    */
   cacheKey?: string

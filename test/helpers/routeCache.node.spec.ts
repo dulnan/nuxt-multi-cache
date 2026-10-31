@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createStorage } from 'unstorage'
+import { createStorage, normalizeKey } from 'unstorage'
 import { getRequestURL, type H3Event } from 'h3'
 import type { MultiCacheServerOptions } from '~/src/runtime/types'
 import {
   getRouteCacheKey,
+  isAmbiguousRoutePath,
   isExcludedRoutePath,
   ROOT_ROUTE_CACHE_KEY,
 } from '~/src/runtime/helpers/routeCache'
@@ -67,6 +68,34 @@ describe('getRouteCacheKey', () => {
     expect(await getRouteCacheKey(buildEvent('/'))).toEqual('en--/')
   })
 
+  test.each([
+    ['a static empty string', '', '/foo'],
+    ['a method returning a prefix', () => Promise.resolve('en'), 'en--/foo'],
+    [
+      'a method returning an empty string',
+      () => Promise.resolve(''),
+      '{none}--/foo',
+    ],
+    [
+      'a method returning undefined',
+      () => Promise.resolve(undefined),
+      '{none}--/foo',
+    ],
+  ])('with %s as the prefix', async (_label, cacheKeyPrefix, expected) => {
+    mocks.serverOptions.cacheKeyPrefix = cacheKeyPrefix as any
+    expect(await getRouteCacheKey(buildEvent('/foo'))).toEqual(expected)
+  })
+
+  test('without a prefix from the method, a path cannot address the items of a prefix', async () => {
+    mocks.serverOptions.cacheKeyPrefix = (event) =>
+      Promise.resolve(event.path === '/news' ? 'premium' : '')
+
+    const prefixed = await getRouteCacheKey(buildEvent('/news'))
+    const unprefixed = await getRouteCacheKey(buildEvent('/premium--/news'))
+    expect(normalizeKey(prefixed)).toEqual('premium--:news')
+    expect(normalizeKey(unprefixed)).not.toEqual(normalizeKey(prefixed))
+  })
+
   test('uses a custom buildCacheKey method', async () => {
     mocks.serverOptions.route = {
       buildCacheKey: (event) => 'custom' + getRequestURL(event).pathname,
@@ -108,5 +137,39 @@ describe('isExcludedRoutePath', () => {
     ['/shop/', customApp, false],
   ])('%s with base URL %o: %s', (path, app, expected) => {
     expect(isExcludedRoutePath(path, app)).toBe(expected)
+  })
+})
+
+describe('isAmbiguousRoutePath', () => {
+  test.each([
+    // Read as a protocol-relative URL by Nuxt.
+    ['//contact', true],
+    ['//x/checkout', true],
+    ['/shop//contact', true],
+    ['/a//b', true],
+    ['/a/b//', true],
+    // Backslashes are slashes in WHATWG URLs.
+    ['/\\contact', true],
+    ['/a\\b', true],
+    // Dot segments are resolved by getRequestURL(), but not by the router.
+    ['/a/../contact', true],
+    ['/a/./contact', true],
+    ['/a/..', true],
+    ['/a/.', true],
+    ['/..', true],
+    ['/.', true],
+    ['/', false],
+    ['/contact', false],
+    ['/a/b/', false],
+    ['/a.b', false],
+    ['/..a', false],
+    ['/a../b', false],
+    ['/a/...', false],
+    ['/.well-known/foo', false],
+    // Only the path is checked, not the query string.
+    ['/a?url=//example.com', false],
+    ['/a?path=../b', false],
+  ])('%s: %s', (path, expected) => {
+    expect(isAmbiguousRoutePath(path)).toBe(expected)
   })
 })

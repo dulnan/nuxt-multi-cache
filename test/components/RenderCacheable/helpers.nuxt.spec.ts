@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { Fragment, defineComponent, h } from 'vue'
 import { createStorage } from 'unstorage'
+import { hash } from 'ohash'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import {
   getCacheKey,
@@ -43,6 +44,54 @@ describe('getCacheKey', () => {
     ).toMatchInlineSnapshot(
       `"MyComponent::AKu9ti69MYahEcv8PwEZFe0Ycb8YyUY_-RWGnNH8zws"`,
     )
+  })
+
+  // Without escaping, both props would be serialized to the same string.
+  test.each([
+    [{ title: 'a', variant: 'b' }, { title: "a',variant:'b" }],
+    [{ tags: ['a', 'b'] }, { tags: ["a','b"] }],
+    [{ tags: ['a\\', 'b'] }, { tags: ["a\\','b"] }],
+    [
+      { item: { title: 'a', variant: 'b' } },
+      { item: { title: "a',variant:'b" } },
+    ],
+  ])('Derives different keys for the props %o and %o.', (a, b) => {
+    const getKey = (props: object) =>
+      getCacheKey({}, { type: { name: 'MyComponent' }, props } as any)
+    expect(getKey(a)).not.toEqual(getKey(b))
+  })
+
+  test('Derives the same key as before if no string has quotes or backslashes.', () => {
+    // Strings in other objects are left as they are.
+    class Item {
+      title = "a'"
+    }
+    const circular: Record<string, unknown> = { title: 'a' }
+    circular.self = circular
+    const props = {
+      title: 'a',
+      tags: ['b', 'c'],
+      nested: { d: 'e' },
+      item: new Item(),
+      map: new Map([['f', "g'"]]),
+      date: new Date(0),
+      circular,
+      withoutPrototype: Object.assign(Object.create(null), { h: 'i' }),
+    }
+    expect(
+      getCacheKey({}, { type: { name: 'MyComponent' }, props } as any),
+    ).toEqual(`MyComponent::${hash(props)}`)
+  })
+
+  test('Derives a cache key for props with circular references.', () => {
+    const item: Record<string, unknown> = { title: "a'" }
+    item.self = item
+    expect(
+      getCacheKey({}, {
+        type: { name: 'MyComponent' },
+        props: { item },
+      } as any),
+    ).toMatch(/^MyComponent::/)
   })
 })
 

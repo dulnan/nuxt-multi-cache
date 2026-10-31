@@ -9,12 +9,15 @@ import type {
   MultiCacheInstance,
 } from '../../types'
 import { onError } from '../hooks/error'
+import { onBeforeResponse } from '../hooks/beforeResponse'
 import { MultiCacheState } from '../../helpers/MultiCacheState'
 import { serveCachedHandler } from '../handler/serveCachedRoute'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
 import {
   shouldLogCacheOverview,
+  isTestMode,
   cdnEnabled,
+  cdnPrivateCacheControl,
   componentCacheEnabled,
   dataCacheEnabled,
   routeCacheEnabled,
@@ -22,6 +25,8 @@ import {
 import { useRuntimeConfig } from '#imports'
 import { InMemoryCacheTagRegistry } from '../../helpers/InMemoryCacheTagRegistry'
 import { CacheTagInvalidator } from '../../helpers/CacheTagInvalidator'
+import { logger } from '../../helpers/multi-cache-logger'
+import { TEST_MODE_DATE_OVERRIDE_HEADER } from '../../helpers/constants'
 
 function createCacheContext(
   cache: MultiCacheServerOptionsCacheOptions | undefined,
@@ -75,12 +80,23 @@ function createMultiCacheApp(): MultiCacheApp {
     state: new MultiCacheState(),
     cacheTagRegistry,
     cacheTagInvalidator,
+    // Internal requests are handled in the same process, so the token never
+    // has to be known outside of it.
+    internalRequestToken: crypto.randomUUID(),
   }
 }
 
 export default defineNitroPlugin((nitroApp) => {
   const multiCache = createMultiCacheApp()
   nitroApp.multiCache = multiCache
+
+  // Test mode is a build option, because e2e tests run against production
+  // builds. Make sure such a build is noticed if it's deployed.
+  if (isTestMode) {
+    logger.warn(
+      `Test mode is enabled: Any request can override the current time of the caches with the "${TEST_MODE_DATE_OVERRIDE_HEADER}" header. Never deploy this build.`,
+    )
+  }
 
   // Adds the context and, if the route cache applies, the route cache helper
   // to the event.
@@ -102,6 +118,11 @@ export default defineNitroPlugin((nitroApp) => {
 
     // Hook into the error handler of H3 to try and serve stale cached routes.
     nitroApp.hooks.hook('error', onError)
+  }
+
+  // Mark responses that are private for the CDN as private in Cache-Control.
+  if (multiCache.config.cdn && cdnEnabled && cdnPrivateCacheControl) {
+    nitroApp.hooks.hook('beforeResponse', onBeforeResponse)
   }
 
   if (shouldLogCacheOverview) {

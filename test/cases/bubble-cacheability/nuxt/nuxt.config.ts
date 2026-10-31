@@ -4,6 +4,15 @@ import NuxtMultiCache from './../../../../src/module'
 export default defineNuxtConfig({
   modules: [NuxtMultiCache],
 
+  routeRules: {
+    '/cdn-private-route-rules': {
+      headers: { 'cache-control': 'public, max-age=60' },
+    },
+    '/cdn-public-route-rules': {
+      headers: { 'cache-control': 'public, max-age=60' },
+    },
+  },
+
   multiCache: {
     debug: true,
     component: {

@@ -212,7 +212,11 @@ composable returns something from cache.
 
 ### Make sure the key is unique
 
-The key you provide is used as-is for the cache item. Make sure that this key is
+The key you provide is used for the cache item without a namespace: The data
+cache doesn't add anything to it except the
+[global cache prefix](/overview/server-options#use-a-global-cache-prefix). The
+storage normalizes the key, and a key with a `?` is not cached at all (see
+[Cache Keys](/advanced/cache-backend#cache-keys)). Make sure that this key is
 unique or else you might experience unexpected behaviour:
 
 ```typescript

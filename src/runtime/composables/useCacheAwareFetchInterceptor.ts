@@ -1,10 +1,17 @@
-import type { FetchContext, ResponseType, FetchResponse } from 'ofetch'
+import type {
+  FetchContext,
+  FetchRequest,
+  ResponseType,
+  FetchResponse,
+} from 'ofetch'
+import { withBase } from 'ufo'
 import { useRequestEvent, useRuntimeConfig } from '#imports'
 import { useRouteCache } from './../server/utils/useRouteCache'
 import {
   ROUTE_CACHE_EXPIRES_HEADER,
   ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
   ROUTE_CACHE_TAGS_HEADER,
+  ROUTE_CACHE_UNCACHEABLE_HEADER,
   SERVER_REQUEST_HEADER,
 } from '../helpers/constants'
 import {
@@ -36,6 +43,22 @@ function getNumericHeader(headers: Headers, name: string): number | undefined {
   return Number.isFinite(number) ? number : undefined
 }
 
+/**
+ * Whether the request is handled by the app itself.
+ *
+ * Nitro handles requests to URLs starting with "/" in the same process. Other
+ * requests leave the app, even if they point to it.
+ */
+export function isAppRequest(request: FetchRequest, baseURL?: string): boolean {
+  if (typeof request !== 'string') {
+    return false
+  }
+
+  // ofetch applies the base URL after the onRequest interceptor.
+  const url = baseURL ? withBase(request, baseURL) : request
+  return url.startsWith('/') && !url.startsWith('//')
+}
+
 type UseCacheAwareFetchInterceptor = {
   onResponse?: OnResponseInterceptor
   onRequest?: OnRequestInterceptor
@@ -49,11 +72,13 @@ type UseCacheAwareFetchInterceptor = {
  * to the current request and merge them.
  *
  * If the route cache is enabled, the onResponse interceptor will also bubble
- * the route cache tags, max age and stale-if-error of API routes to the
- * current request.
+ * the route cache tags, max age, stale-if-error and uncacheability of API
+ * routes to the current request.
  *
  * The onRequest interceptor adds a special request header to indicate that
- * this is an internal request originating from Nuxt during SSR.
+ * this is an internal request originating from Nuxt during SSR. It's only
+ * added to requests that the app handles itself (relative URLs), and only
+ * their route cache values are bubbled.
  *
  * @param bubbleCacheability Which cacheability to bubble. true => everything,
  * route => only route cache, cdn => only CDN headers. Defaults to true.
@@ -69,6 +94,8 @@ export function useCacheAwareFetchInterceptor(
     if (!event) {
       return {}
     }
+
+    const token = event.context.multiCacheApp?.internalRequestToken
 
     return {
       onResponse: function (ctx) {
@@ -89,7 +116,11 @@ export function useCacheAwareFetchInterceptor(
         if (
           routeCacheEnabled &&
           config.multiCache.route &&
-          (bubbleCacheability === true || bubbleCacheability === 'route')
+          (bubbleCacheability === true || bubbleCacheability === 'route') &&
+          // Only the app's own responses are trusted: Another server could
+          // send the internal headers too.
+          !!token &&
+          ctx.options.headers.get(SERVER_REQUEST_HEADER) === token
         ) {
           // The headers are missing if the API route doesn't use the route
           // cache.
@@ -109,11 +140,25 @@ export function useCacheAwareFetchInterceptor(
               expires,
               staleIfErrorExpires,
             })
+
+            // The API route may return data specific to the request, so the
+            // page must not be cached either.
+            if (headers.get(ROUTE_CACHE_UNCACHEABLE_HEADER) === 'true') {
+              helper.setUncacheable()
+            }
           }, event)
         }
       },
       onRequest: function (ctx) {
-        ctx.options.headers.append(SERVER_REQUEST_HEADER, 'true')
+        // The token must never be sent to another server.
+        if (!token || !isAppRequest(ctx.request, ctx.options.baseURL)) {
+          return
+        }
+
+        // Set, not appended: The headers may already contain it, forwarded
+        // from the page request by Nuxt or from the first attempt when ofetch
+        // retries. "x, <token>" would not be recognized as an internal request.
+        ctx.options.headers.set(SERVER_REQUEST_HEADER, token)
       },
     }
   }

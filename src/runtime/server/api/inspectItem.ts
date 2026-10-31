@@ -1,4 +1,9 @@
-import { defineEventHandler, createError, getQuery } from 'h3'
+import {
+  defineEventHandler,
+  createError,
+  getQuery,
+  setResponseHeader,
+} from 'h3'
 import { checkAuth, getCacheInstance } from './helpers'
 
 export default defineEventHandler<Promise<unknown>>(async (event) => {
@@ -13,5 +18,13 @@ export default defineEventHandler<Promise<unknown>>(async (event) => {
       statusMessage: 'Cache item does not exist.',
     })
   }
+
+  // Route and component items are stored as strings, which h3 would send as
+  // text/html. Their content, e.g. the body of a JSON response, would then be
+  // rendered as markup in the browser of whoever opens the URL.
+  if (typeof item === 'string') {
+    setResponseHeader(event, 'content-type', 'text/plain; charset=utf-8')
+  }
+
   return item
 })

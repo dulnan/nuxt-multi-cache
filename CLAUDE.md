@@ -75,13 +75,16 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
   instance per enabled cache, cache tag registry/invalidator, shared state) and
   registers:
   - the `request` hook: attaches the app and, for cacheable requests (GET/HEAD,
-    not excluded paths, `applies`, `enabledForRequest`), a route cache helper to
-    `event.context`;
+    no ambiguous path like `//x`, not excluded paths, `applies` with the decoded
+    path, `enabledForRequest`), a route cache helper to `event.context`;
   - `serveCachedHandler`, unshifted to the front of the h3 stack: serves route
     cache hits;
   - the `afterResponse` hook: stores cacheable responses (status 200, non-empty
     body);
-  - the `error` hook: serves a stale route on server errors (stale-if-error).
+  - the `error` hook: serves a stale route on server errors (stale-if-error);
+  - the `beforeResponse` hook (CDN feature): adds `private` to `Cache-Control`
+    if the CDN header is `private` or `no-store`, because some CDNs (Fastly)
+    ignore these in their own header.
 - Composables (`composables/`, Nuxt, event optional) and server utils
   (`server/utils/`, Nitro, event required) are thin wrappers around the
   implementations in `shared/`.
@@ -101,15 +104,20 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
   option, data cache items and cached components merge their max age,
   stale-if-error, tags and uncacheability into the route cache helper and/or the
   CDN helper.
-- `useCacheAwareFetchInterceptor` marks internal SSR requests with the
-  `x-nuxt-multi-cache-request` header. API routes answer them with internal
-  headers (route cache tags, expires, stale-if-error expires) that are bubbled
-  into the page and stripped before storing (`INTERNAL_RESPONSE_HEADERS`).
+- `useCacheAwareFetchInterceptor` marks internal SSR requests to relative URLs
+  (handled in-process by Nitro) with the `x-nuxt-multi-cache-request` header,
+  set to a random token generated at server start
+  (`MultiCacheApp.internalRequestToken`). API routes answer them with internal
+  headers (route cache tags, expires, stale-if-error expires, uncacheable),
+  written by the server `useRouteCache` after each call. They are bubbled into
+  the page and stripped before storing (`INTERNAL_RESPONSE_HEADERS`).
 - `components/RenderCacheable/server` renders its slot with `ssrRenderSlotInner`
   and stores the markup, the payload of `asyncDataKeys` and the rendered module
   IDs (`ssrModules`, collected through a scoped SSR context provided under Vue's
   `ssrContextKey`). `provide()` calls must happen before the first `await` in
-  its setup. The client version only renders the slot.
+  its setup. A nested instance injects the context of the enclosing one and
+  always merges its cacheability (uncacheable, max age, tags) into it. The
+  client version only renders the slot.
 - `server/api/` contains the purge/stats/inspect handlers, registered only if
   `api.enabled` is set at build time. `checkAuth` responds with 404 when the API
   is disabled via runtime config, then checks the token, disabled authorization,

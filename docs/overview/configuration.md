@@ -134,8 +134,38 @@ export default defineNuxtConfig({
 
     // Allow overriding the current time with the
     // x-nuxt-multi-cache-date-override request header (an ISO date string).
-    // Only use this in tests.
-    enableTestMode: true,
+    // Only use this in tests, see "Test Mode" below.
+    enableTestMode: process.env.E2E === 'true',
+  },
+})
+```
+
+## Test Mode
+
+With `enableTestMode`, any request can override the current time of the caches
+with the `x-nuxt-multi-cache-date-override` header. This makes it possible to
+test expiry and stale behavior in e2e tests.
+
+::: danger
+
+Never deploy a build with test mode enabled. Anyone could make cache items
+expire, or keep them cached far beyond their max age. The server logs a warning
+at startup if test mode is enabled.
+
+:::
+
+Test mode is a build option, because e2e tests (for example with
+`@nuxt/test-utils`) run against a production build. Enable it only for the
+builds of your tests, for example with an environment variable as in the example
+above, or with Nuxt's `$test` override, which applies if `NODE_ENV` is `test`
+while the app is built:
+
+```typescript
+export default defineNuxtConfig({
+  $test: {
+    multiCache: {
+      enableTestMode: true,
+    },
   },
 })
 ```

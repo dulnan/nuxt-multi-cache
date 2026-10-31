@@ -77,3 +77,12 @@ NUXT_MULTI_CACHE_API_AUTHORIZATION_DISABLED=true
 ```
 
 Set to `true` to disable authorization checks for the purge/stats API.
+
+If a token is set (in the module config or via
+`NUXT_MULTI_CACHE_API_AUTHORIZATION_TOKEN`), it is still required. To disable
+authorization for a build with a token, also set the token to an empty string:
+
+```dotenv
+NUXT_MULTI_CACHE_API_AUTHORIZATION_DISABLED=true
+NUXT_MULTI_CACHE_API_AUTHORIZATION_TOKEN=
+```

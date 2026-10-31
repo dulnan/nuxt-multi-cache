@@ -13,6 +13,7 @@ import { logger } from '../../../helpers/multi-cache-logger'
 import {
   getMultiCacheContext,
   getCacheKeyWithPrefix,
+  isValidCacheKey,
   enabledForRequest,
   getRequestTimestamp,
   getCacheTagRegistry,
@@ -43,7 +44,8 @@ import { bubbleCacheability } from './../../../helpers/bubbleCacheability'
  * Wrapper for cacheable components.
  *
  * The component is cached based on the props of the first child in the
- * default slot. Alternatively you can provide a custom cache key.
+ * default slot. Alternatively you can provide a custom cache key, which is
+ * required if the child receives slot content.
  *
  * The slot can only have a single child. That means you would have to wrap it
  * in a <div>, but you likely want to create a component that "groups" together
@@ -87,9 +89,23 @@ export default defineComponent<Props>({
     const defaultSlot = slots.default()
     const renderFallback = () => h(tag, defaultSlot)
 
+    // The context of an enclosing <RenderCacheable>. Its cached markup
+    // contains the markup of this instance, so the cacheability of this
+    // instance is always merged into it. inject() reads from the parent, so
+    // this is not the context provided below.
+    const parentContext = inject<{ helper?: ComponentCacheHelper } | null>(
+      INJECT_COMPONENT_CACHE_CONTEXT,
+      null,
+    )
+
+    if (props.noCache) {
+      parentContext?.helper?.setUncacheable()
+      return renderFallback
+    }
+
     const first = getSlotVNode(props, defaultSlot)
 
-    if (props.noCache || !first) {
+    if (!first) {
       return renderFallback
     }
 
@@ -167,6 +183,9 @@ export default defineComponent<Props>({
     const bubbleError = componentCache.bubbleError
 
     const fullCacheKey = await getCacheKeyWithPrefix(cacheKey, event)
+    if (!isValidCacheKey(fullCacheKey, 'component')) {
+      return renderFallback
+    }
 
     // Get the cached item from the storage.
     const cached = await getCachedComponent(
@@ -215,6 +234,7 @@ export default defineComponent<Props>({
         })
       }
 
+      parentContext?.helper?.mergeFromCacheItem(cacheItem)
       bubbleCacheability(cacheItem, event, props.bubbleCacheability)
 
       return renderMarkup(cacheItem.data)
@@ -297,6 +317,7 @@ export default defineComponent<Props>({
     // The modules rendered in the slot.
     const ssrModules = scopedSsrContext ? [...scopedSsrContext.modules] : []
 
+    parentContext?.helper?.mergeFromCacheability(helper)
     bubbleCacheability(helper, event, props.bubbleCacheability)
 
     const expires = helper.getExpires('maxAge') ?? CACHE_PERMANENT

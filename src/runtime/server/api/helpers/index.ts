@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3'
-import { createError, getHeader } from 'h3'
+import { createError, getHeader, setResponseHeaders } from 'h3'
 import type { Storage } from 'unstorage'
 import { getMultiCacheApp } from '../../utils/useMultiCacheApp'
+import { useCDNHeadersImplementation } from '../../../shared/useCDNHeaders'
 import type { CacheType, MultiCacheInstances } from './../../../types'
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
@@ -36,6 +37,22 @@ export function getCacheInstance(event: H3Event): {
  * authorization failed.
  */
 export async function checkAuth(event: H3Event) {
+  // The responses contain stored content, which must never be rendered as a
+  // document that can run scripts, should a response be sent as text/html.
+  setResponseHeaders(event, {
+    'x-content-type-options': 'nosniff',
+    'content-security-policy': "default-src 'none'; sandbox",
+    // The responses depend on the authorization, which caches can't know
+    // about, e.g. the token is sent in a custom header.
+    'cache-control': 'private, no-store',
+  })
+
+  // A middleware may have marked every response as public for the CDN.
+  // Private is final, so later calls can't make the response public again.
+  useCDNHeadersImplementation((cdn) => {
+    cdn.private().setBoolean('noStore').setNumeric('maxAge', 0)
+  }, event)
+
   const app = getMultiCacheApp()
 
   // The API can be disabled via runtime config. Respond as if the endpoints
@@ -47,12 +64,9 @@ export async function checkAuth(event: H3Event) {
     })
   }
 
-  // Allow if authorization is explicitly disabled.
-  if (app.config.api.authorizationDisabled) {
-    return
-  }
-
-  // Check authorization using token.
+  // Check authorization using token. A token is always required if one is set,
+  // even if authorization is disabled: The token may be set via runtime config
+  // for an environment, while `authorization: false` is in nuxt.config.ts.
   if (app.config.api.authorizationToken) {
     const headerToken = getHeader(event, AUTH_HEADER)
     if (headerToken === app.config.api.authorizationToken) {
@@ -63,6 +77,11 @@ export async function checkAuth(event: H3Event) {
       statusCode: 401,
       statusMessage: 'Unauthorized',
     })
+  }
+
+  // Allow if authorization is explicitly disabled.
+  if (app.config.api.authorizationDisabled) {
+    return
   }
 
   const authorization = app.serverOptions.api?.authorization

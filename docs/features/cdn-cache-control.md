@@ -29,6 +29,14 @@ export default defineNuxtConfig({
        * Default: 'Cache-Tag'
        */
       cacheTagHeader: 'Cache-Tag',
+
+      /**
+       * Add `private` to the Cache-Control header if the CDN header is
+       * private or no-store. See "Private Responses" below.
+       *
+       * Default: true
+       */
+      privateCacheControl: true,
     },
   },
 })
@@ -40,7 +48,7 @@ export default defineNuxtConfig({
 | ----------------------------------------------------------------------------------------- | ------------------- | ---------------- |
 | [**Fastly**](https://docs.fastly.com/en/guides/controlling-caching)                       | `Surrogate-Control` | `Surrogate-Key`  |
 | [**Cloudflare**](https://developers.cloudflare.com/cache/concepts/cdn-cache-control/)     | `CDN-Cache-Control` | `Cache-Tag`      |
-| [**Akamai**](https://techdocs.akamai.com/property-mgr/docs/know-caching)                  | `Edge-Control`      | `Edge-Cache-Tag` |
+| [**Akamai**](https://techdocs.akamai.com/property-mgr/docs/know-caching)                  | `Edge-Control`\*\*  | `Edge-Cache-Tag` |
 | [**nginx**](https://www.nginx.com/blog/nginx-caching-guide/)                              | `Cache-Control`\*   | _unsupported_    |
 | [**varnish**](https://www.varnish-software.com/developers/tutorials/http-caching-basics/) | `Cache-Control`\*   | `X-Cache-Tags`   |
 
@@ -48,9 +56,50 @@ export default defineNuxtConfig({
 With varnish you could use a custom header like `X-Cache-Control` and then
 handle that in a custom VCL.**
 
+**\*\* Akamai describes `Edge-Control` as deprecated, and it's not documented
+which standard directives it honors. Akamai only honors the `Cache-Control`
+header of the origin if "Honor origin Cache-Control" is enabled, and `private`
+only if "Honor private" is enabled.**
+
 The default headers (`Surrogate-Control` and `Cache-Tag`) don't match a single
 service, so set both options for the service you use. For example, Fastly
 expects the cache tags in `Surrogate-Key`.
+
+## Private Responses
+
+If the CDN header is marked as `private` (with
+[`private()`](/composables/useCDNHeaders#private)) or `no-store` (for example
+when an uncacheable item [bubbles](/overview/bubble-cacheability)), the module
+also adds `private` to the `Cache-Control` header of the response. Not every CDN
+honors these directives in its own header: Fastly ignores `private` and
+`no-store` in `Surrogate-Control` and only skips caching for
+`Cache-Control: private`. Without it, Fastly may also hand the response to other
+requests for the same URL that arrive at the same time (request collapsing).
+
+A `Cache-Control` header set by the app is merged: `private` is added, `public`
+is removed, and all other directives are kept. Browsers are private caches, so
+this doesn't change how they cache the response.
+
+| App sets                | Response                 |
+| ----------------------- | ------------------------ |
+| _nothing_               | `private`                |
+| `public, max-age=60`    | `private, max-age=60`    |
+| `no-store`              | `private, no-store`      |
+| `public, s-maxage=3600` | `private, s-maxage=3600` |
+
+This happens in Nitro's `beforeResponse` hook, right before the response is
+sent, so values set via route rules, during rendering, in a `render:response`
+hook or in a server handler after calling `useCDNHeaders()` are merged too. If
+you set `Cache-Control` in a `beforeResponse` hook of your own, which can run
+after the module's hook, or write the response directly to `event.node.res`, add
+`private` yourself for responses that must not be cached.
+
+Nothing is changed if `cacheControlHeader` is `Cache-Control` itself.
+
+To disable this behavior, set `cdn.privateCacheControl` to `false`. Only do this
+if you make sure yourself that private responses are not cached by your CDN, for
+example with a `Cache-Control` header that you always set or with a rule in your
+CDN.
 
 ## Usage in pages / components
 

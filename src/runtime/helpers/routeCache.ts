@@ -11,6 +11,7 @@ import {
   ROUTE_CACHE_EXPIRES_HEADER,
   ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
   ROUTE_CACHE_TAGS_HEADER,
+  ROUTE_CACHE_UNCACHEABLE_HEADER,
 } from './constants'
 import {
   encodeRouteCacheKey,
@@ -67,6 +68,29 @@ export function isExcludedRoutePath(
 }
 
 /**
+ * Matches paths with a double slash, a backslash or a dot segment.
+ */
+const AMBIGUOUS_PATH_RE = /\/\/|\\|(?:^|\/)\.\.?(?:\/|$)/
+
+/**
+ * Whether the request path can be read as a different path.
+ *
+ * The route cache key is built with getRequestURL(), which collapses leading
+ * slashes and resolves dot segments. The router and the Nuxt renderer use the
+ * path as it is: Nuxt renders "//contact" as the home page of the host
+ * "contact", and Nitro routes "/api/files/../../contact" to "/api/files/**".
+ * Their response would be stored under the key of another path, so requests
+ * with such a path never use the route cache.
+ *
+ * @param path - The decoded request path, optionally with the query string.
+ */
+export function isAmbiguousRoutePath(path: string): boolean {
+  const queryIndex = path.indexOf('?')
+  const pathname = queryIndex === -1 ? path : path.slice(0, queryIndex)
+  return AMBIGUOUS_PATH_RE.test(pathname)
+}
+
+/**
  * Build the cache key for the route of the given event.
  */
 export async function getRouteCacheKey(event: H3Event): Promise<string> {
@@ -85,10 +109,15 @@ export async function getRouteCacheKey(event: H3Event): Promise<string> {
  */
 export function setInternalRouteCacheHeaders(
   event: H3Event,
-  item: CacheableItemInterface,
+  item: CacheableItemInterface & { cacheable?: boolean | null },
 ) {
   if (!isInternalServerRequest(event)) {
     return
+  }
+
+  // setUncacheable() is final, so the header is never removed again.
+  if (item.cacheable === false) {
+    setResponseHeader(event, ROUTE_CACHE_UNCACHEABLE_HEADER, 'true')
   }
 
   setResponseHeader(

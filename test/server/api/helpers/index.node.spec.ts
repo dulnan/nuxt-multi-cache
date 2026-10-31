@@ -26,6 +26,25 @@ vi.mock('nitropack/runtime', () => {
   }
 })
 
+/**
+ * Build an event with the given request headers. The response headers are
+ * collected in `node.res.headers`.
+ */
+function buildEvent(requestHeaders: Record<string, string> = {}): any {
+  const responseHeaders: Record<string, unknown> = {}
+  return {
+    node: {
+      req: { headers: requestHeaders },
+      res: {
+        headers: responseHeaders,
+        setHeader(name: string, value: unknown) {
+          responseHeaders[name] = value
+        },
+      },
+    },
+  }
+}
+
 async function mockMultiCacheApp(
   cb: () => Promise<any> | any,
   serverOptions: MultiCacheServerOptions = {},
@@ -51,10 +70,32 @@ afterEach(() => {
 })
 
 describe('checkAuth', () => {
+  test('Sets headers that prevent rendering or caching the response', async () => {
+    await mockMultiCacheApp(
+      async () => {
+        const event = buildEvent()
+        await expect(checkAuth(event)).rejects.toMatchObject({
+          statusCode: 404,
+        })
+        expect(event.node.res.headers).toEqual({
+          'x-content-type-options': 'nosniff',
+          'content-security-policy': "default-src 'none'; sandbox",
+          'cache-control': 'private, no-store',
+        })
+      },
+      {},
+      {
+        api: {
+          enabled: false,
+        },
+      },
+    )
+  })
+
   test('Skips auth check if defined in config', async () => {
     await mockMultiCacheApp(
       async () => {
-        expect(await checkAuth({} as any)).toBeUndefined()
+        expect(await checkAuth(buildEvent())).toBeUndefined()
       },
       {},
       {
@@ -69,7 +110,7 @@ describe('checkAuth', () => {
   test('Throws a 404 error if the API is disabled via runtime config', async () => {
     await mockMultiCacheApp(
       async () => {
-        await expect(checkAuth({} as any)).rejects.toMatchObject({
+        await expect(checkAuth(buildEvent())).rejects.toMatchObject({
           statusCode: 404,
         })
       },
@@ -88,7 +129,7 @@ describe('checkAuth', () => {
     await mockMultiCacheApp(
       async () => {
         await expect(
-          checkAuth({} as any),
+          checkAuth(buildEvent()),
         ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
       },
       {
@@ -110,15 +151,7 @@ describe('checkAuth', () => {
     await mockMultiCacheApp(
       async () => {
         expect(
-          await checkAuth({
-            node: {
-              req: {
-                headers: {
-                  'x-nuxt-multi-cache-token': 'token',
-                },
-              },
-            },
-          } as any),
+          await checkAuth(buildEvent({ 'x-nuxt-multi-cache-token': 'token' })),
         ).toBeUndefined()
       },
       {},
@@ -133,15 +166,9 @@ describe('checkAuth', () => {
     await mockMultiCacheApp(
       async () => {
         await expect(
-          checkAuth({
-            node: {
-              req: {
-                headers: {
-                  'x-nuxt-multi-cache-token': 'invalid_token',
-                },
-              },
-            },
-          } as any),
+          checkAuth(
+            buildEvent({ 'x-nuxt-multi-cache-token': 'invalid_token' }),
+          ),
         ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
       },
       {},
@@ -156,15 +183,7 @@ describe('checkAuth', () => {
     await mockMultiCacheApp(
       async () => {
         await expect(
-          checkAuth({
-            node: {
-              req: {
-                headers: {
-                  'x-nuxt-multi-cache-token': '',
-                },
-              },
-            },
-          } as any),
+          checkAuth(buildEvent({ 'x-nuxt-multi-cache-token': '' })),
         ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
       },
       {},
@@ -177,19 +196,43 @@ describe('checkAuth', () => {
     )
   })
 
+  test('Requires the token even if authorization is disabled', async () => {
+    // For example disabled in nuxt.config.ts for local development, and a
+    // token set via runtime config in production.
+    const config = {
+      api: {
+        enabled: true,
+        authorizationDisabled: true,
+        authorizationToken: 'token',
+      },
+    }
+
+    await mockMultiCacheApp(
+      async () => {
+        await expect(
+          checkAuth(buildEvent()),
+        ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
+      },
+      {},
+      config,
+    )
+
+    await mockMultiCacheApp(
+      async () => {
+        expect(
+          await checkAuth(buildEvent({ 'x-nuxt-multi-cache-token': 'token' })),
+        ).toBeUndefined()
+      },
+      {},
+      config,
+    )
+  })
+
   test('Throws error if no authorization config is provided.', async () => {
     await mockMultiCacheApp(
       async () => {
         await expect(
-          checkAuth({
-            node: {
-              req: {
-                headers: {
-                  'x-nuxt-multi-cache-token': '',
-                },
-              },
-            },
-          } as any),
+          checkAuth(buildEvent({ 'x-nuxt-multi-cache-token': '' })),
         ).rejects.toThrowErrorMatchingInlineSnapshot(
           `[Error: No authorization configuration option provided.]`,
         )

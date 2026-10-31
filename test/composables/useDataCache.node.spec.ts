@@ -1,4 +1,5 @@
 import type { H3Event } from 'h3'
+import { createStorage } from 'unstorage'
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { DataCacheItem } from './../../src/runtime/types'
@@ -257,6 +258,30 @@ describe('useDataCache composable', () => {
       expect((await useDataCache('falsy', event)).value).toEqual(cachedValue)
     },
   )
+
+  test('Neither gets nor stores items whose key contains "?"', async () => {
+    setIsServer(true)
+    const storage = createStorage()
+    const event = {
+      node: { req: { headers: {} } },
+      context: {
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          cache: { data: { storage } },
+          config: { data: true },
+        },
+      },
+    } as any
+
+    await (await useDataCache('search:shoes', event)).addToCache('shoes')
+
+    // unstorage would cut the key off at "?", which is the key above.
+    const cache = await useDataCache('search:shoes?casino', event)
+    expect(cache.value).toBeUndefined()
+    await cache.addToCache('casino')
+
+    expect((await useDataCache('search:shoes', event)).value).toEqual('shoes')
+    expect(await storage.getKeys()).toEqual(['search:shoes'])
+  })
 
   test('Returns dummy if SSR context not found', async () => {
     setIsServer(true)

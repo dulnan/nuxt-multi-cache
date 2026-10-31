@@ -8,6 +8,7 @@ import type {
 import {
   enabledForRequest,
   getCacheKeyWithPrefix,
+  isValidCacheKey,
   getCacheTagRegistry,
   getMultiCacheContext,
   getRequestTimestamp,
@@ -62,6 +63,9 @@ export async function useDataCacheImplementation<T>(
   const bubbleError = multiCache.data.bubbleError
 
   const fullKey = await getCacheKeyWithPrefix(key, event)
+  if (!isValidCacheKey(fullKey, 'data')) {
+    return dummy
+  }
 
   const now = getRequestTimestamp(event)
   const addToCache: DataCacheAddToCacheMethod<T> = async (

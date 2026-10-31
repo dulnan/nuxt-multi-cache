@@ -32,6 +32,13 @@ describe('The useCacheAwareFetchInterceptor', () => {
     ).toMatchInlineSnapshot(`"cdn-cache-tag-from-api cdn-cache-tag-from-page"`)
   })
 
+  test('does not merge an s-maxage longer than the max age of the page', async () => {
+    const response = await fetch('/cdn-shared-max-age')
+    const control = response.headers.get('surrogate-control') ?? ''
+    expect(control).toContain('max-age=0')
+    expect(control).not.toContain('s-maxage=3600')
+  })
+
   test('merges route cache cacheability', async () => {
     await fetch('/route-cache')
 
@@ -65,6 +72,31 @@ describe('The useCacheAwareFetchInterceptor', () => {
     `)
   })
 
+  test.each(['x', 'true'])(
+    'merges route cache cacheability if the page request has the internal header: %s',
+    async (value) => {
+      // The page request's headers are forwarded to the API route request.
+      await fetch('/route-cache', {
+        headers: {
+          'x-nuxt-multi-cache-request': value,
+        },
+      })
+
+      const rows = await getRouteCacheItems()
+      const itemPage = rows.find((v) => v.key === 'route-cache')!.item
+      expect(itemPage.cacheTags).toContain('route-cache-tag-from-api')
+    },
+  )
+
+  test('merges route cache cacheability of a retried API route request', async () => {
+    // The API route fails on the first request, which ofetch retries.
+    await fetch('/route-cache-retry')
+
+    const rows = await getRouteCacheItems()
+    const itemPage = rows.find((v) => v.key === 'route-cache-retry')!.item
+    expect(itemPage.cacheTags).toContain('route-cache-tag-from-retry')
+  })
+
   test('merges the route cache max age and stale-if-error of the API route', async () => {
     // The first request renders the API route, the second one serves it from
     // the route cache.
@@ -88,6 +120,18 @@ describe('The useCacheAwareFetchInterceptor', () => {
     }
   })
 
+  test.each(['uncacheable', 'uncacheable-data'])(
+    'makes the route uncacheable if the API route is uncacheable: %s',
+    async (name) => {
+      // The page marks itself as cacheable, but the API route it fetches is
+      // uncacheable, either directly or bubbled from the data cache.
+      await fetch(`/route-cache-${name}`)
+
+      const rows = await getRouteCacheItems()
+      expect(rows.map((v) => v.key)).toEqual([])
+    },
+  )
+
   test('does not store or serve the internal headers of the API route', async () => {
     // The page fetches the API route as an internal request, which gets the
     // internal cache tags header.
@@ -100,6 +144,34 @@ describe('The useCacheAwareFetchInterceptor', () => {
     // Served from cache to an external request.
     const response = await fetch('/api/handler-with-route')
     expect(response.headers.get('x-nuxt-multi-cache-cache-tags')).toBeNull()
+  })
+
+  test('does not send the internal headers to external requests', async () => {
+    // The first request renders the API route, the second one serves it from
+    // the route cache.
+    for (const request of ['rendered', 'cached']) {
+      const response = await fetch('/api/handler-with-route', {
+        headers: {
+          'x-nuxt-multi-cache-request': 'true',
+        },
+      })
+      expect(
+        response.headers.get('x-nuxt-multi-cache-cache-tags'),
+        request,
+      ).toBeNull()
+      expect(
+        response.headers.get('x-nuxt-multi-cache-expires'),
+        request,
+      ).toBeNull()
+    }
+  })
+
+  test('does not merge route cache cacheability of requests that leave the app', async () => {
+    await fetch('/route-cache-absolute')
+
+    const rows = await getRouteCacheItems()
+    const itemPage = rows.find((v) => v.key === 'route-cache-absolute')?.item
+    expect(itemPage?.cacheTags).toEqual(['tag-from-page'])
   })
 
   test('adds no empty cache tag if the API route has no route cache tags', async () => {

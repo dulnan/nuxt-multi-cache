@@ -1,13 +1,14 @@
 import { type H3Event, getRequestHeader, getRequestURL } from 'h3'
-import type { MultiCacheInstances } from './../types'
+import type { CacheType, MultiCacheInstances } from './../types'
 import type { CacheTagRegistry } from './../types/CacheTagRegistry'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
-import { isServer, isTestMode } from '#nuxt-multi-cache/config'
+import { debug, isServer, isTestMode } from '#nuxt-multi-cache/config'
 import {
   SERVER_REQUEST_HEADER,
   TEST_MODE_DATE_OVERRIDE_HEADER,
 } from './constants'
 import { toTimestamp } from './maxAge'
+import { logger } from './multi-cache-logger'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
 
@@ -58,6 +59,17 @@ export function getMultiCacheRouteHelper(
   return event.context?.multiCache?.route
 }
 
+/**
+ * The cache key prefix for requests for which the cacheKeyPrefix method
+ * returns no prefix.
+ *
+ * Without a prefix, the key of such a request would only be the key, which
+ * could address the items of another prefix, e.g. "premium--/news" for a
+ * request to "/premium--/news". "{" and "}" are always percent-encoded in URL
+ * paths, so no request path can produce this prefix.
+ */
+export const EMPTY_CACHE_KEY_PREFIX = '{none}'
+
 async function determinePrefix(event: H3Event): Promise<string> {
   if (!isServer) {
     return Promise.resolve('')
@@ -73,13 +85,36 @@ async function determinePrefix(event: H3Event): Promise<string> {
       return serverOptions.cacheKeyPrefix
     } else {
       const runtimePrefix = await serverOptions.cacheKeyPrefix(event)
-      if (typeof runtimePrefix === 'string') {
+      if (typeof runtimePrefix === 'string' && runtimePrefix) {
         return runtimePrefix
       }
+      return EMPTY_CACHE_KEY_PREFIX
     }
   }
 
   return ''
+}
+
+/**
+ * Whether a cache item can be read or stored with the given key.
+ *
+ * unstorage drops everything from the first "?" in a key, so the item of
+ * "search:shoes?casino" would be the item of "search:shoes". Keys can contain
+ * request input, such as a query value, so items with such a key are neither
+ * read nor stored.
+ */
+export function isValidCacheKey(key: string, cache: CacheType): boolean {
+  if (!key.includes('?')) {
+    return true
+  }
+
+  if (debug) {
+    logger.warn(
+      `Skipped the ${cache} cache for a key with "?", which the storage would cut off: ${key}`,
+    )
+  }
+
+  return false
 }
 
 export async function getCacheKeyWithPrefix(
@@ -147,8 +182,10 @@ export function isInternalServerRequest(event: H3Event): boolean {
   event.context.multiCache ||= {}
 
   if (event.context.multiCache.isInternalServerRequest === undefined) {
+    // Any client can send the header, but only the app knows the token.
+    const token = event.context.multiCacheApp?.internalRequestToken
     const isServerRequest =
-      getRequestHeader(event, SERVER_REQUEST_HEADER) === 'true'
+      !!token && getRequestHeader(event, SERVER_REQUEST_HEADER) === token
     event.context.multiCache.isInternalServerRequest = isServerRequest
   }
 

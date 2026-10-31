@@ -109,6 +109,9 @@ The method receives the path of the request (including the query string) and
 returns whether the route cache is used for it. If the method returns `false`,
 the route isn't looked up in the route cache and its response isn't stored.
 
+The path is decoded, like the path that Nuxt renders: A request to `/%63heckout`
+passes `/checkout`. Only `%2F` stays encoded.
+
 By default, paths that end in one of these file extensions are excluded, also if
 they have a query string: `ico`, `png`, `jpg`, `js`, `css`, `html`, `woff`,
 `woff2`, `ttf`, `otf`, `eot`, `svg`. Providing a method replaces this default.
@@ -131,7 +134,19 @@ export default defineMultiCacheOptions(() => {
 :::
 
 Nuxt's build assets (`/_nuxt`), the error page and the module's
-[API](/features/api) are always excluded, regardless of this option.
+[API](/features/api) are always excluded, regardless of this option. So are
+paths with a double slash, a backslash or a `.` or `..` segment, such as
+`//contact`: Nuxt or Nitro may handle them as a different path than the one the
+route cache key is built from.
+
+::: warning
+
+Nuxt matches page routes case-insensitively, so `/CHECKOUT` renders the same
+page as `/checkout`, but doesn't start with `/checkout`. To keep a page with
+user-specific data out of the route cache, calling `setUncacheable()` in the
+page itself is more robust than checking its path.
+
+:::
 
 ## Custom API Authorization
 
@@ -166,30 +181,53 @@ export default defineMultiCacheOptions(() => {
 
 ## Disable all Caches per Request
 
+The `enabledForRequest` method decides whether the caches are used for the
+current request. If it returns `false`, no cache items are read or stored for
+the duration of the request. The CDN feature is not affected.
+
 ::: code-group
 
 ```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+import { getCookie } from 'h3'
 
 export default defineMultiCacheOptions(() => {
   return {
-    // Custom callback that decides if caching should be enabled for the current
-    // request. Returning false here prevents access to the cache for the
-    // duration of the request.
     enabledForRequest: async function (event) {
-      const user = await getUserFromRequest(event)
-
-      // Disabled all caching for logged in users.
-      if (user.isLoggedIn) {
-        return false
-      }
-
-      // Caches enabled for anonymous users.
-      return true
+      // Disable all caching for requests with a session, e.g. logged in
+      // users. Checks the request itself, see "When It Runs" below.
+      return !getCookie(event, 'session')
     },
   }
 })
 ```
+
+:::
+
+### When It Runs
+
+The method can run at the very beginning of the request, in Nitro's `request`
+hook, before any server middleware or route handler. This is the case when the
+module checks whether a cached route can be served, which then happens without
+running them.
+
+Only the request itself is available: The method, path, headers and cookies.
+Values that a server middleware puts on `event.context`, such as the current
+user, aren't set yet. The result is kept for the whole request, so the component
+and data caches use the same value.
+
+::: warning
+
+Don't rely on values set by a server middleware:
+
+```typescript
+// Always enabled: The auth middleware hasn't run yet, so `event.context.user`
+// is undefined here, also for logged in users.
+enabledForRequest: async (event) => !event.context.user,
+```
+
+Check the request directly instead, as in the example above, or do the same
+check that your middleware does.
 
 :::
 
@@ -229,6 +267,15 @@ export default defineMultiCacheOptions(() => {
 Provide a method that determines the cache key prefix per request. One use case
 is if your app responds differently based on the request headers, e.g.
 `Accept-Language`.
+
+If the method returns an empty string, the prefix `{none}` is used: The key is
+stored as `{none}--<key>`. Without it, the key of a request to `/premium--/news`
+would be the same as the key of `/news` with the prefix `premium`.
+
+Like `enabledForRequest`, the method can run
+[before any server middleware](#when-it-runs), so it may only depend on the
+request itself, such as headers or cookies. The prefix is determined once per
+request.
 
 ::: code-group
 

@@ -344,6 +344,15 @@ describe('parseMaxAge', () => {
       })
     })
 
+    it.each(['5min', 'constructor', 'toString', 'valueOf', '__proto__'])(
+      'throws for the invalid string %s',
+      (input) => {
+        expect(() => parseMaxAge(input as MaxAge, mockDateTimestamp)).toThrow(
+          `Invalid max age specificed: ${input}`,
+        )
+      },
+    )
+
     it('should return consistent results for repeated calls with time intervals', () => {
       // Mock a specific time
       const mockDate = new Date('2024-01-15T14:30:00.000Z')

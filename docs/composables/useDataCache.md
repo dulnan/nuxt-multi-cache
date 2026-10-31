@@ -37,7 +37,8 @@ const { data: weather } = await useAsyncData(async () => {
 
 ### key: `string`
 
-The key for the cache item.
+The key for the cache item. The storage normalizes it, and a key with a `?` is
+not cached at all (see [Cache Keys](/advanced/cache-backend#cache-keys)).
 
 ### event?: `H3Event`
 

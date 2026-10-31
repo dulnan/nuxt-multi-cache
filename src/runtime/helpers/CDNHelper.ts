@@ -101,6 +101,13 @@ function formatCustomDirective(name: string, value: unknown): string | null {
   return null
 }
 
+/**
+ * Returns the lower of the two values. A current value of null is not set.
+ */
+function lowest(current: number | null, value: number): number {
+  return current === null ? value : Math.min(current, value)
+}
+
 type CacheControlProperties = keyof Omit<CacheControl, 'private' | 'public'>
 type CacheControlNumericProperties = keyof Pick<
   CacheControl,
@@ -116,6 +123,24 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   _tags: string[]
   _control: CacheControl
   _customDirectives: Map<string, string>
+
+  /**
+   * The lowest max age set by the app with setNumeric() or set(). Unlike the
+   * max-age directive, it doesn't include values merged from other responses
+   * or bubbled from cached items.
+   */
+  _ownMaxAge: number | null = null
+
+  /**
+   * The lowest lifetime for shared caches of the merged responses and bubbled
+   * items: Their s-maxage or, without one, their max age.
+   */
+  _mergedSharedMaxAge: number | null = null
+
+  /**
+   * Whether a merged response had an s-maxage.
+   */
+  _hasMergedSharedMaxAge = false
   constructor(
     private readonly now: number,
     public readonly cacheControlHeader = cdnCacheControlHeader,
@@ -141,7 +166,7 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     }
 
     const cacheControlValue = [
-      this._control.format(),
+      this.formatControl(),
       ...this._customDirectives.values(),
     ]
       .filter(Boolean)
@@ -151,6 +176,58 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     }
 
     return this
+  }
+
+  /**
+   * Format the standard directives.
+   *
+   * Shared caches use s-maxage instead of max-age. Like max-age, the s-maxage
+   * is the lowest of all sources, where a source without an s-maxage counts
+   * with its max age: The app's own values, merged responses and bubbled
+   * items. Otherwise a page with max-age=0 that merges s-maxage=3600 from an
+   * API route would be cached for an hour. If no source has an s-maxage,
+   * max-age applies to shared caches as well, so none is added.
+   */
+  private formatControl(): string {
+    const ownSharedMaxAge = this._control.sharedMaxAge
+    if (ownSharedMaxAge === null && !this._hasMergedSharedMaxAge) {
+      return this._control.format()
+    }
+
+    const values = [
+      ownSharedMaxAge ?? this._ownMaxAge,
+      this._mergedSharedMaxAge,
+    ].filter((v) => typeof v === 'number')
+    this._control.sharedMaxAge = values.length ? Math.min(...values) : null
+    const formatted = this._control.format()
+    this._control.sharedMaxAge = ownSharedMaxAge
+    return formatted
+  }
+
+  /**
+   * Merge a max age and s-maxage that are not the app's own: From another
+   * response or bubbled from a cached item. See formatControl().
+   */
+  private mergeMaxAge(
+    providedMaxAge: MaxAge | null,
+    providedSharedMaxAge: MaxAge | null = null,
+  ) {
+    const maxAge =
+      providedMaxAge === null ? null : parseMaxAge(providedMaxAge, this.now)
+    if (maxAge !== null && maxAge !== CACHE_PERMANENT) {
+      this._control.maxAge = lowest(this._control.maxAge, maxAge)
+    }
+
+    const sharedMaxAge =
+      providedSharedMaxAge === null
+        ? maxAge
+        : parseMaxAge(providedSharedMaxAge, this.now)
+    if (providedSharedMaxAge !== null) {
+      this._hasMergedSharedMaxAge = true
+    }
+    if (sharedMaxAge !== null && sharedMaxAge !== CACHE_PERMANENT) {
+      this._mergedSharedMaxAge = lowest(this._mergedSharedMaxAge, sharedMaxAge)
+    }
   }
 
   /**
@@ -185,9 +262,19 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     }
 
     for (const prop of numericProperties) {
+      if (prop === 'maxAge' || prop === 'sharedMaxAge') {
+        continue
+      }
       if (typeof parsed[prop] === 'number') {
         this.setNumeric(prop, parsed[prop])
       }
+    }
+
+    if (
+      typeof parsed.maxAge === 'number' ||
+      typeof parsed.sharedMaxAge === 'number'
+    ) {
+      this.mergeMaxAge(parsed.maxAge, parsed.sharedMaxAge)
     }
 
     for (const prop of booleanProperties) {
@@ -207,6 +294,9 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     value: CacheControl[T],
   ): NuxtMultiCacheCDNHelper {
     this._control[key] = value
+    if (key === 'maxAge') {
+      this._ownMaxAge = typeof value === 'number' ? value : null
+    }
     return this
   }
 
@@ -252,6 +342,9 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
       value < currentValue
     ) {
       this._control[key] = value
+    }
+    if (key === 'maxAge') {
+      this._ownMaxAge = lowest(this._ownMaxAge, value)
     }
     return this
   }
@@ -350,7 +443,7 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     }
 
     if (item.expires !== null && item.expires !== undefined) {
-      this.setNumeric('maxAge', expiresToMaxAge(item.expires, this.now))
+      this.mergeMaxAge(expiresToMaxAge(item.expires, this.now))
     }
     if (
       item.staleIfErrorExpires !== null &&
@@ -372,7 +465,7 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   ): NuxtMultiCacheCDNHelper {
     const maxAge = cacheability.getMaxAge()
     if (maxAge !== null) {
-      this.setNumeric('maxAge', maxAge)
+      this.mergeMaxAge(maxAge)
     }
 
     // Like in mergeFromCacheItem(), a stale-if-error of 0 doesn't lower the
@@ -384,10 +477,12 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
 
     this.addTags(cacheability.getTags())
 
-    // Something that is not cacheable must not be cached by the CDN either,
-    // like a max age of 0.
+    // Something that is not cacheable must not be stored by the CDN either. A
+    // max age of 0 alone would still allow storing the response or serving it
+    // stale. It also lowers an s-maxage to 0, see formatControl().
     if (cacheability.getCacheable() === false) {
-      this.setNumeric('maxAge', 0)
+      this.mergeMaxAge(0)
+      this.setBoolean('noStore')
     }
 
     return this

@@ -3,6 +3,7 @@ export const ROUTE_CACHE_TAGS_HEADER = 'x-nuxt-multi-cache-cache-tags'
 export const ROUTE_CACHE_EXPIRES_HEADER = 'x-nuxt-multi-cache-expires'
 export const ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER =
   'x-nuxt-multi-cache-stale-if-error-expires'
+export const ROUTE_CACHE_UNCACHEABLE_HEADER = 'x-nuxt-multi-cache-uncacheable'
 export const TEST_MODE_DATE_OVERRIDE_HEADER = 'x-nuxt-multi-cache-date-override'
 
 /**
@@ -14,4 +15,5 @@ export const INTERNAL_RESPONSE_HEADERS = [
   ROUTE_CACHE_TAGS_HEADER,
   ROUTE_CACHE_EXPIRES_HEADER,
   ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
+  ROUTE_CACHE_UNCACHEABLE_HEADER,
 ]
