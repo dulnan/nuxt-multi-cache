@@ -132,6 +132,17 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
 - The sidebar is defined in `docs/.vitepress/config.ts`; redirects for removed
   pages go into `docs/public/_redirects`.
 
+## Agent skills
+
+`skills/` ships with the package for agents of the module's users (not for
+developing the module): `nuxt-multi-cache` (usage rules, references loaded on
+demand) and `nuxt-multi-cache-upgrade-v5` (upgrade checklist from 4.x). They
+hold rules and checks and link to the docs instead of repeating the API.
+Behavior changes that affect a rule or a checklist item need an update there
+too. `test/skills.node.spec.ts` checks the frontmatter (description on one line,
+which oxfmt keeps via an override), the size, and that relative links and docs
+links, including anchors, exist.
+
 ## Commits
 
 Conventional commit messages (`fix:`, `feat:`, `docs:`, `test:`, `chore:`,

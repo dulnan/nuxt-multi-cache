@@ -198,6 +198,7 @@ export default defineConfig({
             text: 'Bubbling Cacheability',
             link: '/overview/bubble-cacheability',
           },
+          { text: 'Agent Skills', link: '/overview/agent-skills' },
           { text: 'Migrating from V1', link: '/overview/migrating-from-v1' },
         ],
       },
