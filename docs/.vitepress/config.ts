@@ -231,6 +231,10 @@ export default defineConfig({
             text: 'External APIs',
             link: '/use-cases/external-apis',
           },
+          {
+            text: 'Stale if Error',
+            link: '/use-cases/stale-if-error',
+          },
         ],
       },
       {

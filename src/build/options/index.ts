@@ -38,9 +38,8 @@ export interface ModuleOptions {
    * the generated markup of its slot children. Each subsequent request will
    * load the markup from cache and bypass rendering entirely.
    *
-   * This is generally used for global components like navigation or footer,
-   * but it can also be used to cache an entire page when used in a layout
-   * component. It also supports caching payloads.
+   * This is generally used for global components like navigation or footer.
+   * It also supports caching payloads.
    *
    * The performance improvements are most noticeable if you have complex
    * components and a lot of pages.
