@@ -4,6 +4,7 @@ import { getRequestURL, type H3Event } from 'h3'
 import type { MultiCacheServerOptions } from '~/src/runtime/types'
 import {
   getRouteCacheKey,
+  isAmbiguousRoutePath,
   isExcludedRoutePath,
   ROOT_ROUTE_CACHE_KEY,
 } from '~/src/runtime/helpers/routeCache'
@@ -108,5 +109,39 @@ describe('isExcludedRoutePath', () => {
     ['/shop/', customApp, false],
   ])('%s with base URL %o: %s', (path, app, expected) => {
     expect(isExcludedRoutePath(path, app)).toBe(expected)
+  })
+})
+
+describe('isAmbiguousRoutePath', () => {
+  test.each([
+    // Read as a protocol-relative URL by Nuxt.
+    ['//contact', true],
+    ['//x/checkout', true],
+    ['/shop//contact', true],
+    ['/a//b', true],
+    ['/a/b//', true],
+    // Backslashes are slashes in WHATWG URLs.
+    ['/\\contact', true],
+    ['/a\\b', true],
+    // Dot segments are resolved by getRequestURL(), but not by the router.
+    ['/a/../contact', true],
+    ['/a/./contact', true],
+    ['/a/..', true],
+    ['/a/.', true],
+    ['/..', true],
+    ['/.', true],
+    ['/', false],
+    ['/contact', false],
+    ['/a/b/', false],
+    ['/a.b', false],
+    ['/..a', false],
+    ['/a../b', false],
+    ['/a/...', false],
+    ['/.well-known/foo', false],
+    // Only the path is checked, not the query string.
+    ['/a?url=//example.com', false],
+    ['/a?path=../b', false],
+  ])('%s: %s', (path, expected) => {
+    expect(isAmbiguousRoutePath(path)).toBe(expected)
   })
 })

@@ -61,9 +61,10 @@ This will be executed for every request, including Nuxt pages and server routes.
 Only responses to `GET` and `HEAD` requests are cached, and Nuxt's build assets,
 the error page and the module's [API](/features/api) are never cached. Make sure
 that no other route that returns user-specific data is marked as cacheable this
-way: Exclude such paths in the middleware or using the
-[applies](/overview/server-options#applies) server option, or call
-`setUncacheable()` in these routes.
+way: Call `setUncacheable()` in these routes, or exclude such paths in the
+middleware or using the [applies](/overview/server-options#applies) server
+option. Calling `setUncacheable()` is more robust, since a path check also has
+to match every other spelling of the path, such as `/CHECKOUT` for `/checkout`.
 
 ## Component Cache
 

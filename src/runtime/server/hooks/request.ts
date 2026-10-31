@@ -1,7 +1,8 @@
-import { type H3Event, getRequestURL } from 'h3'
+import type { H3Event } from 'h3'
 import { enabledForRequest, getRequestTimestamp } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import {
+  isAmbiguousRoutePath,
   isExcludedRoutePath,
   isRouteCacheMethod,
 } from '../../helpers/routeCache'
@@ -10,11 +11,12 @@ import { serverOptions } from '#nuxt-multi-cache/server-options'
 import { useRuntimeConfig } from '#imports'
 
 /**
- * Method to check whether route caching is generally applicable to the given URL.
+ * Method to check whether route caching is generally applicable to the given
+ * path.
+ *
+ * @param path - The decoded request path, including the query string.
  */
-function applies(url: URL): boolean {
-  const path = url.pathname + url.search
-
+function applies(path: string): boolean {
   if (isExcludedRoutePath(path, useRuntimeConfig().app)) {
     return false
   }
@@ -26,7 +28,7 @@ function applies(url: URL): boolean {
   // Exclude common files. Only the pathname is checked, so that a query
   // string (e.g. "/style.css?v=2") doesn't prevent the exclusion.
   return !/.\.(ico|png|jpg|js|css|html|woff|woff2|ttf|otf|eot|svg)$/.test(
-    url.pathname,
+    path.split('?')[0]!,
   )
 }
 
@@ -38,8 +40,11 @@ function applies(url: URL): boolean {
  * stored for requests with the route cache helper.
  */
 export async function onRequest(event: H3Event) {
-  const url = getRequestURL(event)
-  const path = url.pathname + url.search
+  // At this point, h3 has decoded the path, but hasn't removed the base URL:
+  // The path that the router and the Nuxt renderer use. Checking the raw URL
+  // instead would let "/%63heckout" (rendered as "/checkout") pass a check
+  // for "/checkout".
+  const path = event.path
   if (!path) {
     return
   }
@@ -57,8 +62,14 @@ export async function onRequest(event: H3Event) {
     return
   }
 
+  // The cache key would belong to a different path than the one that is
+  // rendered, e.g. for "//contact".
+  if (isAmbiguousRoutePath(path)) {
+    return
+  }
+
   // Path is generally not cacheable, so we can skip it.
-  if (!applies(url)) {
+  if (!applies(path)) {
     return
   }
 

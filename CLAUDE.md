@@ -75,8 +75,8 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
   instance per enabled cache, cache tag registry/invalidator, shared state) and
   registers:
   - the `request` hook: attaches the app and, for cacheable requests (GET/HEAD,
-    not excluded paths, `applies`, `enabledForRequest`), a route cache helper to
-    `event.context`;
+    no ambiguous path like `//x`, not excluded paths, `applies` with the decoded
+    path, `enabledForRequest`), a route cache helper to `event.context`;
   - `serveCachedHandler`, unshifted to the front of the h3 stack: serves route
     cache hits;
   - the `afterResponse` hook: stores cacheable responses (status 200, non-empty

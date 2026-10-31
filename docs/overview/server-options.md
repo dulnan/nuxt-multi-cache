@@ -109,6 +109,9 @@ The method receives the path of the request (including the query string) and
 returns whether the route cache is used for it. If the method returns `false`,
 the route isn't looked up in the route cache and its response isn't stored.
 
+The path is decoded, like the path that Nuxt renders: A request to `/%63heckout`
+passes `/checkout`. Only `%2F` stays encoded.
+
 By default, paths that end in one of these file extensions are excluded, also if
 they have a query string: `ico`, `png`, `jpg`, `js`, `css`, `html`, `woff`,
 `woff2`, `ttf`, `otf`, `eot`, `svg`. Providing a method replaces this default.
@@ -131,7 +134,19 @@ export default defineMultiCacheOptions(() => {
 :::
 
 Nuxt's build assets (`/_nuxt`), the error page and the module's
-[API](/features/api) are always excluded, regardless of this option.
+[API](/features/api) are always excluded, regardless of this option. So are
+paths with a double slash, a backslash or a `.` or `..` segment, such as
+`//contact`: Nuxt or Nitro may handle them as a different path than the one the
+route cache key is built from.
+
+::: warning
+
+Nuxt matches page routes case-insensitively, so `/CHECKOUT` renders the same
+page as `/checkout`, but doesn't start with `/checkout`. To keep a page with
+user-specific data out of the route cache, calling `setUncacheable()` in the
+page itself is more robust than checking its path.
+
+:::
 
 ## Custom API Authorization
 

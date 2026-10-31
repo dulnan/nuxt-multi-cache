@@ -274,9 +274,9 @@ cache at the same time, because they work quite differently:
   when using `defineCachedEventHandler` or by checking the `routeRules`.
 - This module instead hooks into the request lifecycle: In the `request` hook,
   it decides whether the route cache applies to the request (see
-  [applies](/overview/server-options#applies)). If it does, an event handler at
-  the start of the handler stack serves cached responses before any other event
-  handler is executed. When the `afterResponse` hook is called, it puts the
-  response in cache. And when the `error` hook is called, it serves a stale
-  response if one is available (see
-  [Stale if Error](/overview/stale-if-error#route-cache)).
+  [applies](/overview/server-options#applies); it never applies to an ambiguous
+  path such as `//contact`). If it does, an event handler at the start of the
+  handler stack serves cached responses before any other event handler is
+  executed. When the `afterResponse` hook is called, it puts the response in
+  cache. And when the `error` hook is called, it serves a stale response if one
+  is available (see [Stale if Error](/overview/stale-if-error#route-cache)).
