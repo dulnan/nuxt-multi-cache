@@ -65,6 +65,31 @@ describe('The useCacheAwareFetchInterceptor', () => {
     `)
   })
 
+  test.each(['x', 'true'])(
+    'merges route cache cacheability if the page request has the internal header: %s',
+    async (value) => {
+      // The page request's headers are forwarded to the API route request.
+      await fetch('/route-cache', {
+        headers: {
+          'x-nuxt-multi-cache-request': value,
+        },
+      })
+
+      const rows = await getRouteCacheItems()
+      const itemPage = rows.find((v) => v.key === 'route-cache')!.item
+      expect(itemPage.cacheTags).toContain('route-cache-tag-from-api')
+    },
+  )
+
+  test('merges route cache cacheability of a retried API route request', async () => {
+    // The API route fails on the first request, which ofetch retries.
+    await fetch('/route-cache-retry')
+
+    const rows = await getRouteCacheItems()
+    const itemPage = rows.find((v) => v.key === 'route-cache-retry')!.item
+    expect(itemPage.cacheTags).toContain('route-cache-tag-from-retry')
+  })
+
   test('merges the route cache max age and stale-if-error of the API route', async () => {
     // The first request renders the API route, the second one serves it from
     // the route cache.

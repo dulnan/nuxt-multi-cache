@@ -113,7 +113,10 @@ export function useCacheAwareFetchInterceptor(
         }
       },
       onRequest: function (ctx) {
-        ctx.options.headers.append(SERVER_REQUEST_HEADER, 'true')
+        // Set, not appended: The headers may already contain it, forwarded
+        // from the page request by Nuxt or from the first attempt when ofetch
+        // retries. "x, true" would not be recognized as an internal request.
+        ctx.options.headers.set(SERVER_REQUEST_HEADER, 'true')
       },
     }
   }
