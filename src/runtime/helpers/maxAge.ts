@@ -121,13 +121,12 @@ export function parseMaxAge(v: MaxAge, now: number): number {
     return CACHE_NEVER
   }
 
-  const duration = DURATIONS[v]
-
-  if (duration === undefined) {
+  // Own properties only, else e.g. "constructor" returns a function.
+  if (!Object.hasOwn(DURATIONS, v)) {
     throw new Error('Invalid max age specificed: ' + v)
   }
 
-  return duration
+  return DURATIONS[v]
 }
 
 export function isExpired(expires: number, now: number): boolean {
