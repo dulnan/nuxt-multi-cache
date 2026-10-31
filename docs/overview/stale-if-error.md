@@ -12,8 +12,10 @@ if:
 - The cached data is still within the `staleIfError` range
 
 ```typescript
-async function loadUser(userId: string): Use {
-  const { value, addToCache, staleValue } = await useDataCache(key.value)
+async function loadUser(userId: string): Promise<User> {
+  const { value, addToCache, staleValue } = await useDataCache<User>(
+    'user:' + userId,
+  )
 
   // A valid, non-stale value exists in the cache.
   if (value) {
@@ -21,7 +23,7 @@ async function loadUser(userId: string): Use {
   }
 
   try {
-    const response = await $fetch('/api/get-user/' + userId)
+    const response = await $fetch<User>('/api/get-user/' + userId)
 
     await addToCache(
       // The object we want to cache.

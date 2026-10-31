@@ -29,7 +29,7 @@ export default {
 }
 ```
 
-### Nuxt 3
+### Current
 
 ```typescript
 const { data: weather } = await useAsyncData('weather', async () => {
@@ -64,7 +64,7 @@ export default {
 </script>
 ```
 
-### Nuxt 3
+### Current
 
 ```vue
 <script lang="ts" setup>
@@ -104,12 +104,12 @@ export default {
 </script>
 ```
 
-### Nuxt 3
+### Current
 
 ```vue
 <template>
   <div>
-    <RenderCacheable :cache-tag="product.id + '_' + product.isHighlighted">
+    <RenderCacheable :cache-key="product.id + '_' + product.isHighlighted">
       <ProductTeaser
         :productId="product.id"
         :is-highlighted="product.isHighlighted"
@@ -123,4 +123,4 @@ export default {
 ## API
 
 The API offers the same functionality as before, but the routes have been
-renamed.
+renamed. See [API](/features/api) for the current routes.

@@ -64,19 +64,84 @@ export default defineMultiCacheOptions(() => {
 
 :::
 
-## Custom cache key generation for route cache
+### Storage Errors
 
-[See this section](/features/route-cache#cache-key-for-routes)
+Each cache has a `bubbleError` option that decides what happens if the storage
+fails, for example because Redis is not reachable:
+
+- `true` - The error is thrown, so it can be handled by your code or results in
+  an error response.
+- `false` - The error is logged and the request continues without the cache.
+
+The default is `true` for the data cache and `false` for the route and component
+cache.
+
+::: code-group
+
+```typescript [server/multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+
+export default defineMultiCacheOptions(() => {
+  return {
+    data: {
+      // Log storage errors instead of throwing them.
+      bubbleError: false,
+    },
+  }
+})
+```
+
+:::
+
+## Route Cache Options
+
+The route cache has additional options:
+
+- `buildCacheKey` - Build a custom cache key for a route. See
+  [Cache Key for Routes](/features/route-cache#cache-key-for-routes).
+- `alterCachedHeaders` - Change which headers are stored. See
+  [Alter which headers are cached](/features/route-cache#alter-which-headers-are-cached).
+- `applies` - Decide which paths can be cached at all.
+
+### applies
+
+The method receives the path of the request (including the query string) and
+returns whether the route cache is used for it. If the method returns `false`,
+the route is neither served from nor stored in the route cache.
+
+By default, paths that end in one of these file extensions are excluded: `ico`,
+`png`, `jpg`, `js`, `css`, `html`, `woff`, `woff2`, `ttf`, `otf`, `eot`, `svg`.
+Providing a method replaces this default.
+
+::: code-group
+
+```typescript [server/multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+
+export default defineMultiCacheOptions(() => {
+  return {
+    route: {
+      // Only cache routes below /blog.
+      applies: (path) => path.startsWith('/blog'),
+    },
+  }
+})
+```
+
+:::
+
+Nuxt's build assets (`/_nuxt`), the error page and the module's
+[API](/features/api) are always excluded, regardless of this option.
 
 ## Custom API Authorization
 
-This method will be called for each request to the API. The function receives
-the `H3Event` object as an argument and can then decide if authorization is
-granted by returning a Promise that resolves to `true` or `false`.
+This method will be called for each request to the API if no token is set (via
+the `api.authorization` module option or runtime config) and authorization is
+not disabled. So leave out the `api.authorization` module option in this case.
 
-The method is only used if no token is set (via the `api.authorization` module
-option or runtime config) and authorization is not disabled. So leave out the
-`api.authorization` module option in this case.
+The function receives the `H3Event` object as an argument and can then decide if
+authorization is granted by returning a Promise that resolves to `true` or
+`false`.
 
 ::: code-group
 
@@ -131,7 +196,13 @@ export default defineMultiCacheOptions(() => {
 ## Use a global cache prefix
 
 You can automatically prefix every cache item with a string. This will affect
-all caches and is prepended to every cache key.
+all caches: The key is stored as `<prefix>--<key>`.
+
+The prefix is not added to the keys of routes if you provide your own
+[buildCacheKey](/features/route-cache#cache-key-for-routes) method.
+
+When using the [API](/features/api) to purge or inspect single items, the key
+must include the prefix.
 
 ### Static
 

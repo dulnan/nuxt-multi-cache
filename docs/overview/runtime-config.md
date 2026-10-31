@@ -5,21 +5,18 @@ Some of the module's options can also be changed at runtime using
 
 ::: info
 
-Note that you can only enable features via runtime config that are **also
-enabled in the module config**. For example, you can _generally_ enable the
-route cache in the module's options and then disable it at runtime, but you can
-not have the route cache disabled in the module config and then enable it using
-runtime config.
+You can only enable features via runtime config that are **added** in the module
+config (see
+[Adding and Enabling Features](/overview/configuration#adding-and-enabling-features)).
+For example, with `route: { enabled: false }` in the module config,
+`NUXT_MULTI_CACHE_ROUTE=true` enables the route cache at runtime. Without a
+`route` key in the module config, it has no effect.
+
+In addition, at least one feature (or the API) must have `enabled: true` in the
+module config. Otherwise the module's server plugin is not added to the build
+and none of the runtime config values have an effect.
 
 :::
-
-## Enable debug
-
-```dotenv
-NUXT_MULTI_CACHE_DEBUG=true
-```
-
-If `true` the module will log debug message to the console.
 
 ## Toggle CDN Headers
 
@@ -59,9 +56,11 @@ Set to `true` to enable route caching or `false` to disable it.
 NUXT_MULTI_CACHE_API_ENABLED=true
 ```
 
-Set to `true` to enable the purge/stats API endpoints, `false` to disable them.
-Disabled endpoints respond with a 404 status code, before any authorization
-check.
+Set to `false` to disable the purge/stats API endpoints. Disabled endpoints
+respond with a 404 status code, before any authorization check.
+
+The endpoints are only added if `api.enabled` is `true` in the module config, so
+this can't enable them.
 
 ## API Authorization Token
 

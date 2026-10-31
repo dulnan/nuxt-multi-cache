@@ -100,9 +100,11 @@ export default defineNuxtConfig({
       enabled: true,
 
       // Set custom cache control for Cloudflare.
+      // Default: 'Surrogate-Control'
       cacheControlHeader: 'CDN-Cache-Control',
 
       // Set custom cache tags header for Cloudflare.
+      // Default: 'Cache-Tag'
       cacheTagHeader: 'Cache-Tag',
     },
 
@@ -111,21 +113,29 @@ export default defineNuxtConfig({
       enabled: true,
 
       // Use a different prefix for the API endpoints.
+      // Default: '/__nuxt_multi_cache'
       prefix: '/api/nuxt-multi-cache',
 
       // Disable authorization check on the API.
       authorization: false,
 
-      // Cache tag invaldiations should be buffered for 5 minutes before the
+      // Cache tag invalidations should be buffered for 5 minutes before the
       // cache items are actually purged.
+      // Default: 60000 (1 minute)
       cacheTagInvalidationDelay: 300000, // 5 minutes
     },
 
-    // Log detailled debugging messages, e.g. when items are cached or returned from cache.
+    // Log detailed debugging messages, e.g. when items are cached or returned
+    // from cache.
     debug: true,
 
     // Disable logging a cache overview when the app starts.
     disableCacheOverviewLogMessage: true,
+
+    // Allow overriding the current time with the
+    // x-nuxt-multi-cache-date-override request header (an ISO date string).
+    // Only use this in tests.
+    enableTestMode: true,
   },
 })
 ```

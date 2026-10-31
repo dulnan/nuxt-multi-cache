@@ -26,10 +26,16 @@ durations defined in [type.NamedDurations], for example:
 You can also use any of the _named intervals_ defined in [type.NamedInterval].
 These will automatically calculate the correct max age, for example:
 
-- `'next-hour'` - Will cache until the end of the current hour (e.g. if the
-  current time is `11:30:00`, it will calculate a max age of `1799`, so the item
-  invalidates at exactly `11:59:59`)
-- `'midnight'` - Will cache until midnight of the current day (e.g. `23:59:59`)
+- `'next-quarter-hour'` - Will cache until the next quarter hour (e.g. if the
+  current time is `11:20:00`, the item expires at `11:30:00`)
+- `'next-hour'` - Will cache until the next full hour (e.g. if the current time
+  is `11:30:00`, it will calculate a max age of `1800`, so the item expires at
+  exactly `12:00:00`)
+- `'midnight'` - Will cache until midnight (`00:00:00` of the next day)
+- `'end-of-week'` - Will cache until the end of the week (midnight from Sunday
+  to Monday)
+
+The intervals are calculated in the time zone of the server.
 
 ## Special Strings
 
