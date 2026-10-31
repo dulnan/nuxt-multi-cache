@@ -245,6 +245,10 @@ Provide a method that determines the cache key prefix per request. One use case
 is if your app responds differently based on the request headers, e.g.
 `Accept-Language`.
 
+If the method returns an empty string, the prefix `{none}` is used: The key is
+stored as `{none}--<key>`. Without it, the key of a request to `/premium--/news`
+would be the same as the key of `/news` with the prefix `premium`.
+
 ::: code-group
 
 ```typescript [server/multiCache.serverOptions.ts]

@@ -140,6 +140,9 @@ export type MultiCacheServerOptions = {
    * multi-domain setup you might have one instance per domain, but each
    * instance uses the same cache backend (e.g. redis). Setting a global prefix
    * will make sure that each instance is scoped.
+   *
+   * If the method returns an empty string, the prefix "{none}" is used, so
+   * that these requests can't address the items of another prefix.
    */
   cacheKeyPrefix?: string | ((event: H3Event) => Promise<string>)
 

@@ -58,6 +58,17 @@ export function getMultiCacheRouteHelper(
   return event.context?.multiCache?.route
 }
 
+/**
+ * The cache key prefix for requests for which the cacheKeyPrefix method
+ * returns no prefix.
+ *
+ * Without a prefix, the key of such a request would only be the key, which
+ * could address the items of another prefix, e.g. "premium--/news" for a
+ * request to "/premium--/news". "{" and "}" are always percent-encoded in URL
+ * paths, so no request path can produce this prefix.
+ */
+export const EMPTY_CACHE_KEY_PREFIX = '{none}'
+
 async function determinePrefix(event: H3Event): Promise<string> {
   if (!isServer) {
     return Promise.resolve('')
@@ -73,9 +84,10 @@ async function determinePrefix(event: H3Event): Promise<string> {
       return serverOptions.cacheKeyPrefix
     } else {
       const runtimePrefix = await serverOptions.cacheKeyPrefix(event)
-      if (typeof runtimePrefix === 'string') {
+      if (typeof runtimePrefix === 'string' && runtimePrefix) {
         return runtimePrefix
       }
+      return EMPTY_CACHE_KEY_PREFIX
     }
   }
 

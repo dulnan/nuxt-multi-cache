@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import { createStorage } from 'unstorage'
+import { createStorage, normalizeKey } from 'unstorage'
 import { getRequestURL, type H3Event } from 'h3'
 import type { MultiCacheServerOptions } from '~/src/runtime/types'
 import {
@@ -66,6 +66,34 @@ describe('getRouteCacheKey', () => {
     mocks.serverOptions.cacheKeyPrefix = 'en'
     expect(await getRouteCacheKey(buildEvent('/foo'))).toEqual('en--/foo')
     expect(await getRouteCacheKey(buildEvent('/'))).toEqual('en--/')
+  })
+
+  test.each([
+    ['a static empty string', '', '/foo'],
+    ['a method returning a prefix', () => Promise.resolve('en'), 'en--/foo'],
+    [
+      'a method returning an empty string',
+      () => Promise.resolve(''),
+      '{none}--/foo',
+    ],
+    [
+      'a method returning undefined',
+      () => Promise.resolve(undefined),
+      '{none}--/foo',
+    ],
+  ])('with %s as the prefix', async (_label, cacheKeyPrefix, expected) => {
+    mocks.serverOptions.cacheKeyPrefix = cacheKeyPrefix as any
+    expect(await getRouteCacheKey(buildEvent('/foo'))).toEqual(expected)
+  })
+
+  test('without a prefix from the method, a path cannot address the items of a prefix', async () => {
+    mocks.serverOptions.cacheKeyPrefix = (event) =>
+      Promise.resolve(event.path === '/news' ? 'premium' : '')
+
+    const prefixed = await getRouteCacheKey(buildEvent('/news'))
+    const unprefixed = await getRouteCacheKey(buildEvent('/premium--/news'))
+    expect(normalizeKey(prefixed)).toEqual('premium--:news')
+    expect(normalizeKey(unprefixed)).not.toEqual(normalizeKey(prefixed))
   })
 
   test('uses a custom buildCacheKey method', async () => {
