@@ -58,7 +58,8 @@ effect.
 ### setUncacheable()
 
 Make the component uncacheable. Once this method is called it can not be
-reverted and the component will be uncacheable.
+reverted and the component will be uncacheable. An enclosing `<RenderCacheable>`
+becomes uncacheable as well, see [Nesting](/features/component-cache#nesting).
 
 ### addPayloadKeys(keys: string|string[])
 

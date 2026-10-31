@@ -231,6 +231,31 @@ the `bubble-cacheability` prop:
 
 See [Bubbling Cacheability](/overview/bubble-cacheability) for details.
 
+## Nesting
+
+A `<RenderCacheable>` can contain other `<RenderCacheable>` instances, for
+example in a child component. The cached markup of the outer instance contains
+the markup of the inner ones, so their cacheability is always merged into the
+outer instance, independent of the `bubble-cacheability` prop:
+
+- If an inner instance has `no-cache` or is marked as uncacheable, the outer
+  instance isn't cached either.
+- The lowest max age and stale if error duration win, and the cache tags of the
+  inner instances are added. This also applies when an inner instance is
+  returned from cache.
+
+An inner instance that is rendered without cache because no cache key could be
+generated doesn't affect the outer instance.
+
+The merging happens when the outer instance is rendered. When the outer instance
+is returned from cache, the inner instances aren't rendered at all. The outer
+instance must therefore still vary its cache key, or set `no-cache`, for
+everything its content depends on.
+
+Data cache items in the slot only
+[bubble](/overview/bubble-cacheability#data-cache) to the route cache and the
+CDN headers, not to the enclosing `<RenderCacheable>`.
+
 ## Payload Extraction
 
 If the cached component fetches data using useAsyncData or useFetch you have to
@@ -273,7 +298,8 @@ now return the cached markup _and_ add the payload to the response.
 Using the `noCache` prop you can skip caching for a component. An example would
 be if our Navbar component shows sensitive information, like email of the user.
 Setting `:no-cache="true"` makes sure that the component is not fetched from the
-cache and also is not put into the cache.
+cache and also is not put into the cache. An enclosing `<RenderCacheable>` isn't
+cached either, see [Nesting](#nesting).
 
 ## All Props
 

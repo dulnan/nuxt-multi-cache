@@ -110,7 +110,9 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
   and stores the markup, the payload of `asyncDataKeys` and the rendered module
   IDs (`ssrModules`, collected through a scoped SSR context provided under Vue's
   `ssrContextKey`). `provide()` calls must happen before the first `await` in
-  its setup. The client version only renders the slot.
+  its setup. A nested instance injects the context of the enclosing one and
+  always merges its cacheability (uncacheable, max age, tags) into it. The
+  client version only renders the slot.
 - `server/api/` contains the purge/stats/inspect handlers, registered only if
   `api.enabled` is set at build time. `checkAuth` responds with 404 when the API
   is disabled via runtime config, then checks the token, disabled authorization,
