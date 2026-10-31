@@ -13,6 +13,9 @@ export default defineNuxtConfig({
     route: {
       enabled: true,
     },
+    cdn: {
+      enabled: true,
+    },
     api: {
       enabled: true,
       authorization: 'hunter2',

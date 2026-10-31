@@ -165,3 +165,7 @@ export default defineEventHandler((event) => {
 ```
 
 :::
+
+The responses of the module's [API](/features/api#caching) stay private. Make
+sure that no other route that returns user-specific data is marked as public
+this way: Call `private()` in these routes, which a later `public()` can't undo.

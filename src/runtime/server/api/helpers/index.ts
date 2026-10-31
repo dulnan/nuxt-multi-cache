@@ -2,6 +2,7 @@ import type { H3Event } from 'h3'
 import { createError, getHeader, setResponseHeaders } from 'h3'
 import type { Storage } from 'unstorage'
 import { getMultiCacheApp } from '../../utils/useMultiCacheApp'
+import { useCDNHeadersImplementation } from '../../../shared/useCDNHeaders'
 import type { CacheType, MultiCacheInstances } from './../../../types'
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
@@ -41,7 +42,16 @@ export async function checkAuth(event: H3Event) {
   setResponseHeaders(event, {
     'x-content-type-options': 'nosniff',
     'content-security-policy': "default-src 'none'; sandbox",
+    // The responses depend on the authorization, which caches can't know
+    // about, e.g. the token is sent in a custom header.
+    'cache-control': 'private, no-store',
   })
+
+  // A middleware may have marked every response as public for the CDN.
+  // Private is final, so later calls can't make the response public again.
+  useCDNHeadersImplementation((cdn) => {
+    cdn.private().setBoolean('noStore').setNumeric('maxAge', 0)
+  }, event)
 
   const app = getMultiCacheApp()
 

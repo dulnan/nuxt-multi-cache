@@ -70,7 +70,7 @@ afterEach(() => {
 })
 
 describe('checkAuth', () => {
-  test('Sets headers that prevent rendering the response as a document', async () => {
+  test('Sets headers that prevent rendering or caching the response', async () => {
     await mockMultiCacheApp(
       async () => {
         const event = buildEvent()
@@ -80,6 +80,7 @@ describe('checkAuth', () => {
         expect(event.node.res.headers).toEqual({
           'x-content-type-options': 'nosniff',
           'content-security-policy': "default-src 'none'; sandbox",
+          'cache-control': 'private, no-store',
         })
       },
       {},

@@ -38,6 +38,30 @@ describe('A middleware that makes every route cacheable', () => {
     )
     expect(apiKeys).toEqual([])
   })
+
+  test.each([
+    ['authorized', { 'x-nuxt-multi-cache-token': 'hunter2' }, 200],
+    ['unauthorized', {}, 401],
+  ])(
+    'does not make %s responses of the API cacheable on the CDN',
+    async (_label, headers, status) => {
+      // The middleware's CDN header works for other routes.
+      const page = await fetch('/shop/products')
+      expect(page.headers.get('surrogate-control')).toEqual(
+        'max-age=604800, public',
+      )
+
+      const response = await fetch(STATS_URL, { headers, redirect: 'manual' })
+      expect(response.status).toEqual(status)
+      expect(response.headers.get('cache-control')).toEqual('private, no-store')
+
+      const cdnHeader = response.headers.get('surrogate-control')!
+      expect(cdnHeader).toContain('private')
+      expect(cdnHeader).toContain('no-store')
+      expect(cdnHeader).toContain('max-age=0')
+      expect(cdnHeader).not.toContain('public')
+    },
+  )
 })
 
 describe('The inspect endpoint', () => {

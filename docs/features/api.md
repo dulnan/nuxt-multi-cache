@@ -96,6 +96,14 @@ error.
 You can disable authorization by setting the value of `api.authorization` to
 `false`. **Only do this if the endpoints are not accessible publicly!**
 
+### Caching
+
+The responses of the API are never cached: They are excluded from the route
+cache and sent with `Cache-Control: private, no-store`. If the
+[CDN feature](/features/cdn-cache-control) is enabled, the CDN header is also
+marked as `private` and `no-store` with a max age of 0, even if a middleware
+made every response public.
+
 ## Purge Everything
 
 Purges everything from all caches.
