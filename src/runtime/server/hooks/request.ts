@@ -33,8 +33,9 @@ function applies(url: URL): boolean {
 /**
  * Callback for the 'request' nitro hook.
  *
- * This adds the context objects to the event and, if enabled, serves cached
- * routes.
+ * This adds the context objects to the event and, if the route cache applies
+ * to the request, the route cache helper. Cached routes are only served and
+ * stored for requests with the route cache helper.
  */
 export async function onRequest(event: H3Event) {
   const url = getRequestURL(event)

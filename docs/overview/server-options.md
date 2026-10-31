@@ -107,7 +107,7 @@ The route cache has additional options:
 
 The method receives the path of the request (including the query string) and
 returns whether the route cache is used for it. If the method returns `false`,
-the route is neither served from nor stored in the route cache.
+the route isn't looked up in the route cache and its response isn't stored.
 
 By default, paths that end in one of these file extensions are excluded, also if
 they have a query string: `ico`, `png`, `jpg`, `js`, `css`, `html`, `woff`,

@@ -1,8 +1,8 @@
 import { type H3Event, getRequestURL } from 'h3'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import {
-  enabledForRequest,
   getMultiCacheContext,
+  getMultiCacheRouteHelper,
   getRequestTimestamp,
 } from '../../helpers/server'
 import {
@@ -12,14 +12,8 @@ import {
 import type { RouteCacheItem } from '../../types'
 import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/multi-cache-logger'
-import {
-  getRouteCacheKey,
-  isExcludedRoutePath,
-  isRouteCacheMethod,
-  setCachedResponse,
-} from '../../helpers/routeCache'
+import { getRouteCacheKey, setCachedResponse } from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
-import { useRuntimeConfig } from '#imports'
 import { isExpired } from '../../helpers/maxAge'
 
 function canBeServedFromCache(
@@ -44,22 +38,12 @@ function canBeServedFromCache(
 }
 
 export async function serveCachedHandler(event: H3Event) {
-  // Other methods (e.g. POST) are never served from cache.
-  if (!isRouteCacheMethod(event)) {
-    return
-  }
-
-  // Neither are the module's own API or Nuxt's assets, even if an item for
-  // the path exists in the cache.
-  if (
-    isExcludedRoutePath(getRequestURL(event).pathname, useRuntimeConfig().app)
-  ) {
-    return
-  }
-
-  const isEnabled = await enabledForRequest(event)
-
-  if (!isEnabled) {
+  // The request hook only adds the route helper if the route cache applies to
+  // the request: Not for other methods (e.g. POST), the module's own API,
+  // Nuxt's assets, paths excluded by `route.applies` (by default static files)
+  // or if `enabledForRequest` returns false. Without it, the cache isn't looked
+  // up, even if an item for the path exists.
+  if (!getMultiCacheRouteHelper(event)) {
     return
   }
 

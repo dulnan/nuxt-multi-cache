@@ -96,8 +96,12 @@ export type MultiCacheServerOptionsRouteCacheOptions =
     /**
      * A function to determine whether route caching is potentially possible.
      *
-     * In order to minimize the number of calls to get routes from the cache,
-     * it makes sense to already exclude certain paths, such as `/_nuxt` or static assets like .css, .js, .png, .jpg, etc.
+     * Receives the path including the query string. If it returns false, the
+     * route is neither looked up in nor stored in the route cache.
+     *
+     * Replaces the default, which excludes static files such as .css, .js,
+     * .png or .jpg. Nuxt's build assets, the error page and the module's API
+     * are always excluded.
      */
     applies?: (path: string) => boolean
   }
