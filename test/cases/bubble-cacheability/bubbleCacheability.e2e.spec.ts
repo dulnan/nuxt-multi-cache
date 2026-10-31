@@ -104,7 +104,9 @@ describe('The "bubble cacheability" feature', () => {
     'Makes the route uncacheable if an item is uncacheable (%s)',
     async (url) => {
       const response = await fetch(url)
-      expect(response.headers.get('surrogate-control')).toEqual('max-age=0')
+      expect(response.headers.get('surrogate-control')).toEqual(
+        'max-age=0, no-store',
+      )
       expect(await getRouteCacheItems()).toHaveLength(0)
     },
   )

@@ -148,8 +148,10 @@ example an item of the data cache. Used to
 ### mergeFromCacheability(cacheability: CacheabilityInterface)
 
 Merges the cache tags, max age and stale if error duration of another cache
-helper. If the helper is marked as uncacheable, the max age is set to `0`. Used
-to [bubble cacheability](/overview/bubble-cacheability).
+helper. If the helper is marked as uncacheable, the max age is set to `0` and
+`no-store` is added, so that the CDN doesn't store the response at all. An
+`s-maxage` is lowered to `0` as well. Used to
+[bubble cacheability](/overview/bubble-cacheability).
 
 ### getMaxAge(), getStaleIfError(), getTags()
 

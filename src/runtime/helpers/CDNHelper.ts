@@ -384,10 +384,14 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
 
     this.addTags(cacheability.getTags())
 
-    // Something that is not cacheable must not be cached by the CDN either,
-    // like a max age of 0.
+    // Something that is not cacheable must not be stored by the CDN either. A
+    // max age of 0 alone would still allow storing the response, serving it
+    // stale or keeping it for its s-maxage, which shared caches use instead.
     if (cacheability.getCacheable() === false) {
-      this.setNumeric('maxAge', 0)
+      this.setNumeric('maxAge', 0).setBoolean('noStore')
+      if (typeof this._control.sharedMaxAge === 'number') {
+        this.setNumeric('sharedMaxAge', 0)
+      }
     }
 
     return this

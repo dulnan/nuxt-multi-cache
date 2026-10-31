@@ -455,7 +455,7 @@ describe('The Cache-Control header of the CDNHelper', () => {
     ).toBe('max-age=60')
   })
 
-  test('sets max-age=0 when merging something uncacheable', () => {
+  test('sets max-age=0 and no-store when merging something uncacheable', () => {
     expect(
       getCacheControlHeader((helper) =>
         helper
@@ -464,7 +464,7 @@ describe('The Cache-Control header of the CDNHelper', () => {
             new CacheHelper(mockDateTimestamp).setUncacheable(),
           ),
       ),
-    ).toBe('max-age=0')
+    ).toBe('max-age=0, no-store')
     expect(
       getCacheControlHeader((helper) =>
         helper
@@ -472,6 +472,22 @@ describe('The Cache-Control header of the CDNHelper', () => {
           .mergeFromCacheability(new CacheHelper(mockDateTimestamp)),
       ),
     ).toBe('max-age=3600')
+  })
+
+  test('lowers s-maxage when merging something uncacheable', () => {
+    // Shared caches use s-maxage instead of max-age.
+    const control = getCacheControlHeader((helper) =>
+      helper
+        .public()
+        .setNumeric('sharedMaxAge', 86400)
+        .setNumeric('staleWhileRevalidate', 600)
+        .mergeFromCacheability(
+          new CacheHelper(mockDateTimestamp).setUncacheable(),
+        ),
+    )
+    expect(control).toContain('no-store')
+    expect(control).toContain('s-maxage=0')
+    expect(control).not.toContain('s-maxage=86400')
   })
 
   test('keeps stale-if-error when merging an item without one', () => {

@@ -28,7 +28,7 @@ Bubbling only has an effect if the route cache or the CDN feature is enabled.
 | Max age        | Lowest value wins             | `max-age`, lowest value wins                    |
 | Stale if error | Lowest value wins, except `0` | `stale-if-error`, lowest value wins, except `0` |
 | Cache tags     | Added                         | Added to the cache tag header                   |
-| Uncacheable    | The route becomes uncacheable | `max-age=0`                                     |
+| Uncacheable    | The route becomes uncacheable | `max-age=0, no-store`, `s-maxage` lowered to 0  |
 
 - A [max age](/overview/max-age) of `'permanent'` never lowers the max age.
 - A stale if error duration of `0` (for example a part that doesn't define one)
