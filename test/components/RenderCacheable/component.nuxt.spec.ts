@@ -254,6 +254,35 @@ describe('RenderCacheable', () => {
     )
   })
 
+  test('Accepts a single key as asyncDataKeys.', async () => {
+    setIsServer(true)
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { app, ssrContext, storage } = createTestApp(
+      `cacheKey="foobar" asyncDataKeys="examplePayload"`,
+    )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {
+            examplePayload: EXAMPLE_PAYLOAD,
+          },
+        },
+      }
+    })
+    await renderToString(app, ssrContext)
+
+    expect(storage['InnerComponent::foobar']).toContain(
+      `"payload":{"examplePayload":{"data":"This is example payload."}}`,
+    )
+    // No "Invalid prop" warning from Vue.
+    const warnings = warnSpy.mock.calls.map((args) => String(args[0]))
+    expect(warnings.filter((v) => v.includes('Invalid prop'))).toEqual([])
+    warnSpy.mockRestore()
+  })
+
   test('Calculates expires value when maxAge is provided.', async () => {
     setIsServer(true)
     const date = new Date(2022, 11, 1)

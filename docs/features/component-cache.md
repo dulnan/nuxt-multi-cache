@@ -322,7 +322,7 @@ is cached permanently.
 How long the cached markup can be returned if an error happens during rendering.
 See [Stale if Error](/overview/stale-if-error#component-cache).
 
-### `asyncDataKeys (string[], default: [])`
+### `asyncDataKeys (string | string[], default: [])`
 
 Provide the async data keys used by the cached component. If provided, the
 payload data will be cached alongside the component. If the component uses
