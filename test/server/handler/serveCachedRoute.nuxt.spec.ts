@@ -255,9 +255,8 @@ describe('serveCachedRoute event handler', () => {
         expect(await serveCachedHandler(event as any)).toBeUndefined()
         expect(getItemRaw).not.toHaveBeenCalled()
       } finally {
-        for (const key of Object.keys(serverOptions)) {
-          delete mocks.serverOptions[key]
-        }
+        delete mocks.serverOptions.route
+        delete mocks.serverOptions.enabledForRequest
         mocks.useNitroApp.mockRestore()
       }
     },
