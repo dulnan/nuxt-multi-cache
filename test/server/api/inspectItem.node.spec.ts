@@ -36,7 +36,12 @@ vi.mock('./../../../src/runtime/server/api/helpers', async (importOriginal) => {
   }
 })
 
-async function doInspect(storage: any, cache: string, key: string) {
+async function doInspect(
+  storage: any,
+  cache: string,
+  key: string,
+  responseHeaders: Record<string, unknown> = {},
+) {
   mocks.useNitroApp.mockReturnValue({
     multiCache: {
       cache: {
@@ -64,6 +69,12 @@ async function doInspect(storage: any, cache: string, key: string) {
     node: {
       req: {
         url: `http://localhost:3000/api/inspect/${cache}?key=${key}`,
+      },
+      res: {
+        getHeader: (name: string) => responseHeaders[name.toLowerCase()],
+        setHeader: (name: string, value: unknown) => {
+          responseHeaders[name.toLowerCase()] = value
+        },
       },
     },
     __CACHE_NAME: cache,
@@ -106,6 +117,27 @@ describe('inspectItem API handler', () => {
         "data": "My second data",
       }
     `)
+  })
+
+  test('Sends items stored as strings as plain text.', async () => {
+    const storage = createStorage()
+    // Route and component items are stored as strings, which h3 would send as
+    // text/html. Their markup is inert in its original context, e.g. a JSON
+    // response.
+    storage.setItem(
+      'route1',
+      '{"headers":{}}<CACHE_ITEM>{"comment":"<img src=x onerror=alert(1)>"}',
+    )
+    storage.setItem('data1', { data: '<img src=x onerror=alert(1)>' })
+
+    const routeHeaders: Record<string, unknown> = {}
+    await doInspect(storage, 'route', 'route1', routeHeaders)
+    expect(routeHeaders['content-type']).toEqual('text/plain; charset=utf-8')
+
+    // Objects are sent as JSON by h3.
+    const dataHeaders: Record<string, unknown> = {}
+    await doInspect(storage, 'data', 'data1', dataHeaders)
+    expect(dataHeaders['content-type']).toBeUndefined()
   })
 
   test('Throws 404 if item is not found.', async () => {

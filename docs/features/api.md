@@ -317,7 +317,9 @@ data cache are stored as objects.
 Inspect a cache item. The key should be provided as a query param `key`. If no
 item exists for the key, the endpoint responds with a 404 status code.
 
-The item is returned as it is stored (see [Get Stats](#get-stats)).
+The item is returned as it is stored (see [Get Stats](#get-stats)). Route and
+component items are stored as strings and sent as plain text (`text/plain`), so
+that a browser doesn't render their content as HTML.
 
 ### Example: Get the cached component with key `Navbar::de--chf`
 
