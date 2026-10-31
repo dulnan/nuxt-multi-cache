@@ -182,9 +182,13 @@ purging by cache tag:
 ```bash
 curl -X POST -i \
   -H "Content-Type: application/json" \
+  -H "x-nuxt-multi-cache-token: hunter2" \
   --data '["navbar"]' \
   http://localhost:3000/__nuxt_multi_cache/purge/tags
 ```
+
+The components are removed after a delay. See
+[Purge Tags](/features/api#purge-tags).
 
 ## Max Age
 

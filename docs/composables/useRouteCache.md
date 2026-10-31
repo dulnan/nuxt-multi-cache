@@ -114,10 +114,15 @@ cache items.
 cached pages in German:
 
 ```bash
-curl -X POST -i -H "Content-Type: application/json" \
+curl -X POST -i \
+  -H "Content-Type: application/json" \
+  -H "x-nuxt-multi-cache-token: hunter2" \
   --data '["language:de"]' \
   http://localhost:3000/__nuxt_multi_cache/purge/tags
 ```
+
+The cached pages are removed after a delay. See
+[Purge Tags](/features/api#purge-tags).
 
 ### Instance Properties
 

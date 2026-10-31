@@ -56,9 +56,9 @@ header:
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/component', {
   method: 'POST',
   headers: {
-    // [!code focus]
+    'Content-Type': 'application/json',
     'x-nuxt-multi-cache-token': 'hunter2', // [!code focus]
-  }, // [!code focus]
+  },
   body: JSON.stringify(['Navbar::de--chf']),
 })
 ```
@@ -66,7 +66,7 @@ fetch('http://localhost:3000/__nuxt_multi_cache/purge/component', {
 ```bash [curl]
 curl -X POST -i \
   -H "Content-Type: application/json" \
-  -H "x-nuxt-multi-cache-token: hunter2" \ // [!code focus]
+  -H "x-nuxt-multi-cache-token: hunter2" \
   --data '["Navbar::de--chf"]' \
   http://localhost:3000/__nuxt_multi_cache/purge/component
 ```
@@ -139,6 +139,7 @@ Purge one or more cache items by key.
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/component', {
   method: 'POST',
   headers: {
+    'Content-Type': 'application/json',
     'x-nuxt-multi-cache-token': 'hunter2',
   },
   body: JSON.stringify(['Navbar::de--chf']),
@@ -174,6 +175,7 @@ curl -X POST -i \
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/route', {
   method: 'POST',
   headers: {
+    'Content-Type': 'application/json',
     'x-nuxt-multi-cache-token': 'hunter2',
   },
   body: JSON.stringify(['/about', '/product/123']),
@@ -226,6 +228,7 @@ collecting tags.
 fetch('http://localhost:3000/__nuxt_multi_cache/purge/tags', {
   method: 'POST',
   headers: {
+    'Content-Type': 'application/json',
     'x-nuxt-multi-cache-token': 'hunter2',
   },
   body: JSON.stringify(['language:de']),

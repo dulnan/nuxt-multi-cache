@@ -93,6 +93,7 @@ The optional API provides endpoints to manage the caches.
 
 ```bash [curl]
 curl -X POST -i \
+  -H "Content-Type: application/json" \
   -H "x-nuxt-multi-cache-token: hunter2" \
   --data '["Navbar::de--chf"]' \
   http://localhost:3000/__nuxt_multi_cache/purge/component
