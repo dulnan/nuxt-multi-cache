@@ -12,9 +12,8 @@ To manage the cache control properties (like maxAge, mustRevalidate, maxStale,
 etc.) the [@tusbar/cache-control](https://github.com/tusbar/cache-control)
 library is used.
 
-In a Nuxt app context, the composable can be called without any argument. In a
-server context, the composable expects the `H3Event` object as a single
-argument.
+In a Nuxt app context, the callback is the only required argument. In a server
+context, the composable expects the `H3Event` object as the second argument.
 
 ## Full Example
 
@@ -32,7 +31,7 @@ useCDNHeaders((helper) => {
 
 ## Arguments
 
-### callback?: `(cache: NuxtMultiCacheCDNHelper) => void`
+### callback: `(cache: NuxtMultiCacheCDNHelper) => void`
 
 The callback that receives the CDN cache helper. The callback is only called on
 the server.
@@ -72,6 +71,9 @@ This method works for the following numeric properties:
 
 The method will only set the value **if it is lower than the current value**.
 
+`maxStaleDuration` is only added to the header if `maxStale` is also set using
+`setBoolean('maxStale')`.
+
 The value can be any [max age](/overview/max-age). `'permanent'` (or `-1`) means
 "no limit": It neither sets the directive nor replaces a lower value.
 
@@ -106,10 +108,10 @@ case for pages for anonymous users.
 If the response was previously marked `private` then this has no effect: The
 value of `public` will remain `false`.
 
-### addTags(tags: string[])
+### addTags(tags: string | string[])
 
-Add cache tags for the Cache-Tag header. Duplicates will be automatically
-removed.
+Add cache tags for the cache tags header (configured via `cdn.cacheTagHeader`,
+by default `Cache-Tag`). Duplicates will be automatically removed.
 
 ### mergeFromResponse(response: FetchResponse)
 
@@ -128,7 +130,7 @@ const { data } = await useAsyncData(() => {
       cdn.mergeFromResponse(response)
     }, event)
 
-    return response.json()
+    return response._data
   })
 })
 ```
@@ -136,6 +138,28 @@ const { data } = await useAsyncData(() => {
 ### mergeCacheControlHeader(header: string)
 
 Parses and merges the given `Cache-Control` header value.
+
+### mergeFromCacheItem(item: CacheableItemInterface)
+
+Merges the cache tags, max age and stale if error duration of a cache item, for
+example an item of the data cache. Used to
+[bubble cacheability](/overview/bubble-cacheability).
+
+### mergeFromCacheability(cacheability: CacheabilityInterface)
+
+Merges the cache tags, max age and stale if error duration of another cache
+helper. If the helper is marked as uncacheable, the max age is set to `0`. Used
+to [bubble cacheability](/overview/bubble-cacheability).
+
+### getMaxAge(), getStaleIfError(), getTags()
+
+Return the current max age, stale if error duration (both `null` if not set) and
+cache tags.
+
+### applyToEvent(event: H3Event)
+
+Sets the headers on the response of the given event. `useCDNHeaders` already
+does this, unless its `applyToEvent` argument is `false`.
 
 ### addCustomDirective(name: string, value?: string | number | true)
 

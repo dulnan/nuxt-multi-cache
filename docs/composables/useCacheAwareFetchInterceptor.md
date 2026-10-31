@@ -1,6 +1,8 @@
 # useCacheAwareFetchInterceptor
 
-Only available in **Nuxt**.
+Only available in **Nuxt**. The composable is available if the
+[CDN feature](/features/cdn-cache-control) or the
+[route cache](/features/route-cache) is added in the module config.
 
 This composable returns an object with `onRequest` and `onResponse` fetch
 interceptors. This allows you to bubble cacheability of
@@ -64,15 +66,17 @@ useCDNHeaders((cdn) => {
 </script>
 ```
 
-By using the interceptor, both the cache tags and the max age (and all other
-Cache-Control values) are merged with the SSR request rendering the page.
+By using the interceptor, both the cache tags and the max age are merged with
+the SSR request rendering the page. This also includes the other numeric and
+boolean directives and `private`, but not `public` or
+[custom directives](/composables/useCDNHeaders#addcustomdirective-name-string-value-string-number-true).
 
 The merging follows the same "rules" as usual: When multiple `maxAge` values are
 set, the **lowest wins**. In our case, the rendered page response header would
-be `Cache-Control: max-age=3600`, because that's the max age defined in the
-event handler.
+be `Surrogate-Control: max-age=3600` (with the default header name), because
+that's the max age defined in the event handler.
 
-The same also works when using the route cache: In this case, the cache tags,
-the max age and the stale if error duration of the API route are merged with the
-route cache of the SSR request. A cached page then never outlives the data of
-the API route it shows.
+The same also works when the API route uses the route cache: In this case, the
+cache tags, the max age and the stale if error duration of the API route are
+merged with the route cache of the SSR request. A cached page then never
+outlives the data of the API route it shows.

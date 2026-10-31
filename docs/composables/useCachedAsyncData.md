@@ -42,14 +42,18 @@ const { data: users } = await useCachedAsyncData(
 )
 ```
 
-The function signature is identical with useAsyncData, but the first argument
-`key` is always required.
+The function signature is similar to useAsyncData, with these differences:
+
+- The `key` and the options are always required.
+- The `getCachedData` option can't be set, because the composable implements it.
 
 ## Arguments
 
-### key: `string`
+### key: `MaybeRefOrGetter<string>`
 
-The key which is used for getting/setting the data cache item.
+The key which is used for getting/setting the data cache item. Like in
+useAsyncData, it can be a ref or a getter. When it changes, the data is fetched
+again for the new key.
 
 ### handler: `(app?: NuxtApp) => Promise<ResT>`
 
@@ -80,7 +84,9 @@ const { data } = await useCachedAsyncData(
 )
 ```
 
-You can invalidate the cache by calling `refresh()` or `clear()`:
+You can bypass the client-side cache by calling `refresh()`. Note that `clear()`
+does not remove the client-side cache item, so the next fetch for the same key
+still returns the cached data.
 
 ```typescript
 const { data, refresh } = await useCachedAsyncData(

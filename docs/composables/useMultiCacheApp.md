@@ -30,8 +30,9 @@ export default defineEventHandler(async (event) => {
 
 ### cache
 
-An object with properties for every cache type and the cache instance as the
-value.
+An object with a property for every enabled cache. Each contains the unstorage
+instance (`storage`) and the
+[bubbleError](/overview/server-options#storage-errors) setting of the cache.
 
 ```typescript
 const multiCache = useMultiCacheApp()
@@ -54,3 +55,21 @@ The mapped runtime config.
 Manages basic state shared between requests, such as which keys are currently
 being revalidated when using the staleWhileRevalidate feature from the route
 cache.
+
+### cacheTagRegistry
+
+The [cache tag registry](/overview/cache-tags#cache-tag-registry) from the
+server options, or `null` if none is configured.
+
+### cacheTagInvalidator
+
+Collects cache tags and purges the items with these tags once the
+[delay](/features/api#purge-tags) has passed. This is what the purge tags API
+endpoint uses.
+
+```typescript
+const multiCache = useMultiCacheApp()
+
+// Purge all items with the tag after the configured delay.
+multiCache?.cacheTagInvalidator.add(['language:de'])
+```

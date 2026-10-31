@@ -43,7 +43,7 @@ in the next 60 minutes, it will return the value from cache, or until the
 
 The key for the cache item.
 
-### cb?: `(cache?: DataCacheHelper) => Promise<T>`
+### cb: `(cache?: DataCacheHelper) => T | Promise<T>`
 
 The callback is called whenever nothing in the cache exists or if the item in
 the cache is expired. The value you return will be put in the cache.
@@ -110,5 +110,5 @@ const data = await useDataCacheCallback('users', async (cache) => {
 })
 
 console.log(data)
-// [{ firstName: "John", lastName: "Wayne" }]
+// { firstName: "John", lastName: "Wayne" }
 ```
