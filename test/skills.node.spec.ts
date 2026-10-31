@@ -150,6 +150,12 @@ describe('The agent skills', () => {
       expect(description.length).toBeLessThanOrEqual(1024)
     })
 
+    // Like the skills of other packages, so that tools that read the
+    // frontmatter line by line get the whole description.
+    test('has the description on one line', () => {
+      expect(readSkill()).toMatch(/^description: \S.*$/m)
+    })
+
     test(`has at most ${MAX_LINES} lines`, () => {
       expect(readSkill().split('\n').length).toBeLessThanOrEqual(MAX_LINES)
     })
