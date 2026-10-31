@@ -52,6 +52,12 @@ function buildEvent(staleIfErrorExpires: number | undefined) {
         routeCachedDecoded: decoded,
       },
     },
+    node: {
+      res: {
+        // Set by h3 from the error before the hook is called.
+        statusMessage: 'Backend not available.',
+      },
+    },
   }
 }
 
@@ -98,5 +104,14 @@ describe('error nitro hook handler', () => {
     onError(error, { event } as any)
 
     expect(mocks.sendWebResponse).toHaveBeenCalledTimes(served ? 1 : 0)
+  })
+
+  test('Resets the status text of the error response', () => {
+    const event = buildEvent(now + 60)
+
+    onError(createError({ statusCode: 500 }), { event } as any)
+
+    expect(mocks.sendWebResponse).toHaveBeenCalledTimes(1)
+    expect(event.node.res.statusMessage).toEqual('')
   })
 })

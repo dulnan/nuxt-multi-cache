@@ -60,6 +60,11 @@ export function onError(error: Error, ctx: CapturedErrorContext) {
       return
     }
 
+    // h3 has already set the status of the error response. The status code is
+    // replaced with the cached one, but the status text has to be reset, so
+    // that the default text of the cached status code is sent.
+    ctx.event.node.res.statusMessage = ''
+
     setCachedResponse(ctx.event, decoded)
 
     const response = new Response(decoded.data, {
