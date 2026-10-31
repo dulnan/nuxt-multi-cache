@@ -196,6 +196,38 @@ describe('checkAuth', () => {
     )
   })
 
+  test('Requires the token even if authorization is disabled', async () => {
+    // For example disabled in nuxt.config.ts for local development, and a
+    // token set via runtime config in production.
+    const config = {
+      api: {
+        enabled: true,
+        authorizationDisabled: true,
+        authorizationToken: 'token',
+      },
+    }
+
+    await mockMultiCacheApp(
+      async () => {
+        await expect(
+          checkAuth(buildEvent()),
+        ).rejects.toThrowErrorMatchingInlineSnapshot(`[Error: Unauthorized]`)
+      },
+      {},
+      config,
+    )
+
+    await mockMultiCacheApp(
+      async () => {
+        expect(
+          await checkAuth(buildEvent({ 'x-nuxt-multi-cache-token': 'token' })),
+        ).toBeUndefined()
+      },
+      {},
+      config,
+    )
+  })
+
   test('Throws error if no authorization config is provided.', async () => {
     await mockMultiCacheApp(
       async () => {

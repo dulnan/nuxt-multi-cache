@@ -109,7 +109,8 @@ export interface ModuleOptions {
      * If `false` is provided then authorization check is skipped. Only do
      * this if you made sure that the API endpoints are not public, since this
      * can potentially leak sensitive information via cached data or allow
-     * anyone to purge cache entries!
+     * anyone to purge cache entries! A token set via runtime config is still
+     * required.
      *
      * If not provided, the token from runtime config is used, or else the
      * `api.authorization` callback from the server options. If neither is

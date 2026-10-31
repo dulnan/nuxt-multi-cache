@@ -96,6 +96,11 @@ error.
 You can disable authorization by setting the value of `api.authorization` to
 `false`. **Only do this if the endpoints are not accessible publicly!**
 
+A token always takes precedence: If a token is set via
+[runtime config](/overview/runtime-config#api-authorization-token), it is
+required, even if authorization is disabled. This way `api.authorization: false`
+can be used for local development, with a token provided for production.
+
 ### Caching
 
 The responses of the API are never cached: They are excluded from the route

@@ -64,12 +64,9 @@ export async function checkAuth(event: H3Event) {
     })
   }
 
-  // Allow if authorization is explicitly disabled.
-  if (app.config.api.authorizationDisabled) {
-    return
-  }
-
-  // Check authorization using token.
+  // Check authorization using token. A token is always required if one is set,
+  // even if authorization is disabled: The token may be set via runtime config
+  // for an environment, while `authorization: false` is in nuxt.config.ts.
   if (app.config.api.authorizationToken) {
     const headerToken = getHeader(event, AUTH_HEADER)
     if (headerToken === app.config.api.authorizationToken) {
@@ -80,6 +77,11 @@ export async function checkAuth(event: H3Event) {
       statusCode: 401,
       statusMessage: 'Unauthorized',
     })
+  }
+
+  // Allow if authorization is explicitly disabled.
+  if (app.config.api.authorizationDisabled) {
+    return
   }
 
   const authorization = app.serverOptions.api?.authorization
