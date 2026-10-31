@@ -207,6 +207,29 @@ describe('RenderCacheable', () => {
     }
   })
 
+  test('Neither gets nor stores markup whose key contains "?"', async () => {
+    setIsServer(true)
+    const { app, ssrContext, storage } = createTestApp('cache-key="foobar?x"')
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+    storage['InnerComponent::foobar?x'] = encodeComponentCacheItem(
+      '<div>Markup from cache</div>',
+    )
+
+    const markup = await renderToString(app, ssrContext)
+    expect(markup).toContain('Hello world')
+    expect(Object.keys(storage)).toEqual(['InnerComponent::foobar?x'])
+    expect(storage['InnerComponent::foobar?x']).toContain('Markup from cache')
+  })
+
   test('Returns cached markup if available.', async () => {
     setIsServer(true)
     const { app, ssrContext, storage } = createTestApp()

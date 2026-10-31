@@ -13,6 +13,7 @@ import { logger } from '../../../helpers/multi-cache-logger'
 import {
   getMultiCacheContext,
   getCacheKeyWithPrefix,
+  isValidCacheKey,
   enabledForRequest,
   getRequestTimestamp,
   getCacheTagRegistry,
@@ -167,6 +168,9 @@ export default defineComponent<Props>({
     const bubbleError = componentCache.bubbleError
 
     const fullCacheKey = await getCacheKeyWithPrefix(cacheKey, event)
+    if (!isValidCacheKey(fullCacheKey, 'component')) {
+      return renderFallback
+    }
 
     // Get the cached item from the storage.
     const cached = await getCachedComponent(

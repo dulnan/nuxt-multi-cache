@@ -4,6 +4,7 @@ import {
   getMultiCacheContext,
   getMultiCacheRouteHelper,
   getRequestTimestamp,
+  isValidCacheKey,
 } from '../../helpers/server'
 import {
   decodeRouteCacheItem,
@@ -58,6 +59,9 @@ export async function serveCachedHandler(event: H3Event) {
   try {
     // Build the cache key.
     const fullKey = await getRouteCacheKey(event)
+    if (!isValidCacheKey(fullKey, 'route')) {
+      return
+    }
 
     // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(

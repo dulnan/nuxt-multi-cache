@@ -262,6 +262,57 @@ describe('serveCachedRoute event handler', () => {
     },
   )
 
+  test('Does not look up a route whose key contains "?"', async () => {
+    const getItemRaw = vi.fn()
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: {},
+        serverOptions: {},
+        config: {
+          cdn: {},
+        },
+      },
+    })
+    mocks.serverOptions.route = {
+      buildCacheKey: () => '/search?q=casino',
+    }
+
+    const event = {
+      method: 'GET',
+      path: '/search?q=casino',
+      headers: {},
+      node: {
+        res: {},
+        req: {
+          originalUrl: '/search?q=casino',
+          headers: {},
+        },
+      },
+      context: {
+        multiCache: {
+          route: new NuxtMultiCacheRouteCacheHelper(0),
+        },
+        [MULTI_CACHE_CONTEXT_KEY]: {
+          cache: {
+            route: {
+              storage: {
+                getItemRaw,
+              },
+            },
+          },
+        },
+      },
+    }
+
+    try {
+      expect(await serveCachedHandler(event as any)).toBeUndefined()
+      expect(getItemRaw).not.toHaveBeenCalled()
+    } finally {
+      delete mocks.serverOptions.route
+      mocks.useNitroApp.mockRestore()
+    }
+  })
+
   test('Respects max age of a cached route', async () => {
     const date = new Date(2022, 11, 29, 13, 0)
     vi.setSystemTime(date)

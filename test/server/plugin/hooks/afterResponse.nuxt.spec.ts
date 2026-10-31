@@ -23,15 +23,16 @@ mockNuxtImport('useRuntimeConfig', (original) => {
   }
 })
 
-vi.mock('#nuxt-multi-cache/server-options', () => {
-  return {
-    serverOptions: {},
-  }
-})
-
 const mocks = vi.hoisted(() => {
   return {
     useNitroApp: vi.fn(),
+    serverOptions: {} as Record<string, any>,
+  }
+})
+
+vi.mock('#nuxt-multi-cache/server-options', () => {
+  return {
+    serverOptions: mocks.serverOptions,
   }
 })
 
@@ -249,6 +250,68 @@ describe('afterResponse nitro hook handler', () => {
     `)
 
     mocks.useNitroApp.mockRestore()
+  })
+
+  test('Does not store a route whose key contains "?"', async () => {
+    const storedItems: any[] = []
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache: {
+          route: {},
+        },
+        serverOptions: {},
+        config: {
+          cdn: {},
+        },
+      },
+    })
+    // unstorage would cut the key off at "?", which is the key of "/search".
+    mocks.serverOptions.route = {
+      buildCacheKey: () => '/search?q=casino',
+    }
+
+    const event = {
+      path: '/search?q=casino',
+      context: {
+        multiCacheApp: {
+          cache: {
+            route: {
+              storage: {
+                setItemRaw(key: string) {
+                  storedItems.push(key)
+                  return Promise.resolve()
+                },
+              },
+            },
+          },
+        },
+        multiCache: {
+          route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
+            .setCacheable()
+            .setMaxAge(1200),
+        },
+      },
+      node: {
+        res: {
+          statusCode: 200,
+          getHeaders() {
+            return {}
+          },
+        },
+        req: {
+          originalUrl: '/search?q=casino',
+          headers: {},
+        },
+      },
+    } as any
+
+    try {
+      await onAfterResponse(event, { body: '<html></html>' } as any)
+      expect(storedItems).toEqual([])
+    } finally {
+      delete mocks.serverOptions.route
+      mocks.useNitroApp.mockRestore()
+    }
   })
 
   test.each([

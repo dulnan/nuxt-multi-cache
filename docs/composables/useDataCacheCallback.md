@@ -41,7 +41,8 @@ in the next 60 minutes, it will return the value from cache, or until the
 
 ### key: `string`
 
-The key for the cache item.
+The key for the cache item. The storage normalizes it, and a key with a `?` is
+not cached at all (see [Cache Keys](/advanced/cache-backend#cache-keys)).
 
 ### cb: `(cache?: DataCacheHelper) => T | Promise<T>`
 

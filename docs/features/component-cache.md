@@ -141,6 +141,9 @@ The resulting keys of the cache entries will be something like:
 - `Navbar::de--chf`
 - `Navbar::fr--eur`
 
+The storage normalizes the key, and a key with a `?` is not cached at all (see
+[Cache Keys](/advanced/cache-backend#cache-keys)).
+
 ### Wrapper Components
 
 `<RenderCacheable>` can also be used in a wrapper component that forwards its

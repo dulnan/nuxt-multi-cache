@@ -1,6 +1,6 @@
 import path from 'node:path'
-import { setup, createPage } from '@nuxt/test-utils/e2e'
-import { describe, test, beforeEach } from 'vitest'
+import { setup, createPage, fetch } from '@nuxt/test-utils/e2e'
+import { describe, expect, test, beforeEach } from 'vitest'
 import { expect as playwrightExpect } from '@nuxt/test-utils/playwright'
 import purgeAll from './../../__helpers__/purgeAll'
 import { sleep } from '~/test/__helpers__'
@@ -51,4 +51,20 @@ describe('The useDataCacheCallback composable', () => {
     )
     await playwrightExpect(page2.locator('#status')).toContainText('error')
   }, 10_000)
+})
+
+describe('The data cache', () => {
+  beforeEach(async () => {
+    await purgeAll()
+  })
+
+  test('does not store data under a key cut off at "?"', async () => {
+    // The query value is decoded to "shoes?casino", which the storage would
+    // cut off to the key of the search "shoes".
+    await fetch('/search?q=shoes%3Fcasino')
+
+    const html = await fetch('/search?q=shoes').then((r) => r.text())
+    expect(html).toContain('RESULTS:shoes')
+    expect(html).not.toContain('casino')
+  })
 })

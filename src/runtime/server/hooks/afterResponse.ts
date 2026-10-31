@@ -9,6 +9,7 @@ import {
   getMultiCacheContext,
   getMultiCacheRouteHelper,
   getRequestTimestamp,
+  isValidCacheKey,
 } from '../../helpers/server'
 import {
   CACHE_NEVER,
@@ -113,6 +114,9 @@ async function storeResponse(
   }
 
   const cacheKey = await getRouteCacheKey(event)
+  if (!isValidCacheKey(cacheKey, 'route')) {
+    return
+  }
 
   const expires = routeHelper.getExpires('maxAge') ?? CACHE_PERMANENT
   const staleIfErrorExpires =
