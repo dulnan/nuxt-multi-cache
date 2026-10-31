@@ -107,9 +107,44 @@ describe('The "bubble cacheability" feature', () => {
       expect(response.headers.get('surrogate-control')).toEqual(
         'max-age=0, no-store',
       )
+      // Not every CDN honors no-store in its own header (e.g. Fastly).
+      expect(response.headers.get('cache-control')).toEqual('private')
       expect(await getRouteCacheItems()).toHaveLength(0)
     },
   )
+
+  test('Marks the response as private in Cache-Control if the CDN header is private', async () => {
+    // The second request is served from the route cache.
+    for (const request of ['rendered', 'cached']) {
+      const response = await fetch('/cdn-private')
+      expect(response.headers.get('surrogate-control'), request).toEqual(
+        'max-age=3600, private',
+      )
+      expect(response.headers.get('cache-control'), request).toEqual('private')
+    }
+  })
+
+  test.each([
+    // Set via route rules, before the CDN headers are applied.
+    '/cdn-private-route-rules',
+    // Set in a render:response hook, after the CDN headers are applied.
+    '/cdn-private-render-response',
+    // Set in an API route after calling useCDNHeaders().
+    '/api/cdn-private',
+  ])(
+    'Merges private into the Cache-Control header set by the app (%s)',
+    async (url) => {
+      const response = await fetch(url)
+      expect(response.headers.get('cache-control')).toEqual(
+        'private, max-age=60',
+      )
+    },
+  )
+
+  test('Keeps the Cache-Control header set by the app if the CDN header is not private', async () => {
+    const response = await fetch('/cdn-public-route-rules')
+    expect(response.headers.get('cache-control')).toEqual('public, max-age=60')
+  })
 
   test('Lowers the s-maxage of the page to the max age of a component', async () => {
     const response = await fetch('/component-shared-max-age')

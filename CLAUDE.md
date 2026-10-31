@@ -81,7 +81,10 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
     cache hits;
   - the `afterResponse` hook: stores cacheable responses (status 200, non-empty
     body);
-  - the `error` hook: serves a stale route on server errors (stale-if-error).
+  - the `error` hook: serves a stale route on server errors (stale-if-error);
+  - the `beforeResponse` hook (CDN feature): adds `private` to `Cache-Control`
+    if the CDN header is `private` or `no-store`, because some CDNs (Fastly)
+    ignore these in their own header.
 - Composables (`composables/`, Nuxt, event optional) and server utils
   (`server/utils/`, Nitro, event required) are thin wrappers around the
   implementations in `shared/`.

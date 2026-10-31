@@ -28,6 +28,22 @@ export type CDNOptions = {
    * The header to use for the cache tags header.
    */
   cacheTagHeader?: string
+
+  /**
+   * Add `private` to the Cache-Control header if the CDN header is marked as
+   * `private` or `no-store`.
+   *
+   * Not every CDN honors these directives in its own header: Fastly, for
+   * example, ignores them in Surrogate-Control and only skips caching for
+   * `Cache-Control: private`. An existing Cache-Control header is merged:
+   * `public` is removed, all other directives are kept.
+   *
+   * Disable this only if you make sure yourself that private responses are not
+   * cached by your CDN.
+   *
+   * @default true
+   */
+  privateCacheControl?: boolean
 }
 
 export interface ModuleOptions {

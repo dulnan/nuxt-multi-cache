@@ -27,6 +27,7 @@ export const debug = ${JSON.stringify(!!helper.options.debug)}
 export const cdnCacheControlHeader = import.meta.server ? ${JSON.stringify(helper.options.cdn?.cacheControlHeader || DEFAULT_CDN_CONTROL_HEADER)} : ''
 export const cdnCacheTagHeader = import.meta.server ? ${JSON.stringify(helper.options.cdn?.cacheTagHeader || DEFAULT_CDN_TAG_HEADER)} : ''
 export const cdnEnabled = ${JSON.stringify(cdnEnabled)}
+export const cdnPrivateCacheControl = ${JSON.stringify(helper.options.cdn?.privateCacheControl !== false)}
 export const routeCacheEnabled = ${JSON.stringify(routeCacheEnabled)}
 export const componentCacheEnabled = ${JSON.stringify(componentCacheEnabled)}
 export const dataCacheEnabled = ${JSON.stringify(dataCacheEnabled)}
@@ -60,6 +61,12 @@ export declare const cdnCacheControlHeader: string
  * The CDN cache tag header name.
  */
 export declare const cdnCacheTagHeader: string
+
+/**
+ * Whether to add \`private\` to the Cache-Control header if the CDN header is
+ * private or no-store.
+ */
+export declare const cdnPrivateCacheControl: boolean
 
 /**
  * Whether the route cache is enabled at build time.

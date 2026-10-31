@@ -96,7 +96,9 @@ The method will always set the boolean value to `true`.
 ### private()
 
 Sets `private` to `true` and sets the value of `public` to `false`. Use this if
-you want to make sure that the response is not cached on the CDN.
+you want to make sure that the response is not cached on the CDN. The module
+then also adds `private` to the `Cache-Control` header, see
+[Private Responses](/features/cdn-cache-control#private-responses).
 
 ### public()
 
@@ -151,7 +153,8 @@ example an item of the data cache. Used to
 Merges the cache tags, max age and stale if error duration of another cache
 helper. If the helper is marked as uncacheable, the max age is set to `0` and
 `no-store` is added, so that the CDN doesn't store the response at all. An
-`s-maxage` is lowered to `0` as well. Used to
+`s-maxage` is lowered to `0` as well, and `Cache-Control` gets `private` (see
+[Private Responses](/features/cdn-cache-control#private-responses)). Used to
 [bubble cacheability](/overview/bubble-cacheability).
 
 ### getMaxAge(), getStaleIfError(), getTags()
