@@ -89,6 +89,58 @@ export function getSlotVNode(
 }
 
 /**
+ * Escape quotes and backslashes in the strings of plain objects and arrays.
+ *
+ * ohash's serialize() wraps strings in quotes without escaping them, so
+ * `{ title: "a',variant:'b" }` would get the same hash as
+ * `{ title: 'a', variant: 'b' }`. Strings without quotes and backslashes are
+ * unchanged, so their hashes stay the same.
+ */
+function escapeStrings(
+  value: unknown,
+  seen = new WeakMap<object, unknown>(),
+): unknown {
+  if (typeof value === 'string') {
+    return value.replace(/['\\]/g, '\\$&')
+  }
+
+  if (typeof value !== 'object' || value === null) {
+    return value
+  }
+
+  // Keep the references, so that ohash still detects circular references.
+  if (seen.has(value)) {
+    return seen.get(value)
+  }
+
+  if (Array.isArray(value)) {
+    const copy: unknown[] = []
+    seen.set(value, copy)
+    for (const item of value) {
+      copy.push(escapeStrings(item, seen))
+    }
+    return copy
+  }
+
+  // Other objects (e.g. class instances, Map, Date) are serialized by ohash
+  // with their type.
+  const proto = Object.getPrototypeOf(value)
+  if (proto !== Object.prototype && proto !== null) {
+    return value
+  }
+
+  const copy = Object.create(proto)
+  seen.set(value, copy)
+  for (const [key, item] of Object.entries(value)) {
+    Object.defineProperty(copy, key, {
+      value: escapeStrings(item, seen),
+      enumerable: true,
+    })
+  }
+  return copy
+}
+
+/**
  * Build the cache key.
  *
  * A custom key is used if provided. If not, a key is generated based on the
@@ -101,7 +153,8 @@ export function getCacheKey(
 ): string | undefined {
   const componentName = getComponentName(vnode)
   const hasProps = Object.keys(vnode.props || {}).length > 0
-  const cacheKeyBase = props.cacheKey ?? (hasProps ? hash(vnode.props) : '')
+  const cacheKeyBase =
+    props.cacheKey ?? (hasProps ? hash(escapeStrings(vnode.props)) : '')
 
   if (!componentName) {
     if (debug) {
