@@ -22,7 +22,7 @@ a few dozen pages you can increase average performance.
 
 ### Step 1: Install
 
-Install the module using your preferred package manager.
+The module requires Nuxt 4. Install it using your preferred package manager.
 
 ```sh
 npm install --save nuxt-multi-cache
@@ -76,8 +76,8 @@ const { value, addToCache } = await useDataCache('weather')
 
 ## [CDN Cache Control](/features/cdn-cache-control)
 
-Dynamically set `Cache-Control` and `Cache-Tag` headers for Cloudflare, Fastly
-and other services.
+Dynamically set cache control and cache tag headers for Cloudflare, Fastly and
+other services.
 
 ```typescript
 useCDNHeaders((helper) => {

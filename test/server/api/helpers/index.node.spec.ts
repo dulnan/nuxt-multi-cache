@@ -59,6 +59,25 @@ describe('checkAuth', () => {
       {},
       {
         api: {
+          enabled: true,
+          authorizationDisabled: true,
+        },
+      },
+    )
+  })
+
+  test('Throws a 404 error if the API is disabled via runtime config', async () => {
+    await mockMultiCacheApp(
+      async () => {
+        await expect(checkAuth({} as any)).rejects.toMatchObject({
+          statusCode: 404,
+        })
+      },
+      {},
+      {
+        api: {
+          enabled: false,
+          // Even if authorization is disabled.
           authorizationDisabled: true,
         },
       },
@@ -80,7 +99,9 @@ describe('checkAuth', () => {
         },
       },
       {
-        api: {},
+        api: {
+          enabled: true,
+        },
       },
     )
   })
@@ -103,6 +124,7 @@ describe('checkAuth', () => {
       {},
       {
         api: {
+          enabled: true,
           authorizationToken: 'token',
         },
       },
@@ -125,6 +147,7 @@ describe('checkAuth', () => {
       {},
       {
         api: {
+          enabled: true,
           authorizationToken: 'token',
         },
       },
@@ -147,6 +170,7 @@ describe('checkAuth', () => {
       {},
       {
         api: {
+          enabled: true,
           authorizationToken: 'token',
         },
       },
@@ -172,7 +196,9 @@ describe('checkAuth', () => {
       },
       {},
       {
-        api: {},
+        api: {
+          enabled: true,
+        },
       },
     )
   })

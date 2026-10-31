@@ -1,6 +1,7 @@
 import { CacheControl } from '@tusbar/cache-control'
 import { describe, expect, test, vi } from 'vitest'
 import { NuxtMultiCacheCDNHelper } from './../../src/runtime/helpers/CDNHelper'
+import { CacheHelper } from './../../src/runtime/helpers/CacheHelper'
 import {
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
@@ -64,6 +65,7 @@ describe('The CDNHelper', () => {
         "getMaxAge",
         "getStaleIfError",
         "getTags",
+        "getCacheable",
       ]
     `)
 
@@ -151,6 +153,26 @@ describe('The CDNHelper', () => {
 
     helper.mergeFromResponse(mockResponse as any)
     expect(helper._tags).toEqual(['product', 'user', 'settings'])
+  })
+
+  test('mergeFromResponse skips empty cache tags', () => {
+    const helper = new NuxtMultiCacheCDNHelper(
+      mockDateTimestamp,
+      DEFAULT_CDN_CONTROL_HEADER,
+      DEFAULT_CDN_TAG_HEADER,
+    )
+
+    const mockResponse = {
+      headers: {
+        get: (header: string) => {
+          if (header === DEFAULT_CDN_TAG_HEADER) return ' product  user '
+          return null
+        },
+      },
+    }
+
+    helper.mergeFromResponse(mockResponse as any)
+    expect(helper._tags).toEqual(['product', 'user'])
   })
 
   test('mergeFromResponse calls mergeCacheControlHeader with correct value', () => {
@@ -383,6 +405,98 @@ describe('The Cache-Control header of the CDNHelper', () => {
     expect(getCacheControlHeader((helper) => helper.setNumeric(key, 60))).toBe(
       expected,
     )
+  })
+
+  test.each(['maxAge', 'staleIfError'] as const)(
+    'contains no %s directive for a permanent value',
+    (key) => {
+      expect(
+        getCacheControlHeader((helper) => helper.setNumeric(key, 'permanent')),
+      ).toBeUndefined()
+      expect(
+        getCacheControlHeader((helper) => helper.setNumeric(key, -1)),
+      ).toBeUndefined()
+    },
+  )
+
+  test('keeps a lower max-age when a permanent value is set', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setNumeric('maxAge', 60).setNumeric('maxAge', 'permanent'),
+      ),
+    ).toBe('max-age=60')
+  })
+
+  test('contains no -1 when merging a permanent cache item', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.mergeFromCacheItem({ expires: -1, staleIfErrorExpires: -1 }),
+      ),
+    ).toBeUndefined()
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setNumeric('maxAge', 60).mergeFromCacheItem({ expires: -1 }),
+      ),
+    ).toBe('max-age=60')
+  })
+
+  test('contains no -1 when merging a permanent cacheability', () => {
+    // E.g. a data cache item without a max age.
+    const permanent = new CacheHelper(mockDateTimestamp).setStaleIfError(-1)
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.mergeFromCacheability(permanent),
+      ),
+    ).toBeUndefined()
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.setNumeric('maxAge', 60).mergeFromCacheability(permanent),
+      ),
+    ).toBe('max-age=60')
+  })
+
+  test('sets max-age=0 when merging something uncacheable', () => {
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 3600)
+          .mergeFromCacheability(
+            new CacheHelper(mockDateTimestamp).setUncacheable(),
+          ),
+      ),
+    ).toBe('max-age=0')
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('maxAge', 3600)
+          .mergeFromCacheability(new CacheHelper(mockDateTimestamp)),
+      ),
+    ).toBe('max-age=3600')
+  })
+
+  test('keeps stale-if-error when merging an item without one', () => {
+    // Items without stale-if-error are stored with 0.
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('staleIfError', 18000)
+          .mergeFromCacheItem({ expires: -1, staleIfErrorExpires: 0 }),
+      ),
+    ).toBe('stale-if-error=18000')
+    expect(
+      getCacheControlHeader((helper) =>
+        helper.mergeFromCacheItem({ staleIfErrorExpires: 0 }),
+      ),
+    ).toBeUndefined()
+    expect(
+      getCacheControlHeader((helper) =>
+        helper
+          .setNumeric('staleIfError', 18000)
+          .mergeFromCacheability(
+            new CacheHelper(mockDateTimestamp).setStaleIfError(0),
+          ),
+      ),
+    ).toBe('stale-if-error=18000')
   })
 
   test.each([

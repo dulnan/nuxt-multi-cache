@@ -42,14 +42,18 @@ const { data: users } = await useCachedAsyncData(
 )
 ```
 
-The function signature is identical with useAsyncData, but the first argument
-`key` is always required.
+The function signature is similar to useAsyncData, with these differences:
+
+- The `key` and the options are always required.
+- The `getCachedData` option can't be set, because the composable implements it.
 
 ## Arguments
 
-### key: `string`
+### key: `MaybeRefOrGetter<string>`
 
-The key which is used for getting/setting the data cache item.
+The key which is used for getting/setting the data cache item. Like in
+useAsyncData, it can be a ref or a getter. When it changes, the data is fetched
+again for the new key.
 
 ### handler: `(app?: NuxtApp) => Promise<ResT>`
 
@@ -61,12 +65,12 @@ cached.
 The type extends `AsyncDataOptions` from Nuxt and adds three additional
 properties:
 
-#### clientMaxAge?: `number`
+#### clientMaxAge?: `MaxAge`
 
-By default, the composable will only cache server-side and will not do any
-client-side caching. This can be changed by providing a `clientMaxAge` value. In
-this case, the composable will store the result in `nuxtApp.static.data` and
-will return cached data for the given duration.
+By default, the composable does not do any client-side caching. This can be
+changed by providing a `clientMaxAge` value, which can be any
+[max age](/overview/max-age). In this case, the composable will store the result
+in `nuxtApp.static.data` and will return cached data for the given duration.
 
 ```typescript
 const { data } = await useCachedAsyncData(
@@ -80,7 +84,9 @@ const { data } = await useCachedAsyncData(
 )
 ```
 
-You can invalidate the cache by calling `refresh()` or `clear()`:
+You can bypass the client-side cache by calling `refresh()`. Note that `clear()`
+does not remove the client-side cache item, so the next fetch for the same key
+still returns the cached data.
 
 ```typescript
 const { data, refresh } = await useCachedAsyncData(
@@ -99,12 +105,16 @@ async function createNewUser() {
 }
 ```
 
-#### serverMaxAge?: `((v: ResT) => number|undefined) | number`
+#### serverMaxAge?: `((v: ResT) => MaxAge|undefined) | MaxAge`
 
-The max age for the cache item. Can either be a method or a value.
+The [max age](/overview/max-age) for the cache item. Can either be a method or a
+value.
 
 When a method is defined, it receives the result of your handler as the first
-argument and should return a number.
+argument and should return a max age.
+
+If no `serverMaxAge` is provided, or if the method returns `undefined`, the data
+is not cached on the server.
 
 ```typescript
 const { data } = await useCachedAsyncData(

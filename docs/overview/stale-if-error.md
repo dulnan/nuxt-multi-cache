@@ -12,8 +12,10 @@ if:
 - The cached data is still within the `staleIfError` range
 
 ```typescript
-async function loadUser(userId: string): Use {
-  const { value, addToCache, staleValue } = await useDataCache(key.value)
+async function loadUser(userId: string): Promise<User> {
+  const { value, addToCache, staleValue } = await useDataCache<User>(
+    'user:' + userId,
+  )
 
   // A valid, non-stale value exists in the cache.
   if (value) {
@@ -21,7 +23,7 @@ async function loadUser(userId: string): Use {
   }
 
   try {
-    const response = await $fetch('/api/get-user/' + userId)
+    const response = await $fetch<User>('/api/get-user/' + userId)
 
     await addToCache(
       // The object we want to cache.
@@ -91,4 +93,20 @@ useRouteCache((helper) => {
   helper.setMaxAge('5m').setStaleIfError('2h').setCacheable()
 })
 </script>
+```
+
+The stale route is only served for server errors: errors with a 5xx status code
+and unhandled errors. A client error, such as a 404 thrown because the content
+was deleted, is sent as usual.
+
+## Only Use the Cache on Errors
+
+To never serve an item from cache, but keep a stale copy for when an error
+happens, set a max age of `0` together with a stale if error duration. This
+works for all three caches.
+
+```typescript
+useRouteCache((helper) => {
+  helper.setMaxAge(0).setStaleIfError('2h').setCacheable()
+})
 ```

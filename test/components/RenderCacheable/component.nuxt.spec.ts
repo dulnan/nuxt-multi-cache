@@ -1,9 +1,12 @@
-import { defineComponent, nextTick } from 'vue'
+import { createSSRApp, defineComponent, nextTick, useSSRContext } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import RenderCacheable from '../../../src/runtime/components/RenderCacheable/server'
-import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
+import {
+  decodeComponentCacheItem,
+  encodeComponentCacheItem,
+} from '../../../src/runtime/helpers/cacheItem'
 import { createTestApp } from './__helpers__'
 
 vi.mock('#imports', () => {
@@ -58,6 +61,25 @@ vi.mock('#nuxt-multi-cache/config', () => {
     isTestMode: false,
   }
 })
+
+/**
+ * A component that registers its module like the code that Vite adds to the
+ * setup of compiled SFCs.
+ */
+function defineComponentWithModule(
+  name: string,
+  template = `<div>${name}</div>`,
+) {
+  return defineComponent({
+    name,
+    components: { RenderCacheable },
+    setup() {
+      const ssrContext = useSSRContext()!
+      ;(ssrContext.modules ||= new Set()).add(`components/${name}.vue`)
+    },
+    template,
+  })
+}
 
 describe('RenderCacheable', () => {
   beforeEach(() => {
@@ -150,6 +172,41 @@ describe('RenderCacheable', () => {
     )
   })
 
+  test.each([
+    ['', undefined],
+    [':max-age="1800"', 1800],
+    [':max-age="60" :stale-if-error="3600"', 3600],
+    [':max-age="0" :stale-if-error="3600"', 3600],
+    [':max-age="0"', null],
+  ])('Puts markup in cache with %j for a TTL of %j', async (props, ttl) => {
+    setIsServer(true)
+    vi.setSystemTime(new Date(2022, 11, 1))
+    const { app, ssrContext, storage, ttls } = createTestApp(
+      `cache-key="ttl" ${props}`,
+    )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+
+    const markup = await renderToString(app, ssrContext)
+    expect(markup).toContain('Hello world')
+
+    if (ttl === null) {
+      // Never served from cache, so it's not stored.
+      expect(storage).not.toHaveProperty('InnerComponent::ttl')
+    } else {
+      expect(storage).toHaveProperty('InnerComponent::ttl')
+      expect(ttls['InnerComponent::ttl']).toEqual(ttl)
+    }
+  })
+
   test('Returns cached markup if available.', async () => {
     setIsServer(true)
     const { app, ssrContext, storage } = createTestApp()
@@ -217,6 +274,128 @@ describe('RenderCacheable', () => {
     expect(storage['InnerComponent::foobar']).toMatchInlineSnapshot(
       `"{"payload":{"examplePayload":{"data":"This is example payload."}},"cacheTags":["test"],"ssrModules":[],"expires":-1,"staleIfErrorExpires":0}<CACHE_ITEM><div>Hello world</div>"`,
     )
+  })
+
+  test('Accepts a single key as asyncDataKeys.', async () => {
+    setIsServer(true)
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { app, ssrContext, storage } = createTestApp(
+      `cacheKey="foobar" asyncDataKeys="examplePayload"`,
+    )
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {
+            examplePayload: EXAMPLE_PAYLOAD,
+          },
+        },
+      }
+    })
+    await renderToString(app, ssrContext)
+
+    expect(storage['InnerComponent::foobar']).toContain(
+      `"payload":{"examplePayload":{"data":"This is example payload."}}`,
+    )
+    // No "Invalid prop" warning from Vue.
+    const warnings = warnSpy.mock.calls.map((args) => String(args[0]))
+    expect(warnings.filter((v) => v.includes('Invalid prop'))).toEqual([])
+    warnSpy.mockRestore()
+  })
+
+  test('Stores the modules rendered in the slot of each instance.', async () => {
+    setIsServer(true)
+    const { ssrContext, storage } = createTestApp()
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+
+    // Both instances render at the same time.
+    const app = createSSRApp(
+      defineComponent({
+        components: {
+          RenderCacheable,
+          ComponentA: defineComponentWithModule('ComponentA'),
+          ComponentB: defineComponentWithModule('ComponentB'),
+          ComponentC: defineComponentWithModule('ComponentC'),
+        },
+        template: `<div>
+          <RenderCacheable cache-key="a"><ComponentA /></RenderCacheable>
+          <RenderCacheable cache-key="b"><ComponentB /></RenderCacheable>
+          <ComponentC />
+        </div>`,
+      }),
+    )
+    await renderToString(app, ssrContext)
+
+    expect(
+      decodeComponentCacheItem(storage['ComponentA::a'])?.ssrModules,
+    ).toEqual(['components/ComponentA.vue'])
+    expect(
+      decodeComponentCacheItem(storage['ComponentB::b'])?.ssrModules,
+    ).toEqual(['components/ComponentB.vue'])
+
+    // The modules are also added to the context of the request.
+    expect([...(ssrContext as any).modules].sort()).toEqual([
+      'components/ComponentA.vue',
+      'components/ComponentB.vue',
+      'components/ComponentC.vue',
+    ])
+  })
+
+  test('Stores the modules of a nested instance returned from cache.', async () => {
+    setIsServer(true)
+    const { ssrContext, storage } = createTestApp()
+    mocks.useNuxtApp.mockImplementation(() => {
+      return {
+        ssrContext,
+        event: ssrContext.event,
+        _asyncData: {},
+        payload: {
+          data: {},
+        },
+      }
+    })
+    storage['Inner::inner'] = encodeComponentCacheItem(
+      '<div>Inner</div>',
+      undefined,
+      undefined,
+      [],
+      ['components/Inner.vue'],
+    )
+
+    const app = createSSRApp(
+      defineComponent({
+        components: {
+          RenderCacheable,
+          Outer: defineComponentWithModule(
+            'Outer',
+            `<div><RenderCacheable cache-key="inner"><Inner /></RenderCacheable></div>`,
+          ),
+        },
+        template: `<RenderCacheable cache-key="outer"><Outer /></RenderCacheable>`,
+      }),
+    )
+    // Not rendered, it's returned from cache.
+    app.component('Inner', defineComponentWithModule('Inner'))
+    await renderToString(app, ssrContext)
+
+    expect(
+      decodeComponentCacheItem(storage['Outer::outer'])?.ssrModules?.sort(),
+    ).toEqual(['components/Inner.vue', 'components/Outer.vue'])
+    expect([...(ssrContext as any).modules].sort()).toEqual([
+      'components/Inner.vue',
+      'components/Outer.vue',
+    ])
   })
 
   test('Calculates expires value when maxAge is provided.', async () => {

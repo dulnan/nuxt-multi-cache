@@ -9,8 +9,9 @@ import {
   computed,
 } from '#imports'
 import {
-  CACHE_PERMANENT,
   CACHE_NEVER,
+  isExpired,
+  maxAgeToExpires,
   parseMaxAge,
   type MaxAge,
   toTimestamp,
@@ -35,11 +36,10 @@ type CachedAsyncDataOptions<
    *
    * If undefined or 0, nothing will be cached. To cache permanently, define 'permanent' or -1.
    *
-   * If a positive integer value is provided, the composable will return
-   * cached data (either from payload or from previous client-side
-   * fetches) for the given duration.
+   * Otherwise the composable will return cached data (either from payload or
+   * from previous client-side fetches) for the given duration.
    */
-  clientMaxAge: MaxAge
+  clientMaxAge?: MaxAge
 
   /**
    * The server-side max age in seconds.
@@ -49,7 +49,7 @@ type CachedAsyncDataOptions<
    *
    * If undefined or 0, nothing will be cached. To cache permanently, define 'permanent' or -1.
    */
-  serverMaxAge: ValueOrMethod<MaxAge, ResT>
+  serverMaxAge?: ValueOrMethod<MaxAge | undefined, ResT>
 
   /**
    * The server-side cache tags to use.
@@ -70,7 +70,8 @@ type ClientSideCachedAsyncData<DataT> = {
   data: DataT
 
   /**
-   * The timestamp in milliseconds when the cache item will expire.
+   * The timestamp in seconds when the cache item will expire, or -1 if it
+   * never expires.
    */
   expires: number
 }
@@ -85,7 +86,7 @@ function getClientSideCachedData<DataT>(
 /**
  * Resolves the value for options that can either be a value or method.
  */
-function valueOrMethod<T extends number | string[] | MaxAge, ResT>(
+function valueOrMethod<T extends number | string[] | undefined | MaxAge, ResT>(
   value: ValueOrMethod<T, ResT> | undefined,
   result: ResT,
 ): T | undefined {
@@ -93,10 +94,6 @@ function valueOrMethod<T extends number | string[] | MaxAge, ResT>(
     return value(result)
   }
   return value
-}
-
-function isValidMaxAge(v?: unknown): v is number {
-  return typeof v === 'number' && (v >= 1 || v === CACHE_PERMANENT)
 }
 
 export function useCachedAsyncData<
@@ -141,9 +138,8 @@ export function useCachedAsyncData<
 /**
  * Wrapper around useAsyncData and useDataCache.
  *
- * By default, the data is indefinitely cached on the server side. When the `
- * serverMaxAge` option is provided, you can define a max age for server-side
- * caching.
+ * The data is only cached on the server side if the `serverMaxAge` option is
+ * provided. It defines the max age for server-side caching.
  *
  * If you want to extend caching to the client-side, provide a `clientMaxAge`
  * value. This will cache the result in Nuxt's static data cache. The cache is
@@ -197,15 +193,16 @@ export function useCachedAsyncData<
           ? await options.transform(result)
           : (result as DataT)
 
-        const maxAge = options.clientMaxAge
-          ? parseMaxAge(options.clientMaxAge, now)
-          : null
+        const expires = maxAgeToExpires(
+          options.clientMaxAge ?? CACHE_NEVER,
+          now,
+        )
 
-        // If a value is provided, we may also cache it client side.
-        if (isValidMaxAge(maxAge)) {
+        // If a max age is provided, we may also cache it client side.
+        if (expires !== CACHE_NEVER) {
           const cacheItem: ClientSideCachedAsyncData<DataT> = {
             data,
-            expires: Date.now() + maxAge * 1000,
+            expires,
           }
           app.static.data[reactiveKey.value] = cacheItem
         }
@@ -235,41 +232,43 @@ export function useCachedAsyncData<
           const payloadData: DataT | undefined = nuxtApp.payload.data[key]
 
           // Replicate the default behaviour from Nuxt: The data from the
-          // payload is always used during hydration.
-          if (payloadData && app.isHydrating) {
+          // payload is always used during hydration. Like in Nuxt, only
+          // undefined means there is no data.
+          if (payloadData !== undefined && app.isHydrating) {
             return payloadData
           }
 
-          // No valid clientMaxAge is provided: Nothing is returned from client cache.
-          if (!isValidMaxAge(options.clientMaxAge)) {
+          const now = toTimestamp(new Date())
+          const clientMaxAge = options.clientMaxAge ?? CACHE_NEVER
+
+          // No clientMaxAge is provided: Nothing is returned from client cache.
+          if (parseMaxAge(clientMaxAge, now) === CACHE_NEVER) {
             return
           }
 
           // We have a payload, but are not hydrating.
-          if (payloadData) {
+          if (payloadData !== undefined) {
             // The expires date for payload items is determined by the time
             // the page was first hydrated.
-            const firstHydrationTime: number =
-              nuxtApp.static.data.__firstHydrationTime
+            const firstHydrationTime = toTimestamp(
+              new Date(nuxtApp.static.data.__firstHydrationTime),
+            )
 
             // The expire value has to be calculated dynamically.
-            const expires = firstHydrationTime + options.clientMaxAge * 1000
+            const expires = maxAgeToExpires(clientMaxAge, firstHydrationTime)
 
             // Payload data is not yet expired.
-            if (expires > Date.now()) {
+            if (!isExpired(expires, now)) {
               return payloadData
             }
           }
 
           // Check whether we have something in the static cache.
           const staticCache = getClientSideCachedData(key, app)
-          if (staticCache) {
-            const expires = staticCache.expires
 
-            // Static cached data not expired, return it.
-            if (expires > Date.now()) {
-              return staticCache.data
-            }
+          // Static cached data not expired, return it.
+          if (staticCache && !isExpired(staticCache.expires, now)) {
+            return staticCache.data
           }
 
           return undefined as any
@@ -287,7 +286,8 @@ export function useCachedAsyncData<
         app?.ssrContext?.event,
       )
 
-      if (value) {
+      // Falsy values such as 0 or false are valid cached values.
+      if (value !== undefined) {
         // We have to cast it to this type, because normally we would be
         // returning ResT here. Because we removed the `transform` method
         // from the options, this value is not transformed anymore, which

@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { encodeRouteCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { serveCachedHandler } from '../../../src/runtime/server/handler/serveCachedRoute'
+import { onRequest } from '../../../src/runtime/server/hooks/request'
+import { NuxtMultiCacheRouteCacheHelper } from '../../../src/runtime/helpers/RouteCacheHelper'
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
 import { logger } from '../../../src/runtime/helpers/multi-cache-logger'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
@@ -29,18 +31,20 @@ vi.mock('#nuxt-multi-cache/config', () => {
     cdnCacheControlHeader: 'Surrogate-Control',
     cdnCacheTagHeader: 'Cache-Tag',
     isTestMode: true,
-  }
-})
-
-vi.mock('#nuxt-multi-cache/server-options', () => {
-  return {
-    serverOptions: {},
+    apiPrefix: '/__nuxt_multi_cache',
   }
 })
 
 const mocks = vi.hoisted(() => {
   return {
     useNitroApp: vi.fn(),
+    serverOptions: {} as Record<string, any>,
+  }
+})
+
+vi.mock('#nuxt-multi-cache/server-options', () => {
+  return {
+    serverOptions: mocks.serverOptions,
   }
 })
 
@@ -72,6 +76,7 @@ describe('serveCachedRoute event handler', () => {
 
     const setHeaders: Record<string, string> = {}
     const event = {
+      method: 'GET',
       path: '/',
       headers: {},
       node: {
@@ -88,7 +93,8 @@ describe('serveCachedRoute event handler', () => {
       },
       context: {
         multiCache: {
-          enabledForRequest: true,
+          // Added by the request hook.
+          route: new NuxtMultiCacheRouteCacheHelper(0),
         },
         [MULTI_CACHE_CONTEXT_KEY]: {
           cache: {
@@ -129,22 +135,132 @@ describe('serveCachedRoute event handler', () => {
     mocks.useNitroApp.mockRestore()
   })
 
-  test('Does not return a route from cache if not enabled.', async () => {
-    const event = {
-      path: '/',
-      headers: {},
-      context: {
+  test.each([
+    ['GET', '/', true],
+    ['HEAD', '/', true],
+    ['GET', '/__nuxt_multi_cache_page', true],
+    // Other methods.
+    ['POST', '/', false],
+    ['PUT', '/', false],
+    ['DELETE', '/', false],
+    // Static files.
+    ['GET', '/favicon.ico', false],
+    ['GET', '/images/logo.png', false],
+    ['GET', '/assets/style.css?v=2', false],
+    // Nuxt's assets and the module's API.
+    ['GET', '/_nuxt/entry.js', false],
+    ['GET', '/__nuxt_multi_cache/stats/route', false],
+    ['GET', '/__nuxt_multi_cache/inspect/route?key=foo', false],
+  ])(
+    'Only looks up routes the route cache applies to (%s %s).',
+    async (method, path, served) => {
+      // An item exists for every path, e.g. stored by a previous version.
+      const getItemRaw = vi.fn(() =>
+        Promise.resolve(
+          encodeRouteCacheItem(
+            '<html></html>',
+            {},
+            200,
+            undefined,
+            undefined,
+            undefined,
+            [],
+          ),
+        ),
+      )
+      mocks.useNitroApp.mockReturnValue({
         multiCache: {
-          enabledForRequest: false,
+          cache: {
+            route: {
+              storage: {
+                getItemRaw,
+              },
+            },
+          },
+          serverOptions: {},
+          config: {
+            cdn: {},
+          },
         },
-      },
-    }
+      })
 
-    const result = await serveCachedHandler(event as any)
+      const event = {
+        method,
+        path,
+        headers: {},
+        node: {
+          res: {
+            setHeader() {},
+            statusCode: null,
+          },
+          req: {
+            originalUrl: path,
+            headers: {},
+          },
+        },
+        context: {},
+      }
 
-    expect(result).toBeUndefined()
-    mocks.useNitroApp.mockRestore()
-  })
+      // Nitro calls the request hook before the event handlers.
+      await onRequest(event as any)
+      const result = await serveCachedHandler(event as any)
+
+      expect(result).toEqual(served ? '<html></html>' : undefined)
+      expect(getItemRaw).toHaveBeenCalledTimes(served ? 1 : 0)
+      mocks.useNitroApp.mockRestore()
+    },
+  )
+
+  test.each([
+    ['route.applies', { route: { applies: () => false } }],
+    ['enabledForRequest', { enabledForRequest: () => Promise.resolve(false) }],
+  ])(
+    'Does not look up the route if %s returns false.',
+    async (_label, serverOptions) => {
+      const getItemRaw = vi.fn()
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {
+              storage: {
+                getItemRaw,
+              },
+            },
+          },
+          serverOptions: {},
+          config: {
+            cdn: {},
+          },
+        },
+      })
+      Object.assign(mocks.serverOptions, serverOptions)
+
+      const event = {
+        method: 'GET',
+        path: '/',
+        headers: {},
+        node: {
+          res: {},
+          req: {
+            originalUrl: '/',
+            headers: {},
+          },
+        },
+        context: {},
+      }
+
+      try {
+        await onRequest(event as any)
+
+        expect(await serveCachedHandler(event as any)).toBeUndefined()
+        expect(getItemRaw).not.toHaveBeenCalled()
+      } finally {
+        delete mocks.serverOptions.route
+        delete mocks.serverOptions.enabledForRequest
+        mocks.useNitroApp.mockRestore()
+      }
+    },
+  )
 
   test('Respects max age of a cached route', async () => {
     const date = new Date(2022, 11, 29, 13, 0)
@@ -162,6 +278,7 @@ describe('serveCachedRoute event handler', () => {
 
     const setHeaders: Record<string, string> = {}
     const event = {
+      method: 'GET',
       path: '/',
       headers: {},
       node: {
@@ -204,6 +321,7 @@ describe('serveCachedRoute event handler', () => {
           },
         },
         multiCache: {
+          route: new NuxtMultiCacheRouteCacheHelper(toTimestamp(date)),
           requestTimestamp: toTimestamp(date),
         },
       },
@@ -238,6 +356,7 @@ describe('serveCachedRoute event handler', () => {
     })
 
     const event = {
+      method: 'GET',
       path: '/',
       node: {
         req: {
@@ -246,6 +365,9 @@ describe('serveCachedRoute event handler', () => {
         },
       },
       context: {
+        multiCache: {
+          route: new NuxtMultiCacheRouteCacheHelper(0),
+        },
         [MULTI_CACHE_CONTEXT_KEY]: {
           cache: {
             route: {

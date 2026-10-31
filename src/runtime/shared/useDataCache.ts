@@ -2,7 +2,7 @@ import type { H3Event } from 'h3'
 import type {
   DataCacheAddToCacheMethod,
   DataCacheCallbackContext,
-  CacheItem,
+  DataCacheItem,
   BubbleCacheability,
 } from './../types'
 import {
@@ -17,6 +17,7 @@ import { debug } from '#nuxt-multi-cache/config'
 import {
   CACHE_NEVER,
   CACHE_PERMANENT,
+  getStorageTtl,
   isExpired,
   type MaxAge,
 } from './../helpers/maxAge'
@@ -71,11 +72,12 @@ export async function useDataCacheImplementation<T>(
   ) => {
     const helper = new DataCacheHelper(now)
 
-    if (providedMaxAge) {
+    // 0 is a valid value and means "never".
+    if (providedMaxAge !== undefined && providedMaxAge !== null) {
       helper.setMaxAge(providedMaxAge)
     }
 
-    if (providedStaleIfError) {
+    if (providedStaleIfError !== undefined && providedStaleIfError !== null) {
       helper.setStaleIfError(providedStaleIfError)
     }
 
@@ -83,17 +85,21 @@ export async function useDataCacheImplementation<T>(
 
     bubbleCacheability(helper, event, options?.bubbleCacheability)
 
-    if (helper.maxAge === CACHE_NEVER) {
-      return Promise.resolve()
-    }
-
     const cacheTags = helper.getTags()
 
-    const item: CacheItem = {
-      data: data as any,
+    const item: DataCacheItem<T> = {
+      data,
       cacheTags,
       expires: helper.getExpires('maxAge') ?? CACHE_PERMANENT,
       staleIfErrorExpires: helper.getExpires('staleIfError') ?? CACHE_NEVER,
+    }
+
+    const ttl = getStorageTtl(item, now)
+
+    // The item can never be returned, not even as a stale value (e.g. a max
+    // age of 0 without stale-if-error).
+    if (ttl === CACHE_NEVER) {
+      return
     }
 
     if (debug) {
@@ -101,9 +107,7 @@ export async function useDataCacheImplementation<T>(
     }
 
     try {
-      await multiCache.data!.storage.setItem(fullKey, item, {
-        ttl: helper.maxAge !== CACHE_PERMANENT ? helper.maxAge : undefined,
-      })
+      await multiCache.data!.storage.setItem(fullKey, item, { ttl })
       if (cacheTags.length) {
         const registry = getCacheTagRegistry(event)
         if (registry) {
@@ -119,13 +123,14 @@ export async function useDataCacheImplementation<T>(
   }
 
   try {
-    const item = await multiCache.data.storage.getItem<CacheItem>(fullKey)
+    const item =
+      await multiCache.data.storage.getItem<DataCacheItem<T>>(fullKey)
 
     const staleValue =
       item &&
       item.staleIfErrorExpires &&
       !isExpired(item.staleIfErrorExpires, now)
-        ? (item.data as T)
+        ? item.data
         : undefined
 
     if (item) {
@@ -141,7 +146,7 @@ export async function useDataCacheImplementation<T>(
           addToCache,
           // Extract the value. If the item was stored along its cache tags, it
           // will be an object with a cacheTags property.
-          value: item.data as T,
+          value: item.data,
           staleValue,
           cacheTags: item.cacheTags || [],
           expires: item.expires,

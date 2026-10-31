@@ -2,7 +2,13 @@ import { CacheControl, parse } from '@tusbar/cache-control'
 import { setResponseHeader, type H3Event } from 'h3'
 import type { FetchResponse } from 'ofetch'
 import { onlyUnique } from './server'
-import { expiresToMaxAge, parseMaxAge, type MaxAge } from './maxAge'
+import {
+  CACHE_NEVER,
+  CACHE_PERMANENT,
+  expiresToMaxAge,
+  parseMaxAge,
+  type MaxAge,
+} from './maxAge'
 import { logger } from './multi-cache-logger'
 import {
   cdnCacheControlHeader,
@@ -153,7 +159,7 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   public mergeFromResponse(arg: FetchResponse<any>): NuxtMultiCacheCDNHelper {
     const tagsHeaderValue = arg.headers.get(this.cacheTagsHeader)
     if (tagsHeaderValue) {
-      const tags = tagsHeaderValue.split(' ')
+      const tags = tagsHeaderValue.split(' ').filter(Boolean)
       this._tags.push(...tags)
     }
 
@@ -226,6 +232,9 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
    * to set the max age to 7 days the value won't be set.
    *
    * This basically means that the lowest value will always "win".
+   *
+   * A permanent value (`'permanent'` or -1) means "no limit", so it neither
+   * sets nor lowers the directive.
    */
   public setNumeric<T extends CacheControlNumericProperties>(
     key: T,
@@ -233,6 +242,10 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   ): NuxtMultiCacheCDNHelper {
     const currentValue = this._control[key]
     const value = parseMaxAge(providedValue, this.now)
+    if (value === CACHE_PERMANENT) {
+      return this
+    }
+
     if (
       currentValue === null ||
       currentValue === undefined ||
@@ -343,10 +356,12 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
       item.staleIfErrorExpires !== null &&
       item.staleIfErrorExpires !== undefined
     ) {
-      this.setNumeric(
-        'staleIfError',
-        expiresToMaxAge(item.staleIfErrorExpires, this.now),
-      )
+      // Items without stale-if-error are stored with 0, so 0 must not lower
+      // the current value.
+      const staleIfError = expiresToMaxAge(item.staleIfErrorExpires, this.now)
+      if (staleIfError !== CACHE_NEVER) {
+        this.setNumeric('staleIfError', staleIfError)
+      }
     }
 
     return this
@@ -360,12 +375,21 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
       this.setNumeric('maxAge', maxAge)
     }
 
+    // Like in mergeFromCacheItem(), a stale-if-error of 0 doesn't lower the
+    // current value.
     const staleIfError = cacheability.getStaleIfError()
-    if (staleIfError !== null) {
+    if (staleIfError !== null && staleIfError !== CACHE_NEVER) {
       this.setNumeric('staleIfError', staleIfError)
     }
 
     this.addTags(cacheability.getTags())
+
+    // Something that is not cacheable must not be cached by the CDN either,
+    // like a max age of 0.
+    if (cacheability.getCacheable() === false) {
+      this.setNumeric('maxAge', 0)
+    }
+
     return this
   }
 
@@ -379,5 +403,12 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
 
   public getTags(): string[] {
     return this._tags
+  }
+
+  /**
+   * The CDN helper doesn't track whether the response is cacheable.
+   */
+  public getCacheable(): boolean | null {
+    return null
   }
 }

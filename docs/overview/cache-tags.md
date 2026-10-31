@@ -17,7 +17,7 @@ context:
 Typically, cache tags are provided by a backend (such as a CMS), but they can
 also be managed directly by your app.
 
-If cache tags are provided by a backend it's likelay also the backend that will
+If cache tags are provided by a backend it's likely also the backend that will
 automatically invalidate the appropriate cache tags when needed.
 nuxt-multi-cache offers an
 [API endpoint to purge one or more cache tags](/features/api#purge-tags).
@@ -116,7 +116,7 @@ You can enable the built-in cache tag registry in your
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
 export default defineMultiCacheOptions(() => {
@@ -151,23 +151,31 @@ API will only affect a random instance.
 ### Custom Implementation
 
 Provide an object in `cacheTagRegistry` that implements the
-[type.CacheTagRegistry] interface.
-
-You can use the built-in in-memory registry implementation as a reference:
-
-<<< @/../src/runtime/helpers/InMemoryCacheTagRegistry.ts
+[type.CacheTagRegistry] interface. The types can be imported from the module:
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/registry.ts]
+import type { CacheTagRegistry, CacheType } from 'nuxt-multi-cache'
+
+export class MyCacheTagRegistry implements CacheTagRegistry {
+  // ...
+}
+```
+
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
-import { InMemoryCacheTagRegistry } from './registry'
+import { MyCacheTagRegistry } from './registry'
 
 export default defineMultiCacheOptions(() => {
   return {
-    cacheTagRegistry: new InMemoryCacheTagRegistry(),
+    cacheTagRegistry: new MyCacheTagRegistry(),
   }
 })
 ```
 
 :::
+
+You can use the built-in in-memory registry implementation as a reference:
+
+<<< @/../src/runtime/helpers/InMemoryCacheTagRegistry.ts

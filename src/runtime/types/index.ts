@@ -34,8 +34,13 @@ export interface MultiCacheInstances {
   route?: MultiCacheInstance
 }
 
-export interface CacheItem {
-  data: string
+/**
+ * A cache item.
+ *
+ * The data of route and component cache items is the rendered markup.
+ */
+export interface CacheItem<T = string> {
+  data: T
   expires: number
   staleIfErrorExpires: number
   cacheTags?: string[]
@@ -53,8 +58,11 @@ export interface RouteCacheItem extends CacheItem {
   staleWhileRevalidate: boolean
 }
 
+/**
+ * A data cache item. The data can be any value that can be stored.
+ */
 // oxlint-disable-next-line typescript/no-empty-object-type
-export interface DataCacheItem extends CacheItem {}
+export interface DataCacheItem<T = unknown> extends CacheItem<T> {}
 
 export interface ComponentCacheItem extends CacheItem {
   payload?: Record<string, any>
@@ -88,8 +96,12 @@ export type MultiCacheServerOptionsRouteCacheOptions =
     /**
      * A function to determine whether route caching is potentially possible.
      *
-     * In order to minimize the number of calls to get routes from the cache,
-     * it makes sense to already exclude certain paths, such as `/_nuxt` or static assets like .css, .js, .png, .jpg, etc.
+     * Receives the path including the query string. If it returns false, the
+     * route is neither looked up in nor stored in the route cache.
+     *
+     * Replaces the default, which excludes static files such as .css, .js,
+     * .png or .jpg. Nuxt's build assets, the error page and the module's API
+     * are always excluded.
      */
     applies?: (path: string) => boolean
   }
@@ -339,8 +351,11 @@ declare module 'nitropack/types' {
   export interface NitroApp {
     /**
      * The nuxt-multi-cache cache context.
+     *
+     * Undefined if the module's server plugin is not registered, which is the
+     * case if all features and the API are disabled.
      */
-    multiCache: MultiCacheApp
+    multiCache?: MultiCacheApp
   }
 }
 
@@ -348,8 +363,11 @@ declare module 'nitropack' {
   export interface NitroApp {
     /**
      * The nuxt-multi-cache cache context.
+     *
+     * Undefined if the module's server plugin is not registered, which is the
+     * case if all features and the API are disabled.
      */
-    multiCache: MultiCacheApp
+    multiCache?: MultiCacheApp
   }
 }
 

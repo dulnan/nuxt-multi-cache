@@ -4,6 +4,7 @@ import { getRequestURL, type H3Event } from 'h3'
 import type { MultiCacheServerOptions } from '~/src/runtime/types'
 import {
   getRouteCacheKey,
+  isExcludedRoutePath,
   ROOT_ROUTE_CACHE_KEY,
 } from '~/src/runtime/helpers/routeCache'
 
@@ -23,6 +24,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
   return {
     isServer: true,
     isTestMode: false,
+    apiPrefix: '/__nuxt_multi_cache',
   }
 })
 
@@ -85,5 +87,26 @@ describe('getRouteCacheKey', () => {
 
     await storage.setItem(ROOT_ROUTE_CACHE_KEY, 'value')
     expect(await storage.getItem(ROOT_ROUTE_CACHE_KEY)).toEqual('value')
+  })
+})
+
+describe('isExcludedRoutePath', () => {
+  const defaultApp = { baseURL: '/', buildAssetsDir: '/_nuxt/' }
+  const customApp = { baseURL: '/shop/', buildAssetsDir: '/assets/' }
+
+  test.each([
+    ['/_nuxt/entry.js', defaultApp, true],
+    ['/__nuxt_error?statusCode=404', defaultApp, true],
+    ['/__nuxt_multi_cache/stats/route', defaultApp, true],
+    ['/__nuxt_multi_cache_page', defaultApp, false],
+    ['/', defaultApp, false],
+    ['/products/1', defaultApp, false],
+    ['/shop/assets/entry.js', customApp, true],
+    ['/shop/__nuxt_error', customApp, true],
+    ['/shop/__nuxt_multi_cache/stats/route', customApp, true],
+    ['/shop/_nuxt/entry.js', customApp, false],
+    ['/shop/', customApp, false],
+  ])('%s with base URL %o: %s', (path, app, expected) => {
+    expect(isExcludedRoutePath(path, app)).toBe(expected)
   })
 })

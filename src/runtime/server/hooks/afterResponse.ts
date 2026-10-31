@@ -8,12 +8,19 @@ import {
   getCacheTagRegistry,
   getMultiCacheContext,
   getMultiCacheRouteHelper,
+  getRequestTimestamp,
 } from '../../helpers/server'
+import {
+  CACHE_NEVER,
+  CACHE_PERMANENT,
+  getStorageTtl,
+} from '../../helpers/maxAge'
 import { getRouteCacheKey } from '../../helpers/routeCache'
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/multi-cache-logger'
-import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import { debug } from '#nuxt-multi-cache/config'
+import { INTERNAL_RESPONSE_HEADERS } from '../../helpers/constants'
 
 function isPureObject(value: any) {
   const proto = Object.getPrototypeOf(value)
@@ -46,9 +53,9 @@ function stringify(value: any): string | undefined {
 }
 
 /**
- * Callback for the 'afterResponse' nitro hook.
+ * Store the response in the route cache, if it's cacheable.
  */
-export async function onAfterResponse(
+async function storeResponse(
   event: H3Event,
   response: { body?: unknown } | undefined,
 ) {
@@ -83,9 +90,11 @@ export async function onAfterResponse(
     return
   }
 
-  const { serverOptions, state } = useMultiCacheApp()
+  const { serverOptions } = getMultiCacheApp()
 
-  let responseHeaders = getResponseHeaders(event)
+  // A copy, because for internal requests (e.g. from the Nuxt app during SSR)
+  // this can be the actual headers object of the response.
+  let responseHeaders = { ...getResponseHeaders(event) }
 
   // We have to remove this header, because what we store in the cache is not
   // encoded. Apps may implement custom encoding that is applied in the
@@ -94,16 +103,26 @@ export async function onAfterResponse(
   // to always send this header, then the response might be invalid.
   responseHeaders['content-encoding'] = undefined
 
+  // Internal headers must not be served to other requests from the cache.
+  for (const header of INTERNAL_RESPONSE_HEADERS) {
+    responseHeaders[header] = undefined
+  }
+
   if (serverOptions.route?.alterCachedHeaders) {
     responseHeaders = serverOptions.route.alterCachedHeaders(responseHeaders)
   }
 
   const cacheKey = await getRouteCacheKey(event)
 
-  const expires = routeHelper.getExpires('maxAge')
-  const staleIfErrorExpires = routeHelper.getExpires('staleIfError')
+  const expires = routeHelper.getExpires('maxAge') ?? CACHE_PERMANENT
+  const staleIfErrorExpires =
+    routeHelper.getExpires('staleIfError') ?? CACHE_NEVER
   const staleWhileRevalidate = !!routeHelper.staleWhileRevalidate
   const cacheTags = routeHelper.getTags()
+  const ttl = getStorageTtl(
+    { expires, staleIfErrorExpires, staleWhileRevalidate },
+    getRequestTimestamp(event),
+  )
 
   const cacheItem = encodeRouteCacheItem(
     responseData,
@@ -115,39 +134,60 @@ export async function onAfterResponse(
     cacheTags,
   )
 
-  if (debug) {
-    const url = getRequestURL(event)
-    logger.info('Storing route in cache: ' + url.toString(), {
-      cacheKey,
-      expires,
-      staleIfErrorExpires,
-      cacheTags,
-      staleWhileRevalidate,
-      statusCode,
-    })
-  }
+  // Items that can never be served (e.g. a max age of 0 without
+  // stale-if-error) are not stored.
+  if (ttl !== CACHE_NEVER) {
+    if (debug) {
+      const url = getRequestURL(event)
+      logger.info('Storing route in cache: ' + url.toString(), {
+        cacheKey,
+        expires,
+        staleIfErrorExpires,
+        cacheTags,
+        staleWhileRevalidate,
+        statusCode,
+        ttl,
+      })
+    }
 
-  try {
-    await multiCache.route.storage.setItemRaw(cacheKey, cacheItem, {
-      ttl: routeHelper.maxAge,
-    })
-    if (cacheTags.length) {
-      const registry = getCacheTagRegistry(event)
-      if (registry) {
-        await registry.addCacheTags(cacheKey, 'route', cacheTags)
+    try {
+      await multiCache.route.storage.setItemRaw(cacheKey, cacheItem, { ttl })
+      if (cacheTags.length) {
+        const registry = getCacheTagRegistry(event)
+        if (registry) {
+          await registry.addCacheTags(cacheKey, 'route', cacheTags)
+        }
+      }
+    } catch (e) {
+      logger.error(
+        `Failed to store route cache item for path "${event.path}"`,
+        e,
+      )
+
+      if (multiCache.route?.bubbleError) {
+        throw e
       }
     }
-  } catch (e) {
-    logger.error(`Failed to store route cache item for path "${event.path}"`, e)
-
-    if (multiCache.route?.bubbleError) {
-      throw e
-    }
   }
+}
 
-  if (event.context.multiCache?.routeRevalidationkey) {
-    state.removeKeyBeingRevalidated(
-      event.context.multiCache.routeRevalidationkey,
-    )
+/**
+ * Callback for the 'afterResponse' nitro hook.
+ */
+export async function onAfterResponse(
+  event: H3Event,
+  response: { body?: unknown } | undefined,
+) {
+  try {
+    await storeResponse(event, response)
+  } finally {
+    // If this request revalidated a stale route, it's no longer being
+    // revalidated. This must also happen when the response was not stored
+    // (e.g. a status other than 200, or not cacheable), or else the stale
+    // route would be served until it's purged.
+    const revalidationKey = event.context?.multiCache?.routeRevalidationkey
+    if (revalidationKey) {
+      getMultiCacheApp().state.removeKeyBeingRevalidated(revalidationKey)
+    }
   }
 }

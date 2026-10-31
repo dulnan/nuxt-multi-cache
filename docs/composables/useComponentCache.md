@@ -35,10 +35,15 @@ useComponentCache((helper) => {
 
 ## Methods
 
-### setMaxAge(age: number)
+### setMaxAge(maxAge: MaxAge)
 
-Set the max age for the cached component. The max age is only set if it's lower
-than the current value.
+Set the [max age](/overview/max-age) for the cached component. The max age is
+only set if it's lower than the current value.
+
+### setStaleIfError(maxAge: MaxAge)
+
+Set how long the cached markup can be returned if an error happens during
+rendering. See [Stale if Error](/overview/stale-if-error#component-cache).
 
 ### addTags(tags: string|string[])
 
@@ -60,8 +65,8 @@ reverted and the component will be uncacheable.
 Add one or more payload keys whose values should be cached alongside the
 component markup.
 
-This can be the key defined in `useAsyncData()` or any key that is passed as
-payload during SSR.
+This is the key defined in `useAsyncData()` or `useFetch()`. Only the data in
+`nuxtApp.payload.data` is cached, not state from `useState()`.
 
 If used, the `<RenderCacheable>` component will also cache the payload value
 together with the component. On subsequent requests, when returning a cached

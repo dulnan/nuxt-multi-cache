@@ -45,10 +45,18 @@ describe('CacheHelper', () => {
       expect(cache.maxAge).toBe(300)
     })
 
-    it('should handle permanent cache (-1)', () => {
+    it('should not override a lower max age with permanent (-1)', () => {
       cache.setMaxAge(300)
       cache.setMaxAge('permanent')
-      expect(cache.maxAge).toBe(-1)
+      expect(cache.maxAge).toBe(300)
+      cache.setMaxAge(-1)
+      expect(cache.maxAge).toBe(300)
+    })
+
+    it('should not override never (0) with permanent (-1)', () => {
+      cache.setMaxAge(0)
+      cache.setMaxAge('permanent')
+      expect(cache.maxAge).toBe(0)
     })
 
     it('should override permanent cache with any numeric value', () => {
@@ -108,10 +116,19 @@ describe('CacheHelper', () => {
       expect(cache.maxAge).toBe(300) // Should not change
     })
 
-    it('should handle permanent value (-1)', () => {
+    it('should not override a lower value with permanent (-1)', () => {
       cache.setNumeric('maxAge', 500)
       cache.setNumeric('maxAge', 'permanent')
-      expect(cache.maxAge).toBe(-1)
+      expect(cache.maxAge).toBe(500)
+    })
+
+    it('should treat a permanent staleIfError as the highest value', () => {
+      cache.setNumeric('staleIfError', 'permanent')
+      expect(cache.staleIfError).toBe(-1)
+      cache.setNumeric('staleIfError', 60)
+      expect(cache.staleIfError).toBe(60)
+      cache.setNumeric('staleIfError', 'permanent')
+      expect(cache.staleIfError).toBe(60)
     })
 
     it('should return this for method chaining', () => {
@@ -308,26 +325,29 @@ describe('CacheHelper', () => {
       expect(cache.maxAge).toBe(0)
     })
 
-    it('should handle negative numbers', () => {
+    it('should treat negative numbers other than -1 as never', () => {
       cache.setMaxAge(-100)
-      expect(cache.maxAge).toBe(-1)
+      expect(cache.maxAge).toBe(0)
 
-      // Setting permanent should still work since -1 < -100
-      cache.setMaxAge('permanent')
-      expect(cache.maxAge).toBe(-1)
+      // A higher max age can't override "never".
+      cache.setMaxAge(60)
+      expect(cache.maxAge).toBe(0)
     })
 
-    it('should handle special numeric values', () => {
+    it('should treat Infinity as permanent', () => {
       cache.setMaxAge(Infinity)
-      expect(cache.maxAge).toBe(Infinity)
+      expect(cache.maxAge).toBe(-1)
 
       cache.setMaxAge(100)
-      expect(cache.maxAge).toBe(100) // Should update since 100 < Infinity
+      expect(cache.maxAge).toBe(100)
     })
 
-    it('should handle NaN by rounding to NaN', () => {
+    it('should treat NaN as never', () => {
       cache.setMaxAge(NaN)
-      expect(cache.maxAge).toBeNaN()
+      expect(cache.maxAge).toBe(0)
+
+      cache.setMaxAge(60)
+      expect(cache.maxAge).toBe(0)
     })
   })
 
@@ -367,6 +387,77 @@ describe('CacheHelper', () => {
     })
   })
 
+  describe('merging', () => {
+    it('should keep a lower max age when merging a permanent cacheability', () => {
+      cache.setMaxAge(60)
+      // E.g. a data cache item without a max age.
+      cache.mergeFromCacheability(new CacheHelper(mockDateTimestamp))
+      expect(cache.maxAge).toBe(60)
+    })
+
+    it('should keep a lower max age when merging a permanent cache item', () => {
+      cache.setMaxAge(60)
+      cache.mergeFromCacheItem({ expires: -1 })
+      expect(cache.maxAge).toBe(60)
+    })
+
+    it('should merge a lower max age', () => {
+      cache.setMaxAge(60)
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setMaxAge(30),
+      )
+      expect(cache.maxAge).toBe(30)
+      cache.mergeFromCacheItem({ expires: mockDateTimestamp + 10 })
+      expect(cache.maxAge).toBe(10)
+    })
+  })
+
+  describe('merging cacheable', () => {
+    it('should become uncacheable when merging something uncacheable', () => {
+      cache.setCacheable()
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setUncacheable(),
+      )
+      expect(cache.cacheable).toBe(false)
+    })
+
+    it('should stay cacheable when merging something cacheable or unset', () => {
+      cache.setCacheable()
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setCacheable(),
+      )
+      cache.mergeFromCacheability(new CacheHelper(mockDateTimestamp))
+      expect(cache.cacheable).toBe(true)
+    })
+  })
+
+  describe('merging stale-if-error', () => {
+    it('should keep the stale-if-error when merging an item without one', () => {
+      cache.setStaleIfError(18000)
+      // Items without stale-if-error are stored with 0.
+      cache.mergeFromCacheItem({ expires: -1, staleIfErrorExpires: 0 })
+      expect(cache.staleIfError).toBe(18000)
+    })
+
+    it('should keep the stale-if-error when merging a cacheability of 0', () => {
+      cache.setStaleIfError(18000)
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setStaleIfError(0),
+      )
+      expect(cache.staleIfError).toBe(18000)
+    })
+
+    it('should merge a lower stale-if-error', () => {
+      cache.setStaleIfError(18000)
+      cache.mergeFromCacheItem({ staleIfErrorExpires: mockDateTimestamp + 60 })
+      expect(cache.staleIfError).toBe(60)
+      cache.mergeFromCacheability(
+        new CacheHelper(mockDateTimestamp).setStaleIfError(30),
+      )
+      expect(cache.staleIfError).toBe(30)
+    })
+  })
+
   describe('complex scenarios', () => {
     it('should handle competing maxAge settings correctly', () => {
       cache.setMaxAge(1000)
@@ -376,10 +467,10 @@ describe('CacheHelper', () => {
       cache.setMaxAge('1h') // 3600 seconds, should not update
       expect(cache.maxAge).toBe(300)
 
-      cache.setMaxAge('permanent') // -1, should update
-      expect(cache.maxAge).toBe(-1)
+      cache.setMaxAge('permanent') // -1, should not update
+      expect(cache.maxAge).toBe(300)
 
-      cache.setMaxAge(100) // Should update since any number overrides -1
+      cache.setMaxAge(100) // Lower, should update
       expect(cache.maxAge).toBe(100)
     })
 

@@ -2,13 +2,17 @@
 
 A generic cache for any type of data (that can be stringified).
 
+The data cache only works on the server. On the client, `useDataCache` never
+returns a cached value and adding items to the cache does nothing, and
+`useDataCacheCallback` always calls the callback. Only
+[useCachedAsyncData](/composables/useCachedAsyncData) can also cache on the
+client.
+
 ## Configuration
 
 ::: code-group
 
 ```typescript [nuxt.config.ts]
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   multiCache: {
     data: {
@@ -16,13 +20,12 @@ export default defineNuxtConfig({
       // If false the cache is disabled, but the composable is still added to
       // the build.
       enabled: true,
-    }
-  }
-}
+    },
+  },
+})
 ```
 
-```typescript [multiCache.serverOptions.ts]
-// ~/server/multiCache.serverOptions.ts
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
@@ -81,7 +84,7 @@ const { data: weather } = await useAsyncData('weather', async () => {
 ## Using `useDataCacheCallback`
 
 If you prefer a different syntax, you can use
-[useDataCacheCallback](/composables/useDataCache) instead:
+[useDataCacheCallback](/composables/useDataCacheCallback) instead:
 
 ```typescript
 const user = await useDataCacheCallback(key.value, async (cache) => {
@@ -94,6 +97,20 @@ const user = await useDataCacheCallback(key.value, async (cache) => {
   return response
 })
 ```
+
+## Bubbling Cacheability
+
+By default, the max age and cache tags of data cache items don't affect the
+route cache or the CDN headers of the page that uses them. To merge them, set
+the `bubbleCacheability` option:
+
+```typescript
+const { value, addToCache } = await useDataCache('weather', null, {
+  bubbleCacheability: true,
+})
+```
+
+See [Bubbling Cacheability](/overview/bubble-cacheability) for details.
 
 ## Using `useCachedAsyncData`
 
@@ -130,7 +147,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const response = await getWeatherFromExternalApi()
-  addToCache(response)
+  await addToCache(response)
   return response
 })
 ```
+
+By default, errors of the cache storage (for example if Redis is not reachable)
+are thrown by the data cache composables. This can be changed with the
+[bubbleError](/overview/server-options#storage-errors) server option.

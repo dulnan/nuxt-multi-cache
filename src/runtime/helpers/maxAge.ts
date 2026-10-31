@@ -96,10 +96,17 @@ function calculateInterval(v: NamedInterval, providedNow: number): number {
 
 export function parseMaxAge(v: MaxAge, now: number): number {
   if (typeof v === 'number') {
-    if (v === CACHE_PERMANENT || v === CACHE_NEVER) {
-      return v
+    if (v === CACHE_PERMANENT || v === Infinity) {
+      return CACHE_PERMANENT
     }
-    return Math.max(Math.floor(v), -1)
+
+    // Other negative numbers (e.g. a computed max age that is already in the
+    // past), fractions below 1 and NaN must never cache.
+    if (!(v >= 1)) {
+      return CACHE_NEVER
+    }
+
+    return Math.floor(v)
   } else if (
     v === 'next-hour' ||
     v === 'midnight' ||
@@ -134,6 +141,51 @@ export function isExpired(expires: number, now: number): boolean {
 
 export function toTimestamp(date: Date): number {
   return Math.floor(date.getTime() / 1000)
+}
+
+/**
+ * Convert a max age to an expires timestamp.
+ *
+ * Returns CACHE_PERMANENT or CACHE_NEVER for these special values, so the
+ * result can be checked with isExpired().
+ */
+export function maxAgeToExpires(v: MaxAge, now: number): number {
+  const maxAge = parseMaxAge(v, now)
+  if (maxAge === CACHE_PERMANENT || maxAge === CACHE_NEVER) {
+    return maxAge
+  }
+
+  return now + maxAge
+}
+
+/**
+ * Get the TTL in seconds for storing a cache item.
+ *
+ * The item must stay in the storage as long as it can be served: Until it
+ * expires, until its stale-if-error expires, or for as long as it may be
+ * served stale while revalidating.
+ *
+ * Returns undefined if the item must be stored without a TTL and CACHE_NEVER
+ * if it can never be served and must not be stored at all.
+ */
+export function getStorageTtl(
+  item: {
+    expires: number
+    staleIfErrorExpires: number
+    staleWhileRevalidate?: boolean
+  },
+  now: number,
+): number | undefined {
+  if (
+    item.expires === CACHE_PERMANENT ||
+    item.staleIfErrorExpires === CACHE_PERMANENT ||
+    item.staleWhileRevalidate
+  ) {
+    return undefined
+  }
+
+  const ttl = Math.max(item.expires, item.staleIfErrorExpires) - now
+  return ttl > 0 ? ttl : CACHE_NEVER
 }
 
 export function expiresToMaxAge(expires: number, now: number): number {

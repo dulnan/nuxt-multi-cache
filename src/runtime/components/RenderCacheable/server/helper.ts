@@ -1,12 +1,13 @@
 import { hash } from 'ohash'
 import type { Storage } from 'unstorage'
 import { ssrRenderSlotInner } from 'vue/server-renderer'
-import type {
-  VNode,
-  RendererNode,
-  RendererElement,
-  Slots,
-  ComponentInternalInstance,
+import {
+  Fragment,
+  type VNode,
+  type RendererNode,
+  type RendererElement,
+  type Slots,
+  type ComponentInternalInstance,
 } from 'vue'
 import {
   decodeComponentCacheItem,
@@ -22,6 +23,39 @@ export type RenderCacheableSlotVNode = VNode<
   RendererElement,
   { [key: string]: any }
 >
+
+/**
+ * Get the vnode of the slot that is used to build the cache key.
+ *
+ * This is the first vnode of the slot. A slot forwarded by a wrapper component
+ * (`<slot />`) is a fragment, so its first child is used instead, but only if
+ * a cache key is provided: The wrapper can't know what is passed into its
+ * slot. For example, the slot of a layout contains <NuxtPage>, which has no
+ * props, so every page would get the same key.
+ */
+export function getSlotVNode(
+  props: Props,
+  vnodes: VNode[],
+): RenderCacheableSlotVNode | undefined {
+  const first = vnodes[0]
+  if (first?.type !== Fragment) {
+    return first
+  }
+
+  if (!props.cacheKey) {
+    if (debug) {
+      logger.info(
+        'Skipped caching forwarded slot because no cache key is provided.',
+        { props },
+      )
+    }
+    return
+  }
+
+  if (Array.isArray(first.children)) {
+    return getSlotVNode(props, first.children as VNode[])
+  }
+}
 
 /**
  * Build the cache key.
@@ -148,6 +182,55 @@ export function renderSlot(
 
     throw e
   }
+}
+
+/**
+ * A set that also adds its values to another set.
+ */
+class ForwardingSet<T> extends Set<T> {
+  constructor(private readonly getTarget: () => Set<T>) {
+    super()
+  }
+
+  override add(value: T): this {
+    this.getTarget().add(value)
+    return super.add(value)
+  }
+}
+
+/**
+ * Create the SSR context for the slot of a <RenderCacheable>.
+ *
+ * Components add the ID of their module to the `modules` set of the SSR
+ * context they inject (via useSSRContext()). Nuxt uses the modules to render
+ * the styles and preload links of the page. The scoped context collects the
+ * modules rendered in the slot, so that they can be stored with the markup.
+ * Unlike replacing the set of the shared context, this also works when
+ * several instances render at the same time.
+ *
+ * The modules are also added to the parent context: The context of the
+ * request, or the scoped context of an outer <RenderCacheable>.
+ */
+export function createScopedSsrContext(parent: Record<string, any>): {
+  context: Record<string, any>
+  modules: Set<string>
+} {
+  const modules = new ForwardingSet<string>(
+    () => (parent.modules ||= new Set()),
+  )
+
+  // All other properties are read from and written to the parent context.
+  const context = new Proxy(parent, {
+    get(target, key) {
+      if (key === 'modules') {
+        return modules
+      }
+
+      return Reflect.get(target, key)
+    },
+  })
+
+  return { context, modules }
 }
 
 /**

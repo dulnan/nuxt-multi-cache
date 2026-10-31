@@ -82,7 +82,8 @@ export default defineNitroPlugin((nitroApp) => {
   const multiCache = createMultiCacheApp()
   nitroApp.multiCache = multiCache
 
-  // Adds the context to the event and returns cached routes.
+  // Adds the context and, if the route cache applies, the route cache helper
+  // to the event.
   nitroApp.hooks.hook('request', onRequest)
 
   // Only needed if route caching is enabled.

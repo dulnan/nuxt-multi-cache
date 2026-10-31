@@ -23,10 +23,23 @@ continue to use compression in an event handler, but just not together with the
 route cache.
 
 For this reason, you have to compress responses globally, via the
-[`beforeResponse` Nitro hook](https://nitro.unjs.io/guide/plugins#available-hooks).
+[`beforeResponse` Nitro hook](https://v2.nitro.build/guide/plugins#available-hooks).
 This is the **only hook** that is guaranteed to work; using **`render:response`
 will not** work, because this hook is only called on the first render of the
 route.
+
+The route cache always stores the uncompressed response and removes the
+`Content-Encoding` header before storing it, so cached responses are compressed
+again in the `beforeResponse` hook.
+
+Note these exceptions:
+
+- A stale response that is served because of an error (see
+  [Stale if Error](/overview/stale-if-error#route-cache)) is sent without
+  calling the `beforeResponse` hook, so it is not compressed.
+- `h3-fast-compression` only compresses string responses with at least 1024
+  characters. A server handler that returns an object is not compressed when
+  it's first called, but it is when served from the route cache (as a string).
 
 ::: info
 
@@ -44,7 +57,7 @@ or by setting
 
 ::: code-group
 
-```typescript [./server/plugins/compression.ts]
+```typescript [server/plugins/compression.ts]
 import { useCompression } from 'h3-fast-compression'
 import { getRequestURL } from 'h3'
 import { defineNitroPlugin } from 'nitropack/runtime'
@@ -68,9 +81,9 @@ export default defineNitroPlugin((nitro) => {
 
 ::: code-group
 
-```typescript [./server/plugins/compression.ts]
+```typescript [server/plugins/compression.ts]
 import { useCompression } from 'h3-fast-compression'
-import { getRequestURL } from 'h3'
+import { getResponseHeader } from 'h3'
 import { defineNitroPlugin } from 'nitropack/runtime'
 
 export default defineNitroPlugin((nitro) => {

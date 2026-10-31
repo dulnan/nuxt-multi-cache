@@ -1,4 +1,11 @@
-import { defineComponent, getCurrentInstance, h, onErrorCaptured } from 'vue'
+import {
+  defineComponent,
+  getCurrentInstance,
+  h,
+  inject,
+  onErrorCaptured,
+  ssrContextKey,
+} from 'vue'
 import { useNuxtApp } from '#app'
 import { provide } from '#imports'
 import { encodeComponentCacheItem } from '../../../helpers/cacheItem'
@@ -10,14 +17,25 @@ import {
   getRequestTimestamp,
   getCacheTagRegistry,
 } from './../../../helpers/server'
-import { getCacheKey, getCachedComponent, renderSlot } from './helper'
+import {
+  createScopedSsrContext,
+  getCacheKey,
+  getCachedComponent,
+  getSlotVNode,
+  renderSlot,
+} from './helper'
 import { type Props, props } from '../shared'
 import { debug } from '#nuxt-multi-cache/config'
 import {
   ComponentCacheHelper,
   INJECT_COMPONENT_CACHE_CONTEXT,
 } from '../../../helpers/ComponentCacheHelper'
-import { isExpired } from '../../../helpers/maxAge'
+import {
+  CACHE_NEVER,
+  CACHE_PERMANENT,
+  getStorageTtl,
+  isExpired,
+} from '../../../helpers/maxAge'
 import type { ComponentCacheItem } from '../../../types'
 import { bubbleCacheability } from './../../../helpers/bubbleCacheability'
 
@@ -69,7 +87,7 @@ export default defineComponent<Props>({
     const defaultSlot = slots.default()
     const renderFallback = () => h(tag, defaultSlot)
 
-    const first = defaultSlot[0]
+    const first = getSlotVNode(props, defaultSlot)
 
     if (props.noCache || !first) {
       return renderFallback
@@ -87,6 +105,20 @@ export default defineComponent<Props>({
 
     // Injected by useComponentCache().
     provide(INJECT_COMPONENT_CACHE_CONTEXT, providedContext)
+
+    // Components in the slot add their module to the SSR context they inject.
+    // A scoped context collects the modules of this instance. Like the
+    // provide() above, this must happen before the first await.
+    const parentSsrContext = inject<Record<string, any> | null>(
+      ssrContextKey,
+      null,
+    )
+    const scopedSsrContext = parentSsrContext
+      ? createScopedSsrContext(parentSsrContext)
+      : null
+    if (scopedSsrContext) {
+      provide(ssrContextKey, scopedSsrContext.context)
+    }
 
     const ssrContext = nuxtApp.ssrContext
 
@@ -167,8 +199,10 @@ export default defineComponent<Props>({
         })
       }
 
-      if (cacheItem.ssrModules && nuxtApp.ssrContext?.modules) {
-        const modules = nuxtApp.ssrContext.modules
+      // Add the modules to the parent context: The context of the request,
+      // or of an outer <RenderCacheable> that stores them too.
+      if (cacheItem.ssrModules && parentSsrContext) {
+        const modules: Set<string> = (parentSsrContext.modules ||= new Set())
         cacheItem.ssrModules.forEach((mod) => modules.add(mod))
       }
 
@@ -226,13 +260,6 @@ export default defineComponent<Props>({
       helper.addTags(props.cacheTags)
     }
 
-    // Store the original set.
-    const originalModules = ssrContext.modules
-
-    // Override with a new Set, so we can capture all module identifiers
-    // that were added during rendering of the entire slot.
-    ssrContext.modules = new Set()
-
     // Capture errors during rendering of the slot.
     let renderError: Error | undefined = undefined
 
@@ -267,19 +294,18 @@ export default defineComponent<Props>({
       }
     }
 
-    const ssrModules = [...ssrContext.modules.values()]
-
-    if (originalModules) {
-      ssrModules.forEach((id) => originalModules.add(id))
-    }
-
-    // Restore the original set.
-    ssrContext.modules = originalModules
+    // The modules rendered in the slot.
+    const ssrModules = scopedSsrContext ? [...scopedSsrContext.modules] : []
 
     bubbleCacheability(helper, event, props.bubbleCacheability)
 
-    // Not cacheable, return.
-    if (!helper.isCacheable()) {
+    const expires = helper.getExpires('maxAge') ?? CACHE_PERMANENT
+    const staleIfErrorExpires = helper.getExpires('staleIfError') ?? CACHE_NEVER
+    const ttl = getStorageTtl({ expires, staleIfErrorExpires }, now)
+
+    // Not cacheable, or can never be served from cache (e.g. a max age of 0
+    // without stale-if-error), return.
+    if (!helper.isCacheable() || ttl === CACHE_NEVER) {
       return renderMarkup(renderResult)
     }
 
@@ -290,8 +316,6 @@ export default defineComponent<Props>({
       // The cache tags for this component.
       const cacheTags = helper.tags
 
-      const maxAge = helper.maxAge
-
       // Extract the payload relevant to the component.
       const payload: Record<string, any> = helper.payloadKeys.reduce<
         Record<string, string>
@@ -299,9 +323,6 @@ export default defineComponent<Props>({
         acc[key] = nuxtApp.payload.data[key]
         return acc
       }, {})
-
-      const expires = helper.getExpires('maxAge')
-      const staleIfErrorExpires = helper.getExpires('staleIfError')
 
       // Store in cache.
       await componentCache.storage.setItemRaw(
@@ -314,7 +335,7 @@ export default defineComponent<Props>({
           ssrModules,
           staleIfErrorExpires,
         ),
-        { ttl: maxAge },
+        { ttl },
       )
       if (cacheTags.length) {
         const registry = getCacheTagRegistry(event)

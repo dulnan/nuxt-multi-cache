@@ -9,6 +9,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
     },
     debug: false,
     isTestMode: true,
+    apiPrefix: '/__nuxt_multi_cache',
   }
 })
 
@@ -52,27 +53,50 @@ vi.mock('#nuxt-multi-cache/server-options', () => {
 })
 
 describe('onRequest nitro hook handler', () => {
-  test('does not apply for common asset file extensions', async () => {
-    mocks.useNitroApp.mockReturnValue({
-      multiCache: {
-        cache: {},
-      },
-    })
-    const event: any = {
-      path: '/test.jpg',
-      node: {
-        res: {},
-        req: {
-          originalUrl: '/test.jpg',
-          headers: {},
+  test.each([
+    ['/test.jpg', false],
+    ['/assets/style.css?v=2', false],
+    ['/fonts/font.woff2?v=1#x', false],
+    ['/test', true],
+    ['/test?file=style.css', true],
+  ])(
+    'Excludes common asset file extensions by default (%s)',
+    async (path, expected) => {
+      const { applies } = mocks.serverOptions.route
+      // @ts-expect-error Removed to test the default.
+      delete mocks.serverOptions.route.applies
+      mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
         },
-      },
-      context: {},
-    }
+      })
+      const event: any = {
+        method: 'GET',
+        path,
+        node: {
+          res: {},
+          req: {
+            originalUrl: path,
+            headers: {},
+          },
+        },
+        context: {},
+      }
 
-    expect(await onRequest(event)).toBeUndefined()
-    mocks.useNitroApp.mockRestore()
-  })
+      try {
+        await onRequest(event)
+
+        expect(!!event.context.multiCache?.route).toBe(expected)
+      } finally {
+        mocks.serverOptions.route.applies = applies
+        mocks.useNitroApp.mockRestore()
+        mocks.serverOptions.enabledForRequest.mockRestore()
+      }
+    },
+  )
 
   test('Calls a custom applies method', async () => {
     mocks.serverOptions.route.applies.mockReturnValue(false)
@@ -84,6 +108,7 @@ describe('onRequest nitro hook handler', () => {
       },
     })
     const event: any = {
+      method: 'GET',
       path: '/test',
       node: {
         res: {},
@@ -103,6 +128,91 @@ describe('onRequest nitro hook handler', () => {
     mocks.serverOptions.route.applies.mockRestore()
   })
 
+  test.each([
+    ['GET', true],
+    ['HEAD', true],
+    ['POST', false],
+    ['PUT', false],
+    ['PATCH', false],
+    ['DELETE', false],
+  ])(
+    'Only adds the route cache helper for GET and HEAD requests (%s)',
+    async (method, expected) => {
+      mocks.serverOptions.route.applies.mockReturnValue(true)
+      mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+        },
+      })
+      const event: any = {
+        method,
+        path: '/test',
+        node: {
+          res: {},
+          req: {
+            originalUrl: '/test',
+            headers: {},
+          },
+        },
+        context: {},
+      }
+
+      await onRequest(event)
+
+      // Without the helper, the response is never stored in the route cache.
+      expect(!!event.context.multiCache?.route).toBe(expected)
+
+      mocks.useNitroApp.mockRestore()
+      mocks.serverOptions.route.applies.mockRestore()
+      mocks.serverOptions.enabledForRequest.mockRestore()
+    },
+  )
+
+  test.each([
+    ['/__nuxt_multi_cache/stats/route', false],
+    ['/__nuxt_multi_cache/inspect/route?key=foo', false],
+    ['/_nuxt/entry.js', false],
+    ['/__nuxt_error', false],
+    ['/__nuxt_multi_cache_page', true],
+  ])(
+    'Never adds the route cache helper for excluded paths (%s)',
+    async (path, expected) => {
+      // Even if a custom applies method allows it.
+      mocks.serverOptions.route.applies.mockReturnValue(true)
+      mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+        },
+      })
+      const event: any = {
+        method: 'GET',
+        path,
+        node: {
+          res: {},
+          req: {
+            originalUrl: path,
+            headers: {},
+          },
+        },
+        context: {},
+      }
+
+      await onRequest(event)
+
+      expect(!!event.context.multiCache?.route).toBe(expected)
+
+      mocks.useNitroApp.mockRestore()
+      mocks.serverOptions.route.applies.mockRestore()
+      mocks.serverOptions.enabledForRequest.mockRestore()
+    },
+  )
+
   test('Calls a custom enabledForRequest method', async () => {
     mocks.serverOptions.route.applies.mockReturnValue(true)
     mocks.serverOptions.enabledForRequest.mockResolvedValue(false)
@@ -114,6 +224,7 @@ describe('onRequest nitro hook handler', () => {
       },
     })
     const event: any = {
+      method: 'GET',
       path: '/test',
       node: {
         res: {},

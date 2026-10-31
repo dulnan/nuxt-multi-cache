@@ -22,3 +22,5 @@
 /api/get-pages                /features/api
 /api/get-components           /features/api
 /api/get-data                 /features/api
+
+/use-cases/short-term-route-caching   /features/route-cache

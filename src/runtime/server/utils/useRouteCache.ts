@@ -1,11 +1,8 @@
 import type { H3Event } from 'h3'
-import {
-  getMultiCacheRouteHelper,
-  isInternalServerRequest,
-} from '../../helpers/server'
+import { getMultiCacheRouteHelper } from '../../helpers/server'
 import type { NuxtMultiCacheRouteCacheHelper } from './../../helpers/RouteCacheHelper'
-import { setHeader } from 'h3'
-import { ROUTE_CACHE_TAGS_HEADER } from '../../helpers/constants'
+import { setInternalRouteCacheHeaders } from '../../helpers/routeCache'
+import { CACHE_NEVER, CACHE_PERMANENT } from '../../helpers/maxAge'
 
 export function useRouteCache(
   cb: (helper: NuxtMultiCacheRouteCacheHelper) => void,
@@ -19,7 +16,9 @@ export function useRouteCache(
 
   cb(helper)
 
-  if (isInternalServerRequest(event)) {
-    setHeader(event, ROUTE_CACHE_TAGS_HEADER, helper.tags.join(' '))
-  }
+  setInternalRouteCacheHeaders(event, {
+    cacheTags: helper.tags,
+    expires: helper.getExpires('maxAge') ?? CACHE_PERMANENT,
+    staleIfErrorExpires: helper.getExpires('staleIfError') ?? CACHE_NEVER,
+  })
 }

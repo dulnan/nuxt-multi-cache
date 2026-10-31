@@ -1,14 +1,21 @@
 import { type H3Event, getRequestURL } from 'h3'
 import { enabledForRequest, getRequestTimestamp } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
-import { useMultiCacheApp } from '../utils/useMultiCacheApp'
+import {
+  isExcludedRoutePath,
+  isRouteCacheMethod,
+} from '../../helpers/routeCache'
+import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
+import { useRuntimeConfig } from '#imports'
 
 /**
- * Method to check whether route caching is generally applicable to the given path.
+ * Method to check whether route caching is generally applicable to the given URL.
  */
-function applies(path: string): boolean {
-  if (path.startsWith('/_nuxt') || path.startsWith('/__nuxt_error')) {
+function applies(url: URL): boolean {
+  const path = url.pathname + url.search
+
+  if (isExcludedRoutePath(path, useRuntimeConfig().app)) {
     return false
   }
 
@@ -16,15 +23,19 @@ function applies(path: string): boolean {
     return serverOptions.route.applies(path)
   }
 
-  // Exclude common files.
-  return !/.\.(ico|png|jpg|js|css|html|woff|woff2|ttf|otf|eot|svg)$/.test(path)
+  // Exclude common files. Only the pathname is checked, so that a query
+  // string (e.g. "/style.css?v=2") doesn't prevent the exclusion.
+  return !/.\.(ico|png|jpg|js|css|html|woff|woff2|ttf|otf|eot|svg)$/.test(
+    url.pathname,
+  )
 }
 
 /**
  * Callback for the 'request' nitro hook.
  *
- * This adds the context objects to the event and, if enabled, serves cached
- * routes.
+ * This adds the context objects to the event and, if the route cache applies
+ * to the request, the route cache helper. Cached routes are only served and
+ * stored for requests with the route cache helper.
  */
 export async function onRequest(event: H3Event) {
   const url = getRequestURL(event)
@@ -33,7 +44,7 @@ export async function onRequest(event: H3Event) {
     return
   }
 
-  const app = useMultiCacheApp()
+  const app = getMultiCacheApp()
   event.context.multiCacheApp = app
 
   // Route cache is disabled.
@@ -41,8 +52,13 @@ export async function onRequest(event: H3Event) {
     return
   }
 
+  // Responses to other methods (e.g. POST) are never stored.
+  if (!isRouteCacheMethod(event)) {
+    return
+  }
+
   // Path is generally not cacheable, so we can skip it.
-  if (!applies(path)) {
+  if (!applies(url)) {
     return
   }
 

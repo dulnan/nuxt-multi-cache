@@ -1,5 +1,5 @@
 import path from 'path'
-import { setup, createPage } from '@nuxt/test-utils/e2e'
+import { setup, createPage, $fetch } from '@nuxt/test-utils/e2e'
 import { describe, expect, test } from 'vitest'
 import { expect as playwrightExpect } from '@nuxt/test-utils/playwright'
 import type { ModuleOptions } from '../src/build/options'
@@ -37,9 +37,9 @@ await setup({
   nuxtConfig,
 })
 
-async function countRowsForVary(vary: string): Promise<number> {
+async function hasDataCacheItem(key: string): Promise<boolean> {
   const items = await getDataCacheItems()
-  return items.rows.filter((v) => v.key.includes('--' + vary)).length
+  return items.rows.some((v) => v.key.endsWith(key))
 }
 
 describe('The useCachedAsyncData composable', () => {
@@ -78,57 +78,85 @@ describe('The useCachedAsyncData composable', () => {
     expect(number1).toEqual(number2)
   })
 
-  test('treats a max age of 0 as uncacheable on the server', async () => {
+  test('caches on the server with a serverMaxAge of 60', async () => {
     await purgeAll()
 
-    const page1 = await createPage('/useCachedAsyncData?vary=two')
+    const url = '/cachedAsyncDataMaxAge?server=60'
+    const page1 = await createPage(url)
+    const time1 = await page1.locator('#time').innerText()
+    const page2 = await createPage(url)
+    const time2 = await page2.locator('#time').innerText()
 
-    expect(await countRowsForVary('two')).toEqual(1)
-
-    const number1 = await page1.locator('#not-cached-data').innerText()
-
-    const page2 = await createPage('/useCachedAsyncData')
-    const number2 = await page2.locator('#not-cached-data').innerText()
-    expect(number1).not.toEqual(number2)
+    expect(time1).toEqual(time2)
+    expect(await hasDataCacheItem('max-age--60--undefined')).toBe(true)
   })
 
-  test('treats a max age of 0 as uncacheable on the client', async () => {
+  test.each(['0', 'never', 'undefined'])(
+    'does not cache on the server with a serverMaxAge of %s',
+    async (maxAge) => {
+      await purgeAll()
+
+      const url = `/cachedAsyncDataMaxAge?server=${maxAge}`
+      const page1 = await createPage(url)
+      const time1 = await page1.locator('#time').innerText()
+      const page2 = await createPage(url)
+      const time2 = await page2.locator('#time').innerText()
+
+      expect(time1).not.toEqual(time2)
+      expect(await hasDataCacheItem(`max-age--${maxAge}--undefined`)).toBe(
+        false,
+      )
+    },
+  )
+
+  test.each(['0', 'never', 'undefined'])(
+    'does not cache on the client with a clientMaxAge of %s',
+    async (maxAge) => {
+      await purgeAll()
+
+      const page = await createPage(`/cachedAsyncDataMaxAge?client=${maxAge}`)
+      const time1 = await page.locator('#time').innerText()
+
+      await page.locator('#go-to-home').click()
+      await page.waitForURL((url) => url.pathname === '/')
+      await page.goBack()
+
+      await playwrightExpect(page.locator('#time')).not.toHaveText(time1)
+    },
+  )
+
+  test.each(['5', '5m', 'permanent', '-1'])(
+    'caches on the client with a clientMaxAge of %s',
+    async (maxAge) => {
+      await purgeAll()
+
+      const page = await createPage(`/cachedAsyncDataMaxAge?client=${maxAge}`)
+      const time1 = await page.locator('#time').innerText()
+
+      await page.locator('#go-to-home').click()
+      await page.waitForURL((url) => url.pathname === '/')
+      await page.goBack()
+
+      await playwrightExpect(page.locator('#time')).toHaveText(time1)
+    },
+  )
+
+  test('caches a falsy value', async () => {
     await purgeAll()
 
-    const page = await createPage('/useCachedAsyncData?vary=three')
-    const number1 = await page.locator('#not-cached-data').innerText()
+    const getCount = () =>
+      $fetch<{ count: number }>('/api/falsyCounter?read=1').then((v) => v.count)
+    const before = await getCount()
 
-    await page.locator('#go-to-home').click()
-    await page.locator('#route-useCachedAsyncData').click()
-    const number2 = await page.locator('#not-cached-data').innerText()
+    for (let i = 0; i < 2; i++) {
+      const page = await createPage('/cachedAsyncDataFalsy')
+      await playwrightExpect(page.locator('#value')).toHaveText('0')
+      await page.waitForLoadState('networkidle')
+    }
 
-    expect(number1).not.toEqual(number2)
-  })
-
-  test('treats no max age as uncacheable on the server', async () => {
-    await purgeAll()
-
-    const page1 = await createPage('/useCachedAsyncData?vary=four')
-
-    expect(await countRowsForVary('four')).toEqual(1)
-
-    const number1 = await page1.locator('#no-max-age').innerText()
-
-    const page2 = await createPage('/useCachedAsyncData')
-    const number2 = await page2.locator('#no-max-age').innerText()
-    expect(number1).not.toEqual(number2)
-  })
-
-  test('treats no max age as uncacheable on the client', async () => {
-    await purgeAll()
-
-    const page = await createPage('/useCachedAsyncData')
-    const number1 = await page.locator('#no-max-age').innerText()
-
-    await page.locator('#go-to-home').click()
-    await page.locator('#route-useCachedAsyncData').click()
-
-    await playwrightExpect(page.locator('#no-max-age')).not.toHaveText(number1)
+    // Only the first server render ran the handler. The second one loaded the
+    // value from the data cache, and both pages hydrated from the payload.
+    expect((await getCount()) - before).toEqual(1)
   })
 
   test('works using a reactive key', async () => {

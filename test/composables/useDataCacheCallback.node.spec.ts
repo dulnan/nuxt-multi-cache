@@ -158,6 +158,103 @@ describe('useDataCacheCallback composable', () => {
     ).toMatchInlineSnapshot('1638318600')
   })
 
+  test.each([[0], ['never' as const]])(
+    'Does not cache data with a max age of %s',
+    async (maxAge) => {
+      isServerValue = true
+      const event = buildEventWithStorage({})
+
+      let calls = 0
+      async function getValue() {
+        return await useDataCacheCallback(
+          'never_cached',
+          (helper) => {
+            calls++
+            helper?.setMaxAge(maxAge)
+            return 'Foobar'
+          },
+          event,
+        )
+      }
+
+      await getValue()
+      await getValue()
+
+      expect(calls).toEqual(2)
+    },
+  )
+
+  test.each([[0], [false], [''], [null]])(
+    'Returns the falsy cached value %j',
+    async (cachedValue) => {
+      isServerValue = true
+      const event = buildEventWithStorage({})
+
+      let calls = 0
+      async function getValue() {
+        return await useDataCacheCallback(
+          'falsy',
+          () => {
+            calls++
+            return cachedValue
+          },
+          event,
+        )
+      }
+
+      expect(await getValue()).toEqual(cachedValue)
+      expect(await getValue()).toEqual(cachedValue)
+      expect(calls).toEqual(1)
+    },
+  )
+
+  test.each([[0], [false], [''], [null]])(
+    'Returns the falsy stale value %j',
+    async (staleValue) => {
+      isServerValue = true
+      const event = buildEventWithStorage({
+        falsy: {
+          data: staleValue,
+          // Expired a long time ago.
+          expires: 1,
+          staleIfErrorExpires: -1,
+        },
+      })
+
+      const data = await useDataCacheCallback(
+        'falsy',
+        () => {
+          throw new Error('Error loading data')
+        },
+        event,
+      )
+
+      expect(data).toEqual(staleValue)
+    },
+  )
+
+  test('Does not cache data marked as uncacheable', async () => {
+    isServerValue = true
+    const event = buildEventWithStorage({})
+
+    let calls = 0
+    async function getValue() {
+      return await useDataCacheCallback(
+        'uncacheable',
+        (helper) => {
+          calls++
+          helper?.setUncacheable()
+          return 'Foobar'
+        },
+        event,
+      )
+    }
+
+    expect(await getValue()).toEqual('Foobar')
+    expect(await getValue()).toEqual('Foobar')
+    expect(calls).toEqual(2)
+  })
+
   test('Returns stale data if permanent age defined', async () => {
     isServerValue = true
     const event = buildEventWithStorage({

@@ -1,24 +1,24 @@
 # Server Options
 
 All dynamic configuration is located in a special runtime file located at
-`~/server/multiCache.serverOptions.ts`. This file is bundled together with the
+`server/multiCache.serverOptions.ts`. This file is bundled together with the
 nitro build in the .output folder.
 
-Create a file called `multiCache.serverOptions.ts` (or js/mjs) inside the
+Create a file called `multiCache.serverOptions.ts` (or `.js`/`.mts`) inside the
 `server` folder in your Nuxt root.
 
 ::: info
 
 In previous versions the file was located in
-`~/app/multiCache.serverOptions.ts`. It must now be placed in the _server dir_,
-which defaults to `<root>/server`. If the file is only found in a previous
+`<root>/app/multiCache.serverOptions.ts`. It must now be placed in the _server
+dir_, which defaults to `<root>/server`. If the file is only found in a previous
 location, Nuxt stops with an error that shows where to move it.
 
 :::
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
 export default defineMultiCacheOptions(() => {
@@ -37,7 +37,7 @@ example a custom cache driver.
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import redisDriver from 'unstorage/drivers/redis'
 
@@ -64,19 +64,88 @@ export default defineMultiCacheOptions(() => {
 
 :::
 
-## Custom cache key generation for route cache
+### Storage Errors
 
-[See this section](/features/route-cache#cache-key-for-routes)
+Each cache has a `bubbleError` option that decides what happens if the storage
+fails, for example because Redis is not reachable:
 
-## Custom API Authorization
+- `true` - The error is thrown, so it can be handled by your code or results in
+  an error response.
+- `false` - The error is logged and the request continues without the cache.
 
-This method will be called for each request to the API. The function receives
-the `H3Event` object as an argument and can then decide if authorization is
-granted by returning a Promise that resolves to `true` or `false`.
+The default is `true` for the data cache and `false` for the route and component
+cache.
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+
+export default defineMultiCacheOptions(() => {
+  return {
+    data: {
+      // Log storage errors instead of throwing them.
+      bubbleError: false,
+    },
+  }
+})
+```
+
+:::
+
+## Route Cache Options
+
+The route cache has additional options:
+
+- `buildCacheKey` - Build a custom cache key for a route. See
+  [Cache Key for Routes](/features/route-cache#cache-key-for-routes).
+- `alterCachedHeaders` - Change which headers are stored. See
+  [Alter which headers are cached](/features/route-cache#alter-which-headers-are-cached).
+- `applies` - Decide which paths can be cached at all.
+
+### applies
+
+The method receives the path of the request (including the query string) and
+returns whether the route cache is used for it. If the method returns `false`,
+the route isn't looked up in the route cache and its response isn't stored.
+
+By default, paths that end in one of these file extensions are excluded, also if
+they have a query string: `ico`, `png`, `jpg`, `js`, `css`, `html`, `woff`,
+`woff2`, `ttf`, `otf`, `eot`, `svg`. Providing a method replaces this default.
+
+::: code-group
+
+```typescript [server/multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+
+export default defineMultiCacheOptions(() => {
+  return {
+    route: {
+      // Only cache routes below /blog.
+      applies: (path) => path.startsWith('/blog'),
+    },
+  }
+})
+```
+
+:::
+
+Nuxt's build assets (`/_nuxt`), the error page and the module's
+[API](/features/api) are always excluded, regardless of this option.
+
+## Custom API Authorization
+
+This method will be called for each request to the API if no token is set (via
+the `api.authorization` module option or runtime config) and authorization is
+not disabled. So leave out the `api.authorization` module option in this case.
+
+The function receives the `H3Event` object as an argument and can then decide if
+authorization is granted by returning a Promise that resolves to `true` or
+`false`.
+
+::: code-group
+
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { isAuthenticated } from './somewhere'
 
@@ -99,7 +168,7 @@ export default defineMultiCacheOptions(() => {
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
 export default defineMultiCacheOptions(() => {
@@ -127,7 +196,13 @@ export default defineMultiCacheOptions(() => {
 ## Use a global cache prefix
 
 You can automatically prefix every cache item with a string. This will affect
-all caches and is prepended to every cache key.
+all caches: The key is stored as `<prefix>--<key>`.
+
+The prefix is not added to the keys of routes if you provide your own
+[buildCacheKey](/features/route-cache#cache-key-for-routes) method.
+
+When using the [API](/features/api) to purge or inspect single items, the key
+must include the prefix.
 
 ### Static
 
@@ -137,7 +212,7 @@ redis).
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
 export default defineMultiCacheOptions(() => {
@@ -157,7 +232,7 @@ is if your app responds differently based on the request headers, e.g.
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { H3Event, getHeader } from 'h3'
 

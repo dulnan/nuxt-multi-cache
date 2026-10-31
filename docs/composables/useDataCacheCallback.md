@@ -43,7 +43,7 @@ in the next 60 minutes, it will return the value from cache, or until the
 
 The key for the cache item.
 
-### cb?: `(cache?: DataCacheHelper) => Promise<T>`
+### cb: `(cache?: DataCacheHelper) => T | Promise<T>`
 
 The callback is called whenever nothing in the cache exists or if the item in
 the cache is expired. The value you return will be put in the cache.
@@ -86,6 +86,13 @@ in a Nuxt app context (e.g. plugin, other composables, component).
 
 When called in a Nitro server context, the argument is required.
 
+### options?: `{ bubbleCacheability?: BubbleCacheability }`
+
+Set `bubbleCacheability` to merge the cacheability of the item into the route
+cache and/or the CDN headers of the current request. This includes marking the
+item as uncacheable with `setUncacheable()` on the helper. See
+[Bubbling Cacheability](/overview/bubble-cacheability).
+
 ## Return Value
 
 The method will return the value from your callback.
@@ -103,5 +110,5 @@ const data = await useDataCacheCallback('users', async (cache) => {
 })
 
 console.log(data)
-// [{ firstName: "John", lastName: "Wayne" }]
+// { firstName: "John", lastName: "Wayne" }
 ```

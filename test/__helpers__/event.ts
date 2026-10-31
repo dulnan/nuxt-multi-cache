@@ -1,10 +1,10 @@
 import type { H3Event } from 'h3'
-import type { CacheItem } from '~/src/runtime/types'
+import type { DataCacheItem } from '~/src/runtime/types'
 import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
 import { TEST_MODE_DATE_OVERRIDE_HEADER } from '~/src/runtime/helpers/constants'
 
 export function buildEventWithStorage(
-  storage: Record<string, CacheItem>,
+  storage: Record<string, DataCacheItem>,
   date?: Date,
 ): H3Event {
   return {
@@ -44,7 +44,7 @@ export function buildEventWithStorage(
 }
 
 export function buildEvent(bubbleError = false, date?: Date): H3Event {
-  const storage: Record<string, CacheItem> = {
+  const storage: Record<string, DataCacheItem> = {
     foobar: {
       data: 'Cached data.',
       expires: -1,

@@ -15,9 +15,9 @@ that, rendering is skipped and the markup is directly rendered.
 
 ::: warning
 
-Due to a [bug in Vue](https://github.com/vuejs/core/issues/6207) it's currently
-not possible to use `<Teleport>` together with `<RenderCacheable>` (or any other
-async component).
+`<Teleport>` can't be used inside `<RenderCacheable>`. Teleported content is
+rendered outside of the component's markup, so it is not part of the cached
+markup.
 
 :::
 
@@ -38,8 +38,6 @@ The cacheability of a component can also be set dynamically using the
 ::: code-group
 
 ```typescript [nuxt.config.ts]
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   multiCache: {
     component: {
@@ -47,12 +45,12 @@ export default defineNuxtConfig({
       // If false the cache is disabled, but the component is still added to
       // the build.
       enabled: true,
-    }
-  }
-}
+    },
+  },
+})
 ```
 
-```typescript [multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
@@ -118,7 +116,7 @@ The cache key is automatically derived from the component's name and props. The
 props are hashed and appended to the component name:
 
 ```
-Navbar::voBC1hkg5S
+Navbar::Ylz5VOwkRMOWmgMvYyM3Z8ezbzYJEPHc_d-2Jcf5oTk
 ```
 
 This means that for each possible language a different cache key is generated.
@@ -130,7 +128,7 @@ You can also provide your own cache key:
 ```vue
 <template>
   <div>
-    <RenderCacheable :cache-key="[currentLanguage, currentCurrenсy].join('--')">
+    <RenderCacheable :cache-key="[currentLanguage, currentCurrency].join('--')">
       <Navbar />
     </RenderCacheable>
   </div>
@@ -142,6 +140,24 @@ The resulting keys of the cache entries will be something like:
 - `Navbar::en--usd`
 - `Navbar::de--chf`
 - `Navbar::fr--eur`
+
+### Wrapper Components
+
+`<RenderCacheable>` can also be used in a wrapper component that forwards its
+own slot:
+
+```vue
+<template>
+  <RenderCacheable :cache-key="cacheKey">
+    <slot />
+  </RenderCacheable>
+</template>
+```
+
+In this case, a cache key is required: Without one, the content is not cached.
+The wrapper can't know what is passed into its slot, so a key derived from props
+could be the same for different content. The key is built from the name of the
+first component in the forwarded slot and the cache key, e.g. `Navbar::en--usd`.
 
 ## Cache Tags
 
@@ -166,14 +182,18 @@ purging by cache tag:
 ```bash
 curl -X POST -i \
   -H "Content-Type: application/json" \
+  -H "x-nuxt-multi-cache-token: hunter2" \
   --data '["navbar"]' \
   http://localhost:3000/__nuxt_multi_cache/purge/tags
 ```
 
+The components are removed after a delay. See
+[Purge Tags](/features/api#purge-tags).
+
 ## Max Age
 
-You can cache components only for a limited amount of time by defining a max age
-in seconds:
+You can cache components only for a limited amount of time by defining a
+[max age](/overview/max-age), either in seconds or as a named value like `'1h'`:
 
 ```vue
 <template>
@@ -185,9 +205,28 @@ in seconds:
 </template>
 ```
 
-Here the component will be rendered again once 1 hour passes. Note that cache
-entries are not automatically removed when they expire. They will be overwritten
-the next time they're rendered.
+Here the component will be rendered again once 1 hour passes. Expired cache
+entries are overwritten the next time they're rendered. Whether they're removed
+from the storage before that depends on the cache driver; see
+[Expiration](/advanced/cache-backend#expiration).
+
+## Bubbling Cacheability
+
+By default, the max age and cache tags of a cached component don't affect the
+route cache or the CDN headers of the page that renders it. To merge them, set
+the `bubble-cacheability` prop:
+
+```vue
+<template>
+  <div>
+    <RenderCacheable max-age="1h" :cache-tags="['navbar']" bubble-cacheability>
+      <Navbar />
+    </RenderCacheable>
+  </div>
+</template>
+```
+
+See [Bubbling Cacheability](/overview/bubble-cacheability) for details.
 
 ## Payload Extraction
 
@@ -230,8 +269,8 @@ now return the cached markup _and_ add the payload to the response.
 
 Using the `noCache` prop you can skip caching for a component. An example would
 be if our Navbar component shows sensitive information, like email of the user.
-Setting `:no-cache="false"` makes sure that the component is not fetched from
-the cache and also is not put into the cache.
+Setting `:no-cache="true"` makes sure that the component is not fetched from the
+cache and also is not put into the cache.
 
 ## All Props
 
@@ -260,22 +299,40 @@ this without a wrapper.
 
 Disable caching entirely for this component.
 
-### `cacheKey (string, default: '')`
+### `cacheKey (string, default: undefined)`
 
-The key to use for the cache entry. If left empty, a key is automatically
+The key to use for the cache entry. If not provided, a key is automatically
 generated based on the props passed to the child. The key is automatically
 prefixed by the component name.
 
-### `cacheTags (string[], default: [])`
+An empty string disables the generated key: All instances of the component then
+share the same cache entry.
+
+### `cacheTags (string | string[], default: [])`
 
 Cache tags that can be later used for invalidation.
 
-### `asyncDataKeys (string[], default: [])`
+### `maxAge (MaxAge, default: undefined)`
+
+The [max age](/overview/max-age) of the cache entry. If not provided, the entry
+is cached permanently.
+
+### `staleIfError (MaxAge, default: undefined)`
+
+How long the cached markup can be returned if an error happens during rendering.
+See [Stale if Error](/overview/stale-if-error#component-cache).
+
+### `asyncDataKeys (string | string[], default: [])`
 
 Provide the async data keys used by the cached component. If provided, the
 payload data will be cached alongside the component. If the component uses
 asyncData and the keys are not provided, you will receive a hydration mismatch
 error in the client.
+
+### `bubbleCacheability (boolean | 'route' | 'cdn', default: false)`
+
+Merge the cacheability of the component into the route cache and/or the CDN
+headers. See [Bubbling Cacheability](/overview/bubble-cacheability).
 
 ## Caveats
 

@@ -2,6 +2,8 @@ import type { FetchContext, ResponseType, FetchResponse } from 'ofetch'
 import { useRequestEvent, useRuntimeConfig } from '#imports'
 import { useRouteCache } from './../server/utils/useRouteCache'
 import {
+  ROUTE_CACHE_EXPIRES_HEADER,
+  ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
   ROUTE_CACHE_TAGS_HEADER,
   SERVER_REQUEST_HEADER,
 } from '../helpers/constants'
@@ -21,6 +23,19 @@ type OnResponseInterceptor = (
 
 type OnRequestInterceptor = (ctx: FetchContext<unknown, ResponseType>) => void
 
+/**
+ * Get a numeric header value, if present.
+ */
+function getNumericHeader(headers: Headers, name: string): number | undefined {
+  const value = headers.get(name)
+  if (value === null) {
+    return
+  }
+
+  const number = Number(value)
+  return Number.isFinite(number) ? number : undefined
+}
+
 type UseCacheAwareFetchInterceptor = {
   onResponse?: OnResponseInterceptor
   onRequest?: OnRequestInterceptor
@@ -34,7 +49,8 @@ type UseCacheAwareFetchInterceptor = {
  * to the current request and merge them.
  *
  * If the route cache is enabled, the onResponse interceptor will also bubble
- * maxAge and cacheTags from route-cached API routes to the current request.
+ * the route cache tags, max age and stale-if-error of API routes to the
+ * current request.
  *
  * The onRequest interceptor adds a special request header to indicate that
  * this is an internal request originating from Nuxt during SSR.
@@ -75,15 +91,25 @@ export function useCacheAwareFetchInterceptor(
           config.multiCache.route &&
           (bubbleCacheability === true || bubbleCacheability === 'route')
         ) {
-          const routeCacheTags = (
-            ctx.response.headers.get(ROUTE_CACHE_TAGS_HEADER) || ''
-          ).split(' ')
+          // The headers are missing if the API route doesn't use the route
+          // cache.
+          const headers = ctx.response.headers
+          const cacheTags = (headers.get(ROUTE_CACHE_TAGS_HEADER) || '')
+            .split(' ')
+            .filter(Boolean)
+          const expires = getNumericHeader(headers, ROUTE_CACHE_EXPIRES_HEADER)
+          const staleIfErrorExpires = getNumericHeader(
+            headers,
+            ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
+          )
 
-          if (routeCacheTags.length) {
-            useRouteCache((helper) => {
-              helper.addTags(routeCacheTags)
-            }, event)
-          }
+          useRouteCache((helper) => {
+            helper.mergeFromCacheItem({
+              cacheTags,
+              expires,
+              staleIfErrorExpires,
+            })
+          }, event)
         }
       },
       onRequest: function (ctx) {

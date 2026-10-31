@@ -38,9 +38,8 @@ export interface ModuleOptions {
    * the generated markup of its slot children. Each subsequent request will
    * load the markup from cache and bypass rendering entirely.
    *
-   * This is generally used for global components like navigation or footer,
-   * but it can also be used to cache an entire page when used in a layout
-   * component. It also supports caching payloads.
+   * This is generally used for global components like navigation or footer.
+   * It also supports caching payloads.
    *
    * The performance improvements are most noticeable if you have complex
    * components and a lot of pages.
@@ -111,8 +110,12 @@ export interface ModuleOptions {
      * this if you made sure that the API endpoints are not public, since this
      * can potentially leak sensitive information via cached data or allow
      * anyone to purge cache entries!
+     *
+     * If not provided, the token from runtime config is used, or else the
+     * `api.authorization` callback from the server options. If neither is
+     * set, the API endpoints respond with an error.
      */
-    authorization: string | false
+    authorization?: string | false
 
     /**
      * Delay for invalidating cache tags.
@@ -123,6 +126,10 @@ export interface ModuleOptions {
      * fixed and starts when the first invalidation request comes in, then all
      * requests are added to the buffer. Once the delay is over, the cache
      * entries for all the tags are purged and the timeout is reset.
+     *
+     * Set it to 0 to purge right after the request.
+     *
+     * @default 60000
      */
     cacheTagInvalidationDelay?: number
   }

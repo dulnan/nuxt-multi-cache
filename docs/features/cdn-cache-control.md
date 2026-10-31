@@ -8,28 +8,30 @@ manage these headers during the execution of the request.
 ## Configuration
 
 ```typescript
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   multiCache: {
     cdn: {
       /**
-      * Enable the CDN headers feature.
-      */
+       * Enable the CDN headers feature.
+       */
       enabled: true,
 
       /**
-      * The header to use for the cache-control settings.
-      */
+       * The header to use for the cache-control settings.
+       *
+       * Default: 'Surrogate-Control'
+       */
       cacheControlHeader: 'CDN-Cache-Control',
 
       /**
-      * The header to use for the cache tags header.
-      */
-      cacheTagHeader: 'Cache-Tag'
-    }
-  }
-}
+       * The header to use for the cache tags header.
+       *
+       * Default: 'Cache-Tag'
+       */
+      cacheTagHeader: 'Cache-Tag',
+    },
+  },
+})
 ```
 
 ### Common Headers
@@ -37,7 +39,7 @@ export default defineNuxtConfig({
 | Service                                                                                   | cacheControlHeader  | cacheTagHeader   |
 | ----------------------------------------------------------------------------------------- | ------------------- | ---------------- |
 | [**Fastly**](https://docs.fastly.com/en/guides/controlling-caching)                       | `Surrogate-Control` | `Surrogate-Key`  |
-| [**Cloudflare**](https://developers.cloudflare.com/cache/about/cdn-cache-control/)        | `CDN-Cache-Control` | `Cache-Tag`      |
+| [**Cloudflare**](https://developers.cloudflare.com/cache/concepts/cdn-cache-control/)     | `CDN-Cache-Control` | `Cache-Tag`      |
 | [**Akamai**](https://techdocs.akamai.com/property-mgr/docs/know-caching)                  | `Edge-Control`      | `Edge-Cache-Tag` |
 | [**nginx**](https://www.nginx.com/blog/nginx-caching-guide/)                              | `Cache-Control`\*   | _unsupported_    |
 | [**varnish**](https://www.varnish-software.com/developers/tutorials/http-caching-basics/) | `Cache-Control`\*   | `X-Cache-Tags`   |
@@ -45,6 +47,10 @@ export default defineNuxtConfig({
 **\* This header will clash with the cache control header meant for browsers.
 With varnish you could use a custom header like `X-Cache-Control` and then
 handle that in a custom VCL.**
+
+The default headers (`Surrogate-Control` and `Cache-Tag`) don't match a single
+service, so set both options for the service you use. For example, Fastly
+expects the cache tags in `Surrogate-Key`.
 
 ## Usage in pages / components
 
@@ -67,7 +73,8 @@ useCDNHeaders((helper) => {
 </script>
 ```
 
-This will set the following headers on the response:
+This will set the following headers on the response (using the default header
+names):
 
 ```http
 Cache-Tag: one two
@@ -139,8 +146,7 @@ Note that using `useCDNHeaders()` only applies for the **current request
 event**. For example, let's say we have an API route that loads a list of users:
 
 ```ts
-import { defineEventHandler } from 'h3'
-import { useCDNHeaders, db } from '#imports'
+import { db } from '../utils/db'
 
 export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {
@@ -182,3 +188,6 @@ const { data } = await useFetch('/api/load-users', {
 The module also provides a
 [useCacheAwareFetchInterceptor](/composables/useCacheAwareFetchInterceptor)
 composable that handles "bubbling" cacheability from a request to an API route.
+
+The cacheability of data cache items and cached components can be bubbled to the
+CDN headers too. See [Bubbling Cacheability](/overview/bubble-cacheability).

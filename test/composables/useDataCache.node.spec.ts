@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
-import type { CacheItem } from './../../src/runtime/types'
+import type { DataCacheItem } from './../../src/runtime/types'
 import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 import { TEST_MODE_DATE_OVERRIDE_HEADER } from '~/src/runtime/helpers/constants'
@@ -32,8 +32,9 @@ vi.mock('#nuxt-multi-cache/config', () => {
 })
 
 function buildEventWithStorage(
-  storage: Record<string, CacheItem>,
+  storage: Record<string, DataCacheItem>,
   date?: Date,
+  ttls?: Record<string, number | undefined>,
 ): H3Event {
   return {
     node: {
@@ -56,8 +57,11 @@ function buildEventWithStorage(
                 }
                 return Promise.resolve(storage[key])
               },
-              setItem: (key: string, data: any) => {
+              setItem: (key: string, data: any, options?: { ttl?: number }) => {
                 storage[key] = data
+                if (ttls) {
+                  ttls[key] = options?.ttl
+                }
                 return Promise.resolve()
               },
             },
@@ -181,6 +185,79 @@ describe('useDataCache composable', () => {
     ).toMatchInlineSnapshot('1638318600')
   })
 
+  test.each([[0], ['never' as const]])(
+    'Does not put data in cache with a max age of %s',
+    async (maxAge) => {
+      setIsServer(true)
+      const storage: Record<string, DataCacheItem> = {}
+      const event = buildEventWithStorage(storage)
+
+      const { addToCache } = await useDataCache('never_cached', event)
+      await addToCache('Hello', [], maxAge)
+
+      expect(storage).toEqual({})
+    },
+  )
+
+  test('Puts data in cache permanently without a max age', async () => {
+    setIsServer(true)
+    const storage: Record<string, DataCacheItem> = {}
+    const event = buildEventWithStorage(storage)
+
+    const { addToCache } = await useDataCache('permanent', event)
+    await addToCache('Hello')
+
+    expect(storage.permanent?.expires).toEqual(-1)
+  })
+
+  test.each([
+    [undefined, undefined, undefined],
+    [60, undefined, 60],
+    [60, 3600, 3600],
+    [60, 'permanent' as const, undefined],
+    [0, 3600, 3600],
+  ])(
+    'Puts data in cache with max age %j and stale-if-error %j for a TTL of %j',
+    async (maxAge, staleIfError, expectedTtl) => {
+      setIsServer(true)
+      const storage: Record<string, DataCacheItem> = {}
+      const ttls: Record<string, number | undefined> = {}
+      const event = buildEventWithStorage(storage, new Date(), ttls)
+
+      const { addToCache } = await useDataCache('with_ttl', event)
+      await addToCache('Hello', [], maxAge, staleIfError)
+
+      expect(storage.with_ttl).toBeDefined()
+      expect(ttls.with_ttl).toEqual(expectedTtl)
+    },
+  )
+
+  test('Returns a stale value for max age 0 with stale-if-error', async () => {
+    setIsServer(true)
+    const storage: Record<string, DataCacheItem> = {}
+    const event = buildEventWithStorage(storage)
+
+    const { addToCache } = await useDataCache('stale_only', event)
+    await addToCache('Hello', [], 0, '1d')
+
+    const cached = await useDataCache('stale_only', event)
+    expect(cached.value).toBeUndefined()
+    expect(cached.staleValue).toEqual('Hello')
+  })
+
+  test.each([[0], [false], [''], [null]])(
+    'Returns the falsy cached value %j',
+    async (cachedValue) => {
+      setIsServer(true)
+      const event = buildEventWithStorage({})
+
+      const { addToCache } = await useDataCache('falsy', event)
+      await addToCache(cachedValue)
+
+      expect((await useDataCache('falsy', event)).value).toEqual(cachedValue)
+    },
+  )
+
   test('Returns dummy if SSR context not found', async () => {
     setIsServer(true)
 
@@ -206,7 +283,7 @@ describe('useDataCache composable', () => {
 
   test('Uses provided event to get data cache.', async () => {
     setIsServer(true)
-    const storage: Record<string, CacheItem> = {
+    const storage: Record<string, DataCacheItem> = {
       foobar: {
         data: 'More cached data.',
         expires: -1,

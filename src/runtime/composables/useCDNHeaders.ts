@@ -13,7 +13,7 @@ import { useCDNHeadersImplementation } from '../shared/useCDNHeaders'
  *
  * @param cb - The callback. Receives the CDN Helper as the first argument.
  * @param providedEvent - Optionally provide the request event if useRequestEvent() fails.
- * @param applyToEvent - Whether to apply the headers to the event. Defaults to false.
+ * @param applyToEvent - Whether to apply the headers to the response right away. Defaults to true. If false, the values are only collected and applied when the page has been rendered.
  */
 export function useCDNHeaders(
   cb: (helper: NuxtMultiCacheCDNHelper) => void,

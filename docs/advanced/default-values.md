@@ -21,7 +21,7 @@ composable in your `app.vue`, which will be executed for every page.
 
 ::: code-group
 
-```vue [app.vue]
+```vue [app/app.vue]
 <template>
   <div class="app">
     <NuxtLayout>
@@ -42,13 +42,11 @@ useRouteCache((helper) => {
 ### For any route
 
 If you additionally want to include custom API routes, you can define a
-[server middleware](https://nuxt.com/docs/guide/directory-structure/server#server-middleware):
+[server middleware](https://nuxt.com/docs/4.x/directory-structure/server#server-middleware):
 
 ::: code-group
 
-```typescript [./server/middleware/routeCache.ts]
-import { useRouteCache } from '#imports'
-
+```typescript [server/middleware/routeCache.ts]
 export default defineEventHandler((event) => {
   // Cache all routes for 7 days.
   useRouteCache((helper) => {
@@ -60,16 +58,23 @@ export default defineEventHandler((event) => {
 :::
 
 This will be executed for every request, including Nuxt pages and server routes.
+Only responses to `GET` and `HEAD` requests are cached, and Nuxt's build assets,
+the error page and the module's [API](/features/api) are never cached. Make sure
+that no other route that returns user-specific data is marked as cacheable this
+way: Exclude such paths in the middleware or using the
+[applies](/overview/server-options#applies) server option, or call
+`setUncacheable()` in these routes.
 
 ## Component Cache
 
 The default values for the props of the `<RenderCacheable>` component are falsy.
 If you need to vary the cache key based on global things like current language,
-domain, currency, etc., you can create your own wrapper:
+domain, currency, etc., you can create your own
+[wrapper component](/features/component-cache#wrapper-components):
 
 ::: code-group
 
-```vue [ContextAwareCacheable.vue]
+```vue [app/components/ContextAwareCacheable.vue]
 <template>
   <RenderCacheable :cache-key="cacheKey">
     <slot></slot>
@@ -91,8 +96,8 @@ Or, the more clean way would be to create a composable:
 
 ::: code-group
 
-```typescript [./composables/useGlobalContextKey.ts]
-export default async function (suffix: string): string | undefined {
+```typescript [app/composables/useGlobalContextKey.ts]
+export default function (suffix: string): string | undefined {
   // Makes sure the rest of the code is not bundled in the client bundle.
   if (import.meta.client) {
     return
@@ -115,8 +120,6 @@ And then use it like this:
 </template>
 
 <script lang="ts" setup>
-const store = useStore()
-
 const cacheKey = useGlobalContextKey('additional-suffix')
 </script>
 ```
@@ -130,7 +133,7 @@ This works the exact same way as with the route cache, just using the
 
 ::: code-group
 
-```vue [app.vue]
+```vue [app/app.vue]
 <template>
   <div class="app">
     <NuxtLayout>
@@ -141,7 +144,7 @@ This works the exact same way as with the route cache, just using the
 
 <script lang="ts" setup>
 useCDNHeaders((helper) => {
-  helper.public().setMaxAge(604800)
+  helper.public().setNumeric('maxAge', 604800)
 })
 </script>
 ```
@@ -152,12 +155,10 @@ useCDNHeaders((helper) => {
 
 ::: code-group
 
-```typescript [./server/middleware/routeCache.ts]
-import { useRouteCache } from '#imports'
-
+```typescript [server/middleware/cdnHeaders.ts]
 export default defineEventHandler((event) => {
   useCDNHeaders((helper) => {
-    helper.public().setMaxAge(604800)
+    helper.public().setNumeric('maxAge', 604800)
   }, event)
 })
 ```

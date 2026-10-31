@@ -13,4 +13,10 @@ export interface CacheabilityInterface {
    * Get the cache tags.
    */
   getTags(): string[]
+
+  /**
+   * Whether it's cacheable: false if it was explicitly marked as uncacheable,
+   * null if it was never set.
+   */
+  getCacheable(): boolean | null
 }

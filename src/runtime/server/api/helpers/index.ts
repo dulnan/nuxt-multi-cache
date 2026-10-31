@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
 import { createError, getHeader } from 'h3'
 import type { Storage } from 'unstorage'
-import { useMultiCacheApp } from '../../utils/useMultiCacheApp'
+import { getMultiCacheApp } from '../../utils/useMultiCacheApp'
 import type { CacheType, MultiCacheInstances } from './../../../types'
 
 const AUTH_HEADER = 'x-nuxt-multi-cache-token'
@@ -10,7 +10,7 @@ export function getCacheInstance(event: H3Event): {
   storage: Storage
   name: CacheType
 } {
-  const multiCache = useMultiCacheApp()
+  const multiCache = getMultiCacheApp()
 
   const cacheName = event.context.params?.cacheName as
     | keyof MultiCacheInstances
@@ -32,10 +32,20 @@ export function getCacheInstance(event: H3Event): {
 /**
  * Check the authorization for API endpoints.
  *
- * Throws an error if authorization failed.
+ * Throws an error if the API is disabled via runtime config or if
+ * authorization failed.
  */
 export async function checkAuth(event: H3Event) {
-  const app = useMultiCacheApp()
+  const app = getMultiCacheApp()
+
+  // The API can be disabled via runtime config. Respond as if the endpoints
+  // didn't exist, before checking any authorization.
+  if (!app.config.api.enabled) {
+    throw createError({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+    })
+  }
 
   // Allow if authorization is explicitly disabled.
   if (app.config.api.authorizationDisabled) {

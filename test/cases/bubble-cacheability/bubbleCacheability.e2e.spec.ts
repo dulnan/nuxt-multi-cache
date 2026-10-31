@@ -2,6 +2,9 @@ import path from 'node:path'
 import { setup, fetch } from '@nuxt/test-utils/e2e'
 import { describe, test, beforeEach, expect } from 'vitest'
 import purgeAll from './../../__helpers__/purgeAll'
+import purgeByKey from './../../__helpers__/purgeByKey'
+import getRouteCacheItems from './../../__helpers__/getRouteCacheItems'
+import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 import { sleep } from '~/test/__helpers__'
 
 await setup({
@@ -95,5 +98,34 @@ describe('The "bubble cacheability" feature', () => {
       'tag-from-route',
       'tag-from-callback',
     ])
+  })
+
+  test.each(['/component-uncacheable', '/use-data-cache-callback-uncacheable'])(
+    'Makes the route uncacheable if an item is uncacheable (%s)',
+    async (url) => {
+      const response = await fetch(url)
+      expect(response.headers.get('surrogate-control')).toEqual('max-age=0')
+      expect(await getRouteCacheItems()).toHaveLength(0)
+    },
+  )
+
+  test('Keeps max age and stale-if-error when merging a data cache item without them', async () => {
+    // The first request stores the data cache item, the second one loads it.
+    for (const request of ['miss', 'hit']) {
+      const response = await fetch('/use-data-cache-permanent')
+      const control = response.headers.get('surrogate-control') ?? ''
+      expect(control, request).toContain('max-age=9000')
+      expect(control, request).toContain('stale-if-error=18000')
+
+      const items = await getRouteCacheItems()
+      expect(items, request).toHaveLength(1)
+      const { expires, staleIfErrorExpires } = items[0]!.item
+      const now = toTimestamp(new Date())
+      expect(expires - now, request).toBeGreaterThan(8990)
+      expect(staleIfErrorExpires - now, request).toBeGreaterThan(17990)
+
+      // So that the next request is not served from the route cache.
+      await purgeByKey('route', items[0]!.key)
+    }
   })
 }, 10_000)

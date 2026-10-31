@@ -77,7 +77,7 @@ export const props = {
   },
 
   asyncDataKeys: {
-    type: Array,
+    type: [String, Array],
   },
 
   bubbleCacheability: {

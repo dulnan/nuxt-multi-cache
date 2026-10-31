@@ -12,9 +12,6 @@
     </div>
 
     <NuxtLink to="/" id="go-to-home">Go to Home</NuxtLink>
-
-    <div id="not-cached-data">{{ notCachedData }}</div>
-    <div id="no-max-age">{{ noMaxAge }}</div>
   </div>
 </template>
 
@@ -47,24 +44,6 @@ const { data, refresh } = await useCachedAsyncData(
         cachedTime: null,
       }
     },
-  },
-)
-
-const { data: notCachedData } = await useCachedAsyncData(
-  'not-cached-data' + vary.value,
-  () => Promise.resolve(Date.now().toString()),
-  {
-    serverMaxAge: 0,
-    clientMaxAge: 0,
-  },
-)
-
-const { data: noMaxAge } = await useCachedAsyncData(
-  'no-max-age' + vary.value,
-  () => Promise.resolve(Date.now().toString()),
-  {
-    serverMaxAge: 'never',
-    clientMaxAge: 'never',
   },
 )
 
