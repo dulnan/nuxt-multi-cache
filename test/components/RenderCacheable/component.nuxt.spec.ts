@@ -677,6 +677,65 @@ describe('RenderCacheable', () => {
     expect(storage).toMatchInlineSnapshot('{}')
   })
 
+  describe('A component with slot content', () => {
+    // The slot content can be different for every request, e.g. the name of
+    // the current user.
+    function render(props: string, storage: Record<string, any>) {
+      const { ssrContext } = createTestApp('', '', storage)
+      mocks.useNuxtApp.mockImplementation(() => {
+        return {
+          ssrContext,
+          event: ssrContext.event,
+          _asyncData: {},
+          payload: {
+            data: {},
+          },
+        }
+      })
+
+      const app = createSSRApp(
+        defineComponent({
+          components: {
+            RenderCacheable,
+            Card: defineComponent({
+              name: 'Card',
+              props: { variant: String },
+              template: `<div><slot /></div>`,
+            }),
+          },
+          setup() {
+            return { name: 'Alice' }
+          },
+          template: `<RenderCacheable ${props}><Card variant="info">Hello {{ name }}</Card></RenderCacheable>`,
+        }),
+      )
+      return renderToString(app, ssrContext)
+    }
+
+    beforeEach(() => {
+      setIsServer(true)
+    })
+
+    test('is not cached without a cache key', async () => {
+      const storage: Record<string, any> = {}
+      const html = await render('', storage)
+
+      expect(html).toContain('Hello Alice')
+      expect(Object.keys(storage)).toEqual([])
+    })
+
+    test.each([
+      ['cache-key="alice"', 'Card::alice'],
+      ['cache-key=""', 'Card'],
+    ])('is cached with %s', async (props, key) => {
+      const storage: Record<string, any> = {}
+      await render(props, storage)
+
+      expect(Object.keys(storage)).toEqual([key])
+      expect(storage[key]).toContain('Hello Alice')
+    })
+  })
+
   test('Handles errors when getting cache item.', async () => {
     setIsServer(true)
     const consoleSpy = vi.spyOn(global.console, 'error')

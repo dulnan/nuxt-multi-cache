@@ -44,7 +44,8 @@ import { bubbleCacheability } from './../../../helpers/bubbleCacheability'
  * Wrapper for cacheable components.
  *
  * The component is cached based on the props of the first child in the
- * default slot. Alternatively you can provide a custom cache key.
+ * default slot. Alternatively you can provide a custom cache key, which is
+ * required if the child receives slot content.
  *
  * The slot can only have a single child. That means you would have to wrap it
  * in a <div>, but you likely want to create a component that "groups" together

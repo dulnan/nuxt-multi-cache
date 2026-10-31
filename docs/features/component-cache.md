@@ -121,6 +121,33 @@ Navbar::Ylz5VOwkRMOWmgMvYyM3Z8ezbzYJEPHc_d-2Jcf5oTk
 
 This means that for each possible language a different cache key is generated.
 
+### Slot Content
+
+Only the props are part of the generated key, not the content the component
+receives in its slots. This content is rendered by the parent and can be
+different for every request. A component with slot content is therefore only
+cached if a `cache-key` is provided:
+
+```vue
+<template>
+  <div>
+    <!-- Not cached: The generated key doesn't include the slot content. -->
+    <RenderCacheable>
+      <Card variant="info">{{ $t('welcome') }}</Card>
+    </RenderCacheable>
+
+    <!-- Cached per language. -->
+    <RenderCacheable :cache-key="'info--' + locale">
+      <Card variant="info">{{ $t('welcome') }}</Card>
+    </RenderCacheable>
+  </div>
+</template>
+```
+
+A custom key replaces the generated one, so it must also cover the props. If the
+slot content and the props are the same for every instance, an empty `cache-key`
+uses one entry for all instances.
+
 ### Custom Cache Key
 
 You can also provide your own cache key:
@@ -332,7 +359,8 @@ Disable caching entirely for this component.
 
 The key to use for the cache entry. If not provided, a key is automatically
 generated based on the props passed to the child. The key is automatically
-prefixed by the component name.
+prefixed by the component name. If the child receives
+[slot content](#slot-content), a key is required.
 
 An empty string disables the generated key: All instances of the component then
 share the same cache entry.

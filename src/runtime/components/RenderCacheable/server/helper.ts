@@ -25,6 +25,18 @@ export type RenderCacheableSlotVNode = VNode<
 >
 
 /**
+ * Whether the component of the vnode receives content in its slots.
+ */
+function hasSlotContent(vnode: VNode): boolean {
+  return (
+    typeof vnode.type === 'object' &&
+    typeof vnode.children === 'object' &&
+    vnode.children !== null &&
+    !Array.isArray(vnode.children)
+  )
+}
+
+/**
  * Get the vnode of the slot that is used to build the cache key.
  *
  * This is the first vnode of the slot. A slot forwarded by a wrapper component
@@ -32,6 +44,11 @@ export type RenderCacheableSlotVNode = VNode<
  * a cache key is provided: The wrapper can't know what is passed into its
  * slot. For example, the slot of a layout contains <NuxtPage>, which has no
  * props, so every page would get the same key.
+ *
+ * For the same reason, a component that receives slot content is only cached
+ * with a cache key: The generated key only contains its props, while the slot
+ * content can be different for every request. An empty cache key explicitly
+ * uses the same key for all instances.
  */
 export function getSlotVNode(
   props: Props,
@@ -39,6 +56,20 @@ export function getSlotVNode(
 ): RenderCacheableSlotVNode | undefined {
   const first = vnodes[0]
   if (first?.type !== Fragment) {
+    if (
+      first &&
+      hasSlotContent(first) &&
+      (props.cacheKey === undefined || props.cacheKey === null)
+    ) {
+      if (debug) {
+        logger.info(
+          'Skipped caching component with slot content because no cache key is provided.',
+          { props },
+        )
+      }
+      return
+    }
+
     return first
   }
 
