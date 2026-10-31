@@ -14,6 +14,7 @@ import { serveCachedHandler } from '../handler/serveCachedRoute'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
 import {
   shouldLogCacheOverview,
+  isTestMode,
   cdnEnabled,
   componentCacheEnabled,
   dataCacheEnabled,
@@ -22,6 +23,8 @@ import {
 import { useRuntimeConfig } from '#imports'
 import { InMemoryCacheTagRegistry } from '../../helpers/InMemoryCacheTagRegistry'
 import { CacheTagInvalidator } from '../../helpers/CacheTagInvalidator'
+import { logger } from '../../helpers/multi-cache-logger'
+import { TEST_MODE_DATE_OVERRIDE_HEADER } from '../../helpers/constants'
 
 function createCacheContext(
   cache: MultiCacheServerOptionsCacheOptions | undefined,
@@ -81,6 +84,14 @@ function createMultiCacheApp(): MultiCacheApp {
 export default defineNitroPlugin((nitroApp) => {
   const multiCache = createMultiCacheApp()
   nitroApp.multiCache = multiCache
+
+  // Test mode is a build option, because e2e tests run against production
+  // builds. Make sure such a build is noticed if it's deployed.
+  if (isTestMode) {
+    logger.warn(
+      `Test mode is enabled: Any request can override the current time of the caches with the "${TEST_MODE_DATE_OVERRIDE_HEADER}" header. Never deploy this build.`,
+    )
+  }
 
   // Adds the context and, if the route cache applies, the route cache helper
   // to the event.

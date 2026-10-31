@@ -154,6 +154,10 @@ export interface ModuleOptions {
    *   "current time" for anything nuxt-multi-cache related. This allows
    *   you to write tests for cache-related behaviour.
    *   The date should be in the ISO format returned by date.toISOString().
+   *
+   * Never deploy a build with test mode enabled: Any request could make cache
+   * items expire or keep them cached far beyond their max age. The server
+   * logs a warning at startup if it's enabled.
    */
   enableTestMode?: boolean
 }
