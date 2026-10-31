@@ -15,9 +15,9 @@ that, rendering is skipped and the markup is directly rendered.
 
 ::: warning
 
-Due to a [bug in Vue](https://github.com/vuejs/core/issues/6207) it's currently
-not possible to use `<Teleport>` together with `<RenderCacheable>` (or any other
-async component).
+`<Teleport>` can't be used inside `<RenderCacheable>`. Teleported content is
+rendered outside of the component's markup, so it is not part of the cached
+markup.
 
 :::
 
@@ -116,7 +116,7 @@ The cache key is automatically derived from the component's name and props. The
 props are hashed and appended to the component name:
 
 ```
-Navbar::voBC1hkg5S
+Navbar::Ylz5VOwkRMOWmgMvYyM3Z8ezbzYJEPHc_d-2Jcf5oTk
 ```
 
 This means that for each possible language a different cache key is generated.
@@ -128,7 +128,7 @@ You can also provide your own cache key:
 ```vue
 <template>
   <div>
-    <RenderCacheable :cache-key="[currentLanguage, currentCurrenсy].join('--')">
+    <RenderCacheable :cache-key="[currentLanguage, currentCurrency].join('--')">
       <Navbar />
     </RenderCacheable>
   </div>
@@ -192,8 +192,8 @@ The components are removed after a delay. See
 
 ## Max Age
 
-You can cache components only for a limited amount of time by defining a max age
-in seconds:
+You can cache components only for a limited amount of time by defining a
+[max age](/overview/max-age), either in seconds or as a named value like `'1h'`:
 
 ```vue
 <template>
@@ -205,9 +205,10 @@ in seconds:
 </template>
 ```
 
-Here the component will be rendered again once 1 hour passes. Note that cache
-entries are not automatically removed when they expire. They will be overwritten
-the next time they're rendered.
+Here the component will be rendered again once 1 hour passes. Expired cache
+entries are overwritten the next time they're rendered. Whether they're removed
+from the storage before that depends on the cache driver; see
+[Expiration](/advanced/cache-backend#expiration).
 
 ## Bubbling Cacheability
 
@@ -268,8 +269,8 @@ now return the cached markup _and_ add the payload to the response.
 
 Using the `noCache` prop you can skip caching for a component. An example would
 be if our Navbar component shows sensitive information, like email of the user.
-Setting `:no-cache="false"` makes sure that the component is not fetched from
-the cache and also is not put into the cache.
+Setting `:no-cache="true"` makes sure that the component is not fetched from the
+cache and also is not put into the cache.
 
 ## All Props
 
@@ -298,15 +299,28 @@ this without a wrapper.
 
 Disable caching entirely for this component.
 
-### `cacheKey (string, default: '')`
+### `cacheKey (string, default: undefined)`
 
-The key to use for the cache entry. If left empty, a key is automatically
+The key to use for the cache entry. If not provided, a key is automatically
 generated based on the props passed to the child. The key is automatically
 prefixed by the component name.
 
-### `cacheTags (string[], default: [])`
+An empty string disables the generated key: All instances of the component then
+share the same cache entry.
+
+### `cacheTags (string | string[], default: [])`
 
 Cache tags that can be later used for invalidation.
+
+### `maxAge (MaxAge, default: undefined)`
+
+The [max age](/overview/max-age) of the cache entry. If not provided, the entry
+is cached permanently.
+
+### `staleIfError (MaxAge, default: undefined)`
+
+How long the cached markup can be returned if an error happens during rendering.
+See [Stale if Error](/overview/stale-if-error#component-cache).
 
 ### `asyncDataKeys (string[], default: [])`
 

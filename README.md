@@ -22,16 +22,23 @@ Cache data directly in your Nuxt app or Nitro event handlers using
 `useDataCache`:
 
 ```typescript
-const { value, addToCache } = await useDataCache<WeatherResponse>('weather')
-if (value) {
-  return value
-}
+export default defineEventHandler(async (event) => {
+  const { value, addToCache } = await useDataCache<WeatherResponse>(
+    'weather',
+    event,
+  )
+  if (value) {
+    return value
+  }
 
-const response = await $fetch<WeatherResponse>('/api/getWeather')
-await addToCache(response)
+  const response = await $fetch<WeatherResponse>('/api/getWeather')
+  await addToCache(response)
 
-return response
+  return response
+})
 ```
+
+In a Nuxt app (e.g. in a component), the event can be omitted.
 
 ### [Component Cache](https://nuxt-multi-cache.dulnan.net/features/component-cache)
 

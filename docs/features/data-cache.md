@@ -2,6 +2,12 @@
 
 A generic cache for any type of data (that can be stringified).
 
+The data cache only works on the server. On the client, `useDataCache` never
+returns a cached value and adding items to the cache does nothing, and
+`useDataCacheCallback` always calls the callback. Only
+[useCachedAsyncData](/composables/useCachedAsyncData) can also cache on the
+client.
+
 ## Configuration
 
 ::: code-group
@@ -78,7 +84,7 @@ const { data: weather } = await useAsyncData('weather', async () => {
 ## Using `useDataCacheCallback`
 
 If you prefer a different syntax, you can use
-[useDataCacheCallback](/composables/useDataCache) instead:
+[useDataCacheCallback](/composables/useDataCacheCallback) instead:
 
 ```typescript
 const user = await useDataCacheCallback(key.value, async (cache) => {
@@ -141,7 +147,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const response = await getWeatherFromExternalApi()
-  addToCache(response)
+  await addToCache(response)
   return response
 })
 ```
+
+By default, errors of the cache storage (for example if Redis is not reachable)
+are thrown by the data cache composables. This can be changed with the
+[bubbleError](/overview/server-options#storage-errors) server option.

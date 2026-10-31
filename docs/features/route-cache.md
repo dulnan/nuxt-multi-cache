@@ -8,6 +8,9 @@ should be cached, for how long, etc.. Any `routeRules` or
 `defineCachedEventHandler` are ignored by this module (but they still work if
 you wish to use both at the same time).
 
+Only responses to `GET` and `HEAD` requests with a status code of `200` and a
+non-empty body are stored.
+
 ## Configuration
 
 ::: code-group
@@ -97,9 +100,14 @@ served from cache by the cached item `api_query_products_123`:
 - /api/query/products?foobar=456&id=123
 - /api/query/products?foobar=456&id=123&whatever=string&does=not&matter=at-all
 
+The key returned by `buildCacheKey` is used as is: The
+[global cache prefix](/overview/server-options#use-a-global-cache-prefix) is not
+added to it.
+
 The root path `/` is stored with the key `{root}`, because the storage
 normalizes `/` to an empty key, which it doesn't allow. The same applies if
-`buildCacheKey` returns such a key.
+`buildCacheKey` returns such a key. With a global cache prefix, the root path is
+stored as `<prefix>--`.
 
 ### Alter which headers are cached
 
@@ -109,9 +117,10 @@ to cache.
 
 ::: warning
 
-By default all headers are stored in the cache, because it is assumed that your
-app already makes sure to not mark a response as uncacheable during rendering if
-it contains sensitive headers such as Set-Cookie for authentication. You can
+By default all headers are stored in the cache (except `Content-Encoding`,
+because the body is stored uncompressed), because it is assumed that your app
+already makes sure to not mark a response as uncacheable during rendering if it
+contains sensitive headers such as Set-Cookie for authentication. You can
 however alter the headers that are stored in the cache. Keep in mind that this
 might introduce side effects: If you use `useCookie()` to set a cookie and then
 remove the `Set-Cookie` header using this approach, only the first request will
@@ -178,12 +187,10 @@ completely remove this code from client bundles.
 
 ## Usage in Server Handlers
 
-The composable is not imported automatically and you have to provide the
-`H3Event` object as the second argument:
+The server util is imported automatically, but you have to provide the `H3Event`
+object as the second argument:
 
 ```typescript
-import { useRouteCache } from '#imports'
-
 const getResult = function () {
   return new Promise((resolve) => {
     setTimeout(() => {
@@ -215,17 +222,19 @@ See [useRouteCache](/composables/useRouteCache).
 ## Difference to Nitro Cache
 
 Nitro (and by proxy also Nuxt) already ships with a route cache feature using
-either [`routeRules`](https://nitro.unjs.io/config#routerules) or
-[`defineCachedEventHandler`](https://nitro.unjs.io/guide/cache#cached-event-handlers).
+either [`routeRules`](https://v2.nitro.build/config#routerules) or
+[`defineCachedEventHandler`](https://v2.nitro.build/guide/cache#cached-event-handlers).
 However, it is more targeted towards simple use cases.
 
 ### Missing features
 
-#### No runtime cacheability
+#### No cacheability decided during rendering
 
-It's only possible to define the cacheability at build time. Meaning: At runtime
-you can not decide whether a route should be cached or not. A common use case is
-to disable caching for logged in users, which is not possible using just Nitro.
+Nitro decides whether a response is cached before the handler runs: With the
+options of the handler or the route rules, or per request with
+`shouldBypassCache`. It's not possible to change this based on what happens
+while the response is rendered, for example to only cache a page if all of its
+data could be loaded.
 
 When using nuxt-multi-cache route cache, you can decide at any given moment
 during the duration of your request whether or not the response should be
@@ -263,7 +272,9 @@ cache at the same time, because they work quite differently:
 
 - Nitro decides on a per event handler basis whether or not it can be cached
   when using `defineCachedEventHandler` or by checking the `routeRules`.
-- This module instead hooks into the request lifecycle: When the `request` hook
-  is called (before any event handler is executed), it already tries to serve
-  from cache. And similarly, when the `afterResponse` hook is called, it puts
-  the response in cache.
+- This module instead hooks into the request lifecycle: It adds an event handler
+  at the start of the handler stack, which serves cached responses before any
+  other event handler is executed. When the `afterResponse` hook is called, it
+  puts the response in cache. And when the `error` hook is called, it serves a
+  stale response if one is available (see
+  [Stale if Error](/overview/stale-if-error#route-cache)).
