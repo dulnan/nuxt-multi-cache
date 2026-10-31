@@ -10,6 +10,8 @@ This module provides several layers of server-side caching for your Nuxt app:
 - CDN cache control headers (e.g. Cloudflare, Fastly, Varnish)
 - API for cache management
 - Cache tag based invalidation
+- [Agent skills](https://nuxt-multi-cache.dulnan.net/overview/agent-skills) for
+  coding agents, including one for the upgrade from 4.x
 
 **[Documentation](https://nuxt-multi-cache.dulnan.net)** -
 **[NPM](https://www.npmjs.com/package/nuxt-multi-cache)**

@@ -62,7 +62,8 @@
     "url": "git+https://github.com/dulnan/nuxt-multi-cache.git"
   },
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "dependencies": {
     "@nuxt/kit": "^4.6.3",
@@ -84,6 +85,7 @@
     "@types/node": "^22.20.5",
     "@vitest/coverage-v8": "^5.0.5",
     "@vue/test-utils": "^2.5.1",
+    "confbox": "^0.3.2",
     "glob": "^14.0.3",
     "h3-compression": "^1.1.0",
     "h3-fast-compression": "^1.0.1",
