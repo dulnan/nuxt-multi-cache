@@ -101,8 +101,10 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
   option, data cache items and cached components merge their max age,
   stale-if-error, tags and uncacheability into the route cache helper and/or the
   CDN helper.
-- `useCacheAwareFetchInterceptor` marks internal SSR requests with the
-  `x-nuxt-multi-cache-request` header. API routes answer them with internal
+- `useCacheAwareFetchInterceptor` marks internal SSR requests to relative URLs
+  (handled in-process by Nitro) with the `x-nuxt-multi-cache-request` header,
+  set to a random token generated at server start
+  (`MultiCacheApp.internalRequestToken`). API routes answer them with internal
   headers (route cache tags, expires, stale-if-error expires, uncacheable),
   written by the server `useRouteCache` after each call. They are bubbled into
   the page and stripped before storing (`INTERNAL_RESPONSE_HEADERS`).

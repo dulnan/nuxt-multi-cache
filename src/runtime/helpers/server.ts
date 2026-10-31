@@ -182,8 +182,10 @@ export function isInternalServerRequest(event: H3Event): boolean {
   event.context.multiCache ||= {}
 
   if (event.context.multiCache.isInternalServerRequest === undefined) {
+    // Any client can send the header, but only the app knows the token.
+    const token = event.context.multiCacheApp?.internalRequestToken
     const isServerRequest =
-      getRequestHeader(event, SERVER_REQUEST_HEADER) === 'true'
+      !!token && getRequestHeader(event, SERVER_REQUEST_HEADER) === token
     event.context.multiCache.isInternalServerRequest = isServerRequest
   }
 

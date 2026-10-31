@@ -81,3 +81,12 @@ cache tags, the max age and the stale if error duration of the API route are
 merged with the route cache of the SSR request. A cached page then never
 outlives the data of the API route it shows. If the API route is marked as
 uncacheable, the page becomes uncacheable as well.
+
+## Relative URLs Only
+
+The route cache values are only bubbled from requests to relative URLs, such as
+`/api/load-users`, which Nitro handles in the same process. The interceptor
+marks them as internal requests with a random token that changes whenever the
+server starts. Requests to absolute URLs leave the app, even if they point to
+it, so they neither get the token nor bubble route cache values. Their CDN
+headers are still merged.

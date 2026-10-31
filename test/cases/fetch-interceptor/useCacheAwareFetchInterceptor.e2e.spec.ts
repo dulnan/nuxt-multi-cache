@@ -146,6 +146,34 @@ describe('The useCacheAwareFetchInterceptor', () => {
     expect(response.headers.get('x-nuxt-multi-cache-cache-tags')).toBeNull()
   })
 
+  test('does not send the internal headers to external requests', async () => {
+    // The first request renders the API route, the second one serves it from
+    // the route cache.
+    for (const request of ['rendered', 'cached']) {
+      const response = await fetch('/api/handler-with-route', {
+        headers: {
+          'x-nuxt-multi-cache-request': 'true',
+        },
+      })
+      expect(
+        response.headers.get('x-nuxt-multi-cache-cache-tags'),
+        request,
+      ).toBeNull()
+      expect(
+        response.headers.get('x-nuxt-multi-cache-expires'),
+        request,
+      ).toBeNull()
+    }
+  })
+
+  test('does not merge route cache cacheability of requests that leave the app', async () => {
+    await fetch('/route-cache-absolute')
+
+    const rows = await getRouteCacheItems()
+    const itemPage = rows.find((v) => v.key === 'route-cache-absolute')?.item
+    expect(itemPage?.cacheTags).toEqual(['tag-from-page'])
+  })
+
   test('adds no empty cache tag if the API route has no route cache tags', async () => {
     await fetch('/route-cache-api-without-tags')
 

@@ -78,6 +78,9 @@ function createMultiCacheApp(): MultiCacheApp {
     state: new MultiCacheState(),
     cacheTagRegistry,
     cacheTagInvalidator,
+    // Internal requests are handled in the same process, so the token never
+    // has to be known outside of it.
+    internalRequestToken: crypto.randomUUID(),
   }
 }
 

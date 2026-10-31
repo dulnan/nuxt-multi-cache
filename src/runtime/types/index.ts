@@ -242,6 +242,12 @@ export interface MultiCacheApp {
    * The debounced cache tag invalidator.
    */
   cacheTagInvalidator: CacheTagInvalidator
+
+  /**
+   * A random token, generated when the server starts, that marks internal
+   * requests from the Nuxt app during SSR (useCacheAwareFetchInterceptor).
+   */
+  internalRequestToken: string
 }
 
 export type CacheStatsResponse<T> = {
