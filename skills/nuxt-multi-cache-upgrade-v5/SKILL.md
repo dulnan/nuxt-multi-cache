@@ -71,10 +71,11 @@ the project and report it with evidence.
      earlier.
 5. **`clientMaxAge` accepts every max age.** Before, only positive numbers
    cached on the client; `'5m'`, `'permanent'` and `-1` were stored but never
-   served. An invalid string now throws on the client.
+   served.
    - Search: `clientMaxAge`.
-   - Do: replace an invalid string with the number of seconds it means (`'3h'` →
-     `10800`). Report the others: they now cache on the client.
+   - Do: replace an invalid string, which throws, with the number of seconds
+     it means (`'3h'` → `10800`). Report the others: they now cache on the
+     client.
      [Valid strings](https://nuxt-multi-cache.dulnan.net/overview/max-age#named-absolute-duration)
 6. **Falsy values are cache hits.** `useDataCacheCallback` and
    `useCachedAsyncData` return a cached `0`, `false`, `''` or `null` instead of
@@ -171,8 +172,10 @@ the project and report it with evidence.
     - Search: `buildCacheKey`, and keys of `useDataCache(`,
       `useDataCacheCallback(`, `useCachedAsyncData(` and `cache-key` that
       include a query string or URL.
-    - Do: build the key without a `?`, e.g.
-      `` `${path}:${encodeURIComponent(query)}` ``.
+    - Do: build the key from validated values of known parameters, e.g.
+      `` `products:${id}` `` after checking that `id` is a number, or from a hash
+      of them. A raw query value can also contain `..`, which the storage
+      rejects.
       [Cache keys](https://nuxt-multi-cache.dulnan.net/advanced/cache-backend#cache-keys)
 18. **A `cacheKeyPrefix` method that returns no prefix gets `{none}`.** Keys of
     such requests are now `{none}--<key>`.
@@ -180,11 +183,12 @@ the project and report it with evidence.
     - Do: report if the method can return `''` or no string. Existing items of
       these requests are missed once.
       [Dynamic prefix](https://nuxt-multi-cache.dulnan.net/overview/server-options#dynamic)
-19. **Purging and inspecting by key use new keys** for the cases of item 18 and
-    for the root path, which is stored as `{root}`.
+19. **Purging and inspecting by key use new keys** for the cases of item 18 and,
+    without a cache key prefix, for the root path, which is stored as `{root}`.
     - Search: calls of the purge and inspect API (`/__nuxt_multi_cache/` or the
       configured `api.prefix`) in scripts, CMS hooks and CI.
-    - Do: use `{none}--<key>` and `{root}` (with a prefix: `<prefix>--{root}`).
+    - Do: use `{none}--<key>`, and `{root}` for the root path. With a prefix,
+      the root path stays `<prefix>--`.
       [Cache key for routes](https://nuxt-multi-cache.dulnan.net/features/route-cache#cache-key-for-routes)
 
 ### CDN headers
@@ -192,9 +196,10 @@ the project and report it with evidence.
 20. **`Cache-Control` gets `private` when the CDN header is `private` or
     `no-store`.** Fastly ignores both in `Surrogate-Control`. `public` is
     removed from an existing `Cache-Control`, other directives stay.
-    - Search: `cdn` options with a `cacheControlHeader` other than
-      `Cache-Control`; responses marked `private()`, `no-store` or bubbling
-      "uncacheable" (item 7).
+    - Search: the `cdn` feature in the module options. Every project with it
+      is affected unless `cdn.cacheControlHeader` is `'Cache-Control'`; the
+      default is `Surrogate-Control`. Then find the responses marked
+      `private()`, `no-store` or bubbling "uncacheable" (item 7).
     - Do: report. `cdn.privateCacheControl: false` restores the 4.x behavior.
       [Private responses](https://nuxt-multi-cache.dulnan.net/features/cdn-cache-control#private-responses)
 21. **`s-maxage` is capped by all sources.** If the page or a merged response
