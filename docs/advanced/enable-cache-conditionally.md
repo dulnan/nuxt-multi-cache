@@ -15,7 +15,7 @@ feature continues to work.
 
 ::: code-group
 
-```typescript [./server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
 export default defineMultiCacheOptions(() => {

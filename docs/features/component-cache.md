@@ -38,8 +38,6 @@ The cacheability of a component can also be set dynamically using the
 ::: code-group
 
 ```typescript [nuxt.config.ts]
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   multiCache: {
     component: {
@@ -47,12 +45,12 @@ export default defineNuxtConfig({
       // If false the cache is disabled, but the component is still added to
       // the build.
       enabled: true,
-    }
-  }
-}
+    },
+  },
+})
 ```
 
-```typescript [multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 

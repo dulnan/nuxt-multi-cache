@@ -44,7 +44,7 @@ or by setting
 
 ::: code-group
 
-```typescript [./server/plugins/compression.ts]
+```typescript [server/plugins/compression.ts]
 import { useCompression } from 'h3-fast-compression'
 import { getRequestURL } from 'h3'
 import { defineNitroPlugin } from 'nitropack/runtime'
@@ -68,7 +68,7 @@ export default defineNitroPlugin((nitro) => {
 
 ::: code-group
 
-```typescript [./server/plugins/compression.ts]
+```typescript [server/plugins/compression.ts]
 import { useCompression } from 'h3-fast-compression'
 import { getRequestURL } from 'h3'
 import { defineNitroPlugin } from 'nitropack/runtime'

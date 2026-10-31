@@ -21,7 +21,7 @@ composable in your `app.vue`, which will be executed for every page.
 
 ::: code-group
 
-```vue [app.vue]
+```vue [app/app.vue]
 <template>
   <div class="app">
     <NuxtLayout>
@@ -46,7 +46,7 @@ If you additionally want to include custom API routes, you can define a
 
 ::: code-group
 
-```typescript [./server/middleware/routeCache.ts]
+```typescript [server/middleware/routeCache.ts]
 import { useRouteCache } from '#imports'
 
 export default defineEventHandler((event) => {
@@ -69,7 +69,7 @@ domain, currency, etc., you can create your own wrapper:
 
 ::: code-group
 
-```vue [ContextAwareCacheable.vue]
+```vue [app/components/ContextAwareCacheable.vue]
 <template>
   <RenderCacheable :cache-key="cacheKey">
     <slot></slot>
@@ -91,7 +91,7 @@ Or, the more clean way would be to create a composable:
 
 ::: code-group
 
-```typescript [./composables/useGlobalContextKey.ts]
+```typescript [app/composables/useGlobalContextKey.ts]
 export default async function (suffix: string): string | undefined {
   // Makes sure the rest of the code is not bundled in the client bundle.
   if (import.meta.client) {
@@ -130,7 +130,7 @@ This works the exact same way as with the route cache, just using the
 
 ::: code-group
 
-```vue [app.vue]
+```vue [app/app.vue]
 <template>
   <div class="app">
     <NuxtLayout>
@@ -152,7 +152,7 @@ useCDNHeaders((helper) => {
 
 ::: code-group
 
-```typescript [./server/middleware/routeCache.ts]
+```typescript [server/middleware/routeCache.ts]
 import { useRouteCache } from '#imports'
 
 export default defineEventHandler((event) => {

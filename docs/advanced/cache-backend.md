@@ -16,7 +16,7 @@ provided by unstorage.
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import redisDriver from 'unstorage/drivers/redis'
 
@@ -58,7 +58,7 @@ object.
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { defineDriver } from 'unstorage'
 

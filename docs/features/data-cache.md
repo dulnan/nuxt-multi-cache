@@ -7,8 +7,6 @@ A generic cache for any type of data (that can be stringified).
 ::: code-group
 
 ```typescript [nuxt.config.ts]
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   multiCache: {
     data: {
@@ -16,13 +14,12 @@ export default defineNuxtConfig({
       // If false the cache is disabled, but the composable is still added to
       // the build.
       enabled: true,
-    }
-  }
-}
+    },
+  },
+})
 ```
 
-```typescript [multiCache.serverOptions.ts]
-// ~/server/multiCache.serverOptions.ts
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 

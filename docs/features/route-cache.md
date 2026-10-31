@@ -13,19 +13,16 @@ you wish to use both at the same time).
 ::: code-group
 
 ```typescript [nuxt.config.ts]
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   multiCache: {
     route: {
       enabled: true,
-    }
-  }
-}
+    },
+  },
+})
 ```
 
-```typescript [multiCache.serverOptions.ts]
-// ~/server/multiCache.serverOptions.ts
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import myCustomDriver from './somehwere'
 
@@ -62,7 +59,7 @@ the cache key for a given route:
 
 ::: code-group
 
-```typescript [multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { getQuery, getRequestURL } from 'h3'
 
@@ -134,7 +131,7 @@ example right after calling `useCookie`.
 
 ::: code-group
 
-```typescript [multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
 export default defineMultiCacheOptions(() => {

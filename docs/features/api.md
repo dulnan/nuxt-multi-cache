@@ -9,22 +9,19 @@ cache tags.
 ::: code-group
 
 ```typescript [nuxt.config.ts]
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   multiCache: {
     api: {
       enabled: true,
       prefix: '/__nuxt_multi_cache',
       authorization: 'hunter2',
-      cacheTagInvalidationDelay: 60000
-    }
-  }
-}
+      cacheTagInvalidationDelay: 60000,
+    },
+  },
+})
 ```
 
-```typescript [multiCache.serverOptions.ts]
-// ~/server/multiCache.serverOptions.ts
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { isAuthenticated } from './somewhere'
 

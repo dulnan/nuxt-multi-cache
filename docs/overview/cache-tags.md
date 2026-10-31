@@ -116,7 +116,7 @@ You can enable the built-in cache tag registry in your
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 
 export default defineMultiCacheOptions(() => {
@@ -159,7 +159,7 @@ You can use the built-in in-memory registry implementation as a reference:
 
 ::: code-group
 
-```typescript [~/server/multiCache.serverOptions.ts]
+```typescript [server/multiCache.serverOptions.ts]
 import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
 import { InMemoryCacheTagRegistry } from './registry'
 

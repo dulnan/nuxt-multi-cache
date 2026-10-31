@@ -8,28 +8,26 @@ manage these headers during the execution of the request.
 ## Configuration
 
 ```typescript
-import { defineNuxtConfig } from 'nuxt'
-
 export default defineNuxtConfig({
   multiCache: {
     cdn: {
       /**
-      * Enable the CDN headers feature.
-      */
+       * Enable the CDN headers feature.
+       */
       enabled: true,
 
       /**
-      * The header to use for the cache-control settings.
-      */
+       * The header to use for the cache-control settings.
+       */
       cacheControlHeader: 'CDN-Cache-Control',
 
       /**
-      * The header to use for the cache tags header.
-      */
-      cacheTagHeader: 'Cache-Tag'
-    }
-  }
-}
+       * The header to use for the cache tags header.
+       */
+      cacheTagHeader: 'Cache-Tag',
+    },
+  },
+})
 ```
 
 ### Common Headers
