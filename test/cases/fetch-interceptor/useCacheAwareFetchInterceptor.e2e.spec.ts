@@ -120,6 +120,18 @@ describe('The useCacheAwareFetchInterceptor', () => {
     }
   })
 
+  test.each(['uncacheable', 'uncacheable-data'])(
+    'makes the route uncacheable if the API route is uncacheable: %s',
+    async (name) => {
+      // The page marks itself as cacheable, but the API route it fetches is
+      // uncacheable, either directly or bubbled from the data cache.
+      await fetch(`/route-cache-${name}`)
+
+      const rows = await getRouteCacheItems()
+      expect(rows.map((v) => v.key)).toEqual([])
+    },
+  )
+
   test('does not store or serve the internal headers of the API route', async () => {
     // The page fetches the API route as an internal request, which gets the
     // internal cache tags header.

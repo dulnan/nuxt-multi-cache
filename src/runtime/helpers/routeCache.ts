@@ -11,6 +11,7 @@ import {
   ROUTE_CACHE_EXPIRES_HEADER,
   ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
   ROUTE_CACHE_TAGS_HEADER,
+  ROUTE_CACHE_UNCACHEABLE_HEADER,
 } from './constants'
 import {
   encodeRouteCacheKey,
@@ -108,10 +109,15 @@ export async function getRouteCacheKey(event: H3Event): Promise<string> {
  */
 export function setInternalRouteCacheHeaders(
   event: H3Event,
-  item: CacheableItemInterface,
+  item: CacheableItemInterface & { cacheable?: boolean | null },
 ) {
   if (!isInternalServerRequest(event)) {
     return
+  }
+
+  // setUncacheable() is final, so the header is never removed again.
+  if (item.cacheable === false) {
+    setResponseHeader(event, ROUTE_CACHE_UNCACHEABLE_HEADER, 'true')
   }
 
   setResponseHeader(

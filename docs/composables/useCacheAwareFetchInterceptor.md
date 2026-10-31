@@ -79,4 +79,5 @@ that's the max age defined in the event handler.
 The same also works when the API route uses the route cache: In this case, the
 cache tags, the max age and the stale if error duration of the API route are
 merged with the route cache of the SSR request. A cached page then never
-outlives the data of the API route it shows.
+outlives the data of the API route it shows. If the API route is marked as
+uncacheable, the page becomes uncacheable as well.

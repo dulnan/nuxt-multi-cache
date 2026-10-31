@@ -112,3 +112,14 @@ const { data } = await useFetch(
   useCacheAwareFetchInterceptor(),
 )
 ```
+
+- **Route cache:** The values of the API route's route cache helper bubble,
+  including `setUncacheable()`. A page that fetches an uncacheable API route
+  becomes uncacheable as well.
+- **CDN headers:** The CDN header of the API route is merged, including
+  `private` and `no-store`. Its route cache values don't affect the CDN headers.
+
+An API route that doesn't use the route cache, or is excluded from it with
+`route.applies` or `enabledForRequest`, has no route cache values to bubble. If
+such an API route returns data specific to the request, mark the page as
+uncacheable yourself.

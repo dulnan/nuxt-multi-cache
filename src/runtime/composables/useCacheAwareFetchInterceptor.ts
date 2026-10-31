@@ -5,6 +5,7 @@ import {
   ROUTE_CACHE_EXPIRES_HEADER,
   ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
   ROUTE_CACHE_TAGS_HEADER,
+  ROUTE_CACHE_UNCACHEABLE_HEADER,
   SERVER_REQUEST_HEADER,
 } from '../helpers/constants'
 import {
@@ -49,8 +50,8 @@ type UseCacheAwareFetchInterceptor = {
  * to the current request and merge them.
  *
  * If the route cache is enabled, the onResponse interceptor will also bubble
- * the route cache tags, max age and stale-if-error of API routes to the
- * current request.
+ * the route cache tags, max age, stale-if-error and uncacheability of API
+ * routes to the current request.
  *
  * The onRequest interceptor adds a special request header to indicate that
  * this is an internal request originating from Nuxt during SSR.
@@ -109,6 +110,12 @@ export function useCacheAwareFetchInterceptor(
               expires,
               staleIfErrorExpires,
             })
+
+            // The API route may return data specific to the request, so the
+            // page must not be cached either.
+            if (headers.get(ROUTE_CACHE_UNCACHEABLE_HEADER) === 'true') {
+              helper.setUncacheable()
+            }
           }, event)
         }
       },

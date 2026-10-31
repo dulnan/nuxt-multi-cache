@@ -103,8 +103,9 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
   CDN helper.
 - `useCacheAwareFetchInterceptor` marks internal SSR requests with the
   `x-nuxt-multi-cache-request` header. API routes answer them with internal
-  headers (route cache tags, expires, stale-if-error expires) that are bubbled
-  into the page and stripped before storing (`INTERNAL_RESPONSE_HEADERS`).
+  headers (route cache tags, expires, stale-if-error expires, uncacheable),
+  written by the server `useRouteCache` after each call. They are bubbled into
+  the page and stripped before storing (`INTERNAL_RESPONSE_HEADERS`).
 - `components/RenderCacheable/server` renders its slot with `ssrRenderSlotInner`
   and stores the markup, the payload of `asyncDataKeys` and the rendered module
   IDs (`ssrModules`, collected through a scoped SSR context provided under Vue's

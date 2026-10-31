@@ -17,6 +17,7 @@ export function useRouteCache(
   cb(helper)
 
   setInternalRouteCacheHeaders(event, {
+    cacheable: helper.cacheable,
     cacheTags: helper.tags,
     expires: helper.getExpires('maxAge') ?? CACHE_PERMANENT,
     staleIfErrorExpires: helper.getExpires('staleIfError') ?? CACHE_NEVER,
