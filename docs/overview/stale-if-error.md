@@ -95,6 +95,10 @@ useRouteCache((helper) => {
 </script>
 ```
 
+The stale route is only served for server errors: errors with a 5xx status code
+and unhandled errors. A client error, such as a 404 thrown because the content
+was deleted, is sent as usual.
+
 ## Only Use the Cache on Errors
 
 To never serve an item from cache, but keep a stale copy for when an error

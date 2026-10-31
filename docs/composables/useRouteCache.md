@@ -91,9 +91,10 @@ before that depends on the cache driver; see
 
 Set the "stale if error" duration for the cache entry. When set, a stale cached
 route (in other words, a cache entry that would normally not be served because
-it is expired) will be served if an error is thrown while the response is
-generated. This applies to any error, regardless of its status code. The value
-is only set if it's lower than the current value.
+it is expired) will be served if a server error (with a 5xx status code, or an
+unhandled error) is thrown while the response is generated. Client errors, such
+as a 404, are not replaced with a stale response. The value is only set if it's
+lower than the current value.
 
 ### allowStaleWhileRevalidate()
 

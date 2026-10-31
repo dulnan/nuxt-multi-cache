@@ -7,11 +7,22 @@ import { getRequestTimestamp } from '../../helpers/server'
 import { isExpired } from '../../helpers/maxAge'
 
 /**
+ * Whether the error is a server error (5xx).
+ *
+ * Errors without a status code are unhandled errors, to which h3 responds
+ * with a 500.
+ */
+function isServerError(error: Error): boolean {
+  const statusCode = (error as { statusCode?: unknown }).statusCode
+  return typeof statusCode !== 'number' || statusCode >= 500
+}
+
+/**
  * Callback for the 'error' nitro hook.
  *
  * This is called during any error that happens in an event handler.
  */
-export function onError(_error: Error, ctx: CapturedErrorContext) {
+export function onError(error: Error, ctx: CapturedErrorContext) {
   try {
     if (!ctx.event) {
       return
@@ -23,6 +34,13 @@ export function onError(_error: Error, ctx: CapturedErrorContext) {
       state.removeKeyBeingRevalidated(
         ctx.event.context.multiCache.routeRevalidationkey,
       )
+    }
+
+    // Like the stale-if-error directive in HTTP, only server errors serve a
+    // stale route. A client error, such as a 404 for deleted content, must
+    // reach the client.
+    if (!isServerError(error)) {
+      return
     }
 
     // Get the decoded route cache item. The "request" handler may have already

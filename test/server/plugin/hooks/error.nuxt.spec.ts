@@ -1,4 +1,5 @@
 import { describe, expect, test, vi, beforeEach } from 'vitest'
+import { createError } from 'h3'
 import { onError } from '../../../../src/runtime/server/hooks/error'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 import type { RouteCacheItem } from '~/src/runtime/types'
@@ -84,4 +85,18 @@ describe('error nitro hook handler', () => {
       expect(mocks.setCachedResponse).toHaveBeenCalledTimes(served ? 1 : 0)
     },
   )
+
+  test.each([
+    ['an unhandled error', true, new Error('Failed to render.')],
+    ['a 500 error', true, createError({ statusCode: 500 })],
+    ['a 503 error', true, createError({ statusCode: 503 })],
+    ['a 404 error', false, createError({ statusCode: 404 })],
+    ['a 401 error', false, createError({ statusCode: 401 })],
+  ])('Serves a stale route for %s: %s', (_label, served, error) => {
+    const event = buildEvent(now + 60)
+
+    onError(error, { event } as any)
+
+    expect(mocks.sendWebResponse).toHaveBeenCalledTimes(served ? 1 : 0)
+  })
 })
