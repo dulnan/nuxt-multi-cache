@@ -47,6 +47,12 @@ Vitest has two projects (`vitest.config.mts`):
 tests. Test mode (`enableTestMode`) allows overriding the current time with the
 `x-nuxt-multi-cache-date-override` request header.
 
+`test/cases/cloudflare-workers` builds its fixture with the `cloudflare_module`
+preset and runs it in workerd through Miniflare, with Cloudflare KV as the
+storage. Workers run Nitro plugins in the global scope, where random values,
+timers and I/O throw, and they don't run timers after the response has been
+sent.
+
 ## Architecture
 
 ### Build side (`src/module.ts`, `src/build/`)

@@ -90,6 +90,7 @@
     "h3-compression": "^1.1.0",
     "h3-fast-compression": "^1.0.1",
     "happy-dom": "^21.0.4",
+    "miniflare": "^4.20260730.0",
     "nuxt": "^4.6.3",
     "oxfmt": "^0.75.0",
     "oxlint": "^1.90.0",

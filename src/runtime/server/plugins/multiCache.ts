@@ -74,6 +74,8 @@ function createMultiCacheApp(): MultiCacheApp {
     cacheTagRegistry,
   )
 
+  let internalRequestToken: string | undefined
+
   return {
     cache: cacheContext,
     serverOptions,
@@ -82,8 +84,13 @@ function createMultiCacheApp(): MultiCacheApp {
     cacheTagRegistry,
     cacheTagInvalidator,
     // Internal requests are handled in the same process, so the token never
-    // has to be known outside of it.
-    internalRequestToken: crypto.randomUUID(),
+    // has to be known outside of it. It's generated on first use, during a
+    // request: Cloudflare Workers don't allow generating random values in the
+    // global scope, where Nitro plugins run.
+    get internalRequestToken() {
+      internalRequestToken ??= crypto.randomUUID()
+      return internalRequestToken
+    },
   }
 }
 
