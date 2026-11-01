@@ -34,6 +34,7 @@ export const dataCacheEnabled = ${JSON.stringify(dataCacheEnabled)}
 export const shouldLogCacheOverview = ${JSON.stringify(!helper.options.disableCacheOverviewLogMessage)}
 export const cacheTagInvalidationDelay = ${JSON.stringify(helper.options.api?.cacheTagInvalidationDelay ?? DEFAULT_CACHE_TAG_INVALIDATION_DELAY)}
 export const apiPrefix = ${JSON.stringify(helper.options.api?.prefix ?? DEFAULT_API_PREFIX)}
+export const apiEnabled = ${JSON.stringify(!!helper.options.api?.enabled)}
 export const isTestMode = ${JSON.stringify(!!helper.options.enableTestMode)}
 export const isServer = import.meta.server
 `
@@ -103,6 +104,13 @@ export declare const apiPrefix: string
  * Whether the cache overview should be logged to the console.
  */
 export declare const shouldLogCacheOverview: boolean
+
+/**
+ * Whether the API is enabled at build time, which adds its handlers.
+ *
+ * The API may still be disabled at runtime via runtime config.
+ */
+export declare const apiEnabled: boolean
 
 /**
  * Alias for import.meta.server, used for mocking in tests.

@@ -15,7 +15,7 @@ that keep a cache from serving one request's content to another.
 - **`nuxt.config`:** a feature is added when its key exists in `multiCache`
   (`route`, `component`, `data`, `cdn`, `api`) and enabled with
   `enabled: true`. Runtime config can turn added features on and off; the API
-  can only be turned off.
+  can only be turned off. Remove the key to leave a feature out of the build.
   [Configuration](https://nuxt-multi-cache.dulnan.net/overview/configuration#adding-and-enabling-features)
 - **`server/multiCache.serverOptions.ts`:** everything that isn't serializable,
   with `defineMultiCacheOptions` from `nuxt-multi-cache/server-options`:

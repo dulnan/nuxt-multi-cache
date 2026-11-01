@@ -228,9 +228,12 @@ the project and report it with evidence.
     - Do: report if the API is used where the variable is `false`.
 24. **Runtime config can enable a feature** that has `enabled: false` in
     `nuxt.config`: `NUXT_MULTI_CACHE_CDN`, `_COMPONENT`, `_DATA` and `_ROUTE`
-    set to `true`. Before, the feature stayed off.
+    set to `true`. Before, the feature stayed off. A feature is added to the
+    build when its key exists in the module options, also with
+    `enabled: false`, so the startup table shows it as "Added in Build ✅".
     - Search: these variables in `.env*` files and deployment config.
-    - Do: report each feature that now turns on.
+    - Do: report each feature that now turns on. To keep a feature out of the
+      build entirely, remove its key from the module options.
 25. **`cacheTagInvalidationDelay: 0` purges during the request.** It was
     replaced by 60000. Now the purge tags API responds once the items are
     removed, with an error response if the storage fails, and

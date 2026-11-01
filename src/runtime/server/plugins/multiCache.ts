@@ -21,6 +21,7 @@ import {
   componentCacheEnabled,
   dataCacheEnabled,
   routeCacheEnabled,
+  apiEnabled,
 } from '#nuxt-multi-cache/config'
 import { useRuntimeConfig } from '#imports'
 import { InMemoryCacheTagRegistry } from '../../helpers/InMemoryCacheTagRegistry'
@@ -139,7 +140,7 @@ export default defineNitroPlugin((nitroApp) => {
     console.log('\n\nnuxt-multi-cache configuration')
     console.log('-'.repeat(62))
     console.log(
-      `| Feature            | Enabled in Build | Enabled at Runtime |`,
+      `| Feature            | Added in Build   | Enabled at Runtime |`,
     )
     console.log('-'.repeat(62))
     debugTableEntry(
@@ -158,7 +159,11 @@ export default defineNitroPlugin((nitroApp) => {
       runtimeConfig.multiCache.route,
     )
     debugTableEntry('CDN Headers', cdnEnabled, runtimeConfig.multiCache.cdn)
+    debugTableEntry('API', apiEnabled, runtimeConfig.multiCache.api?.enabled)
     console.log('-'.repeat(62))
+    console.log(
+      'A feature is added when its key exists in the module options, also with "enabled: false". Remove the key to leave it out of the build.',
+    )
     console.log(
       `You can disable this message by setting "disableCacheOverviewLogMessage: true" in the module's configuration.\n`,
     )

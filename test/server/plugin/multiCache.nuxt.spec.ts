@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => {
     isTestMode: false,
     cdn: false,
     cdnPrivateCacheControl: true,
+    shouldLogCacheOverview: false,
+    apiEnabled: false,
   }
 })
 
@@ -18,7 +20,12 @@ vi.mock('#nuxt-multi-cache/config', () => {
     },
     debug: false,
     isServer: true,
-    shouldLogCacheOverview: false,
+    get shouldLogCacheOverview() {
+      return mocks.shouldLogCacheOverview
+    },
+    get apiEnabled() {
+      return mocks.apiEnabled
+    },
     cdnEnabled: true,
     get cdnPrivateCacheControl() {
       return mocks.cdnPrivateCacheControl
@@ -95,6 +102,30 @@ describe('The nuxt-multi-cache Nitro plugin', () => {
       mocks.cdnPrivateCacheControl = true
     },
   )
+
+  test('logs which features are added and enabled', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {})
+    mocks.shouldLogCacheOverview = true
+    mocks.apiEnabled = true
+    runPlugin()
+    mocks.shouldLogCacheOverview = false
+    mocks.apiEnabled = false
+
+    const output = log.mock.calls.map((call) => call[0]).join('\n')
+    expect(output).toContain(
+      '| Feature            | Added in Build   | Enabled at Runtime |',
+    )
+    // Added in the module options, disabled in runtime config.
+    expect(output).toContain(
+      '| CDN Headers        | ✅               | ❌                 |',
+    )
+    expect(output).toContain(
+      '| API                | ✅               | ❌                 |',
+    )
+    expect(output).toContain(
+      'A feature is added when its key exists in the module options',
+    )
+  })
 
   test('does not warn if test mode is disabled', () => {
     const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {})
