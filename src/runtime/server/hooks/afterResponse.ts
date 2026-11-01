@@ -54,9 +54,10 @@ function stringify(value: any): string | undefined {
 }
 
 /**
- * Store the response in the route cache, if it's cacheable.
+ * The values of the route cache item for the response, or undefined if the
+ * response is not stored.
  */
-async function storeResponse(
+export function getStorableRoute(
   event: H3Event,
   response: { body?: unknown } | undefined,
 ) {
@@ -85,9 +86,49 @@ async function storeResponse(
     return
   }
 
-  const responseData = stringify(response.body)
+  const expires = routeHelper.getExpires('maxAge') ?? CACHE_PERMANENT
+  const staleIfErrorExpires =
+    routeHelper.getExpires('staleIfError') ?? CACHE_NEVER
+  const staleWhileRevalidate = !!routeHelper.staleWhileRevalidate
+  const ttl = getStorageTtl(
+    { expires, staleIfErrorExpires, staleWhileRevalidate },
+    getRequestTimestamp(event),
+  )
 
-  if (!responseData) {
+  // Items that can never be served (e.g. a max age of 0 without
+  // stale-if-error) are not stored.
+  if (ttl === CACHE_NEVER) {
+    return
+  }
+
+  // Only strings and data that can be serialized as JSON are stored, e.g. not
+  // streams.
+  const data = stringify(response.body)
+  if (!data) {
+    return
+  }
+
+  return {
+    cache: multiCache.route,
+    data,
+    statusCode,
+    expires,
+    staleIfErrorExpires,
+    staleWhileRevalidate,
+    cacheTags: routeHelper.getTags(),
+    ttl,
+  }
+}
+
+/**
+ * Store the response in the route cache, if it's cacheable.
+ */
+async function storeResponse(
+  event: H3Event,
+  response: { body?: unknown } | undefined,
+) {
+  const storable = getStorableRoute(event, response)
+  if (!storable) {
     return
   }
 
@@ -109,6 +150,13 @@ async function storeResponse(
     responseHeaders[header] = undefined
   }
 
+  // The entry of the route cache in the Cache-Status header only describes
+  // this response. Entries of other caches, e.g. of a proxied API, are kept.
+  const cacheStatus = event.context.multiCache?.routeCacheStatusHeader
+  if (cacheStatus && responseHeaders['cache-status'] === cacheStatus.value) {
+    responseHeaders['cache-status'] = cacheStatus.before
+  }
+
   if (serverOptions.route?.alterCachedHeaders) {
     responseHeaders = serverOptions.route.alterCachedHeaders(responseHeaders)
   }
@@ -118,18 +166,19 @@ async function storeResponse(
     return
   }
 
-  const expires = routeHelper.getExpires('maxAge') ?? CACHE_PERMANENT
-  const staleIfErrorExpires =
-    routeHelper.getExpires('staleIfError') ?? CACHE_NEVER
-  const staleWhileRevalidate = !!routeHelper.staleWhileRevalidate
-  const cacheTags = routeHelper.getTags()
-  const ttl = getStorageTtl(
-    { expires, staleIfErrorExpires, staleWhileRevalidate },
-    getRequestTimestamp(event),
-  )
+  const {
+    cache,
+    data,
+    statusCode,
+    expires,
+    staleIfErrorExpires,
+    staleWhileRevalidate,
+    cacheTags,
+    ttl,
+  } = storable
 
   const cacheItem = encodeRouteCacheItem(
-    responseData,
+    data,
     responseHeaders,
     statusCode,
     expires,
@@ -138,39 +187,32 @@ async function storeResponse(
     cacheTags,
   )
 
-  // Items that can never be served (e.g. a max age of 0 without
-  // stale-if-error) are not stored.
-  if (ttl !== CACHE_NEVER) {
-    if (debug) {
-      const url = getRequestURL(event)
-      logger.info('Storing route in cache: ' + url.toString(), {
-        cacheKey,
-        expires,
-        staleIfErrorExpires,
-        cacheTags,
-        staleWhileRevalidate,
-        statusCode,
-        ttl,
-      })
+  if (debug) {
+    const url = getRequestURL(event)
+    logger.info('Storing route in cache: ' + url.toString(), {
+      cacheKey,
+      expires,
+      staleIfErrorExpires,
+      cacheTags,
+      staleWhileRevalidate,
+      statusCode,
+      ttl,
+    })
+  }
+
+  try {
+    await cache.storage.setItemRaw(cacheKey, cacheItem, { ttl })
+    if (cacheTags.length) {
+      const registry = getCacheTagRegistry(event)
+      if (registry) {
+        await registry.addCacheTags(cacheKey, 'route', cacheTags)
+      }
     }
+  } catch (e) {
+    logger.error(`Failed to store route cache item for path "${event.path}"`, e)
 
-    try {
-      await multiCache.route.storage.setItemRaw(cacheKey, cacheItem, { ttl })
-      if (cacheTags.length) {
-        const registry = getCacheTagRegistry(event)
-        if (registry) {
-          await registry.addCacheTags(cacheKey, 'route', cacheTags)
-        }
-      }
-    } catch (e) {
-      logger.error(
-        `Failed to store route cache item for path "${event.path}"`,
-        e,
-      )
-
-      if (multiCache.route?.bubbleError) {
-        throw e
-      }
+    if (cache.bubbleError) {
+      throw e
     }
   }
 }

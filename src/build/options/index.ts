@@ -13,6 +13,20 @@ interface CacheConfigOptions {
   enabled: boolean
 }
 
+export interface RouteCacheOptions extends CacheConfigOptions {
+  /**
+   * Add a Cache-Status header (RFC 9211) that says how the route cache
+   * handled the request, e.g. `nuxt-multi-cache; hit; ttl=376`.
+   *
+   * `true` uses the name `nuxt-multi-cache`, a string sets another name.
+   *
+   * Can be changed at runtime with `NUXT_MULTI_CACHE_ROUTE_CACHE_STATUS`.
+   *
+   * @default false
+   */
+  cacheStatus?: boolean | string
+}
+
 export type CDNOptions = {
   /**
    * Enable the CDN headers feature.
@@ -76,7 +90,7 @@ export interface ModuleOptions {
    * Caches routes based on the path. Works for both rendered Nuxt pages and
    * server API routes.
    */
-  route?: CacheConfigOptions
+  route?: RouteCacheOptions
 
   /**
    * Configuration for the CDN headers feature.

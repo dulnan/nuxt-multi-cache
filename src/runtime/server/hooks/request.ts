@@ -3,9 +3,11 @@ import { enabledForRequest, getRequestTimestamp } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import {
   isAmbiguousRoutePath,
+  isErrorPagePath,
   isExcludedRoutePath,
   isRouteCacheMethod,
 } from '../../helpers/routeCache'
+import { setRouteCacheStatus } from '../../helpers/cacheStatus'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
 import { useRuntimeConfig } from '#imports'
@@ -30,6 +32,18 @@ function applies(path: string): boolean {
   return !/.\.(ico|png|jpg|js|css|html|woff|woff2|ttf|otf|eot|svg)$/.test(
     path.split('?')[0]!,
   )
+}
+
+/**
+ * Mark a request that the route cache doesn't handle, for the Cache-Status
+ * header.
+ */
+function bypass(event: H3Event, path: string) {
+  // Nuxt copies the headers of its error page onto error responses, which
+  // have the status of their own request.
+  if (!isErrorPagePath(path, useRuntimeConfig().app)) {
+    setRouteCacheStatus(event, { fwd: 'bypass' })
+  }
 }
 
 /**
@@ -59,24 +73,25 @@ export async function onRequest(event: H3Event) {
 
   // Responses to other methods (e.g. POST) are never stored.
   if (!isRouteCacheMethod(event)) {
+    setRouteCacheStatus(event, { fwd: 'method' })
     return
   }
 
   // The cache key would belong to a different path than the one that is
   // rendered, e.g. for "//contact".
   if (isAmbiguousRoutePath(path)) {
-    return
+    return bypass(event, path)
   }
 
   // Path is generally not cacheable, so we can skip it.
   if (!applies(path)) {
-    return
+    return bypass(event, path)
   }
 
   const isEnabled = await enabledForRequest(event)
 
   if (!isEnabled) {
-    return
+    return bypass(event, path)
   }
 
   // Add the route cache helper.

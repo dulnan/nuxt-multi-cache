@@ -138,7 +138,8 @@ key. Each rule protects that.
    cache.
 2. Build and start the app (`nuxt build`, `node .output/server/index.mjs`).
 3. Request each changed page twice. The second response comes from the cache:
-   the log says so, or a timestamp rendered on the page stays the same. Read the
+   the log says so, a timestamp rendered on the page stays the same, or, with
+   `route.cacheStatus: true`, the `Cache-Status` header says `hit`. Read the
    CDN headers with `curl -sI`.
 4. For everything that must not be shared, request it as a second visitor
    (other cookies, other language) and compare: the second response has none of

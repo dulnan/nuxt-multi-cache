@@ -50,6 +50,18 @@ NUXT_MULTI_CACHE_ROUTE=true
 
 Set to `true` to enable route caching or `false` to disable it.
 
+## Cache-Status Header
+
+```dotenv
+NUXT_MULTI_CACHE_ROUTE_CACHE_STATUS=true
+```
+
+Adds the [Cache-Status header](/features/route-cache#cache-status-header) of the
+route cache: `true` with the name `nuxt-multi-cache`, or a name, e.g.
+`NUXT_MULTI_CACHE_ROUTE_CACHE_STATUS=shop`. Set to `false` to disable it.
+
+This has no effect if the route cache is disabled.
+
 ## Toggle API
 
 ```dotenv

@@ -94,7 +94,17 @@ sent, which is why the cache tag invalidation delay is always 0 for
   - the `error` hook: serves a stale route on server errors (stale-if-error);
   - the `beforeResponse` hook (CDN feature): adds `private` to `Cache-Control`
     if the CDN header is `private` or `no-store`, because some CDNs (Fastly)
-    ignore these in their own header.
+    ignore these in their own header;
+  - the `beforeResponse` hook (`route.cacheStatus`, runtime config
+    `routeCacheStatus`): adds the route cache's entry to the RFC 9211
+    `Cache-Status` header, from the status that the `request` hook and
+    `serveCachedHandler` store on the event, plus `stored` for lookups that
+    missed if `afterResponse` will store the response (`getStorableRoute`).
+    Responses that handlers send themselves (`event.handled`) skip
+    `beforeResponse` and get no entry. Error responses skip it too, so the
+    `error` hook adds it. Nuxt copies the headers of its `/__nuxt_error` render
+    onto error responses, so that path never gets an entry. The entry is removed
+    again before the response is stored.
 - Composables (`composables/`, Nuxt, event optional) and server utils
   (`server/utils/`, Nitro, event required) are thin wrappers around the
   implementations in `shared/`.

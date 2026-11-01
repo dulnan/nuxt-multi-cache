@@ -7,6 +7,12 @@ export const ROUTE_CACHE_UNCACHEABLE_HEADER = 'x-nuxt-multi-cache-uncacheable'
 export const TEST_MODE_DATE_OVERRIDE_HEADER = 'x-nuxt-multi-cache-date-override'
 
 /**
+ * The name of the route cache in the Cache-Status header if the option is
+ * `true`.
+ */
+export const DEFAULT_CACHE_STATUS_NAME = 'nuxt-multi-cache'
+
+/**
  * Response headers that are only set for internal requests from the Nuxt app
  * during SSR. They describe a single request, so they are never stored in the
  * route cache.

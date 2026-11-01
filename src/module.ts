@@ -6,6 +6,7 @@ import type { ModuleOptions } from './build/options'
 import { defaultOptions } from './build/options/defaults'
 import { ModuleHelper } from './build/ModuleHelper'
 import { TEMPLATES } from './build/templates'
+import { DEFAULT_CACHE_STATUS_NAME } from './runtime/helpers/constants'
 import { pathToFileURL } from 'node:url'
 import { parseURL } from 'ufo'
 
@@ -70,6 +71,11 @@ export default defineNuxtModule<ModuleOptions>({
       component: !!options.component?.enabled,
       data: !!options.data?.enabled,
       route: !!options.route?.enabled,
+      // Always a string, so that its generated type allows setting a name.
+      routeCacheStatus:
+        options.route?.cacheStatus === true
+          ? DEFAULT_CACHE_STATUS_NAME
+          : options.route?.cacheStatus || '',
       api: {
         enabled: !!options.api?.enabled,
         authorizationToken:

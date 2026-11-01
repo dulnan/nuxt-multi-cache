@@ -16,6 +16,10 @@ import { logger } from '../../helpers/multi-cache-logger'
 import { getRouteCacheKey, setCachedResponse } from '../../helpers/routeCache'
 import { debug } from '#nuxt-multi-cache/config'
 import { isExpired } from '../../helpers/maxAge'
+import {
+  getCacheStatusTtl,
+  setRouteCacheStatus,
+} from '../../helpers/cacheStatus'
 
 function canBeServedFromCache(
   event: H3Event,
@@ -60,6 +64,7 @@ export async function serveCachedHandler(event: H3Event) {
     // Build the cache key.
     const fullKey = await getRouteCacheKey(event)
     if (!isValidCacheKey(fullKey, 'route')) {
+      setRouteCacheStatus(event, { fwd: 'bypass' })
       return
     }
 
@@ -70,6 +75,7 @@ export async function serveCachedHandler(event: H3Event) {
 
     // No cache entry.
     if (!cachedRaw) {
+      setRouteCacheStatus(event, { fwd: 'uri-miss' })
       return
     }
     const decoded = decodeRouteCacheItem(cachedRaw)
@@ -77,6 +83,7 @@ export async function serveCachedHandler(event: H3Event) {
     // Decoding failed. May happen if the format is wrong, possibly after a
     // deployment with a newer version.
     if (!decoded) {
+      setRouteCacheStatus(event, { fwd: 'miss' })
       return
     }
 
@@ -93,6 +100,8 @@ export async function serveCachedHandler(event: H3Event) {
         event.context.multiCache.routeRevalidationkey = fullKey
       }
 
+      setRouteCacheStatus(event, { fwd: 'stale' })
+
       // Returning, so the route is revalidated.
       return
     }
@@ -106,12 +115,20 @@ export async function serveCachedHandler(event: H3Event) {
 
     setCachedResponse(event, decoded)
 
+    // The ttl is negative if a stale route is served while revalidating.
+    setRouteCacheStatus(event, {
+      hit: true,
+      ttl: getCacheStatusTtl(decoded.expires, getRequestTimestamp(event)),
+    })
+
     return decoded.data
   } catch (e) {
     logger.error(
       `Error while attempting to serve cached route for path "${event.path}".`,
       e,
     )
+
+    setRouteCacheStatus(event, { fwd: 'miss' })
 
     if (context.route.bubbleError) {
       throw e

@@ -5,6 +5,13 @@ why some items are skipped (no component name, a key with a `?`).
 
 ## A page or API route isn't cached
 
+With `route.cacheStatus: true`, the `Cache-Status` header of the response
+narrows it down: `fwd=bypass` is 5 to 7, `fwd=method` is 3, and `fwd=uri-miss`,
+`fwd=miss` or `fwd=stale` without `stored` is 2 to 4. No header means the route
+cache is off (1), or the handler sent the response itself (`sendStream`,
+`proxyRequest`), which is never stored.
+[Cache-Status header](https://nuxt-multi-cache.dulnan.net/features/route-cache#cache-status-header)
+
 Check in this order; the first match is usually the cause.
 
 1. **The feature is off.** The route cache needs `route` in the module options
