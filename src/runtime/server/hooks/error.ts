@@ -5,16 +5,30 @@ import { sendWebResponse } from 'h3'
 import { logger } from '../../helpers/multi-cache-logger'
 import { getRequestTimestamp } from '../../helpers/server'
 import { isExpired } from '../../helpers/maxAge'
+import {
+  addCacheStatusHeader,
+  appendCacheStatus,
+  getCacheStatusName,
+  getCacheStatusTtl,
+  serializeCacheStatus,
+} from '../../helpers/cacheStatus'
 
 /**
- * Whether the error is a server error (5xx).
+ * The status code of the error response.
  *
  * Errors without a status code are unhandled errors, to which h3 responds
  * with a 500.
  */
-function isServerError(error: Error): boolean {
+function getErrorStatusCode(error: Error): number {
   const statusCode = (error as { statusCode?: unknown }).statusCode
-  return typeof statusCode !== 'number' || statusCode >= 500
+  return typeof statusCode === 'number' ? statusCode : 500
+}
+
+/**
+ * Whether the error is a server error (5xx).
+ */
+function isServerError(error: Error): boolean {
+  return getErrorStatusCode(error) >= 500
 }
 
 /**
@@ -28,12 +42,20 @@ export function onError(error: Error, ctx: CapturedErrorContext) {
       return
     }
 
-    const { state } = getMultiCacheApp()
+    const { state, config } = getMultiCacheApp()
 
     if (ctx.event.context.multiCache?.routeRevalidationkey) {
       state.removeKeyBeingRevalidated(
         ctx.event.context.multiCache.routeRevalidationkey,
       )
+    }
+
+    // Error responses are sent without the beforeResponse hook, which adds
+    // the entry of the route cache to the Cache-Status header otherwise.
+    const cacheStatusName = getCacheStatusName(config.routeCacheStatus)
+    const cacheStatus = ctx.event.context.multiCache?.routeCacheStatus
+    if (cacheStatusName && cacheStatus) {
+      addCacheStatusHeader(ctx.event, cacheStatusName, cacheStatus)
     }
 
     // Like the stale-if-error directive in HTTP, only server errors serve a
@@ -67,9 +89,23 @@ export function onError(error: Error, ctx: CapturedErrorContext) {
 
     setCachedResponse(ctx.event, decoded)
 
-    const response = new Response(decoded.data, {
-      headers: decoded.headers,
-    })
+    // The headers of the response replace the ones already set.
+    const headers = { ...decoded.headers }
+    if (cacheStatusName) {
+      headers['cache-status'] = appendCacheStatus(
+        headers['cache-status'],
+        serializeCacheStatus(cacheStatusName, {
+          fwd: 'stale',
+          fwdStatus: getErrorStatusCode(error),
+          ttl: getCacheStatusTtl(
+            decoded.expires,
+            getRequestTimestamp(ctx.event),
+          ),
+        }),
+      )
+    }
+
+    const response = new Response(decoded.data, { headers })
 
     // Directly respond with our response.
     // This might potentially lead to other hooks (such as beforeResponse) not

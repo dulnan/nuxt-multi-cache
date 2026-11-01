@@ -61,15 +61,22 @@ function buildEvent(staleIfErrorExpires: number | undefined) {
   }
 }
 
+function mockApp(routeCacheStatus = '') {
+  mocks.useNitroApp.mockReturnValue({
+    multiCache: {
+      config: {
+        routeCacheStatus,
+      },
+      state: {
+        removeKeyBeingRevalidated: vi.fn(),
+      },
+    },
+  })
+}
+
 describe('error nitro hook handler', () => {
   beforeEach(() => {
-    mocks.useNitroApp.mockReturnValue({
-      multiCache: {
-        state: {
-          removeKeyBeingRevalidated: vi.fn(),
-        },
-      },
-    })
+    mockApp()
     mocks.sendWebResponse.mockReset()
     mocks.setCachedResponse.mockReset()
   })
@@ -113,5 +120,17 @@ describe('error nitro hook handler', () => {
 
     expect(mocks.sendWebResponse).toHaveBeenCalledTimes(1)
     expect(event.node.res.statusMessage).toEqual('')
+  })
+
+  test('Adds the Cache-Status header to the stale route', () => {
+    mockApp('nuxt-multi-cache')
+    const event = buildEvent(now + 60)
+
+    onError(new Error('Failed to render.'), { event } as any)
+
+    const response: Response = mocks.sendWebResponse.mock.calls[0]![1]
+    expect(response.headers.get('cache-status')).toEqual(
+      'nuxt-multi-cache; fwd=stale; fwd-status=500; ttl=-10',
+    )
   })
 })

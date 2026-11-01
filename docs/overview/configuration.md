@@ -93,6 +93,11 @@ export default defineNuxtConfig({
     // cache.
     route: {
       enabled: false,
+
+      // Add a Cache-Status header that says how the route cache handled the
+      // request. A string sets the name of the cache in the header.
+      // Default: false
+      cacheStatus: true,
     },
 
     // CDN Cache Control Headers feature.

@@ -55,16 +55,32 @@ export function isExcludedRoutePath(
   path: string,
   app: { baseURL: string; buildAssetsDir: string },
 ): boolean {
-  const prefixes = [
-    joinURL(app.baseURL, app.buildAssetsDir),
-    joinURL(app.baseURL, '/__nuxt_error'),
-  ]
+  const prefixes = [joinURL(app.baseURL, app.buildAssetsDir)]
 
   if (apiPrefix) {
     prefixes.push(withTrailingSlash(joinURL(app.baseURL, apiPrefix)))
   }
 
-  return prefixes.some((prefix) => path.startsWith(prefix))
+  return (
+    isErrorPagePath(path, app) ||
+    prefixes.some((prefix) => path.startsWith(prefix))
+  )
+}
+
+/**
+ * Whether the path is Nuxt's error page.
+ *
+ * Nuxt renders it with an internal request for error responses and copies
+ * its response headers onto the error response.
+ *
+ * @param path - The request path, including the base URL.
+ * @param app - The app runtime config.
+ */
+export function isErrorPagePath(
+  path: string,
+  app: { baseURL: string },
+): boolean {
+  return path.startsWith(joinURL(app.baseURL, '/__nuxt_error'))
 }
 
 /**

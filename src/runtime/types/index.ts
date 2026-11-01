@@ -1,10 +1,11 @@
-import type { OutgoingHttpHeaders } from 'node:http'
+import type { OutgoingHttpHeader, OutgoingHttpHeaders } from 'node:http'
 import type { CreateStorageOptions, Storage } from 'unstorage'
 import type { H3Event } from 'h3'
 import type { NuxtMultiCacheRouteCacheHelper } from './../helpers/RouteCacheHelper'
 import type { NuxtMultiCacheCDNHelper } from './../helpers/CDNHelper'
 import type { MultiCacheState } from './../helpers/MultiCacheState'
 import type { MaxAge } from './../helpers/maxAge'
+import type { RouteCacheStatus } from './../helpers/cacheStatus'
 import type { CacheTagInvalidator } from './../helpers/CacheTagInvalidator'
 import type { CacheTagRegistry } from './CacheTagRegistry'
 
@@ -249,6 +250,13 @@ export type MultiCacheRuntimeConfig = {
   route: boolean
 
   /**
+   * The name of the route cache in the Cache-Status header, or an empty string
+   * if the header is disabled. An env variable can also set it to `true` (the
+   * default name) or `false`.
+   */
+  routeCacheStatus: string | boolean
+
+  /**
    * API settings.
    */
   api: {
@@ -385,6 +393,21 @@ export type MultiCacheEventContext = {
    * Contains the already fetched cached route, if it exists.
    */
   routeCachedDecoded?: RouteCacheItem
+
+  /**
+   * How the route cache handled the request, for the Cache-Status header.
+   */
+  routeCacheStatus?: RouteCacheStatus
+
+  /**
+   * The Cache-Status header with the entry of the route cache (`value`) and
+   * before it was added (`before`). Set once the entry is added. The header is
+   * reset to `before` when the response is stored.
+   */
+  routeCacheStatusHeader?: {
+    before: OutgoingHttpHeader | undefined
+    value: string
+  }
 
   /**
    * Whether this request originates from within the Nuxt app during SSR.

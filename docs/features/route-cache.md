@@ -161,6 +161,63 @@ export default defineMultiCacheOptions(() => {
 
 :::
 
+### Cache-Status header
+
+The module can add a
+[`Cache-Status` header (RFC 9211)](https://www.rfc-editor.org/rfc/rfc9211.html)
+to responses that says how the route cache handled the request:
+
+::: code-group
+
+```typescript [nuxt.config.ts]
+export default defineNuxtConfig({
+  multiCache: {
+    route: {
+      enabled: true,
+      // `true` uses the name "nuxt-multi-cache", a string sets another name.
+      cacheStatus: true,
+    },
+  },
+})
+```
+
+:::
+
+It can also be enabled or disabled at runtime, see
+[Runtime Config](/overview/runtime-config#cache-status-header).
+
+| The response                                                                                                                         | Cache-Status                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| Served from the route cache                                                                                                          | `nuxt-multi-cache; hit; ttl=376`                       |
+| Served stale while another request renders it again ([stale while revalidate](/composables/useRouteCache#allowstalewhilerevalidate)) | `nuxt-multi-cache; hit; ttl=-12`                       |
+| Rendered, nothing was stored                                                                                                         | `nuxt-multi-cache; fwd=uri-miss`                       |
+| Rendered, the stored route is expired                                                                                                | `nuxt-multi-cache; fwd=stale`                          |
+| Rendered, the stored route could not be loaded                                                                                       | `nuxt-multi-cache; fwd=miss`                           |
+| The stored route, because rendering failed with a server error ([stale-if-error](/overview/stale-if-error))                          | `nuxt-multi-cache; fwd=stale; fwd-status=503; ttl=-60` |
+| Rendered without the route cache: excluded by `route.applies`, `enabledForRequest` or the module                                     | `nuxt-multi-cache; fwd=bypass`                         |
+| Rendered without the route cache: a method other than `GET` and `HEAD`                                                               | `nuxt-multi-cache; fwd=method`                         |
+
+A rendered response that is stored also gets `stored` and the `ttl` of the
+stored route, e.g. `nuxt-multi-cache; fwd=uri-miss; ttl=3600; stored`. If
+writing it to the storage fails, the error is logged. The `ttl` is the time in
+seconds until the route expires. It's 0 or negative if the response is stale (0
+for a max age of 0), and missing if the route has no max age. Error responses
+get the entry of the request that failed, e.g. `fwd=uri-miss` for a 404 page.
+
+Responses that a server handler sends itself, e.g. with `sendStream`,
+`sendRedirect` or `proxyRequest`, don't get an entry. They are never stored
+either.
+
+If the response already has a `Cache-Status` header, for example from an API
+whose response is proxied, the entry is added after it. The entry is never
+stored with the route. A CDN that caches the response keeps the entry and adds
+its own after it, so the entry then describes the response when it was rendered.
+
+The header is sent to every visitor, like the cache status headers of CDNs. It
+doesn't include the cache key or the cache tags. To find the key of a route, use
+the debug log (`debug: true`), then
+[inspect it with the API](/features/api#inspect).
+
 ## Usage in Components
 
 Use the `useRouteCache` composable in a page, layout or any component:

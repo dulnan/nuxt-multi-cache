@@ -10,6 +10,8 @@ import type {
 } from '../../types'
 import { onError } from '../hooks/error'
 import { onBeforeResponse } from '../hooks/beforeResponse'
+import { onBeforeResponseCacheStatus } from '../hooks/cacheStatus'
+import { getCacheStatusName } from '../../helpers/cacheStatus'
 import { MultiCacheState } from '../../helpers/MultiCacheState'
 import { serveCachedHandler } from '../handler/serveCachedRoute'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
@@ -126,6 +128,11 @@ export default defineNitroPlugin((nitroApp) => {
 
     // Hook into the error handler of H3 to try and serve stale cached routes.
     nitroApp.hooks.hook('error', onError)
+
+    // Add the Cache-Status header to responses.
+    if (getCacheStatusName(multiCache.config.routeCacheStatus)) {
+      nitroApp.hooks.hook('beforeResponse', onBeforeResponseCacheStatus)
+    }
   }
 
   // Mark responses that are private for the CDN as private in Cache-Control.
