@@ -1,4 +1,4 @@
-import { type H3Event, getRequestURL } from 'h3'
+import { type H3Event, getRequestURL, getResponseHeaders } from 'h3'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import {
   getMultiCacheContext,
@@ -20,6 +20,7 @@ import {
   getCacheStatusTtl,
   setRouteCacheStatus,
 } from '../../helpers/cacheStatus'
+import { copyHeaders } from '../../helpers/staleIfError'
 
 function canBeServedFromCache(
   event: H3Event,
@@ -101,6 +102,12 @@ export async function serveCachedHandler(event: H3Event) {
       }
 
       setRouteCacheStatus(event, { fwd: 'stale' })
+
+      // If revalidating fails, the stale route may be served. This handler
+      // runs first, so these are the headers a cache hit would have.
+      event.context.multiCache.routeInitialHeaders = copyHeaders(
+        getResponseHeaders(event),
+      )
 
       // Returning, so the route is revalidated.
       return

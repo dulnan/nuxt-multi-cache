@@ -114,11 +114,15 @@ sent, which is why the cache tag invalidation delay is always 0 for
   existing ones (Nuxt's) in `nitro:init` (after all `nitro:config` hooks, which
   could replace it): for errors that become the response, it serves a stale
   route on server errors (stale-if-error) and removes the revalidation key,
-  because h3 skips `afterResponse` for them. Nitro awaits error handlers and
-  stops at the first that responds, so the app's handler doesn't run for a stale
-  route; Nitro's `defaultHandler` is called to log the error. The Nitro `error`
-  hook isn't used: Nitro doesn't await it, and calls it for errors that don't
-  end the request too (`event.captureError`, cache storage errors).
+  because h3 skips `afterResponse` for them. Stale routes (also in
+  `render:response`) are sent with the headers of a cache hit: the response's
+  headers are reset to the snapshot that `serveCachedHandler` takes before any
+  other handler runs (`routeInitialHeaders`), then the cached ones are set.
+  Nitro awaits error handlers and stops at the first that responds, so the app's
+  handler doesn't run for a stale route; Nitro's `defaultHandler` is called to
+  log the error. The Nitro `error` hook isn't used: Nitro doesn't await it, and
+  calls it for errors that don't end the request too (`event.captureError`,
+  cache storage errors).
 - Composables (`composables/`, Nuxt, event optional) and server utils
   (`server/utils/`, Nitro, event required) are thin wrappers around the
   implementations in `shared/`.

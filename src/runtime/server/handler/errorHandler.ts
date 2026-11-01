@@ -1,17 +1,16 @@
-import { sendWebResponse } from 'h3'
+import { send } from 'h3'
 import { defineNitroErrorHandler } from 'nitropack/runtime'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { useMultiCacheApp } from '../utils/useMultiCacheApp'
 import { logger } from '../../helpers/multi-cache-logger'
 import {
   addCacheStatusHeader,
-  appendCacheStatus,
   getCacheStatusName,
-  serializeCacheStatus,
 } from '../../helpers/cacheStatus'
 import {
   getStaleRoute,
   getStaleRouteCacheStatus,
+  restoreInitialHeaders,
 } from '../../helpers/staleIfError'
 
 /**
@@ -41,22 +40,26 @@ export default defineNitroErrorHandler(
         return
       }
 
-      // Error responses are sent without the beforeResponse hook, which adds
-      // the entry of the route cache to the Cache-Status header otherwise.
       const cacheStatusName = getCacheStatusName(app.config.routeCacheStatus)
-      const cacheStatus = event.context.multiCache?.routeCacheStatus
-      if (cacheStatusName && cacheStatus) {
-        addCacheStatusHeader(event, cacheStatusName, cacheStatus)
-      }
-
       const decoded = getStaleRoute(event, error.statusCode)
+
       if (!decoded) {
+        // Error responses are sent without the beforeResponse hook, which adds
+        // the entry of the route cache to the Cache-Status header otherwise.
+        const cacheStatus = event.context.multiCache?.routeCacheStatus
+        if (cacheStatusName && cacheStatus) {
+          addCacheStatusHeader(event, cacheStatusName, cacheStatus)
+        }
         return
       }
 
       // The app's error handler, which logs the error otherwise, isn't called.
       // Nitro's default handler logs unhandled and fatal errors.
       await defaultHandler(error, event)
+
+      // Sent with the same headers as a cache hit, without the ones that the
+      // failed request has set.
+      restoreInitialHeaders(event)
 
       // h3 and Nitro's default handler have set the status of the error
       // response. The status code is replaced with the cached one, but the
@@ -66,16 +69,11 @@ export default defineNitroErrorHandler(
 
       setCachedResponse(event, decoded)
 
-      // The cached headers replace the values of headers already set. Other
-      // headers already set are kept.
-      const headers = { ...decoded.headers }
       if (cacheStatusName) {
-        headers['cache-status'] = appendCacheStatus(
-          headers['cache-status'],
-          serializeCacheStatus(
-            cacheStatusName,
-            getStaleRouteCacheStatus(event, decoded, error.statusCode),
-          ),
+        addCacheStatusHeader(
+          event,
+          cacheStatusName,
+          getStaleRouteCacheStatus(event, decoded, error.statusCode),
         )
       }
 
@@ -83,7 +81,7 @@ export default defineNitroErrorHandler(
       // to call the next error handler.
       // The beforeResponse hook is not called for the stale route, so it is
       // not compressed by an app that compresses responses there.
-      await sendWebResponse(event, new Response(decoded.data, { headers }))
+      await send(event, decoded.data)
     } catch (e) {
       logger.warn('Unexpected error in nuxt-multi-cache error handler.', e)
     }

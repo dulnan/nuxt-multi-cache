@@ -1,4 +1,10 @@
-import type { H3Event } from 'h3'
+import type { OutgoingHttpHeaders } from 'node:http'
+import {
+  getResponseHeaders,
+  removeResponseHeader,
+  setResponseHeader,
+  type H3Event,
+} from 'h3'
 import type { RouteCacheItem } from '../types'
 import { isExpired } from './maxAge'
 import { getRequestTimestamp } from './server'
@@ -50,5 +56,37 @@ export function getStaleRouteCacheStatus(
     fwd: 'stale',
     fwdStatus: statusCode,
     ttl: getCacheStatusTtl(decoded.expires, getRequestTimestamp(event)),
+  }
+}
+
+/**
+ * A copy of the headers, e.g. of the response.
+ */
+export function copyHeaders(headers: OutgoingHttpHeaders): OutgoingHttpHeaders {
+  const copy: OutgoingHttpHeaders = {}
+  for (const [name, value] of Object.entries(headers)) {
+    // Multiple values (e.g. of Set-Cookie) may be appended to the same array.
+    copy[name] = Array.isArray(value) ? [...value] : value
+  }
+  return copy
+}
+
+/**
+ * Reset the headers of the response to the ones set before any handler ran.
+ *
+ * The stale route is then sent with the same headers as a cache hit: Headers
+ * that the failed request set, e.g. a cookie for the visitor or the headers of
+ * the error page, are removed.
+ */
+export function restoreInitialHeaders(event: H3Event) {
+  for (const name of Object.keys(getResponseHeaders(event))) {
+    removeResponseHeader(event, name)
+  }
+
+  const initial = event.context.multiCache?.routeInitialHeaders ?? {}
+  for (const [name, value] of Object.entries(initial)) {
+    if (value !== undefined) {
+      setResponseHeader(event, name, value)
+    }
   }
 }

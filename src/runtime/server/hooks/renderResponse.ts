@@ -5,6 +5,7 @@ import { setRouteCacheStatus } from '../../helpers/cacheStatus'
 import {
   getStaleRoute,
   getStaleRouteCacheStatus,
+  restoreInitialHeaders,
 } from '../../helpers/staleIfError'
 
 /**
@@ -40,6 +41,9 @@ export function onRenderResponse(
     throw createError({ statusCode: response.statusCode })
   }
 
+  // Sent with the same headers as a cache hit, without the ones that the
+  // failed render (and Nuxt's error page) has set.
+  restoreInitialHeaders(event)
   setCachedResponse(event, decoded)
 
   // Added to the Cache-Status header by the beforeResponse hook.

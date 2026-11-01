@@ -10,7 +10,7 @@ const now = toTimestamp(mockDate)
 const mocks = vi.hoisted(() => {
   return {
     useNitroApp: vi.fn(),
-    sendWebResponse: vi.fn(),
+    send: vi.fn(),
     setCachedResponse: vi.fn(),
     removeKeyBeingRevalidated: vi.fn(),
     defaultHandler: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('nitropack/runtime', () => {
 vi.mock('h3', async (importOriginal) => {
   return {
     ...(await importOriginal<typeof import('h3')>()),
-    sendWebResponse: mocks.sendWebResponse,
+    send: mocks.send,
   }
 })
 
@@ -37,9 +37,30 @@ vi.mock('../../../src/runtime/helpers/routeCache', () => {
   }
 })
 
+/**
+ * A response with the header methods of Node's ServerResponse used by h3.
+ */
+function buildResponse(initialHeaders: Record<string, any>) {
+  const headers = new Map<string, any>(Object.entries(initialHeaders))
+  return {
+    // Set by h3 from the error before the error handler is called.
+    statusMessage: 'Backend not available.',
+    headersSent: false,
+    getHeaders: () => Object.fromEntries(headers),
+    getHeader: (name: string) => headers.get(name.toLowerCase()),
+    setHeader: (name: string, value: any) => {
+      headers.set(name.toLowerCase(), value)
+    },
+    removeHeader: (name: string) => {
+      headers.delete(name.toLowerCase())
+    },
+  }
+}
+
 function buildEvent(
   staleIfErrorExpires: number | undefined,
   multiCache: Record<string, unknown> = {},
+  headers: Record<string, any> = {},
 ) {
   const decoded: Partial<RouteCacheItem> = {
     data: '<html></html>',
@@ -61,10 +82,7 @@ function buildEvent(
       },
     },
     node: {
-      res: {
-        // Set by h3 from the error before the error handler is called.
-        statusMessage: 'Backend not available.',
-      },
+      res: buildResponse(headers),
     },
   }
 }
@@ -91,7 +109,7 @@ function handle(error: H3Error, event: ReturnType<typeof buildEvent>) {
 describe('Nitro error handler', () => {
   beforeEach(() => {
     mockApp()
-    mocks.sendWebResponse.mockReset()
+    mocks.send.mockReset()
     mocks.setCachedResponse.mockReset()
     mocks.removeKeyBeingRevalidated.mockReset()
     mocks.defaultHandler.mockReset()
@@ -110,7 +128,7 @@ describe('Nitro error handler', () => {
 
       await handle(createError({ statusCode: 500 }), event)
 
-      expect(mocks.sendWebResponse).toHaveBeenCalledTimes(served ? 1 : 0)
+      expect(mocks.send).toHaveBeenCalledTimes(served ? 1 : 0)
       expect(mocks.setCachedResponse).toHaveBeenCalledTimes(served ? 1 : 0)
     },
   )
@@ -127,13 +145,13 @@ describe('Nitro error handler', () => {
 
     await handle(error, event)
 
-    expect(mocks.sendWebResponse).toHaveBeenCalledTimes(served ? 1 : 0)
+    expect(mocks.send).toHaveBeenCalledTimes(served ? 1 : 0)
   })
 
   test('Resolves once the stale route has been sent', async () => {
     const event = buildEvent(now + 60)
     let sent = false
-    mocks.sendWebResponse.mockImplementation(async () => {
+    mocks.send.mockImplementation(async () => {
       await new Promise((resolve) => setTimeout(resolve, 10))
       sent = true
     })
@@ -171,7 +189,7 @@ describe('Nitro error handler', () => {
 
     await handle(createError({ statusCode: 500 }), event)
 
-    expect(mocks.sendWebResponse).not.toHaveBeenCalled()
+    expect(mocks.send).not.toHaveBeenCalled()
   })
 
   test.each([
@@ -195,7 +213,7 @@ describe('Nitro error handler', () => {
 
     await handle(createError({ statusCode: 500 }), event)
 
-    expect(mocks.sendWebResponse).toHaveBeenCalledTimes(1)
+    expect(mocks.send).toHaveBeenCalledTimes(1)
     expect(event.node.res.statusMessage).toEqual('')
   })
 
@@ -205,9 +223,39 @@ describe('Nitro error handler', () => {
 
     await handle(createError({ statusCode: 500 }), event)
 
-    const response: Response = mocks.sendWebResponse.mock.calls[0]![1]
-    expect(response.headers.get('cache-status')).toEqual(
+    expect(event.node.res.getHeader('cache-status')).toEqual(
       'nuxt-multi-cache; fwd=stale; fwd-status=500; ttl=-10',
     )
+  })
+
+  test('Removes the headers that the failed request has set', async () => {
+    const before = {
+      'x-request-id': 'abc',
+      'set-cookie': ['session=1'],
+    }
+    const event = buildEvent(
+      now + 60,
+      { routeInitialHeaders: before },
+      {
+        'x-request-id': 'abc',
+        'x-failed-request': 'true',
+        'set-cookie': ['session=1', 'failed-request=true'],
+      },
+    )
+
+    await handle(createError({ statusCode: 500 }), event)
+
+    // The cached headers are set afterwards (setCachedResponse).
+    expect(event.node.res.getHeaders()).toEqual(before)
+    expect(mocks.setCachedResponse).toHaveBeenCalledTimes(1)
+  })
+
+  test('Keeps the headers if no stale route is served', async () => {
+    const headers = { 'x-failed-request': 'true' }
+    const event = buildEvent(undefined, { routeInitialHeaders: {} }, headers)
+
+    await handle(createError({ statusCode: 500 }), event)
+
+    expect(event.node.res.getHeaders()).toEqual(headers)
   })
 })

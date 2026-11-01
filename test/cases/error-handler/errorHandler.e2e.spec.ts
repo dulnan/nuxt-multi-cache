@@ -31,6 +31,7 @@ async function request(url: string, date = NOW) {
     status: response.status,
     body: await response.text(),
     cacheStatus: response.headers.get('cache-status'),
+    headers: response.headers,
   }
 }
 
@@ -87,6 +88,29 @@ describe('The error handler of the route cache', () => {
     // Nitro's cache has no entry for this URL, so the page is rendered.
     const recovered = await request('/nitro-cached?v=2', EXPIRED)
     expect(recovered.body).not.toEqual(first.body)
+  })
+
+  test.each(['/stale-if-error', '/page'])(
+    'sends only the headers of the stale route for %s',
+    async (path) => {
+      await request(path)
+      const failed = await request(path + '?fail=true', EXPIRED)
+      expect(failed.status).toEqual(200)
+
+      // Set by the failed request before it failed.
+      expect(failed.headers.get('x-failed-request')).toBeNull()
+      expect(failed.headers.getSetCookie()).toEqual([])
+
+      // Set by a request hook and not stored with the route. A cache hit has
+      // it too.
+      expect(failed.headers.get('x-request-id')).toBeTruthy()
+    },
+  )
+
+  test('sends the cookie stored with the stale route once', async () => {
+    await request('/stale-if-error?cookie=true')
+    const failed = await request('/stale-if-error?fail=true', EXPIRED)
+    expect(failed.headers.getSetCookie()).toEqual(['cached=true; Path=/'])
   })
 
   test('responds normally if a non-fatal error was captured', async () => {

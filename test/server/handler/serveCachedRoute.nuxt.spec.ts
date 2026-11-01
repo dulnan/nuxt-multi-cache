@@ -337,6 +337,8 @@ describe('serveCachedRoute event handler', () => {
           setHeader: function (name: string, value: string) {
             setHeaders[name] = value
           },
+          // Set by a request hook.
+          getHeaders: () => ({ 'x-request-id': 'abc' }),
         },
         req: {
           originalUrl: '/',
@@ -380,6 +382,11 @@ describe('serveCachedRoute event handler', () => {
 
     // Should not serve from cache because item is stale.
     expect(await serveCachedHandler(event as any)).toBeUndefined()
+
+    // The headers a cache hit would have, for when the stale route is served.
+    expect(event.context.multiCache).toHaveProperty('routeInitialHeaders', {
+      'x-request-id': 'abc',
+    })
 
     // Now set time to one year ago.
     const newDate = new Date(date)

@@ -23,7 +23,7 @@ the project and report it with evidence.
    `.nvmrc`, `.node-version`, CI, Dockerfile).
 3. **Install** `nuxt-multi-cache@^5` with the project's package manager. If
    the install fails because a patch of the module doesn't apply, continue with
-   item 28 first.
+   item 31 first.
 4. **Check every item** of the checklist below, searching the whole project
    except `node_modules` and build output. Give each item a verdict:
    - **affected**, with `file:line` of each match the change applies to;
@@ -153,21 +153,47 @@ the project and report it with evidence.
       4xx when a backend fails.
     - Do: report. Backend failures need a 5xx status to serve the stale copy.
       [Stale if error](https://nuxt-multi-cache.dulnan.net/overview/stale-if-error#route-cache)
-15. **`route.applies` gets the decoded path**, and static files are detected
+15. **A stale route is sent with the headers of a cache hit:** the ones set
+    before any handler ran (Nitro `request` hooks) and the cached headers.
+    Headers that the failed request had set in middleware, the handler or the
+    page were sent along, including cookies such as a renewed session.
+    - Search: `setStaleIfError`, `staleIfError`; on those routes, headers and
+      cookies set in `server/middleware/`, server routes and pages
+      (`setCookie(`, `useCookie(`, `setResponseHeader(`).
+    - Do: report. Headers that every response needs, also a stale one, belong
+      in a Nitro `request` hook or must be stored with the route.
+      [Stale if error](https://nuxt-multi-cache.dulnan.net/overview/stale-if-error#route-cache)
+16. **The app's error handler isn't called when a stale route is served.**
+    The module's Nitro error handler responds first. Nitro still logs the
+    error and calls its `error` hook, but a custom `nitro.errorHandler` that
+    reports errors no longer sees them.
+    - Search: `errorHandler` in the `nitro` options, `defineNitroErrorHandler`.
+    - Do: report. Error reporting belongs in the Nitro `error` hook
+      (`nitroApp.hooks.hook('error', ...)` in a server plugin).
+      [Stale if error](https://nuxt-multi-cache.dulnan.net/overview/stale-if-error#route-cache)
+17. **Browsers get a stale route with its cached status code.** For requests
+    that accept HTML, the stale route was sent with the error status (500 or
+    503). Now it's a 200 with the cached headers, so a CDN may store it for the
+    cached max age.
+    - Search: `setStaleIfError`, `staleIfError`; CDN headers on those routes
+      (`useCDNHeaders`).
+    - Do: report. Mark it outside the repo when the CDN's config decides what
+      it stores.
+18. **`route.applies` gets the decoded path**, and static files are detected
     without the query string. Paths excluded by `applies` skip the route cache
     entirely, including `enabledForRequest`.
     - Search: `applies` in the server options.
     - Do: match decoded characters (`é` instead of `%C3%A9`). Report a check
       that relied on the query string.
       [applies](https://nuxt-multi-cache.dulnan.net/overview/server-options#applies)
-16. **`state.keysBeingRevalidated` is a `Map`** of start times instead of a
+19. **`state.keysBeingRevalidated` is a `Map`** of start times instead of a
     `Set`.
     - Search: `keysBeingRevalidated`.
     - Do: adapt the code; `has()` and `delete()` still work.
 
 ### Cache keys and purging
 
-17. **Keys with a `?` are neither read nor stored.** The storage dropped
+20. **Keys with a `?` are neither read nor stored.** The storage dropped
     everything after the `?`, so different keys shared one item. Affects
     `buildCacheKey`, data cache keys and `cache-key` props built from query
     values or URLs.
@@ -179,13 +205,13 @@ the project and report it with evidence.
       of them. A raw query value can also contain `..`, which the storage
       rejects.
       [Cache keys](https://nuxt-multi-cache.dulnan.net/advanced/cache-backend#cache-keys)
-18. **A `cacheKeyPrefix` method that returns no prefix gets `{none}`.** Keys of
+21. **A `cacheKeyPrefix` method that returns no prefix gets `{none}`.** Keys of
     such requests are now `{none}--<key>`.
     - Search: `cacheKeyPrefix` in the server options.
     - Do: report if the method can return `''` or no string. Existing items of
       these requests are missed once.
       [Dynamic prefix](https://nuxt-multi-cache.dulnan.net/overview/server-options#dynamic)
-19. **Purging and inspecting by key use new keys** for the cases of item 18 and,
+22. **Purging and inspecting by key use new keys** for the cases of item 21 and,
     without a cache key prefix, for the root path, which is stored as `{root}`.
     - Search: calls of the purge and inspect API (`/__nuxt_multi_cache/` or the
       configured `api.prefix`) in scripts, CMS hooks and CI.
@@ -195,7 +221,7 @@ the project and report it with evidence.
 
 ### CDN headers
 
-20. **`Cache-Control` gets `private` when the CDN header is `private` or
+23. **`Cache-Control` gets `private` when the CDN header is `private` or
     `no-store`.** Fastly ignores both in `Surrogate-Control`. `public` is
     removed from an existing `Cache-Control`, other directives stay.
     - Search: the `cdn` feature in the module options. Every project with it
@@ -204,7 +230,7 @@ the project and report it with evidence.
       `private()`, `no-store` or bubbling "uncacheable" (item 7).
     - Do: report. `cdn.privateCacheControl: false` restores the 4.x behavior.
       [Private responses](https://nuxt-multi-cache.dulnan.net/features/cdn-cache-control#private-responses)
-21. **`s-maxage` is capped by all sources.** If the page or a merged response
+24. **`s-maxage` is capped by all sources.** If the page or a merged response
     sets an `s-maxage`, the header gets the lowest lifetime for shared caches of
     all sources. A bubbled "uncacheable" adds `no-store` and sets `s-maxage`
     to 0.
@@ -215,18 +241,18 @@ the project and report it with evidence.
 
 ### API and runtime config
 
-22. **A set API token is required, even with authorization disabled.**
+25. **A set API token is required, even with authorization disabled.**
     - Search: `authorization: false` in `nuxt.config`,
       `NUXT_MULTI_CACHE_API_AUTHORIZATION_DISABLED`, and a token in the config
       or `NUXT_MULTI_CACHE_API_AUTHORIZATION_TOKEN`.
     - Do: report. Callers must send the token, or the token is set to an empty
       string in that environment.
       [Toggle API authorization](https://nuxt-multi-cache.dulnan.net/overview/runtime-config#toggle-api-authorization)
-23. **`NUXT_MULTI_CACHE_API_ENABLED=false` disables the API** (404). It was
+26. **`NUXT_MULTI_CACHE_API_ENABLED=false` disables the API** (404). It was
     ignored.
     - Search: the variable in `.env*` files and deployment config.
     - Do: report if the API is used where the variable is `false`.
-24. **Runtime config can enable a feature** that has `enabled: false` in
+27. **Runtime config can enable a feature** that has `enabled: false` in
     `nuxt.config`: `NUXT_MULTI_CACHE_CDN`, `_COMPONENT`, `_DATA` and `_ROUTE`
     set to `true`. Before, the feature stayed off. A feature is added to the
     build when its key exists in the module options, also with
@@ -234,7 +260,7 @@ the project and report it with evidence.
     - Search: these variables in `.env*` files and deployment config.
     - Do: report each feature that now turns on. To keep a feature out of the
       build entirely, remove its key from the module options.
-25. **`cacheTagInvalidationDelay: 0` purges during the request.** It was
+28. **`cacheTagInvalidationDelay: 0` purges during the request.** It was
     replaced by 60000. Now the purge tags API responds once the items are
     removed, with an error response if the storage fails, and
     `cacheTagInvalidator.add()` returns a promise that resolves after the purge.
@@ -250,7 +276,7 @@ the project and report it with evidence.
 
 ### Storage and types
 
-26. **Permanent items get no storage TTL.** Redis, Upstash and Vercel KV
+29. **Permanent items get no storage TTL.** Redis, Upstash and Vercel KV
     rejected the old `ttl: -1`, so permanent route and component items were
     never stored; Cloudflare KV expired them after 60 s. Now they stay until
     purged, and items with stale-if-error or stale-while-revalidate stay longer.
@@ -258,7 +284,7 @@ the project and report it with evidence.
     - Do: report for a driver with TTL support: the storage grows, so permanent
       items need cache tags to be purged.
       [Expiration](https://nuxt-multi-cache.dulnan.net/advanced/cache-backend#expiration)
-27. **Type changes.** `useMultiCacheApp()` returns `MultiCacheApp | undefined`;
+30. **Type changes.** `useMultiCacheApp()` returns `MultiCacheApp | undefined`;
     the stats and inspect API responses of the component cache are strings;
     `DataCacheItem.data` is `unknown`. The CDN helper is based on
     `@tusbar/cache-control` 3.x instead of 1.x, whose `CacheControl` has the new
@@ -270,7 +296,7 @@ the project and report it with evidence.
 
 ### Code against the module's internals
 
-28. **Patches, mocks and imports of internals break silently.** They target
+31. **Patches, mocks and imports of internals break silently.** They target
     the 4.x implementation. In 5.0, for example, the API handlers get the app
     with `getMultiCacheApp()`, which responds with a 500 if it's missing, and
     `checkAuth` reads `config.api.enabled`. A test that mocks the old shape can
@@ -289,7 +315,7 @@ the project and report it with evidence.
 
 ### Nuxt layers
 
-29. **A server options file in a layer is used.** 4.x only read the app's
+32. **A server options file in a layer is used.** 4.x only read the app's
     `server/multiCache.serverOptions.ts`. Now the first file found is used,
     starting with the app, then its layers in their order of priority. The
     files aren't merged.
@@ -312,5 +338,5 @@ the project and report it with evidence.
      or the configured `api.prefix`). Keys changed, and items stored by 4.x may
      have a wrong expiry, the internal headers of API routes, or the modules of
      other components.
-   - **Environment variables** of the deployment for items 22 to 24, if they
+   - **Environment variables** of the deployment for items 25 to 27, if they
      aren't in the repo.

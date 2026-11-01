@@ -18,7 +18,29 @@ vi.mock('../../../../src/runtime/helpers/routeCache', () => {
   }
 })
 
-function buildEvent(staleIfErrorExpires: number | undefined, tags: string[]) {
+/**
+ * A response with the header methods of Node's ServerResponse used by h3.
+ */
+function buildNodeResponse(initialHeaders: Record<string, any>) {
+  const headers = new Map<string, any>(Object.entries(initialHeaders))
+  return {
+    statusMessage: '',
+    getHeaders: () => Object.fromEntries(headers),
+    setHeader: (name: string, value: any) => {
+      headers.set(name.toLowerCase(), value)
+    },
+    removeHeader: (name: string) => {
+      headers.delete(name.toLowerCase())
+    },
+  }
+}
+
+function buildEvent(
+  staleIfErrorExpires: number | undefined,
+  tags: string[],
+  multiCache: Record<string, any> = {},
+  headers: Record<string, any> = {},
+) {
   const decoded: Partial<RouteCacheItem> = {
     data: '<html>Stale</html>',
     headers: { 'content-type': 'text/html' },
@@ -37,12 +59,11 @@ function buildEvent(staleIfErrorExpires: number | undefined, tags: string[]) {
       multiCache: {
         requestTimestamp: now,
         routeCachedDecoded: decoded,
+        ...multiCache,
       } as Record<string, any>,
     },
     node: {
-      res: {
-        statusMessage: '',
-      },
+      res: buildNodeResponse(headers),
     },
   }
 }
@@ -86,6 +107,26 @@ describe('render:response nitro hook handler', () => {
       fwdStatus: 500,
       ttl: -10,
     })
+  })
+
+  test('Removes the headers that the failed render has set', () => {
+    const before = { 'x-request-id': 'abc' }
+    const event = buildEvent(
+      now + 60,
+      ['ssr'],
+      { routeInitialHeaders: before },
+      {
+        'x-request-id': 'abc',
+        'content-type': 'text/html;charset=utf-8',
+        'set-cookie': ['failed-request=true'],
+      },
+    )
+
+    render(buildResponse(500), event)
+
+    // The cached headers are set afterwards (setCachedResponse, and Nitro from
+    // the response).
+    expect(event.node.res.getHeaders()).toEqual(before)
   })
 
   test("Throws instead inside Nitro's cache, which would store the stale route", () => {

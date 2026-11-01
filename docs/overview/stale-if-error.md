@@ -99,9 +99,11 @@ The stale route is only served for server errors: errors with a 5xx status code
 and unhandled errors. A client error, such as a 404 thrown because the content
 was deleted, is sent as usual.
 
-The stale route is sent with its cached status code, body and headers instead of
-the error response. Headers that were already set during the failed request are
-kept, unless the cached route has its own value for them.
+The stale route is sent with its cached status code and body instead of the
+error response, with the same headers as a cache hit: the ones set before any
+handler ran (for example by a Nitro `request` hook) and the cached headers.
+Headers that the failed request has set are not sent, including cookies, for
+example a renewed session.
 
 The module adds a Nitro
 [error handler](https://v2.nitro.build/config#errorhandler) for this, which runs
