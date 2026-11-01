@@ -395,6 +395,13 @@ export type MultiCacheEventContext = {
   routeCachedDecoded?: RouteCacheItem
 
   /**
+   * The response headers before any handler ran (set by request hooks), if
+   * the cached route could not be served. A stale route is sent with these
+   * and its cached headers, like a cache hit.
+   */
+  routeInitialHeaders?: OutgoingHttpHeaders
+
+  /**
    * How the route cache handled the request, for the Cache-Status header.
    */
   routeCacheStatus?: RouteCacheStatus

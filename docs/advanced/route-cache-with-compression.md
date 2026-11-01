@@ -36,7 +36,9 @@ Note these exceptions:
 
 - A stale response that is served because of an error (see
   [Stale if Error](/overview/stale-if-error#route-cache)) is sent without
-  calling the `beforeResponse` hook, so it is not compressed.
+  calling the `beforeResponse` hook, so it is not compressed. Pages served stale
+  instead of Nuxt's inline error page (`experimental.inlineErrorRendering`) are
+  the exception.
 - `h3-fast-compression` only compresses string responses with at least 1024
   characters. A server handler that returns an object is not compressed when
   it's first called, but it is when served from the route cache (as a string).

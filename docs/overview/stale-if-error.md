@@ -99,6 +99,26 @@ The stale route is only served for server errors: errors with a 5xx status code
 and unhandled errors. A client error, such as a 404 thrown because the content
 was deleted, is sent as usual.
 
+The stale route is sent with its cached status code and body instead of the
+error response, with the same headers as a cache hit: the ones set before any
+handler ran (for example by a Nitro `request` hook) and the cached headers.
+Headers that the failed request has set are not sent, including cookies, for
+example a renewed session.
+
+The module adds a Nitro
+[error handler](https://v2.nitro.build/config#errorhandler) for this, which runs
+before the app's error handler (Nuxt's error page, or a custom
+`nitro.errorHandler`). The app's error handler is not called when a stale route
+is served. The error is still logged like Nitro logs errors, and reported to
+Nitro's `error` hook, where error monitoring receives it. With Nuxt's
+`experimental.inlineErrorRendering`, a page that fails to render responds with
+the error page instead of throwing, and the module replaces the error page with
+the stale route.
+
+Only an error that becomes the response serves the stale route. Errors that are
+only reported while the request continues, such as with `event.captureError()`
+or by Nitro's cache when its storage fails, don't.
+
 ## Only Use the Cache on Errors
 
 To never serve an item from cache, but keep a stale copy for when an error
