@@ -23,6 +23,10 @@ that keep a cache from serving one request's content to another.
   `route.alterCachedHeaders`, `enabledForRequest`, `cacheKeyPrefix`, the API
   authorization callback.
   [Server options](https://nuxt-multi-cache.dulnan.net/overview/server-options)
+  With Nuxt layers, only the first file is used, starting with the app. An app
+  that adds its own file replaces the layer's options, unless it spreads them
+  from `#layers/<name>/server/multiCache.serverOptions`.
+  [Nuxt layers](https://nuxt-multi-cache.dulnan.net/overview/server-options#nuxt-layers)
 - **Storage:** without a driver, every cache is in memory, per server process.
   It's empty after a restart, and with several instances each has its own
   cache, so a purge request only reaches one of them. Deployments with more

@@ -60,11 +60,12 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
 - Templates (`src/build/templates/`) generate `#nuxt-multi-cache/config`
   (build-time constants: debug, header names, which features are added, API
   prefix, test mode) and `#nuxt-multi-cache/server-options`, which bundles the
-  user's `server/multiCache.serverOptions.ts` (`defineMultiCacheOptions`).
-  Server options hold everything that can't be serialized into `nuxt.config`:
-  storage drivers, `bubbleError`,
-  `route.buildCacheKey/alterCachedHeaders/applies`, `enabledForRequest`,
-  `cacheKeyPrefix`, API authorization callback, cache tag registry.
+  user's `server/multiCache.serverOptions.ts` (`defineMultiCacheOptions`), the
+  first one found in the app and then its layers (not merged). Server options
+  hold everything that can't be serialized into `nuxt.config`: storage drivers,
+  `bubbleError`, `route.buildCacheKey/alterCachedHeaders/applies`,
+  `enabledForRequest`, `cacheKeyPrefix`, API authorization callback, cache tag
+  registry.
 - A build plugin replaces server-only modules with stubs in client bundles
   (`CLIENT_STUBS`), and calls of `useRouteCache`, `useCDNHeaders` and
   `useComponentCache` are tree-shaken from the client.

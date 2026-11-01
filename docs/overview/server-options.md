@@ -30,6 +30,40 @@ export default defineMultiCacheOptions(() => {
 
 :::
 
+## Nuxt Layers
+
+The file is also found in the server folder of
+[Nuxt layers](https://nuxt.com/docs/4.x/getting-started/layers). The module
+looks in the app first, then in its layers in their order of priority, and uses
+the first file it finds. The files are not merged: If the app has its own file,
+the file of the layer is not used.
+
+To keep the options of a layer and change some of them, import its file in the
+app's file:
+
+::: code-group
+
+```typescript [server/multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+import { getCookie } from 'h3'
+import layerOptions from '#layers/base/server/multiCache.serverOptions'
+
+export default defineMultiCacheOptions(() => {
+  return {
+    ...layerOptions(),
+    enabledForRequest: async function (event) {
+      return !getCookie(event, 'session')
+    },
+  }
+})
+```
+
+:::
+
+Nuxt adds the `#layers/<name>` alias for each layer in the `layers/` folder,
+named after its folder, and for each layer with a `$meta.name` in its
+`nuxt.config`.
+
 ## Cache Configuration
 
 For each cache you can define custom options for the unstorage instance, for
