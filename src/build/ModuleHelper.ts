@@ -8,9 +8,10 @@ import {
   addTypeTemplate,
   addComponent,
   addServerPlugin,
+  getLayerDirectories,
   type Resolver,
 } from '@nuxt/kit'
-import { relative } from 'pathe'
+import { join, relative } from 'pathe'
 import type { RouterMethod } from 'h3'
 import type { Nuxt, ResolvedNuxtTemplate } from 'nuxt/schema'
 import type { ModuleOptions } from './options'
@@ -139,14 +140,28 @@ export class ModuleHelper {
 
   /**
    * Find the path to the multiCache.serverOptions.ts file.
+   *
+   * The file is looked up in the server directory of the app and then of its
+   * layers, in their order of priority. The first file found is used; the
+   * files are not merged.
    */
   private findServerOptions(): string | null {
-    // Look for the file in the server directory.
-    const newPath = this.resolvers.server.resolve('multiCache.serverOptions')
-    const serverPath = fileExists(newPath)
+    const layers = getLayerDirectories(this.nuxt)
 
-    if (serverPath) {
-      return serverPath
+    for (const [index, layer] of layers.entries()) {
+      const serverPath = fileExists(
+        join(layer.server, 'multiCache.serverOptions'),
+      )
+
+      if (serverPath) {
+        // The first layer is the app.
+        if (index > 0) {
+          logger.info(
+            `Using the server options of a layer: ${relative(this.paths.root, serverPath)}`,
+          )
+        }
+        return serverPath
+      }
     }
 
     // Check for previous locations of the server options file that are not

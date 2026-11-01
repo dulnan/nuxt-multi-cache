@@ -280,6 +280,20 @@ the project and report it with evidence.
       `_control.sharedMaxAge` now only holds the app's own value, not the
       computed `s-maxage`. Report other uses of private properties.
 
+### Nuxt layers
+
+29. **A server options file in a layer is used.** 4.x only read the app's
+    `server/multiCache.serverOptions.ts`. Now the first file found is used,
+    starting with the app, then its layers in their order of priority. The
+    files aren't merged.
+    - Search: `multiCache.serverOptions` in the layers of the app: the
+      `layers/` folder, and the paths and packages in `extends` of
+      `nuxt.config`, also in `node_modules`.
+    - Do: report if a layer has the file and the app doesn't: its storage
+      drivers, `cacheKeyPrefix`, `enabledForRequest` and other options now
+      apply. If the app has its own file, nothing changes.
+      [Nuxt layers](https://nuxt-multi-cache.dulnan.net/overview/server-options#nuxt-layers)
+
 ## Report
 
 1. A table with one row per checklist item: number, change, verdict, evidence,
