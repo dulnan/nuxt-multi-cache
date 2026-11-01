@@ -250,9 +250,13 @@ the project and report it with evidence.
       [Expiration](https://nuxt-multi-cache.dulnan.net/advanced/cache-backend#expiration)
 27. **Type changes.** `useMultiCacheApp()` returns `MultiCacheApp | undefined`;
     the stats and inspect API responses of the component cache are strings;
-    `DataCacheItem.data` is `unknown`.
-    - Search: the typecheck output.
-    - Do: add guards and types.
+    `DataCacheItem.data` is `unknown`. The CDN helper is based on
+    `@tusbar/cache-control` 3.x instead of 1.x, whose `CacheControl` has the new
+    fields `mustUnderstand`, `noCacheFields` and `privateFields`.
+    - Search: the typecheck output; imports from `@tusbar/cache-control`.
+    - Do: add guards and types. Replace types imported from
+      `@tusbar/cache-control` for the CDN values with `CDNCacheControl` from
+      `nuxt-multi-cache`.
 
 ### Code against the module's internals
 
@@ -268,8 +272,10 @@ the project and report it with evidence.
       `cdn._control`.
     - Do: remove patches for bugs that 5.x fixes, and recreate the others
       against 5.x. Adapt mocks to the 5.x code and check that the tests using
-      them fail when the tested behavior breaks. Report uses of private
-      properties.
+      them fail when the tested behavior breaks. Replace reads of `cdn._control`
+      with `cdn.getControl()`, which returns the values sent in the header:
+      `_control.sharedMaxAge` now only holds the app's own value, not the
+      computed `s-maxage`. Report other uses of private properties.
 
 ## Report
 

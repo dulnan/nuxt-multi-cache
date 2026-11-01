@@ -14,7 +14,7 @@ import {
   cdnCacheControlHeader,
   cdnCacheTagHeader,
 } from '#nuxt-multi-cache/config'
-import type { CacheableItemInterface } from '../types'
+import type { CacheableItemInterface, CDNCacheControl } from '../types'
 import type { CacheabilityInterface } from './CacheabilityInterface'
 
 const numericProperties = [
@@ -125,6 +125,11 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
   _customDirectives: Map<string, string>
 
   /**
+   * The values of the custom directives, by name. See getControl().
+   */
+  _customDirectiveValues: Map<string, string | number | true> = new Map()
+
+  /**
    * The lowest max age set by the app with setNumeric() or set(). Unlike the
    * max-age directive, it doesn't include values merged from other responses
    * or bubbled from cached items.
@@ -190,18 +195,26 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
    */
   private formatControl(): string {
     const ownSharedMaxAge = this._control.sharedMaxAge
+    this._control.sharedMaxAge = this.getSharedMaxAge()
+    const formatted = this._control.format()
+    this._control.sharedMaxAge = ownSharedMaxAge
+    return formatted
+  }
+
+  /**
+   * The s-maxage of the header. See formatControl().
+   */
+  private getSharedMaxAge(): number | null {
+    const ownSharedMaxAge = this._control.sharedMaxAge
     if (ownSharedMaxAge === null && !this._hasMergedSharedMaxAge) {
-      return this._control.format()
+      return null
     }
 
     const values = [
       ownSharedMaxAge ?? this._ownMaxAge,
       this._mergedSharedMaxAge,
     ].filter((v) => typeof v === 'number')
-    this._control.sharedMaxAge = values.length ? Math.min(...values) : null
-    const formatted = this._control.format()
-    this._control.sharedMaxAge = ownSharedMaxAge
-    return formatted
+    return values.length ? Math.min(...values) : null
   }
 
   /**
@@ -407,6 +420,10 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     }
 
     this._customDirectives.set(key, directive)
+    this._customDirectiveValues.set(
+      key,
+      typeof value === 'number' ? Math.floor(value) : value,
+    )
     return this
   }
 
@@ -486,6 +503,39 @@ export class NuxtMultiCacheCDNHelper implements CacheabilityInterface {
     }
 
     return this
+  }
+
+  /**
+   * Get the standard directives as they are sent in the header.
+   *
+   * Includes the values merged from other responses and bubbled from cached
+   * items, the s-maxage computed from all sources, and the custom directives.
+   * The returned object is a copy.
+   */
+  public getControl(): CDNCacheControl {
+    const control = this._control
+    return {
+      maxAge: control.maxAge,
+      sharedMaxAge: this.getSharedMaxAge(),
+      staleIfError: control.staleIfError,
+      staleWhileRevalidate: control.staleWhileRevalidate,
+      maxStaleDuration: control.maxStaleDuration,
+      minFresh: control.minFresh,
+      public: !!control.public,
+      private: !!control.private,
+      privateFields: control.privateFields ? [...control.privateFields] : null,
+      noCache: !!control.noCache,
+      noCacheFields: control.noCacheFields ? [...control.noCacheFields] : null,
+      noStore: !!control.noStore,
+      mustRevalidate: !!control.mustRevalidate,
+      proxyRevalidate: !!control.proxyRevalidate,
+      mustUnderstand: !!control.mustUnderstand,
+      immutable: !!control.immutable,
+      noTransform: !!control.noTransform,
+      maxStale: !!control.maxStale,
+      onlyIfCached: !!control.onlyIfCached,
+      customDirectives: Object.fromEntries(this._customDirectiveValues),
+    }
   }
 
   public getMaxAge(): number | null {

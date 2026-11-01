@@ -8,6 +8,7 @@ import {
 } from './../../src/build/options/defaults'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 import { logger } from '~/src/runtime/helpers/multi-cache-logger'
+import type { CDNCacheControl } from '~/src/module'
 
 const mockDate = new Date('2024-03-15T10:30:00.000Z')
 const mockDateTimestamp = toTimestamp(mockDate)
@@ -52,6 +53,7 @@ describe('The CDNHelper', () => {
         "constructor",
         "applyToEvent",
         "formatControl",
+        "getSharedMaxAge",
         "mergeMaxAge",
         "mergeFromResponse",
         "mergeCacheControlHeader",
@@ -64,6 +66,7 @@ describe('The CDNHelper', () => {
         "public",
         "mergeFromCacheItem",
         "mergeFromCacheability",
+        "getControl",
         "getMaxAge",
         "getStaleIfError",
         "getTags",
@@ -718,5 +721,77 @@ describe('The Cache-Control header of the CDNHelper', () => {
     expect(
       getCacheControlHeader((helper) => helper.mergeCacheControlHeader(header)),
     ).toBe(expected)
+  })
+})
+
+describe('getControl() of the CDNHelper', () => {
+  test('returns null or false for directives that are not set', () => {
+    const control: CDNCacheControl = new NuxtMultiCacheCDNHelper(
+      mockDateTimestamp,
+    ).getControl()
+
+    expect(control.maxAge).toBeNull()
+    expect(control.sharedMaxAge).toBeNull()
+    expect(control.public).toBe(false)
+    expect(control.private).toBe(false)
+    expect(control.privateFields).toBeNull()
+    expect(control.customDirectives).toEqual({})
+  })
+
+  test('returns the custom directives with their values', () => {
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
+    vi.spyOn(logger, 'warn').mockImplementation(() => {})
+    helper
+      .addCustomDirective('Durable')
+      .addCustomDirective('cdn-ttl', 7200.9)
+      .addCustomDirective('x-label', 'a b')
+      // Skipped: invalid value.
+      .addCustomDirective('x-invalid', -1)
+
+    expect(helper.getControl().customDirectives).toEqual({
+      durable: true,
+      'cdn-ttl': 7200,
+      'x-label': 'a b',
+    })
+    vi.restoreAllMocks()
+  })
+
+  test('returns the values of the header, including merged values', () => {
+    let control: CDNCacheControl | undefined
+    const header = getCacheControlHeader((helper) => {
+      helper
+        .public()
+        .setNumeric('maxAge', 3600)
+        .setNumeric('sharedMaxAge', 86400)
+        .setNumeric('staleIfError', 600)
+        .setBoolean('mustRevalidate')
+      // A merged response with a lower max age also lowers the s-maxage.
+      helper.mergeCacheControlHeader('max-age=60')
+      control = helper.getControl()
+    })
+
+    expect(control).toMatchObject({
+      public: true,
+      maxAge: 60,
+      sharedMaxAge: 60,
+      staleIfError: 600,
+      mustRevalidate: true,
+      noStore: false,
+    })
+    expect(header).toContain('s-maxage=60')
+  })
+
+  test('returns a copy', () => {
+    const helper = new NuxtMultiCacheCDNHelper(mockDateTimestamp)
+    helper.set('privateFields', ['set-cookie']).addCustomDirective('durable')
+
+    const control = helper.getControl()
+    control.maxAge = 10
+    control.privateFields!.push('authorization')
+    control.customDirectives['cdn-ttl'] = 60
+
+    expect(helper.getControl().maxAge).toBeNull()
+    expect(helper.getControl().privateFields).toEqual(['set-cookie'])
+    expect(helper.getControl().customDirectives).toEqual({ durable: true })
   })
 })

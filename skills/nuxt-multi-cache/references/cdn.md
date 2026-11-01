@@ -20,6 +20,8 @@ cache. [Docs](https://nuxt-multi-cache.dulnan.net/features/cdn-cache-control)
   `setNumeric('sharedMaxAge' | 'staleIfError' | 'staleWhileRevalidate', ...)`,
   `setBoolean('noStore')`, `addTags([...])`.
 - The lowest max age wins. `'permanent'` doesn't set or lower a directive.
+- `cdn.getControl()` returns the values as they go into the header, including
+  merged ones. `cdn._control` is internal and holds only some of them.
 
 ## Private responses
 
