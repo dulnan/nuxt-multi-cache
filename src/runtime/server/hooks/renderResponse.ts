@@ -1,3 +1,4 @@
+import { createError } from 'h3'
 import type { RenderContext, RenderResponse } from 'nitropack/types'
 import { setCachedResponse } from '../../helpers/routeCache'
 import { setRouteCacheStatus } from '../../helpers/cacheStatus'
@@ -30,6 +31,13 @@ export function onRenderResponse(
   const decoded = getStaleRoute(event, response.statusCode)
   if (!decoded) {
     return
+  }
+
+  // Rendered inside Nitro's cache (route rules with `cache`, `swr` or `isr`),
+  // which would store the stale route as a fresh response. Nitro's cache
+  // doesn't store errors, which reach the module's error handler instead.
+  if (event.context.cache) {
+    throw createError({ statusCode: response.statusCode })
   }
 
   setCachedResponse(event, decoded)

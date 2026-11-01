@@ -132,16 +132,17 @@ export default defineNuxtModule<ModuleOptions>({
     }
 
     // Serve stale routes for errors that become the response. Nitro calls its
-    // error handlers in order until one responds; Nuxt has already set its
-    // own handler, which renders the error page.
+    // error handlers in order until one responds, so this one is put before
+    // Nuxt's, which renders the error page. Added once Nitro is initialized,
+    // so that no `nitro:config` hook can replace it.
     if (options.route) {
       const errorHandler = helper.resolvers.module.resolve(
         './runtime/server/handler/errorHandler',
       )
-      nuxt.hook('nitro:config', (nitroConfig) => {
-        nitroConfig.errorHandler = [
+      nuxt.hook('nitro:init', (nitro) => {
+        nitro.options.errorHandler = [
           errorHandler,
-          ...[nitroConfig.errorHandler ?? []].flat(),
+          ...[nitro.options.errorHandler ?? []].flat(),
         ]
       })
     }

@@ -39,6 +39,15 @@ async function request(url: string, date = NOW) {
   }
 }
 
+async function setBackendDown(down: boolean) {
+  await fetch(`/backend?down=${down}`, { method: 'POST' })
+}
+
+// The tags of the errors that Nitro captured since the last call.
+async function getCapturedErrorTags(): Promise<string[][]> {
+  return (await fetch('/captured-error-tags')).json()
+}
+
 describe('The error handler of the route cache with inline error rendering', () => {
   beforeEach(async () => {
     await purgeAll()
@@ -53,7 +62,15 @@ describe('The error handler of the route cache with inline error rendering', () 
 
   test('serves the stale route if rendering a page fails', async () => {
     const first = await request('/page')
+    await getCapturedErrorTags()
     const failed = await request('/page?fail=true', EXPIRED)
+
+    // Nuxt rendered the error inline: It reports the error with the "ssr" tag
+    // instead of throwing it to the error handler.
+    expect(await getCapturedErrorTags()).toContainEqual(
+      expect.arrayContaining(['ssr']),
+    )
+
     expect(failed.status).toEqual(200)
     expect(failed.body).toEqual(first.body)
     expect(failed.cacheStatus).toEqual(
@@ -68,6 +85,34 @@ describe('The error handler of the route cache with inline error rendering', () 
     // Still expired, so the page is rendered again.
     const next = await request('/page', EXPIRED)
     expect(next.body).not.toEqual(first.body)
+  })
+
+  test("does not let Nitro's cache store the stale page", async () => {
+    const first = await request('/nitro-cached?v=1')
+
+    await setBackendDown(true)
+    try {
+      const failed = await request('/nitro-cached?v=2', EXPIRED)
+      expect(failed.status).toEqual(200)
+      expect(failed.body).toEqual(first.body)
+    } finally {
+      await setBackendDown(false)
+    }
+
+    // Nitro's cache has no entry for this URL, so the page is rendered.
+    const recovered = await request('/nitro-cached?v=2', EXPIRED)
+    expect(recovered.body).not.toEqual(first.body)
+  })
+
+  test('revalidates the page again after a revalidation failed', async () => {
+    const first = await request('/swr-page')
+
+    // Expired: This request revalidates the page and fails.
+    expect((await request('/swr-page?fail=true', EXPIRED)).status).toEqual(500)
+
+    // The page is no longer being revalidated, so this request revalidates it,
+    // instead of getting the stale page.
+    expect((await request('/swr-page', EXPIRED)).body).not.toEqual(first.body)
   })
 
   test('responds normally if a non-fatal error was captured', async () => {

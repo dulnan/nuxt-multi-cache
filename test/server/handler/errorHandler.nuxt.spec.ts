@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => {
     sendWebResponse: vi.fn(),
     setCachedResponse: vi.fn(),
     removeKeyBeingRevalidated: vi.fn(),
+    defaultHandler: vi.fn(),
   }
 })
 
@@ -82,7 +83,9 @@ function mockApp(routeCacheStatus = '') {
 }
 
 function handle(error: H3Error, event: ReturnType<typeof buildEvent>) {
-  return errorHandler(error, event as any, { defaultHandler: vi.fn() as any })
+  return errorHandler(error, event as any, {
+    defaultHandler: mocks.defaultHandler,
+  })
 }
 
 describe('Nitro error handler', () => {
@@ -91,6 +94,7 @@ describe('Nitro error handler', () => {
     mocks.sendWebResponse.mockReset()
     mocks.setCachedResponse.mockReset()
     mocks.removeKeyBeingRevalidated.mockReset()
+    mocks.defaultHandler.mockReset()
   })
 
   test.each([
@@ -140,6 +144,26 @@ describe('Nitro error handler', () => {
     // sent when the promise resolves.
     expect(sent).toEqual(true)
   })
+
+  test.each([
+    ['a stale route is served', now + 60, 1],
+    ['no stale route is served', undefined, 0],
+  ])(
+    "Calls Nitro's default handler, which logs the error, if %s",
+    async (_label, staleIfErrorExpires, calls) => {
+      const event = buildEvent(staleIfErrorExpires)
+      const error = createError(new Error('Failed to render.'))
+
+      await handle(error, event)
+
+      // The app's error handler, which logs the error otherwise, is only
+      // called if no stale route is served.
+      expect(mocks.defaultHandler).toHaveBeenCalledTimes(calls)
+      if (calls) {
+        expect(mocks.defaultHandler).toHaveBeenCalledWith(error, event)
+      }
+    },
+  )
 
   test('Does not respond if the response has already been sent', async () => {
     const event = buildEvent(now + 60)

@@ -88,6 +88,18 @@ describe('render:response nitro hook handler', () => {
     })
   })
 
+  test("Throws instead inside Nitro's cache, which would store the stale route", () => {
+    const event = buildEvent(now + 60, ['ssr'])
+    ;(event.context as Record<string, any>).cache = { options: {} }
+    const response = buildResponse(500)
+
+    expect(() => render(response, event)).toThrow(
+      expect.objectContaining({ statusCode: 500 }),
+    )
+    expect(mocks.setCachedResponse).not.toHaveBeenCalled()
+    expect(response).toEqual(buildResponse(500))
+  })
+
   test.each([
     ['the render did not fail', now + 60, ['test'], 500],
     ['the status is not a server error', now + 60, ['ssr'], 404],

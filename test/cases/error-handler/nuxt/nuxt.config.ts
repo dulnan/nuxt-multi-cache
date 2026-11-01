@@ -17,5 +17,10 @@ export default defineNuxtConfig({
     enableTestMode: true,
   },
 
+  routeRules: {
+    // Nitro's own cache, in front of the page's rendering.
+    '/nitro-cached': { swr: 600 },
+  },
+
   compatibilityDate: '2025-04-27',
 })

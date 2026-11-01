@@ -34,6 +34,10 @@ async function request(url: string, date = NOW) {
   }
 }
 
+async function setBackendDown(down: boolean) {
+  await fetch(`/backend?down=${down}`, { method: 'POST' })
+}
+
 describe('The error handler of the route cache', () => {
   beforeEach(async () => {
     await purgeAll()
@@ -66,6 +70,23 @@ describe('The error handler of the route cache', () => {
     // Still expired, so the page is rendered again.
     const next = await request('/page', EXPIRED)
     expect(next.body).not.toEqual(first.body)
+  })
+
+  test("does not let Nitro's cache store the stale page", async () => {
+    const first = await request('/nitro-cached?v=1')
+
+    await setBackendDown(true)
+    try {
+      const failed = await request('/nitro-cached?v=2', EXPIRED)
+      expect(failed.status).toEqual(200)
+      expect(failed.body).toEqual(first.body)
+    } finally {
+      await setBackendDown(false)
+    }
+
+    // Nitro's cache has no entry for this URL, so the page is rendered.
+    const recovered = await request('/nitro-cached?v=2', EXPIRED)
+    expect(recovered.body).not.toEqual(first.body)
   })
 
   test('responds normally if a non-fatal error was captured', async () => {

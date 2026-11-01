@@ -93,7 +93,10 @@ sent, which is why the cache tag invalidation delay is always 0 for
     body);
   - the `render:response` hook: replaces Nuxt's inline error page
     (`experimental.inlineErrorRendering`, which reports the render error with
-    the `ssr` tag instead of throwing) with a stale route (stale-if-error);
+    the `ssr` tag instead of throwing) with a stale route (stale-if-error).
+    Inside Nitro's own cache (route rules with `cache`, `swr` or `isr`, which
+    sets `event.context.cache` and would store the swap as a fresh 200) it
+    rethrows for the error handler instead;
   - the `beforeResponse` hook (CDN feature): adds `private` to `Cache-Control`
     if the CDN header is `private` or `no-store`, because some CDNs (Fastly)
     ignore these in their own header;
@@ -108,12 +111,14 @@ sent, which is why the cache tag invalidation delay is always 0 for
     error responses, so that path never gets an entry. The entry is removed
     again before the response is stored.
 - `server/handler/errorHandler.ts` is a Nitro error handler, put in front of the
-  existing ones (Nuxt's) in `nitro:config`: for errors that become the response,
-  it serves a stale route on server errors (stale-if-error) and removes the
-  revalidation key, because h3 skips `afterResponse` for them. Nitro awaits
-  error handlers and stops at the first that responds. The Nitro `error` hook
-  isn't used: Nitro doesn't await it, and calls it for errors that don't end the
-  request too (`event.captureError`, cache storage errors).
+  existing ones (Nuxt's) in `nitro:init` (after all `nitro:config` hooks, which
+  could replace it): for errors that become the response, it serves a stale
+  route on server errors (stale-if-error) and removes the revalidation key,
+  because h3 skips `afterResponse` for them. Nitro awaits error handlers and
+  stops at the first that responds, so the app's handler doesn't run for a stale
+  route; Nitro's `defaultHandler` is called to log the error. The Nitro `error`
+  hook isn't used: Nitro doesn't await it, and calls it for errors that don't
+  end the request too (`event.captureError`, cache storage errors).
 - Composables (`composables/`, Nuxt, event optional) and server utils
   (`server/utils/`, Nitro, event required) are thin wrappers around the
   implementations in `shared/`.
