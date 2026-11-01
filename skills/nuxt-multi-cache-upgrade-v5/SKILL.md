@@ -21,7 +21,9 @@ the project and report it with evidence.
    `^20.19.0 || >=22.12.0`. On Nuxt 3 the module isn't loaded: stop and tell the
    user to upgrade Nuxt first. Check every place that pins Node (`engines`,
    `.nvmrc`, `.node-version`, CI, Dockerfile).
-3. **Install** `nuxt-multi-cache@^5` with the project's package manager.
+3. **Install** `nuxt-multi-cache@^5` with the project's package manager. If
+   the install fails because a patch of the module doesn't apply, continue with
+   item 28 first.
 4. **Check every item** of the checklist below, searching the whole project
    except `node_modules` and build output. Give each item a verdict:
    - **affected**, with `file:line` of each match the change applies to;
@@ -251,6 +253,23 @@ the project and report it with evidence.
     `DataCacheItem.data` is `unknown`.
     - Search: the typecheck output.
     - Do: add guards and types.
+
+### Code against the module's internals
+
+28. **Patches, mocks and imports of internals break silently.** They target
+    the 4.x implementation. In 5.0, for example, the API handlers get the app
+    with `getMultiCacheApp()`, which responds with a 500 if it's missing, and
+    `checkAuth` reads `config.api.enabled`. A test that mocks the old shape can
+    fail, or pass by accident.
+    - Search: `patchedDependencies` in `package.json` or `pnpm-workspace.yaml`,
+      and patch files for `nuxt-multi-cache` in `patches/` or `.yarn/patches/`;
+      imports from `nuxt-multi-cache/dist/`; mocks of `#nuxt-multi-cache/*` or
+      of `useNitroApp().multiCache`; properties that start with `_`, such as
+      `cdn._control`.
+    - Do: remove patches for bugs that 5.x fixes, and recreate the others
+      against 5.x. Adapt mocks to the 5.x code and check that the tests using
+      them fail when the tested behavior breaks. Report uses of private
+      properties.
 
 ## Report
 
