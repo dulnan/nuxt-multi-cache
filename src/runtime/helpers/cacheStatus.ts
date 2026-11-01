@@ -167,8 +167,7 @@ export function addCacheStatusHeader(
   const added = event.context.multiCache.routeCacheStatusHeader
 
   // Replace the entry if it was already added, unless the header has been set
-  // again since then: The error hook also runs for non-fatal errors, during
-  // the request.
+  // again since then.
   const before = added && current === added.value ? added.before : current
   const value = appendCacheStatus(before, serializeCacheStatus(name, status))
 

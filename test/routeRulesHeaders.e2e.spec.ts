@@ -65,7 +65,7 @@ describe('Route cache in combination with routeRules', () => {
 
   // During "stale if error", the event handlers are executed as normal,
   // including the "route rules" handler by Nitro. In this scenario, the route
-  // cache serves the cached route from the "error" hook, which runs *after*
+  // cache serves the cached route from its error handler, which runs *after*
   // the route rules handler. This is why we don't have the problem anymore
   // with "Cannot set headers after they are sent to the client".
   // This test makes sure that route rules are also applied in this scenario.

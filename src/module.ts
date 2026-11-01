@@ -131,6 +131,21 @@ export default defineNuxtModule<ModuleOptions>({
       helper.addServerPlugin('multiCache')
     }
 
+    // Serve stale routes for errors that become the response. Nitro calls its
+    // error handlers in order until one responds; Nuxt has already set its
+    // own handler, which renders the error page.
+    if (options.route) {
+      const errorHandler = helper.resolvers.module.resolve(
+        './runtime/server/handler/errorHandler',
+      )
+      nuxt.hook('nitro:config', (nitroConfig) => {
+        nitroConfig.errorHandler = [
+          errorHandler,
+          ...[nitroConfig.errorHandler ?? []].flat(),
+        ]
+      })
+    }
+
     helper.addAlias('#nuxt-multi-cache', helper.paths.moduleBuildDir)
     helper.addServerUtil('useMultiCacheApp')
 

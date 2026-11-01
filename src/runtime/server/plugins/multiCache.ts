@@ -8,7 +8,7 @@ import type {
   MultiCacheInstances,
   MultiCacheInstance,
 } from '../../types'
-import { onError } from '../hooks/error'
+import { onRenderResponse } from '../hooks/renderResponse'
 import { onBeforeResponse } from '../hooks/beforeResponse'
 import { onBeforeResponseCacheStatus } from '../hooks/cacheStatus'
 import { getCacheStatusName } from '../../helpers/cacheStatus'
@@ -126,8 +126,10 @@ export default defineNitroPlugin((nitroApp) => {
     // Hook into afterResponse to store cacheable responses in cache.
     nitroApp.hooks.hook('afterResponse', onAfterResponse)
 
-    // Hook into the error handler of H3 to try and serve stale cached routes.
-    nitroApp.hooks.hook('error', onError)
+    // Serve stale routes instead of Nuxt's inline error page. Other errors
+    // that become the response are handled by the module's Nitro error
+    // handler.
+    nitroApp.hooks.hook('render:response', onRenderResponse)
 
     // Add the Cache-Status header to responses.
     if (getCacheStatusName(multiCache.config.routeCacheStatus)) {

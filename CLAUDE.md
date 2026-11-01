@@ -91,7 +91,9 @@ sent, which is why the cache tag invalidation delay is always 0 for
     cache hits;
   - the `afterResponse` hook: stores cacheable responses (status 200, non-empty
     body);
-  - the `error` hook: serves a stale route on server errors (stale-if-error);
+  - the `render:response` hook: replaces Nuxt's inline error page
+    (`experimental.inlineErrorRendering`, which reports the render error with
+    the `ssr` tag instead of throwing) with a stale route (stale-if-error);
   - the `beforeResponse` hook (CDN feature): adds `private` to `Cache-Control`
     if the CDN header is `private` or `no-store`, because some CDNs (Fastly)
     ignore these in their own header;
@@ -101,10 +103,17 @@ sent, which is why the cache tag invalidation delay is always 0 for
     `serveCachedHandler` store on the event, plus `stored` for lookups that
     missed if `afterResponse` will store the response (`getStorableRoute`).
     Responses that handlers send themselves (`event.handled`) skip
-    `beforeResponse` and get no entry. Error responses skip it too, so the
-    `error` hook adds it. Nuxt copies the headers of its `/__nuxt_error` render
-    onto error responses, so that path never gets an entry. The entry is removed
+    `beforeResponse` and get no entry. Error responses skip it too, so the error
+    handler adds it. Nuxt copies the headers of its `/__nuxt_error` render onto
+    error responses, so that path never gets an entry. The entry is removed
     again before the response is stored.
+- `server/handler/errorHandler.ts` is a Nitro error handler, put in front of the
+  existing ones (Nuxt's) in `nitro:config`: for errors that become the response,
+  it serves a stale route on server errors (stale-if-error) and removes the
+  revalidation key, because h3 skips `afterResponse` for them. Nitro awaits
+  error handlers and stops at the first that responds. The Nitro `error` hook
+  isn't used: Nitro doesn't await it, and calls it for errors that don't end the
+  request too (`event.captureError`, cache storage errors).
 - Composables (`composables/`, Nuxt, event optional) and server utils
   (`server/utils/`, Nitro, event required) are thin wrappers around the
   implementations in `shared/`.

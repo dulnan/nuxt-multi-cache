@@ -16,8 +16,8 @@ import { getStorableRoute } from './afterResponse'
  * once the response is complete, so that a response rendered by the app can
  * be marked as stored.
  *
- * Error responses are sent without this hook: The error hook adds the entry
- * to them.
+ * Error responses are sent without this hook: The module's error handler adds
+ * the entry to them.
  */
 export function onBeforeResponseCacheStatus(
   event: H3Event,
