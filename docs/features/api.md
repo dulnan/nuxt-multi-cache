@@ -246,6 +246,9 @@ Set it to `0` to purge the items during the request, without collecting tags:
 The response is sent once the items are removed, and an error while removing
 them results in an error response.
 
+For Cloudflare presets the delay is always `0`, see
+[Cloudflare Workers](/advanced/cache-backend#cloudflare-workers).
+
 :::
 
 ### Example Purge all cache items with cache tag `language:de`

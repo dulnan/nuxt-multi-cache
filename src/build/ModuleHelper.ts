@@ -16,7 +16,7 @@ import type { RouterMethod } from 'h3'
 import type { Nuxt, ResolvedNuxtTemplate } from 'nuxt/schema'
 import type { ModuleOptions } from './options'
 import { logger } from './logger'
-import { fileExists } from './helpers'
+import { fileExists, isCloudflarePreset } from './helpers'
 import type { ModuleTemplate } from './templates/defineTemplate'
 import { DEFAULT_API_PREFIX } from './options/defaults'
 
@@ -94,6 +94,11 @@ export class ModuleHelper {
   public readonly isDev: boolean
 
   public readonly options: ModuleOptions
+
+  /**
+   * The resolved Nitro preset, set when Nitro is initialized.
+   */
+  public nitroPreset = ''
 
   private nitroExternals: string[] = []
   private tsPaths: Record<string, string> = {}
@@ -186,6 +191,20 @@ export class ModuleHelper {
 
     logger.info('No multiCache.serverOptions file found.')
     return null
+  }
+
+  /**
+   * Set the resolved Nitro preset.
+   */
+  public setNitroPreset(preset: string) {
+    this.nitroPreset = preset
+
+    const delay = this.options.api?.cacheTagInvalidationDelay
+    if (delay && isCloudflarePreset(preset)) {
+      logger.warn(
+        `The api.cacheTagInvalidationDelay of ${delay} ms is ignored for the "${preset}" preset: Cloudflare Workers don't run timers after the response has been sent, so cache tags are purged during the request.`,
+      )
+    }
   }
 
   /**
@@ -322,14 +341,14 @@ export class ModuleHelper {
 
   public addTemplate(template: ModuleTemplate) {
     if (template.build) {
-      const content = this.processTemplate(
-        template.options.path,
-        template.build(this),
-      )
+      const build = template.build
       addTemplate({
         filename: template.options.path + '.js',
         write: true,
-        getContents: () => content,
+        // Built when the template is generated, after Nitro is initialized,
+        // so that it can depend on the Nitro preset.
+        getContents: () =>
+          this.processTemplate(template.options.path, build(this)),
       })
     }
     if (template.buildTypes) {

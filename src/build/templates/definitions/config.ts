@@ -1,9 +1,9 @@
 import {
   DEFAULT_API_PREFIX,
-  DEFAULT_CACHE_TAG_INVALIDATION_DELAY,
   DEFAULT_CDN_CONTROL_HEADER,
   DEFAULT_CDN_TAG_HEADER,
 } from '../../options/defaults'
+import { getCacheTagInvalidationDelay } from '../../helpers'
 import { defineTemplate } from '../defineTemplate'
 
 export default defineTemplate(
@@ -32,7 +32,7 @@ export const routeCacheEnabled = ${JSON.stringify(routeCacheEnabled)}
 export const componentCacheEnabled = ${JSON.stringify(componentCacheEnabled)}
 export const dataCacheEnabled = ${JSON.stringify(dataCacheEnabled)}
 export const shouldLogCacheOverview = ${JSON.stringify(!helper.options.disableCacheOverviewLogMessage)}
-export const cacheTagInvalidationDelay = ${JSON.stringify(helper.options.api?.cacheTagInvalidationDelay ?? DEFAULT_CACHE_TAG_INVALIDATION_DELAY)}
+export const cacheTagInvalidationDelay = ${JSON.stringify(getCacheTagInvalidationDelay(helper.options, helper.nitroPreset))}
 export const apiPrefix = ${JSON.stringify(helper.options.api?.prefix ?? DEFAULT_API_PREFIX)}
 export const apiEnabled = ${JSON.stringify(!!helper.options.api?.enabled)}
 export const isTestMode = ${JSON.stringify(!!helper.options.enableTestMode)}
@@ -92,6 +92,8 @@ export declare const dataCacheEnabled: boolean
 
 /**
  * The delay in milliseconds before invalidating cache tags.
+ *
+ * Always 0 for Cloudflare presets.
  */
 export declare const cacheTagInvalidationDelay: number
 

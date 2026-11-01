@@ -238,8 +238,15 @@ the project and report it with evidence.
     replaced by 60000. Now the purge tags API responds once the items are
     removed, with an error response if the storage fails, and
     `cacheTagInvalidator.add()` returns a promise that resolves after the purge.
-    - Search: `cacheTagInvalidationDelay`, `cacheTagInvalidator`.
-    - Do: report.
+    Cloudflare presets always use 0: in 4.x, purging by tag never ran there,
+    because Workers don't run timers after the response. A set delay logs a
+    build warning.
+    - Search: `cacheTagInvalidationDelay`, `cacheTagInvalidator`; a
+      `cloudflare` Nitro preset in `nuxt.config`, `NITRO_PRESET` or the
+      deployment config.
+    - Do: report. On Cloudflare, also report caches without a cache tag
+      registry: purging by tag fails above about 1,000 items.
+      [Cloudflare Workers](https://nuxt-multi-cache.dulnan.net/advanced/cache-backend#cloudflare-workers)
 
 ### Storage and types
 
