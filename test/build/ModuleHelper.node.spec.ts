@@ -94,3 +94,54 @@ describe('The server options file', () => {
     expect(getServerOptionsPath(layers)).toBeNull()
   })
 })
+
+describe('The Nitro preset', () => {
+  let root = ''
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'nuxt-multi-cache-'))
+  })
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true })
+    vi.restoreAllMocks()
+  })
+
+  function setNitroPreset(
+    preset: string,
+    cacheTagInvalidationDelay?: number,
+  ): ModuleHelper {
+    const helper = new ModuleHelper(createNuxt([root]), import.meta.url, {
+      api: { cacheTagInvalidationDelay },
+    })
+    helper.setNitroPreset(preset)
+    return helper
+  }
+
+  test('is stored', () => {
+    expect(setNitroPreset('cloudflare-module').nitroPreset).toBe(
+      'cloudflare-module',
+    )
+  })
+
+  test('logs that a cache tag invalidation delay is ignored on Cloudflare', () => {
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {})
+    setNitroPreset('cloudflare-pages', 5000)
+    expect(warn).toHaveBeenCalledWith(
+      `The api.cacheTagInvalidationDelay of 5000 ms is ignored for the "cloudflare-pages" preset: Cloudflare Workers don't run timers after the response has been sent, so cache tags are purged during the request.`,
+    )
+  })
+
+  test.each([
+    [undefined, 'cloudflare-module'],
+    [0, 'cloudflare-module'],
+    [5000, 'node-server'],
+  ])(
+    'logs nothing for a cache tag invalidation delay of %j and the %s preset',
+    (cacheTagInvalidationDelay, preset) => {
+      const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {})
+      setNitroPreset(preset, cacheTagInvalidationDelay)
+      expect(warn).not.toHaveBeenCalled()
+    },
+  )
+})

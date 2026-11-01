@@ -35,6 +35,47 @@ export default defineMultiCacheOptions(() => {
 
 :::
 
+## Cloudflare Workers
+
+On Cloudflare Workers, the memory storage only lives as long as an isolate. Use
+the [Cloudflare KV binding driver](https://unstorage.unjs.io/drivers/cloudflare)
+instead:
+
+::: code-group
+
+```typescript [server/multiCache.serverOptions.ts]
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+import cloudflareKVBindingDriver from 'unstorage/drivers/cloudflare-kv-binding'
+
+export default defineMultiCacheOptions(() => {
+  return {
+    route: {
+      storage: {
+        driver: cloudflareKVBindingDriver({ binding: 'CACHE', base: 'route' }),
+      },
+    },
+  }
+})
+```
+
+:::
+
+- **Purging by tag happens during the request.** Workers don't run timers after
+  the response has been sent, so for Cloudflare presets the
+  `api.cacheTagInvalidationDelay` option is ignored. If it's set, the build logs
+  a warning.
+- **Larger caches need a
+  [cache tag registry](/overview/cache-tags#cache-tag-registry).** Without one,
+  purging by tag lists all keys and reads every item. A Worker can make
+  [1,000 operations](https://developers.cloudflare.com/kv/platform/limits/) to
+  KV and other services per request, so this fails once the caches hold about
+  1,000 items. The built-in in-memory registry doesn't work here; implement one
+  with KV, D1 or a Durable Object.
+- **Purged items can still be served in other locations for a while.** KV
+  changes
+  [may take 60 seconds or more](https://developers.cloudflare.com/kv/concepts/how-kv-works/)
+  to be visible everywhere.
+
 ## Expiration
 
 Items are stored with the `ttl` option of unstorage, so drivers that support

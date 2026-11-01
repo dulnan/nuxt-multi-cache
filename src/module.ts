@@ -55,6 +55,12 @@ export default defineNuxtModule<ModuleOptions>({
       helper.addTemplate(template)
     })
 
+    // Nitro resolves the preset when it's initialized, before the templates
+    // are generated.
+    nuxt.hook('nitro:init', (nitro) => {
+      helper.setNitroPreset(nitro.options.preset)
+    })
+
     helper.transpile(helper.resolvers.module.resolve('./runtime'))
     helper.inlineNitroExternals(helper.resolvers.module.resolve('./runtime'))
     helper.inlineNitroExternals(helper.paths.moduleBuildDir)

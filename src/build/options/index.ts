@@ -147,6 +147,9 @@ export interface ModuleOptions {
      * Set it to 0 to purge during the request: The API responds once the
      * items are removed.
      *
+     * For Cloudflare presets the delay is always 0, because Workers don't run
+     * timers after the response has been sent.
+     *
      * @default 60000
      */
     cacheTagInvalidationDelay?: number

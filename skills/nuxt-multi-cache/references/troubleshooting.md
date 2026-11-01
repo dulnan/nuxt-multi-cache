@@ -51,8 +51,10 @@ Check in this order; the first match is usually the cause.
   once. Tag items with the source of their content.
 - **Purging by tag waits** for `api.cacheTagInvalidationDelay` (60000 ms by
   default), after the API has already responded. Errors during that purge only
-  appear in the server log.
+  appear in the server log. Cloudflare presets always purge during the request.
 - **The purge reached one instance** of several, with the memory storage.
+- **Cloudflare KV is eventually consistent:** other locations can serve a
+  purged item for 60 seconds or more.
 - **The page outlives its data** because the data cache items and components
   don't set `bubbleCacheability`.
 - **The CDN keeps its own copy**, which the module doesn't purge.

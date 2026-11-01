@@ -51,7 +51,8 @@ tests. Test mode (`enableTestMode`) allows overriding the current time with the
 preset and runs it in workerd through Miniflare, with Cloudflare KV as the
 storage. Workers run Nitro plugins in the global scope, where random values,
 timers and I/O throw, and they don't run timers after the response has been
-sent.
+sent, which is why the cache tag invalidation delay is always 0 for
+`cloudflare*` presets.
 
 ## Architecture
 
@@ -65,13 +66,15 @@ sent.
   is enabled at build time.
 - Templates (`src/build/templates/`) generate `#nuxt-multi-cache/config`
   (build-time constants: debug, header names, which features are added, API
-  prefix, test mode) and `#nuxt-multi-cache/server-options`, which bundles the
-  user's `server/multiCache.serverOptions.ts` (`defineMultiCacheOptions`), the
-  first one found in the app and then its layers (not merged). Server options
-  hold everything that can't be serialized into `nuxt.config`: storage drivers,
-  `bubbleError`, `route.buildCacheKey/alterCachedHeaders/applies`,
-  `enabledForRequest`, `cacheKeyPrefix`, API authorization callback, cache tag
-  registry.
+  prefix, test mode, the cache tag invalidation delay, which depends on the
+  Nitro preset resolved in `nitro:init`; the templates are built when Nuxt
+  generates them, after that hook) and `#nuxt-multi-cache/server-options`, which
+  bundles the user's `server/multiCache.serverOptions.ts`
+  (`defineMultiCacheOptions`), the first one found in the app and then its
+  layers (not merged). Server options hold everything that can't be serialized
+  into `nuxt.config`: storage drivers, `bubbleError`,
+  `route.buildCacheKey/alterCachedHeaders/applies`, `enabledForRequest`,
+  `cacheKeyPrefix`, API authorization callback, cache tag registry.
 - A build plugin replaces server-only modules with stubs in client bundles
   (`CLIENT_STUBS`), and calls of `useRouteCache`, `useCDNHeaders` and
   `useComponentCache` are tree-shaken from the client.

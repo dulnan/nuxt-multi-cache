@@ -34,6 +34,10 @@ that keep a cache from serving one request's content to another.
   keeps items across deploys: purge the route and component caches on each
   deploy, because cached pages point to the asset files of the previous build.
   [Cache backend](https://nuxt-multi-cache.dulnan.net/advanced/cache-backend)
+- **Cloudflare Workers:** memory only lives as long as an isolate, so use the
+  KV binding driver. Purging by tag without a cache tag registry reads every
+  item and fails above about 1,000 items (the operations limit per request).
+  [Cloudflare Workers](https://nuxt-multi-cache.dulnan.net/advanced/cache-backend#cloudflare-workers)
 
 ## Which cache
 
@@ -119,7 +123,8 @@ key. Each rule protects that.
   `x-nuxt-multi-cache-token` header. Tags are collected for
   `api.cacheTagInvalidationDelay` (60000 ms by default) before items are
   removed, so the response only confirms that the tags were received. With
-  `0`, the response is sent once the items are removed. The module only sends
+  `0`, the response is sent once the items are removed. Cloudflare presets
+  always use `0`. The module only sends
   the tags to the CDN; purge the CDN through its own API.
   [API](https://nuxt-multi-cache.dulnan.net/features/api)
 - **Protect the API:** set the token with

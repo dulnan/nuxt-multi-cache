@@ -15,11 +15,10 @@ export default defineNuxtConfig({
     data: {
       enabled: true,
     },
+    // The cache tag invalidation delay is 0 for Cloudflare presets.
     api: {
       enabled: true,
       authorization: false,
-      // Workers don't run timers after the response has been sent.
-      cacheTagInvalidationDelay: 0,
     },
   },
 

@@ -3,8 +3,11 @@ import configTemplate from '../../src/build/templates/definitions/config'
 import type { ModuleHelper } from '../../src/build/ModuleHelper'
 import type { ModuleOptions } from '../../src/build/options'
 
-function renderConfig(options: ModuleOptions): string {
-  return configTemplate.build!({ options } as unknown as ModuleHelper)
+function renderConfig(options: ModuleOptions, nitroPreset = 'node-server') {
+  return configTemplate.build!({
+    options,
+    nitroPreset,
+  } as unknown as ModuleHelper)
 }
 
 describe('The config template', () => {
@@ -20,4 +23,17 @@ describe('The config template', () => {
       )
     },
   )
+
+  test.each([
+    'cloudflare-module',
+    'cloudflare-module-legacy',
+    'cloudflare-pages',
+    'cloudflare-durable',
+  ])('sets a cache tag invalidation delay of 0 for %s', (preset) => {
+    for (const cacheTagInvalidationDelay of [undefined, 5000]) {
+      expect(
+        renderConfig({ api: { cacheTagInvalidationDelay } }, preset),
+      ).toContain(`export const cacheTagInvalidationDelay = 0\n`)
+    }
+  })
 })
