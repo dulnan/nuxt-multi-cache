@@ -50,7 +50,8 @@ Check in this order; the first match is usually the cause.
 - **Long max ages without cache tags** can only be purged by key or all at
   once. Tag items with the source of their content.
 - **Purging by tag waits** for `api.cacheTagInvalidationDelay` (60000 ms by
-  default).
+  default), after the API has already responded. Errors during that purge only
+  appear in the server log.
 - **The purge reached one instance** of several, with the memory storage.
 - **The page outlives its data** because the data cache items and components
   don't set `bubbleCacheability`.

@@ -114,8 +114,9 @@ key. Each rule protects that.
   `POST /__nuxt_multi_cache/purge/tags` with a JSON array of tags and the
   `x-nuxt-multi-cache-token` header. Tags are collected for
   `api.cacheTagInvalidationDelay` (60000 ms by default) before items are
-  removed. The module only sends the tags to the CDN; purge the CDN through its
-  own API.
+  removed, so the response only confirms that the tags were received. With
+  `0`, the response is sent once the items are removed. The module only sends
+  the tags to the CDN; purge the CDN through its own API.
   [API](https://nuxt-multi-cache.dulnan.net/features/api)
 - **Protect the API:** set the token with
   `NUXT_MULTI_CACHE_API_AUTHORIZATION_TOKEN`. `api.authorization: false` is only

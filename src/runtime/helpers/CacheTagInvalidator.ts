@@ -6,6 +6,7 @@ import {
   decodeRouteCacheItem,
   handleRawCacheData,
 } from './cacheItem'
+import { logger } from './multi-cache-logger'
 
 /**
  * A helper class to debounce cache tag invalidation.
@@ -38,8 +39,18 @@ export class CacheTagInvalidator {
 
   /**
    * Add tags to be purged.
+   *
+   * With a delay of 0, the items are purged right away: The returned promise
+   * resolves once they are removed, and rejects if the storage fails.
+   * Otherwise the tags are collected and purged after the delay, and errors
+   * are logged.
    */
-  add(tags: string[] = []) {
+  async add(tags: string[] = []): Promise<void> {
+    if (cacheTagInvalidationDelay === 0) {
+      await this.purgeTags(tags)
+      return
+    }
+
     tags.forEach((tag) => {
       if (!this.tags.has(tag)) {
         this.tags.add(tag)
@@ -49,7 +60,9 @@ export class CacheTagInvalidator {
     // Create a timeout to delay the actual invalidation.
     if (!this.timeout) {
       this.timeout = setTimeout(() => {
-        this.invalidate()
+        this.invalidate().catch((e) => {
+          logger.error('Error while purging cache tags.', e)
+        })
       }, cacheTagInvalidationDelay)
     }
   }
@@ -83,13 +96,24 @@ export class CacheTagInvalidator {
   /**
    * Invalidate the tags in the buffer.
    */
-  async invalidate() {
+  async invalidate(): Promise<boolean> {
     // Get the tags to invalidate and reset the buffer.
     const tags: string[] = [...this.tags.values()]
     this.tags.clear()
 
     // Reset the timeout.
     this.timeout = null
+
+    return this.purgeTags(tags)
+  }
+
+  /**
+   * Remove the cache items with any of the given tags.
+   */
+  private async purgeTags(tags: string[]): Promise<boolean> {
+    if (!tags.length) {
+      return true
+    }
 
     // Use the cache tag registry if provided.
     if (this.cacheTagRegistry) {

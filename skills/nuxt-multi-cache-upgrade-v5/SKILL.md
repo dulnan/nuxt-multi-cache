@@ -229,9 +229,11 @@ the project and report it with evidence.
     set to `true`. Before, the feature stayed off.
     - Search: these variables in `.env*` files and deployment config.
     - Do: report each feature that now turns on.
-25. **`cacheTagInvalidationDelay: 0` purges right away.** It was replaced
-    by 60000.
-    - Search: `cacheTagInvalidationDelay`.
+25. **`cacheTagInvalidationDelay: 0` purges during the request.** It was
+    replaced by 60000. Now the purge tags API responds once the items are
+    removed, with an error response if the storage fails, and
+    `cacheTagInvalidator.add()` returns a promise that resolves after the purge.
+    - Search: `cacheTagInvalidationDelay`, `cacheTagInvalidator`.
     - Do: report.
 
 ### Storage and types
