@@ -71,5 +71,8 @@ endpoint uses.
 const multiCache = useMultiCacheApp()
 
 // Purge all items with the tag after the configured delay.
-multiCache?.cacheTagInvalidator.add(['language:de'])
+await multiCache?.cacheTagInvalidator.add(['language:de'])
 ```
+
+With a delay of `0`, the promise returned by `add()` resolves once the items are
+removed and rejects if the storage fails. With a delay, it resolves right away.

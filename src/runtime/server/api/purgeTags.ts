@@ -34,7 +34,8 @@ export default defineEventHandler<Promise<CachePurgeTagsResponse>>(
     const tags = await getTagsToPurge(event)
     const app = getMultiCacheApp()
 
-    app.cacheTagInvalidator.add(tags)
+    // Resolves after the purge with a delay of 0, otherwise right away.
+    await app.cacheTagInvalidator.add(tags)
 
     return {
       status: 'OK',

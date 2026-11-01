@@ -144,7 +144,8 @@ export interface ModuleOptions {
      * requests are added to the buffer. Once the delay is over, the cache
      * entries for all the tags are purged and the timeout is reset.
      *
-     * Set it to 0 to purge right after the request.
+     * Set it to 0 to purge during the request: The API responds once the
+     * items are removed.
      *
      * @default 60000
      */

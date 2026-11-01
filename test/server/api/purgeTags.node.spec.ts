@@ -9,6 +9,7 @@ import { CacheTagInvalidator } from '~/src/runtime/helpers/CacheTagInvalidator'
 const mocks = vi.hoisted(() => {
   return {
     useNitroApp: vi.fn(),
+    cacheTagInvalidationDelay: 1000,
   }
 })
 
@@ -48,7 +49,9 @@ vi.mock('#nuxt-multi-cache/server-options', () => {
 
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
-    cacheTagInvalidationDelay: 1000,
+    get cacheTagInvalidationDelay() {
+      return mocks.cacheTagInvalidationDelay
+    },
     isTestMode: true,
   }
 })
@@ -124,6 +127,29 @@ describe('purgeTags API handler', () => {
     // Items are now purged.
     expect(await storageData.getItem('data1')).toBeNull()
     expect(await storageComponent.getItem('component2')).toBeNull()
+  })
+
+  test('Purges the items before responding with a delay of 0', async () => {
+    mocks.cacheTagInvalidationDelay = 0
+    const storage = createStorage()
+    await storage.setItem('data1', { data: 'One', cacheTags: ['one'] })
+    await storage.setItem('data2', { data: 'Two', cacheTags: ['two'] })
+    const cache: MultiCacheInstances = {
+      data: { storage, bubbleError: false },
+    }
+    mocks.useNitroApp.mockReturnValue({
+      multiCache: {
+        cache,
+        cacheTagInvalidator: new CacheTagInvalidator(cache, null),
+      },
+    })
+
+    const result = await purgeTags({ body: ['one'] } as any)
+
+    expect(result.status).toEqual('OK')
+    expect(await storage.hasItem('data1')).toBe(false)
+    expect(await storage.hasItem('data2')).toBe(true)
+    mocks.cacheTagInvalidationDelay = 1000
   })
 
   test('Throws error if no tags are provided', async () => {

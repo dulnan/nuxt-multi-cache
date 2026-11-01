@@ -7,9 +7,18 @@ import {
   encodeComponentCacheItem,
   encodeRouteCacheItem,
 } from '~/src/runtime/helpers/cacheItem'
+import { logger } from '~/src/runtime/helpers/multi-cache-logger'
+
+const mocks = vi.hoisted(() => {
+  return {
+    cacheTagInvalidationDelay: 100,
+  }
+})
 
 vi.mock('#nuxt-multi-cache/config', () => ({
-  cacheTagInvalidationDelay: 100,
+  get cacheTagInvalidationDelay() {
+    return mocks.cacheTagInvalidationDelay
+  },
   isTestMode: true,
 }))
 
@@ -477,6 +486,62 @@ describe('CacheTagInvalidator', () => {
       vi.advanceTimersByTime(100)
 
       expect(invalidateSpy).toHaveBeenCalledOnce()
+    })
+  })
+
+  describe('with a delay of 0', () => {
+    beforeEach(async () => {
+      mocks.cacheTagInvalidationDelay = 0
+      await cacheContext.data!.storage.setItem('data1', {
+        data: 'One',
+        cacheTags: ['tag1'],
+      })
+      await cacheContext.data!.storage.setItem('data2', {
+        data: 'Two',
+        cacheTags: ['tag2'],
+      })
+      cacheTagInvalidator = new CacheTagInvalidator(cacheContext, null)
+    })
+
+    afterEach(() => {
+      mocks.cacheTagInvalidationDelay = 100
+    })
+
+    it('purges the items before the promise of add() resolves', async () => {
+      await cacheTagInvalidator.add(['tag1'])
+
+      expect(await cacheContext.data!.storage.hasItem('data1')).toBe(false)
+      expect(await cacheContext.data!.storage.hasItem('data2')).toBe(true)
+      expect(getTimeout()).toBeNull()
+    })
+
+    it('rejects if the storage fails', async () => {
+      vi.spyOn(cacheContext.data!.storage, 'removeItem').mockRejectedValue(
+        new Error('Storage failed'),
+      )
+
+      await expect(cacheTagInvalidator.add(['tag1'])).rejects.toThrow(
+        'Storage failed',
+      )
+    })
+  })
+
+  describe('with a delay', () => {
+    it('logs an error of the storage', async () => {
+      const error = vi.spyOn(logger, 'error').mockImplementation(() => {})
+      await cacheContext.data!.storage.setItem('data1', {
+        data: 'One',
+        cacheTags: ['tag1'],
+      })
+      vi.spyOn(cacheContext.data!.storage, 'removeItem').mockRejectedValue(
+        new Error('Storage failed'),
+      )
+      cacheTagInvalidator = new CacheTagInvalidator(cacheContext, null)
+
+      cacheTagInvalidator.add(['tag1'])
+      await vi.runAllTimersAsync()
+
+      expect(error).toHaveBeenCalledOnce()
     })
   })
 })

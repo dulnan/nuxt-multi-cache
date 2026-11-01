@@ -46,6 +46,42 @@ export interface CacheItem<T = string> {
   cacheTags?: string[]
 }
 
+/**
+ * The standard directives of the CDN cache control header, as returned by
+ * `getControl()` of the CDN helper.
+ *
+ * Numeric directives are in seconds and `null` if not set, boolean directives
+ * are `false` if not set.
+ */
+export interface CDNCacheControl {
+  maxAge: number | null
+  sharedMaxAge: number | null
+  staleIfError: number | null
+  staleWhileRevalidate: number | null
+  maxStaleDuration: number | null
+  minFresh: number | null
+  public: boolean
+  private: boolean
+  privateFields: string[] | null
+  noCache: boolean
+  noCacheFields: string[] | null
+  noStore: boolean
+  mustRevalidate: boolean
+  proxyRevalidate: boolean
+  mustUnderstand: boolean
+  immutable: boolean
+  noTransform: boolean
+  maxStale: boolean
+  onlyIfCached: boolean
+
+  /**
+   * The custom directives added with `addCustomDirective()`, by their name in
+   * lowercase: `true` for a directive without a value, otherwise the value as
+   * it is sent (numbers rounded down).
+   */
+  customDirectives: Record<string, string | number | true>
+}
+
 export interface CacheableItemInterface {
   expires?: number | null
   staleIfErrorExpires?: number | null

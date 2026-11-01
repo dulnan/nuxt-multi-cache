@@ -239,8 +239,12 @@ Unless a [cache tag registry](/overview/cache-tags#cache-tag-registry) is used,
 every item needs to be loaded from the cache and its tags checked.
 
 The delay is configurable via the `api.cacheTagInvalidationDelay` option (in
-milliseconds). Set it to `0` to purge the items right after the request, without
-collecting tags.
+milliseconds). With a delay, the response only confirms that the tags were
+received, and errors while purging are logged on the server.
+
+Set it to `0` to purge the items during the request, without collecting tags:
+The response is sent once the items are removed, and an error while removing
+them results in an error response.
 
 :::
 

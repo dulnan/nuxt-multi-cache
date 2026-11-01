@@ -162,6 +162,27 @@ helper. If the helper is marked as uncacheable, the max age is set to `0` and
 Return the current max age, stale if error duration (both `null` if not set) and
 cache tags.
 
+### getControl()
+
+Returns the directives as they are sent in the header, as a
+[type.CDNCacheControl] object: Numeric directives in seconds or `null`, boolean
+directives `true` or `false`. It includes the values merged from other responses
+and bubbled from cached items, and the `s-maxage` computed from all of them.
+
+Custom directives are in `customDirectives`, by their name in lowercase: `true`
+for a directive without a value, otherwise its value (numbers rounded down).
+
+```typescript
+useCDNHeaders((cdn) => {
+  const { maxAge, sharedMaxAge, customDirectives } = cdn.getControl()
+  const isDurable = customDirectives.durable === true
+})
+```
+
+The returned object is a copy, so changing it doesn't change the header. The
+type can be imported with
+`import type { CDNCacheControl } from 'nuxt-multi-cache'`.
+
 ### applyToEvent(event: H3Event)
 
 Sets the headers on the response of the given event. `useCDNHeaders` already
