@@ -117,6 +117,8 @@ const { data } = await useFetch(
   including `setUncacheable()`. A page that fetches an uncacheable API route
   becomes uncacheable as well. This only applies to
   [relative URLs](/composables/useCacheAwareFetchInterceptor#relative-urls-only).
+  It also applies to API routes requested with another method than `GET` or
+  `HEAD`, such as `POST`, whose responses are never stored themselves.
 - **CDN headers:** The CDN header of the API route is merged, including
   `private` and `no-store`. Its route cache values don't affect the CDN headers.
 

@@ -16,7 +16,7 @@ import {
   CACHE_PERMANENT,
   getStorageTtl,
 } from '../../helpers/maxAge'
-import { getRouteCacheKey } from '../../helpers/routeCache'
+import { getRouteCacheKey, isRouteCacheMethod } from '../../helpers/routeCache'
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/multi-cache-logger'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
@@ -78,6 +78,12 @@ export function getStorableRoute(
 
   const multiCache = getMultiCacheContext(event)
   if (!multiCache?.route) {
+    return
+  }
+
+  // Internal requests with other methods (e.g. POST) have the route helper
+  // only to pass their route cache values to the page.
+  if (!isRouteCacheMethod(event)) {
     return
   }
 

@@ -171,6 +171,52 @@ describe('onRequest nitro hook handler', () => {
     },
   )
 
+  // The helper collects the route cache values of API routes for the page that
+  // requests them during SSR. Serving and storing are limited to GET and HEAD.
+  test.each([
+    ['POST', 'secret-token', true],
+    ['PUT', 'secret-token', true],
+    ['POST', 'wrong-token', false],
+    ['POST', undefined, false],
+  ])(
+    'Adds the route cache helper for internal %s requests (token: %s)',
+    async (method, token, expected) => {
+      mocks.serverOptions.route.applies.mockReturnValue(true)
+      mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+          internalRequestToken: 'secret-token',
+        },
+      })
+      const event: any = {
+        method,
+        path: '/api/test',
+        node: {
+          res: {},
+          req: {
+            originalUrl: '/api/test',
+            headers: token ? { 'x-nuxt-multi-cache-request': token } : {},
+          },
+        },
+        context: {},
+      }
+
+      await onRequest(event)
+
+      expect(!!event.context.multiCache?.route).toBe(expected)
+      expect(event.context.multiCache?.routeCacheStatus).toEqual({
+        fwd: 'method',
+      })
+
+      mocks.useNitroApp.mockRestore()
+      mocks.serverOptions.route.applies.mockRestore()
+      mocks.serverOptions.enabledForRequest.mockRestore()
+    },
+  )
+
   test.each([
     ['/__nuxt_multi_cache/stats/route', false],
     ['/__nuxt_multi_cache/inspect/route?key=foo', false],

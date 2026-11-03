@@ -143,7 +143,10 @@ the project and report it with evidence.
 
 ### Route cache
 
-13. **Only GET and HEAD requests use the route cache.**
+13. **Only GET and HEAD requests use the route cache.** Responses to other
+    methods are neither served from nor stored in the route cache. Their route
+    cache values still bubble to a page that fetches them with
+    `useCacheAwareFetchInterceptor`.
     - Search: `useRouteCache` in server routes for other methods (`.post.ts`,
       `.put.ts`, method checks in the handler).
     - Do: report.

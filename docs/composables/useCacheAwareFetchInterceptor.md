@@ -80,7 +80,10 @@ The same also works when the API route uses the route cache: In this case, the
 cache tags, the max age and the stale if error duration of the API route are
 merged with the route cache of the SSR request. A cached page then never
 outlives the data of the API route it shows. If the API route is marked as
-uncacheable, the page becomes uncacheable as well.
+uncacheable, the page becomes uncacheable as well. This also applies to API
+routes requested with another method than `GET` or `HEAD`, such as `POST`: Their
+route cache values are passed to the page, but their responses are never stored
+in the route cache.
 
 ## Relative URLs Only
 

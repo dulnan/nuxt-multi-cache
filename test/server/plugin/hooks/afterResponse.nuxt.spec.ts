@@ -1,6 +1,9 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
-import { onAfterResponse } from '../../../../src/runtime/server/hooks/afterResponse'
+import {
+  getStorableRoute,
+  onAfterResponse,
+} from '../../../../src/runtime/server/hooks/afterResponse'
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../../src/runtime/helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../../../src/runtime/helpers/RouteCacheHelper'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
@@ -198,6 +201,7 @@ describe('afterResponse nitro hook handler', () => {
     }
 
     const event = {
+      method: 'GET',
       path: '/foobar',
       context: {
         multiCacheApp: {
@@ -252,6 +256,70 @@ describe('afterResponse nitro hook handler', () => {
     mocks.useNitroApp.mockRestore()
   })
 
+  // Internal requests of other methods get the route cache helper, so that
+  // API routes can pass their route cache values to the page.
+  test.each(['POST', 'PUT'])(
+    'Does not store the response to a %s request with the route cache helper.',
+    async (method) => {
+      const storedItems: any[] = []
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+          serverOptions: {},
+          config: {
+            cdn: {},
+          },
+        },
+      })
+
+      const event = {
+        method,
+        path: '/api/foobar',
+        context: {
+          multiCacheApp: {
+            cache: {
+              route: {
+                storage: {
+                  setItemRaw(key: string) {
+                    storedItems.push(key)
+                    return Promise.resolve()
+                  },
+                },
+              },
+            },
+          },
+          multiCache: {
+            route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
+              .setCacheable()
+              .setMaxAge(1200),
+          },
+        },
+        node: {
+          res: {
+            statusCode: 200,
+            getHeaders() {
+              return {}
+            },
+          },
+          req: {
+            originalUrl: '/api/foobar',
+            headers: {},
+          },
+        },
+      } as any
+
+      try {
+        expect(getStorableRoute(event, { body: '{}' })).toBeUndefined()
+        await onAfterResponse(event, { body: '{}' } as any)
+        expect(storedItems).toEqual([])
+      } finally {
+        mocks.useNitroApp.mockRestore()
+      }
+    },
+  )
+
   // unstorage would cut the key off at "?": "/search" is the key of another
   // route, and the empty key of "/?q=casino" must not become the root key.
   test.each(['/search?q=casino', '/?q=casino'])(
@@ -274,6 +342,7 @@ describe('afterResponse nitro hook handler', () => {
       }
 
       const event = {
+        method: 'GET',
         path: key,
         context: {
           multiCacheApp: {
@@ -369,6 +438,7 @@ describe('afterResponse nitro hook handler', () => {
       })
 
       const event = {
+        method: 'GET',
         path: '/foobar',
         context: {
           multiCacheApp: {
@@ -460,6 +530,7 @@ describe('afterResponse nitro hook handler', () => {
       }
 
       const event = {
+        method: 'GET',
         path: '/foobar',
         context: {
           multiCacheApp: {

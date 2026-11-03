@@ -1,5 +1,9 @@
 import type { H3Event } from 'h3'
-import { enabledForRequest, getRequestTimestamp } from '../../helpers/server'
+import {
+  enabledForRequest,
+  getRequestTimestamp,
+  isInternalServerRequest,
+} from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import {
   isAmbiguousRoutePath,
@@ -72,10 +76,15 @@ export async function onRequest(event: H3Event) {
     return
   }
 
-  // Responses to other methods (e.g. POST) are never stored.
+  // Responses to other methods (e.g. POST) are never served from or stored in
+  // the route cache. Internal requests from the Nuxt app during SSR still get
+  // the route cache helper, so that API routes can pass their route cache
+  // values (tags, max age, uncacheable) to the page.
   if (!isRouteCacheMethod(event)) {
     setRouteCacheStatus(event, { fwd: 'method' })
-    return
+    if (!isInternalServerRequest(event)) {
+      return
+    }
   }
 
   // The cache key would belong to a different path than the one that is
