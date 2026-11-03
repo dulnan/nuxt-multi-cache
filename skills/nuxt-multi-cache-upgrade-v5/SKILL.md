@@ -54,7 +54,7 @@ the project and report it with evidence.
    - Do: report. These items are now fetched on every request.
 2. **`useCachedAsyncData` without `serverMaxAge` doesn't cache on the server**,
    also when the `serverMaxAge` function returns `undefined`. It cached
-   permanently.
+   permanently. The items 4.x stored for it are no longer read.
    - Search: `useCachedAsyncData(`.
    - Do: report, and propose `serverMaxAge: 'permanent'` (the 4.x behavior) or a
      max age that fits the data.

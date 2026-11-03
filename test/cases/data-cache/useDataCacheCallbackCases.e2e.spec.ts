@@ -68,3 +68,26 @@ describe('The data cache', () => {
     expect(html).not.toContain('casino')
   })
 })
+
+describe('The useCachedAsyncData composable', () => {
+  beforeEach(async () => {
+    await purgeAll()
+    // An item stored without a max age, e.g. by 4.x, which cached the data of
+    // useCachedAsyncData without a serverMaxAge permanently.
+    await fetch('/api/seed?key=server-max-age', { method: 'POST' })
+  })
+
+  test.each(['', '?max=0', '?max=never'])(
+    'does not return a stored item if it never caches on the server (%s)',
+    async (query) => {
+      const html = await fetch('/server-max-age' + query).then((r) => r.text())
+      expect(html).toContain('RENDERED')
+      expect(html).not.toContain('FROM_CACHE')
+    },
+  )
+
+  test('returns a stored item if it caches on the server', async () => {
+    const html = await fetch('/server-max-age?max=3600').then((r) => r.text())
+    expect(html).toContain('FROM_CACHE')
+  })
+})
