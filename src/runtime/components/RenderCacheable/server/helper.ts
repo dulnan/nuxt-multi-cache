@@ -89,12 +89,15 @@ export function getSlotVNode(
 }
 
 /**
- * Escape quotes and backslashes in the strings of plain objects and arrays.
+ * Escape quotes and backslashes in the strings of plain objects and arrays,
+ * and colons, commas and backslashes in the keys of plain objects.
  *
  * ohash's serialize() wraps strings in quotes without escaping them, so
  * `{ title: "a',variant:'b" }` would get the same hash as
- * `{ title: 'a', variant: 'b' }`. Strings without quotes and backslashes are
- * unchanged, so their hashes stay the same.
+ * `{ title: 'a', variant: 'b' }`. It writes object keys without quotes, so
+ * `{ "a:'1',b": '2' }` (e.g. a query object from the request) would get the
+ * same hash as `{ a: '1', b: '2' }`. Strings and keys without these
+ * characters are unchanged, so their hashes stay the same.
  */
 function escapeStrings(
   value: unknown,
@@ -132,7 +135,7 @@ function escapeStrings(
   const copy = Object.create(proto)
   seen.set(value, copy)
   for (const [key, item] of Object.entries(value)) {
-    Object.defineProperty(copy, key, {
+    Object.defineProperty(copy, key.replace(/[\\:,]/g, '\\$&'), {
       value: escapeStrings(item, seen),
       enumerable: true,
     })

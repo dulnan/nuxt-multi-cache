@@ -55,6 +55,10 @@ describe('getCacheKey', () => {
       { item: { title: 'a', variant: 'b' } },
       { item: { title: "a',variant:'b" } },
     ],
+    // Object keys aren't quoted, e.g. the keys of a query object.
+    [{ query: { a: '1', b: '2' } }, { query: { "a:'1',b": '2' } }],
+    [{ query: { a: 1, b: '2' } }, { query: { 'a:1,b': '2' } }],
+    [{ query: { 'a:1': 'x' } }, { query: { 'a\\:1': 'x' } }],
   ])('Derives different keys for the props %o and %o.', (a, b) => {
     const getKey = (props: object) =>
       getCacheKey({}, { type: { name: 'MyComponent' }, props } as any)
