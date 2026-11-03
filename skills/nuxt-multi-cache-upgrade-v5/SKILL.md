@@ -119,9 +119,10 @@ the project and report it with evidence.
 
 10. **A child with slot content needs a `cache-key`.** The generated key only
     contains the child's name and props, so a `<RenderCacheable>` whose child
-    receives slot content is no longer cached without `cache-key`.
+    receives slot content is no longer cached without `cache-key`. The same
+    applies to a lazy child (`<LazyFoo>`): all lazy components share one name.
     - Search: every `<RenderCacheable>`; check whether its child has content
-      between its tags.
+      between its tags or is a `Lazy` component.
     - Do: report. Propose a `cache-key` only for slot content that is the same
       for every request, unique for each distinct content. Content that differs
       per request (user data, query values) has to be part of the key.

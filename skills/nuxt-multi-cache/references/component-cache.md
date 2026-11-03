@@ -18,6 +18,8 @@ hit. [Docs](https://nuxt-multi-cache.dulnan.net/features/component-cache)
   (`Navbar::Ylz5VOw...`). Everything the markup depends on has to be a prop.
 - **Slot content** isn't part of the generated key. A child with content
   between its tags is only cached with a `cache-key`.
+- **Lazy components** (`<LazyFoo>`) all share the name of Vue's async wrapper,
+  so they're only cached with a `cache-key`, unique among them.
 - **`cache-key`** replaces the generated key, so it has to cover the props and
   every variant of the slot content, e.g. `:cache-key="'info--' + locale"`. An
   empty `cache-key` uses one entry for all instances.

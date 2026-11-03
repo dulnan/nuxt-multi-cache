@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { Fragment, defineComponent, h } from 'vue'
+import { Fragment, defineAsyncComponent, defineComponent, h } from 'vue'
 import { createStorage } from 'unstorage'
 import { hash } from 'ohash'
 import { encodeComponentCacheItem } from '../../../src/runtime/helpers/cacheItem'
@@ -128,6 +128,21 @@ describe('getSlotVNode', () => {
   test('Returns nothing for an empty slot.', () => {
     expect(getSlotVNode({}, [])).toBeUndefined()
     expect(getSlotVNode({ cacheKey: 'foo' }, [h(Fragment, [])])).toBeUndefined()
+  })
+
+  // Async components, such as Nuxt's <LazyFoo>, all have the name of Vue's
+  // wrapper, so their generated keys would only differ by their props.
+  test('Returns nothing for an async component without a cache key.', () => {
+    const Lazy = defineAsyncComponent(() => Promise.resolve(Inner))
+    expect(getSlotVNode({}, [h(Lazy)])).toBeUndefined()
+    expect(getSlotVNode({}, [h(Lazy, { id: 1 })])).toBeUndefined()
+  })
+
+  test('Returns an async component with a cache key.', () => {
+    const Lazy = defineAsyncComponent(() => Promise.resolve(Inner))
+    const lazy = h(Lazy)
+    expect(getSlotVNode({ cacheKey: 'foo' }, [lazy])).toBe(lazy)
+    expect(getSlotVNode({ cacheKey: '' }, [lazy])).toBe(lazy)
   })
 })
 

@@ -39,8 +39,8 @@ Check in this order; the first match is usually the cause.
 ## A component isn't cached
 
 - The first child of `<RenderCacheable>` isn't a component with a name.
-- Its child gets slot content, or the slot is forwarded, and there's no
-  `cache-key`.
+- Its child gets slot content, is a lazy component (`<LazyFoo>`), or the slot
+  is forwarded, and there's no `cache-key`.
 - `no-cache` is set on it, or on a `<RenderCacheable>` nested in it.
 - The `cache-key` contains a `?`.
 

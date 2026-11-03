@@ -148,6 +148,23 @@ A custom key replaces the generated one, so it must also cover the props. If the
 slot content and the props are the same for every instance, an empty `cache-key`
 uses one entry for all instances.
 
+### Lazy Components
+
+Lazy components (`<LazyFoo>`) and other async components
+(`defineAsyncComponent`) are only cached if a `cache-key` is provided. Vue only
+knows which component they render once it's loaded, so they all have the name of
+Vue's wrapper (`AsyncComponentWrapper`), and the generated keys of two different
+components would only differ by their props. The key is prefixed with this name
+too, so it must be unique among the lazy components:
+
+```vue
+<template>
+  <RenderCacheable cache-key="footer">
+    <LazyFooter />
+  </RenderCacheable>
+</template>
+```
+
 ### Custom Cache Key
 
 You can also provide your own cache key:
@@ -362,7 +379,8 @@ Disable caching entirely for this component.
 The key to use for the cache entry. If not provided, a key is automatically
 generated based on the props passed to the child. The key is automatically
 prefixed by the component name. If the child receives
-[slot content](#slot-content), a key is required.
+[slot content](#slot-content) or is a [lazy component](#lazy-components), a key
+is required.
 
 An empty string disables the generated key: All instances of the component then
 share the same cache entry.

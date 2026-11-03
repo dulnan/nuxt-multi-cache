@@ -1,4 +1,10 @@
-import { createSSRApp, defineComponent, nextTick, useSSRContext } from 'vue'
+import {
+  createSSRApp,
+  defineAsyncComponent,
+  defineComponent,
+  nextTick,
+  useSSRContext,
+} from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, test, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -422,6 +428,56 @@ describe('RenderCacheable', () => {
       'components/Outer.vue',
     ])
   })
+
+  // Async components such as Nuxt's <LazyFoo> all have the name of Vue's
+  // wrapper. Without props, they would all get the same generated key.
+  test.each([
+    ['', []],
+    ['cache-key="first"', ['AsyncComponentWrapper::first']],
+  ])(
+    'Only caches async components with a cache key (%s).',
+    async (firstProps, expectedKeys) => {
+      setIsServer(true)
+      const { ssrContext, storage } = createTestApp()
+      mocks.useNuxtApp.mockImplementation(() => {
+        return {
+          ssrContext,
+          event: ssrContext.event,
+          _asyncData: {},
+          payload: {
+            data: {},
+          },
+        }
+      })
+      const component = (text: string) =>
+        defineAsyncComponent(() =>
+          Promise.resolve(
+            defineComponent({ name: text, template: `<div>${text}</div>` }),
+          ),
+        )
+      const render = () =>
+        renderToString(
+          createSSRApp(
+            defineComponent({
+              components: {
+                RenderCacheable,
+                First: component('First'),
+                Second: component('Second'),
+              },
+              template: `<div><RenderCacheable ${firstProps}><First /></RenderCacheable><RenderCacheable><Second /></RenderCacheable></div>`,
+            }),
+          ),
+          ssrContext,
+        )
+
+      await render()
+      const html = await render()
+
+      expect(html).toContain('<div>First</div>')
+      expect(html).toContain('<div>Second</div>')
+      expect(Object.keys(storage)).toEqual(expectedKeys)
+    },
+  )
 
   describe('An instance containing a nested instance', () => {
     const date = new Date(2022, 11, 1)
