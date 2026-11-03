@@ -78,6 +78,22 @@ describe('The RenderCacheable component', () => {
     expect(await getComponentCacheItem()).toHaveLength(0)
   })
 
+  // Lazy components are async components, which all have the same name.
+  test.each([
+    ['', 0],
+    ['?key=first', 1],
+  ])(
+    'only caches lazy components with a cache key (%s)',
+    async (query, storedItems) => {
+      await $fetch<string>('/lazy' + query)
+      const html = await $fetch<string>('/lazy' + query)
+
+      expect(html).toContain('LAZY:first')
+      expect(html).toContain('LAZY:second')
+      expect(await getComponentCacheItem()).toHaveLength(storedItems)
+    },
+  )
+
   test('sets max age of "0" correctly on component', async () => {
     const page1 = await createPage('/max-age?maxAge=0')
     const timestamp1 = await page1.locator('#timestamp').innerText()

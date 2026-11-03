@@ -114,7 +114,9 @@ When a method is defined, it receives the result of your handler as the first
 argument and should return a max age.
 
 If no `serverMaxAge` is provided, or if the method returns `undefined`, the data
-is not cached on the server.
+is not cached on the server. Without a `serverMaxAge`, or with a value that
+means "never" (such as `0`), the data cache isn't read either, so an item stored
+for the key earlier (e.g. by 4.x) is never returned.
 
 ```typescript
 const { data } = await useCachedAsyncData(

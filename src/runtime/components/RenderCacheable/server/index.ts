@@ -45,7 +45,8 @@ import { bubbleCacheability } from './../../../helpers/bubbleCacheability'
  *
  * The component is cached based on the props of the first child in the
  * default slot. Alternatively you can provide a custom cache key, which is
- * required if the child receives slot content.
+ * required if the child receives slot content or is an async component (e.g.
+ * `<LazyFoo>`).
  *
  * The slot can only have a single child. That means you would have to wrap it
  * in a <div>, but you likely want to create a component that "groups" together
@@ -113,10 +114,18 @@ export default defineComponent<Props>({
 
     // We have to call provide() before the first await or else it will not
     // work. To prevent always creating a ComponentCacheHelper instance, even
-    // if not needed, we provide an empty object instead and create the helper
-    // later and assign it to the helper property.
-    const providedContext: { helper?: ComponentCacheHelper } = {
-      helper: undefined,
+    // if not needed, we provide an object whose helper is created later.
+    // Until then, and if this instance renders its slot uncached, its markup
+    // ends up in the enclosing instance, so the components and instances in
+    // the slot get the helper of the enclosing instance.
+    const providedContext: {
+      ownHelper?: ComponentCacheHelper
+      readonly helper?: ComponentCacheHelper
+    } = {
+      ownHelper: undefined,
+      get helper() {
+        return this.ownHelper ?? parentContext?.helper
+      },
     }
 
     // Injected by useComponentCache().
@@ -258,7 +267,7 @@ export default defineComponent<Props>({
     }
 
     const helper = new ComponentCacheHelper(now)
-    providedContext.helper = helper
+    providedContext.ownHelper = helper
 
     // For backwards-compatibility we assume that the component is
     // cacheable by default.

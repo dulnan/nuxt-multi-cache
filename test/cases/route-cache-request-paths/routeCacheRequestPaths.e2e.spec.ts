@@ -96,15 +96,25 @@ describe('The route cache with unusual request paths', () => {
     },
   )
 
-  test.each(['/api/files/%2e%2e/%2e%2e/contact', '/api/files/../../contact'])(
-    'does not store the response for %s as /contact',
-    async (requestPath) => {
-      expect((await rawGet(requestPath)).body).toContain('files')
+  test('does not store the page rendered for "/contact%3F/../" as the home page', async () => {
+    // The app routes the decoded path up to the "?", so it renders /contact.
+    // The URL of the request resolves "%3F/.." away, so its path is "/".
+    expect((await rawGet('/contact%3F/../')).body).toContain('PAGE:contact')
 
-      const response = await rawGet('/contact')
-      expect(response.body).toContain('PAGE:contact')
-    },
-  )
+    const response = await rawGet('/')
+    expect(response.body).toContain('PAGE:home')
+  })
+
+  test.each([
+    '/api/files/%2e%2e/%2e%2e/contact',
+    '/api/files/../../contact',
+    '/api/files/x%3F/../../../contact',
+  ])('does not store the response for %s as /contact', async (requestPath) => {
+    expect((await rawGet(requestPath)).body).toContain('files')
+
+    const response = await rawGet('/contact')
+    expect(response.body).toContain('PAGE:contact')
+  })
 
   test('does not store API responses requested with an encoded path', async () => {
     const encodedStatsPath = '/%5F_nuxt_multi_cache/stats/route'

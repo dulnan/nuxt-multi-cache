@@ -4,9 +4,10 @@ import { describe, expect, test, vi, afterEach, beforeEach } from 'vitest'
 import { useDataCache } from './../../src/runtime/composables/useDataCache'
 import type { DataCacheItem } from './../../src/runtime/types'
 import { MULTI_CACHE_CONTEXT_KEY } from '~/src/runtime/helpers/server'
-import { toTimestamp } from '~/src/runtime/helpers/maxAge'
+import { CACHE_PERMANENT, toTimestamp } from '~/src/runtime/helpers/maxAge'
 import { TEST_MODE_DATE_OVERRIDE_HEADER } from '~/src/runtime/helpers/constants'
 import { buildEvent } from '../__helpers__/event'
+import { NuxtMultiCacheRouteCacheHelper } from '~/src/runtime/helpers/RouteCacheHelper'
 
 const { getIsServer, setIsServer } = vi.hoisted(() => {
   let serverValue = false
@@ -281,6 +282,70 @@ describe('useDataCache composable', () => {
 
     expect((await useDataCache('search:shoes', event)).value).toEqual('shoes')
     expect(await storage.getKeys()).toEqual(['search:shoes'])
+  })
+
+  describe('Bubbles the values passed to addToCache if the item is not stored', () => {
+    function buildBubblingEvent(
+      config: { data: boolean },
+      storage: Record<string, any>,
+      bubbleError = false,
+    ) {
+      const route = new NuxtMultiCacheRouteCacheHelper(toTimestamp(new Date()))
+      const event = {
+        node: { req: { headers: {} } },
+        context: {
+          multiCache: { route },
+          [MULTI_CACHE_CONTEXT_KEY]: {
+            cache: { data: { storage, bubbleError } },
+            config: { ...config, route: true },
+          },
+        },
+      } as any as H3Event
+      return { event, route }
+    }
+
+    const failingStorage = {
+      getItem: () => Promise.reject(new Error('Failed to read.')),
+      setItem: vi.fn(),
+    }
+
+    test.each([
+      ['the data cache is disabled at runtime', { data: false }, 'weather'],
+      ['the key contains "?"', { data: true }, 'weather?city=bern'],
+      ['reading the item failed', { data: true }, 'weather', failingStorage],
+    ])('when %s', async (_name, config, key, failing?) => {
+      setIsServer(true)
+      const storage = failing ?? createStorage()
+      const { event, route } = buildBubblingEvent(config, storage)
+
+      const cache = await useDataCache(key, event, {
+        bubbleCacheability: 'route',
+      })
+      await cache.addToCache('Sunny', ['weather'], 60, 120)
+
+      expect(route.tags).toEqual(['weather'])
+      expect(route.getMaxAge()).toEqual(60)
+      expect(route.getStaleIfError()).toEqual(120)
+      if (failing) {
+        expect(failing.setItem).not.toHaveBeenCalled()
+      } else {
+        expect(await (storage as any).getKeys()).toEqual([])
+      }
+    })
+
+    test('only with the bubbleCacheability option', async () => {
+      setIsServer(true)
+      const { event, route } = buildBubblingEvent(
+        { data: false },
+        createStorage(),
+      )
+
+      const cache = await useDataCache('weather', event)
+      await cache.addToCache('Sunny', ['weather'], 60)
+
+      expect(route.tags).toEqual([])
+      expect(route.getMaxAge()).toEqual(CACHE_PERMANENT)
+    })
   })
 
   test('Returns dummy if SSR context not found', async () => {

@@ -4,7 +4,10 @@ import NuxtMultiCache from './../../../../src/module'
 export default defineNuxtConfig({
   modules: [NuxtMultiCache],
 
-  routeRules: {},
+  routeRules: {
+    // Forwards the request headers, like a proxy to another server.
+    '/api/proxied': { proxy: '/api/echo-headers' },
+  },
 
   multiCache: {
     debug: true,

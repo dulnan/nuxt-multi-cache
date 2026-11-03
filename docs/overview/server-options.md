@@ -170,8 +170,8 @@ export default defineMultiCacheOptions(() => {
 Nuxt's build assets (`/_nuxt`), the error page and the module's
 [API](/features/api) are always excluded, regardless of this option. So are
 paths with a double slash, a backslash or a `.` or `..` segment, such as
-`//contact`: Nuxt or Nitro may handle them as a different path than the one the
-route cache key is built from.
+`//contact`, and paths with an encoded `?` (`%3F`): Nuxt or Nitro may handle
+them as a different path than the one the route cache key is built from.
 
 ::: warning
 

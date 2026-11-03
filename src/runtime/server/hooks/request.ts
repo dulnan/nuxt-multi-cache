@@ -1,10 +1,16 @@
 import type { H3Event } from 'h3'
-import { enabledForRequest, getRequestTimestamp } from '../../helpers/server'
+import {
+  enabledForRequest,
+  getRequestTimestamp,
+  isInternalServerRequest,
+  removeInternalRequestHeader,
+} from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import {
   isAmbiguousRoutePath,
   isErrorPagePath,
   isExcludedRoutePath,
+  isMismatchedRouteKeyPath,
   isRouteCacheMethod,
 } from '../../helpers/routeCache'
 import { setRouteCacheStatus } from '../../helpers/cacheStatus'
@@ -66,20 +72,31 @@ export async function onRequest(event: H3Event) {
   const app = getMultiCacheApp()
   event.context.multiCacheApp = app
 
+  // Decide once, with the token, whether this is an internal request from the
+  // Nuxt app during SSR. Then the header is removed, so that the token is never
+  // forwarded to another server, e.g. by a proxy route rule.
+  isInternalServerRequest(event)
+  removeInternalRequestHeader(event)
+
   // Route cache is disabled.
   if (!app.cache.route) {
     return
   }
 
-  // Responses to other methods (e.g. POST) are never stored.
+  // Responses to other methods (e.g. POST) are never served from or stored in
+  // the route cache. Internal requests from the Nuxt app during SSR still get
+  // the route cache helper, so that API routes can pass their route cache
+  // values (tags, max age, uncacheable) to the page.
   if (!isRouteCacheMethod(event)) {
     setRouteCacheStatus(event, { fwd: 'method' })
-    return
+    if (!isInternalServerRequest(event)) {
+      return
+    }
   }
 
   // The cache key would belong to a different path than the one that is
-  // rendered, e.g. for "//contact".
-  if (isAmbiguousRoutePath(path)) {
+  // rendered, e.g. for "//contact" or "/a%3F/../b".
+  if (isAmbiguousRoutePath(path) || isMismatchedRouteKeyPath(event)) {
     return bypass(event, path)
   }
 

@@ -38,8 +38,40 @@ export async function useDataCacheImplementation<T>(
   event: H3Event,
   options?: UseDataCacheOptions | null,
 ): Promise<DataCacheCallbackContext<T>> {
+  // The cacheability of the data passed to addToCache(). It bubbles whether
+  // the item is stored or not: The page shows the data either way, so it must
+  // not outlive it, and purging the data's tags must purge the page too.
+  const createBubbledHelper = (
+    providedCacheTags: string[] = [],
+    providedMaxAge?: MaxAge,
+    providedStaleIfError?: MaxAge,
+  ): DataCacheHelper => {
+    const helper = new DataCacheHelper(getRequestTimestamp(event))
+
+    // 0 is a valid value and means "never".
+    if (providedMaxAge !== undefined && providedMaxAge !== null) {
+      helper.setMaxAge(providedMaxAge)
+    }
+
+    if (providedStaleIfError !== undefined && providedStaleIfError !== null) {
+      helper.setStaleIfError(providedStaleIfError)
+    }
+
+    helper.addTags(providedCacheTags)
+
+    bubbleCacheability(helper, event, options?.bubbleCacheability)
+
+    return helper
+  }
+
+  // Returned if the data cache isn't used for this item: It is disabled, not
+  // enabled for the request, the key is invalid or reading failed. Nothing is
+  // stored, but the cacheability still bubbles.
   const dummy: DataCacheCallbackContext<T> = {
-    addToCache: (_v: T) => {
+    addToCache: (_data, tags, maxAge, staleIfError) => {
+      if (options?.bubbleCacheability) {
+        createBubbledHelper(tags, maxAge, staleIfError)
+      }
       return Promise.resolve()
     },
     cacheTags: [] as string[],
@@ -70,24 +102,15 @@ export async function useDataCacheImplementation<T>(
   const now = getRequestTimestamp(event)
   const addToCache: DataCacheAddToCacheMethod<T> = async (
     data: T,
-    providedCacheTags: string[] = [],
+    providedCacheTags?: string[],
     providedMaxAge?: MaxAge,
     providedStaleIfError?: MaxAge,
   ) => {
-    const helper = new DataCacheHelper(now)
-
-    // 0 is a valid value and means "never".
-    if (providedMaxAge !== undefined && providedMaxAge !== null) {
-      helper.setMaxAge(providedMaxAge)
-    }
-
-    if (providedStaleIfError !== undefined && providedStaleIfError !== null) {
-      helper.setStaleIfError(providedStaleIfError)
-    }
-
-    helper.addTags(providedCacheTags)
-
-    bubbleCacheability(helper, event, options?.bubbleCacheability)
+    const helper = createBubbledHelper(
+      providedCacheTags,
+      providedMaxAge,
+      providedStaleIfError,
+    )
 
     const cacheTags = helper.getTags()
 

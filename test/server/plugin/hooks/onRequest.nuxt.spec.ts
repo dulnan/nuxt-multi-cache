@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onRequest } from '../../../../src/runtime/server/hooks/request'
+import { isInternalServerRequest } from '../../../../src/runtime/helpers/server'
 
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
@@ -164,6 +165,88 @@ describe('onRequest nitro hook handler', () => {
 
       // Without the helper, the response is never stored in the route cache.
       expect(!!event.context.multiCache?.route).toBe(expected)
+
+      mocks.useNitroApp.mockRestore()
+      mocks.serverOptions.route.applies.mockRestore()
+      mocks.serverOptions.enabledForRequest.mockRestore()
+    },
+  )
+
+  // A handler such as a proxy route rule could forward the request headers to
+  // another server, which must never get the token.
+  test.each([
+    ['the token', 'secret-token', true],
+    ['another value', 'true', false],
+  ])(
+    'Removes the internal request header with %s',
+    async (_label, value, isInternal) => {
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {},
+          internalRequestToken: 'secret-token',
+        },
+      })
+      const event: any = {
+        method: 'GET',
+        path: '/api/test',
+        node: {
+          res: {},
+          req: {
+            originalUrl: '/api/test',
+            headers: { 'x-nuxt-multi-cache-request': value, accept: '*/*' },
+          },
+        },
+        context: {},
+      }
+
+      await onRequest(event)
+
+      expect(event.node.req.headers).toEqual({ accept: '*/*' })
+      expect(isInternalServerRequest(event)).toBe(isInternal)
+
+      mocks.useNitroApp.mockRestore()
+    },
+  )
+
+  // The helper collects the route cache values of API routes for the page that
+  // requests them during SSR. Serving and storing are limited to GET and HEAD.
+  test.each([
+    ['POST', 'secret-token', true],
+    ['PUT', 'secret-token', true],
+    ['POST', 'wrong-token', false],
+    ['POST', undefined, false],
+  ])(
+    'Adds the route cache helper for internal %s requests (token: %s)',
+    async (method, token, expected) => {
+      mocks.serverOptions.route.applies.mockReturnValue(true)
+      mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {
+            route: {},
+          },
+          internalRequestToken: 'secret-token',
+        },
+      })
+      const event: any = {
+        method,
+        path: '/api/test',
+        node: {
+          res: {},
+          req: {
+            originalUrl: '/api/test',
+            headers: token ? { 'x-nuxt-multi-cache-request': token } : {},
+          },
+        },
+        context: {},
+      }
+
+      await onRequest(event)
+
+      expect(!!event.context.multiCache?.route).toBe(expected)
+      expect(event.context.multiCache?.routeCacheStatus).toEqual({
+        fwd: 'method',
+      })
 
       mocks.useNitroApp.mockRestore()
       mocks.serverOptions.route.applies.mockRestore()

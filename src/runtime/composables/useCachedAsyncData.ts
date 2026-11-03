@@ -277,10 +277,34 @@ export function useCachedAsyncData<
     )
   }
 
+  // Without a server max age, or with one that means "never", the data is
+  // never stored, so it isn't looked up either. An item that an older version
+  // stored permanently would otherwise be returned until it is purged. A
+  // method can only return the max age once the data has been loaded.
+  // Called in the handler, so that an invalid max age is an error of the
+  // handler, as when it's passed to addToCache().
+  const cachesOnServer = () => {
+    const serverMaxAge = options?.serverMaxAge
+    return (
+      serverMaxAge !== undefined &&
+      (typeof serverMaxAge === 'function' ||
+        parseMaxAge(serverMaxAge, toTimestamp(new Date())) !== CACHE_NEVER)
+    )
+  }
+
   // Code for server-side caching.
   return useAsyncData<ResT, any, DataT, PickKeys, DefaultT>(
     reactiveKey,
     async (app) => {
+      if (!cachesOnServer()) {
+        const result: Awaited<ResT> = await handler(app)
+        // The transform method was removed from the options, see below.
+        const data = options?.transform
+          ? await options.transform(result)
+          : (result as DataT)
+        return data as any as ResT
+      }
+
       const { value, addToCache } = await useDataCache<DataT>(
         reactiveKey.value,
         app?.ssrContext?.event,

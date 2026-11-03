@@ -132,6 +132,44 @@ describe('The useCacheAwareFetchInterceptor', () => {
     },
   )
 
+  test('merges route cache cacheability of an API route requested with POST', async () => {
+    const start = Math.floor(Date.now() / 1000)
+    await fetch('/route-cache-post')
+
+    const rows = await getRouteCacheItems()
+    expect(
+      rows.map((v) => v.key),
+      'Only the page is stored, the response to the POST request is not.',
+    ).toEqual(['route-cache-post'])
+
+    const itemPage = rows[0]!.item
+    expect([...itemPage.cacheTags!].sort()).toEqual([
+      'route-cache-tag-from-post',
+      'tag-from-page',
+    ])
+    // The max age of the API route.
+    expect(itemPage.expires).toBeGreaterThanOrEqual(start + 600)
+    expect(itemPage.expires).toBeLessThanOrEqual(
+      Math.floor(Date.now() / 1000) + 600,
+    )
+  })
+
+  test('makes the route uncacheable if an API route requested with POST is uncacheable', async () => {
+    await fetch('/route-cache-post?uncacheable=1')
+
+    const rows = await getRouteCacheItems()
+    expect(rows.map((v) => v.key)).toEqual([])
+  })
+
+  test('does not forward the token of the internal request through a proxy', async () => {
+    // The API route is a proxy route rule, which forwards the request headers.
+    const html = await fetch('/route-cache-proxied').then((r) => r.text())
+    const headers = html.match(/id="headers">([^<]*)</)?.[1]
+
+    expect(headers, 'The proxied request has headers').toContain('host')
+    expect(headers).not.toContain('x-nuxt-multi-cache-request')
+  })
+
   test('does not store or serve the internal headers of the API route', async () => {
     // The page fetches the API route as an internal request, which gets the
     // internal cache tags header.

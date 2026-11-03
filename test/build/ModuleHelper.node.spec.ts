@@ -1,7 +1,9 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
+import { fileURLToPath } from 'node:url'
 import { join } from 'pathe'
 import type { Nuxt } from 'nuxt/schema'
+import ts from 'typescript'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ModuleHelper } from '../../src/build/ModuleHelper'
 import { logger } from '../../src/build/logger'
@@ -144,4 +146,36 @@ describe('The Nitro preset', () => {
       expect(warn).not.toHaveBeenCalled()
     },
   )
+})
+
+describe('The runtime types for the generated Nitro types', () => {
+  test('resolve to the runtime types file', () => {
+    const root = mkdtempSync(join(tmpdir(), 'nuxt-multi-cache-'))
+    try {
+      const helper = new ModuleHelper(
+        createNuxt([root]),
+        new URL('../../src/module.ts', import.meta.url).href,
+        {},
+      )
+      // The generated types import the path from the module's build dir.
+      const { resolvedModule } = ts.resolveModuleName(
+        helper.paths.runtimeTypes,
+        join(helper.paths.moduleBuildDir, 'nitro.d.ts'),
+        {
+          module: ts.ModuleKind.ESNext,
+          moduleResolution: ts.ModuleResolutionKind.Bundler,
+          allowImportingTsExtensions: true,
+          noEmit: true,
+        },
+        ts.sys,
+      )
+      expect(resolvedModule?.resolvedFileName).toBe(
+        fileURLToPath(
+          new URL('../../src/runtime/types/index.ts', import.meta.url),
+        ),
+      )
+    } finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  })
 })

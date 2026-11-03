@@ -18,7 +18,8 @@ export type Props = {
    *
    * If the child receives slot content, a key is required: The slot content
    * isn't part of the generated key. An empty string uses the same key for
-   * all instances.
+   * all instances. Async components (e.g. `<LazyFoo>`) also require a key,
+   * because they all have the same name.
    *
    * The key is automatically prefixed by the component name.
    */

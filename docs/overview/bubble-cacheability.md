@@ -76,7 +76,10 @@ const { value, addToCache } = await useDataCache('weather', null, {
 ```
 
 `useDataCache` bubbles the cached item when a value is returned from cache, and
-the values passed to `addToCache` when it is called.
+the values passed to `addToCache` when it is called. They bubble even if the
+data cache doesn't store the item: if it is disabled at runtime, not enabled for
+the request, the key contains a `?` or reading the item failed. The page still
+shows the data, so it must not outlive it.
 
 ```typescript
 const weather = await useDataCacheCallback(
@@ -117,6 +120,8 @@ const { data } = await useFetch(
   including `setUncacheable()`. A page that fetches an uncacheable API route
   becomes uncacheable as well. This only applies to
   [relative URLs](/composables/useCacheAwareFetchInterceptor#relative-urls-only).
+  It also applies to API routes requested with another method than `GET` or
+  `HEAD`, such as `POST`, whose responses are never stored themselves.
 - **CDN headers:** The CDN header of the API route is merged, including
   `private` and `no-store`. Its route cache values don't affect the CDN headers.
 

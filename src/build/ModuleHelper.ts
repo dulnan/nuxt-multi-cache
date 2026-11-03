@@ -136,8 +136,10 @@ export class ModuleHelper {
 
     // This path needs to be built afterwards since the method we call
     // depends on a value of this.paths.
+    // Without an extension, so that it resolves to the source in the module
+    // and to the type declarations in the build.
     this.paths.runtimeTypes = this.toModuleBuildRelative(
-      this.resolvers.module.resolve('./runtime/types.ts'),
+      this.resolvers.module.resolve('./runtime/types/index'),
     )
 
     this.paths.serverOptions = this.findServerOptions()

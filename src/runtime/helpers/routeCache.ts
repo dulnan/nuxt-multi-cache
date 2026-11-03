@@ -5,7 +5,7 @@ import {
   type H3Event,
 } from 'h3'
 import { normalizeKey } from 'unstorage'
-import { joinURL, withTrailingSlash } from 'ufo'
+import { decodePath, joinURL, withTrailingSlash } from 'ufo'
 import type { CacheableItemInterface, RouteCacheItem } from '../types'
 import {
   ROUTE_CACHE_EXPIRES_HEADER,
@@ -107,6 +107,33 @@ export function isAmbiguousRoutePath(path: string): boolean {
 }
 
 /**
+ * Decode a URL path the way h3 decodes event.path: "%2F" and "%25" stay
+ * encoded.
+ */
+function decodeRequestPath(path: string): string {
+  return path.includes('%25')
+    ? decodePath(path.replace(/%25/g, '%2525'))
+    : decodePath(path)
+}
+
+/**
+ * Whether the default cache key would be built from another path than the
+ * one that is rendered.
+ *
+ * The key is built from the request URL, which resolves dot segments in the
+ * raw path. The router and the Nuxt renderer use the decoded path up to the
+ * first "?". An encoded "?" makes them differ: For "/a%3F/../b", the app
+ * renders "/a", but the key is "/b". Requests whose decoded key path isn't
+ * the rendered path never use the route cache.
+ *
+ * @param event - The event, whose path is the decoded request path.
+ */
+export function isMismatchedRouteKeyPath(event: H3Event): boolean {
+  const renderedPath = event.path.split('?')[0]
+  return decodeRequestPath(encodeRouteCacheKey(event)) !== renderedPath
+}
+
+/**
  * Build the cache key for the route of the given event.
  */
 export async function getRouteCacheKey(event: H3Event): Promise<string> {
@@ -114,8 +141,11 @@ export async function getRouteCacheKey(event: H3Event): Promise<string> {
     ? await serverOptions.route.buildCacheKey(event)
     : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
 
-  // unstorage normalizes "/" to an empty key, which it rejects.
-  return normalizeKey(key) ? key : ROOT_ROUTE_CACHE_KEY
+  // unstorage normalizes "/" to an empty key, which it rejects. It also cuts
+  // off everything from "?", so a key such as "/?q=x" (e.g. from a
+  // buildCacheKey method that returns the path with the query) is empty too.
+  // It must not become the root key: isValidCacheKey() skips it instead.
+  return normalizeKey(key) || key.includes('?') ? key : ROOT_ROUTE_CACHE_KEY
 }
 
 /**

@@ -54,7 +54,7 @@ the project and report it with evidence.
    - Do: report. These items are now fetched on every request.
 2. **`useCachedAsyncData` without `serverMaxAge` doesn't cache on the server**,
    also when the `serverMaxAge` function returns `undefined`. It cached
-   permanently.
+   permanently. The items 4.x stored for it are no longer read.
    - Search: `useCachedAsyncData(`.
    - Do: report, and propose `serverMaxAge: 'permanent'` (the 4.x behavior) or a
      max age that fits the data.
@@ -95,8 +95,12 @@ the project and report it with evidence.
    a `<RenderCacheable>` whose content calls `setUncacheable()` makes the page
    uncacheable: no route cache, and `max-age=0, no-store` in the CDN header. A
    `useDataCacheCallback` result is no longer stored after `setUncacheable()`.
+   The values passed to `addToCache()` (and set on the `useDataCacheCallback`
+   helper) also bubble when the data cache doesn't store the item: disabled at
+   runtime, `enabledForRequest` false, a key with `?`, a failed read.
    - Search: `bubbleCacheability`, `setUncacheable(`.
-   - Do: report the pages that are no longer cached.
+   - Do: report the pages that are no longer cached, and the pages that now get
+     a lower max age or more tags where the data cache is turned off.
      [What bubbles](https://nuxt-multi-cache.dulnan.net/overview/bubble-cacheability#what-bubbles)
 8. **The fetch interceptor bubbles more from API routes.** The max age,
    stale-if-error and "uncacheable" of route cached API routes now bubble into
@@ -119,23 +123,34 @@ the project and report it with evidence.
 
 10. **A child with slot content needs a `cache-key`.** The generated key only
     contains the child's name and props, so a `<RenderCacheable>` whose child
-    receives slot content is no longer cached without `cache-key`.
+    receives slot content is no longer cached without `cache-key`. This also
+    covers `<NuxtLink>text</NuxtLink>`, `<Transition>`, named slots and a
+    nested `<RenderCacheable>` as the child. The same applies to a lazy child
+    (`<LazyFoo>`): all lazy components share one name.
     - Search: every `<RenderCacheable>`; check whether its child has content
-      between its tags.
+      between its tags or is a `Lazy` component.
     - Do: report. Propose a `cache-key` only for slot content that is the same
       for every request, unique for each distinct content. Content that differs
       per request (user data, query values) has to be part of the key.
       [Slot content](https://nuxt-multi-cache.dulnan.net/features/component-cache#slot-content)
 11. **A forwarded slot with a `cache-key` is cached.** A wrapper component that
     passes its own slot into `<RenderCacheable>` was never cached. With a
-    `cache-key`, it now is.
-    - Search: components with a `<slot` inside `<RenderCacheable>`.
+    `cache-key`, it now is. The same applies to a `v-for` or a `<template>`
+    with several children as the first node. A layout that wraps its page
+    `<slot />` like this now caches whole pages, without their head tags and
+    payload.
+    - Search: components with a `<slot` inside `<RenderCacheable>`, including
+      layouts; `<RenderCacheable>` with a `cache-key` whose first node is a
+      `v-for` or a `<template>`.
     - Do: report each wrapper whose `cache-key` doesn't cover everything passed
-      into its slot: it now serves the first render to everyone.
+      into its slot: it now serves the first render to everyone. Report every
+      layout that wraps the page this way.
       [Wrapper components](https://nuxt-multi-cache.dulnan.net/features/component-cache#wrapper-components)
 12. **Nested `<RenderCacheable>` instances merge into the outer one.** An inner
     `no-cache` or uncacheable instance makes the outer one uncacheable, and the
-    inner max age and cache tags apply to the outer item.
+    inner max age and cache tags apply to the outer item. This also passes
+    through an instance in between that renders uncached (e.g. its first child
+    is an element), so `useComponentCache()` in its slot affects the outer one.
     - Search: `<RenderCacheable>` inside the content of another, also through
       child components.
     - Do: report outer instances that are no longer cached or expire earlier.
@@ -143,7 +158,10 @@ the project and report it with evidence.
 
 ### Route cache
 
-13. **Only GET and HEAD requests use the route cache.**
+13. **Only GET and HEAD requests use the route cache.** Responses to other
+    methods are neither served from nor stored in the route cache. Their route
+    cache values still bubble to a page that fetches them with
+    `useCacheAwareFetchInterceptor`.
     - Search: `useRouteCache` in server routes for other methods (`.post.ts`,
       `.put.ts`, method checks in the handler).
     - Do: report.
@@ -181,10 +199,16 @@ the project and report it with evidence.
       it stores.
 18. **`route.applies` gets the decoded path**, and static files are detected
     without the query string. Paths excluded by `applies` skip the route cache
-    entirely, including `enabledForRequest`.
-    - Search: `applies` in the server options.
+    entirely, including `enabledForRequest`. An `enabledForRequest` that throws
+    no longer fails the request with a 500: the page renders without the route
+    cache, and nothing is logged. Paths below the `api.prefix` are always
+    excluded, also with the API disabled.
+    - Search: `applies` and `enabledForRequest` in the server options;
+      `api.prefix` in the module options.
     - Do: match decoded characters (`é` instead of `%C3%A9`). Report a check
-      that relied on the query string.
+      that relied on the query string, an `enabledForRequest` that can throw
+      (it has to catch and log errors itself), and app routes below the
+      `api.prefix`.
       [applies](https://nuxt-multi-cache.dulnan.net/overview/server-options#applies)
 19. **`state.keysBeingRevalidated` is a `Map`** of start times instead of a
     `Set`.
@@ -233,10 +257,13 @@ the project and report it with evidence.
 24. **`s-maxage` is capped by all sources.** If the page or a merged response
     sets an `s-maxage`, the header gets the lowest lifetime for shared caches of
     all sources. A bubbled "uncacheable" adds `no-store` and sets `s-maxage`
-    to 0.
+    to 0. Merged headers are parsed with `@tusbar/cache-control` 3.x: a
+    `private="Set-Cookie"` makes the page private, `no-cache="…"` becomes
+    `no-cache`.
     - Search: `useCDNHeaders` with `sharedMaxAge` or `s-maxage`;
-      `mergeFromResponse`; pages that fetch API routes that set `s-maxage`.
-    - Do: report pages whose `s-maxage` gets lower.
+      `mergeFromResponse`; pages that fetch API routes that set `s-maxage`, or
+      whose CDN header has `private=` or `no-cache=`.
+    - Do: report pages whose `s-maxage` gets lower or that become private.
       [Merging cacheability](https://nuxt-multi-cache.dulnan.net/features/cdn-cache-control#merging-cacheability)
 
 ### API and runtime config
@@ -252,14 +279,17 @@ the project and report it with evidence.
     ignored.
     - Search: the variable in `.env*` files and deployment config.
     - Do: report if the API is used where the variable is `false`.
-27. **Runtime config can enable a feature** that has `enabled: false` in
-    `nuxt.config`: `NUXT_MULTI_CACHE_CDN`, `_COMPONENT`, `_DATA` and `_ROUTE`
-    set to `true`. Before, the feature stayed off. A feature is added to the
-    build when its key exists in the module options, also with
-    `enabled: false`, so the startup table shows it as "Added in Build ✅".
+27. **Runtime config turns features on and off.** `NUXT_MULTI_CACHE_CDN`,
+    `_COMPONENT`, `_DATA` and `_ROUTE` set to `true` enable a feature that has
+    `enabled: false` in `nuxt.config`. Before, the feature stayed off. A
+    feature is added to the build when its key exists in the module options,
+    also with `enabled: false`, so the startup table shows it as "Added in
+    Build ✅". `NUXT_MULTI_CACHE_CDN=false` now also turns off the CDN headers:
+    before, `useCDNHeaders` and bubbling still sent them.
     - Search: these variables in `.env*` files and deployment config.
-    - Do: report each feature that now turns on. To keep a feature out of the
-      build entirely, remove its key from the module options.
+    - Do: report each feature that now turns on, and each environment where
+      the CDN headers disappear. To keep a feature out of the build entirely,
+      remove its key from the module options.
 28. **`cacheTagInvalidationDelay: 0` purges during the request.** It was
     replaced by 60000. Now the purge tags API responds once the items are
     removed, with an error response if the storage fails, and
@@ -285,22 +315,28 @@ the project and report it with evidence.
       items need cache tags to be purged.
       [Expiration](https://nuxt-multi-cache.dulnan.net/advanced/cache-backend#expiration)
 30. **Type changes.** `useMultiCacheApp()` returns `MultiCacheApp | undefined`;
-    the stats and inspect API responses of the component cache are strings;
     `DataCacheItem.data` is `unknown`. The CDN helper is based on
     `@tusbar/cache-control` 3.x instead of 1.x, whose `CacheControl` has the new
     fields `mustUnderstand`, `noCacheFields` and `privateFields`.
-    - Search: the typecheck output; imports from `@tusbar/cache-control`.
+    `CacheabilityInterface` has a new `getCacheable()` method: an object without
+    it passed to `mergeFromCacheability()` throws.
+    - Search: the typecheck output; imports from `@tusbar/cache-control`;
+      `mergeFromCacheability(` with an object of the app.
     - Do: add guards and types. Replace types imported from
       `@tusbar/cache-control` for the CDN values with `CDNCacheControl` from
-      `nuxt-multi-cache`.
+      `nuxt-multi-cache`. Add `getCacheable()` to such objects.
 
 ### Code against the module's internals
 
 31. **Patches, mocks and imports of internals break silently.** They target
     the 4.x implementation. In 5.0, for example, the API handlers get the app
     with `getMultiCacheApp()`, which responds with a 500 if it's missing, and
-    `checkAuth` reads `config.api.enabled`. A test that mocks the old shape can
-    fail, or pass by accident.
+    `checkAuth` reads `config.api.enabled`. `useCDNHeaders(cb, event)` does
+    nothing for an event without `context.multiCacheApp.config.cdn`, which the
+    module's `request` hook sets, e.g. a fake event in a unit test. The
+    `x-nuxt-multi-cache-request` header is removed from requests, so handlers
+    no longer see it. A test that mocks the old shape can fail, or pass by
+    accident.
     - Search: `patchedDependencies` in `package.json` or `pnpm-workspace.yaml`,
       and patch files for `nuxt-multi-cache` in `patches/` or `.yarn/patches/`;
       imports from `nuxt-multi-cache/dist/`; mocks of `#nuxt-multi-cache/*` or
@@ -327,6 +363,19 @@ the project and report it with evidence.
       apply. If the app has its own file, nothing changes.
       [Nuxt layers](https://nuxt-multi-cache.dulnan.net/overview/server-options#nuxt-layers)
 
+### Logging
+
+33. **The module's server logs appear.** In 4.x, its runtime logger printed
+    nothing. Now storage and purge errors are logged, and with `debug: true`
+    one line per cache operation. Errors of a delayed tag purge are logged
+    instead of reaching Nitro's `error` hook. The warning
+    `Unexpected error in nuxt-multi-cache nitro error handler.` is now
+    `Unexpected error in nuxt-multi-cache error handler.`
+    `NUXT_MULTI_CACHE_DEBUG` never had an effect; `debug` is a module option.
+    - Search: `debug: true` in the module options, `NUXT_MULTI_CACHE_DEBUG`,
+      log filters or alerts that match `nuxt-multi-cache`.
+    - Do: report. Set `debug` only where the log volume is acceptable.
+
 ## Report
 
 1. A table with one row per checklist item: number, change, verdict, evidence,
@@ -336,7 +385,8 @@ the project and report it with evidence.
 3. **Outside the repo**, the items that depend on the deployment, and always:
    - **Purge all caches after deploying** (`POST /__nuxt_multi_cache/purge/all`,
      or the configured `api.prefix`). Keys changed, and items stored by 4.x may
-     have a wrong expiry, the internal headers of API routes, or the modules of
-     other components.
-   - **Environment variables** of the deployment for items 25 to 27, if they
-     aren't in the repo.
+     have a wrong expiry, the internal headers of API routes, the modules of
+     other components, or the markup of request-specific nested components.
+   - **Environment variables** of the deployment for items 25 to 27 and 33, if
+     they aren't in the repo.
+   - **Log alerts and log volume** (item 33).

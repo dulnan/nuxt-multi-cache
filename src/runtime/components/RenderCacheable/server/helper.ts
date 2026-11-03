@@ -37,6 +37,16 @@ function hasSlotContent(vnode: VNode): boolean {
 }
 
 /**
+ * Whether the vnode is an async component, e.g. Nuxt's <LazyFoo>.
+ *
+ * Vue's wrapper of an async component has the same name for every component
+ * and only knows the component once it's loaded.
+ */
+function isAsyncComponent(vnode: VNode): boolean {
+  return typeof vnode.type === 'object' && '__asyncLoader' in vnode.type
+}
+
+/**
  * Get the vnode of the slot that is used to build the cache key.
  *
  * This is the first vnode of the slot. A slot forwarded by a wrapper component
@@ -49,6 +59,10 @@ function hasSlotContent(vnode: VNode): boolean {
  * with a cache key: The generated key only contains its props, while the slot
  * content can be different for every request. An empty cache key explicitly
  * uses the same key for all instances.
+ *
+ * Async components (e.g. Nuxt's <LazyFoo>) are only cached with a cache key
+ * too: They all have the name of Vue's wrapper, so the generated keys of two
+ * different components would only differ by their props.
  */
 export function getSlotVNode(
   props: Props,
@@ -56,14 +70,21 @@ export function getSlotVNode(
 ): RenderCacheableSlotVNode | undefined {
   const first = vnodes[0]
   if (first?.type !== Fragment) {
-    if (
-      first &&
-      hasSlotContent(first) &&
-      (props.cacheKey === undefined || props.cacheKey === null)
-    ) {
+    const hasCacheKey = props.cacheKey !== undefined && props.cacheKey !== null
+    if (first && hasSlotContent(first) && !hasCacheKey) {
       if (debug) {
         logger.info(
           'Skipped caching component with slot content because no cache key is provided.',
+          { props },
+        )
+      }
+      return
+    }
+
+    if (first && isAsyncComponent(first) && !hasCacheKey) {
+      if (debug) {
+        logger.info(
+          'Skipped caching async component because no cache key is provided.',
           { props },
         )
       }
@@ -89,12 +110,15 @@ export function getSlotVNode(
 }
 
 /**
- * Escape quotes and backslashes in the strings of plain objects and arrays.
+ * Escape quotes and backslashes in the strings of plain objects and arrays,
+ * and colons, commas and backslashes in the keys of plain objects.
  *
  * ohash's serialize() wraps strings in quotes without escaping them, so
  * `{ title: "a',variant:'b" }` would get the same hash as
- * `{ title: 'a', variant: 'b' }`. Strings without quotes and backslashes are
- * unchanged, so their hashes stay the same.
+ * `{ title: 'a', variant: 'b' }`. It writes object keys without quotes, so
+ * `{ "a:'1',b": '2' }` (e.g. a query object from the request) would get the
+ * same hash as `{ a: '1', b: '2' }`. Strings and keys without these
+ * characters are unchanged, so their hashes stay the same.
  */
 function escapeStrings(
   value: unknown,
@@ -132,7 +156,7 @@ function escapeStrings(
   const copy = Object.create(proto)
   seen.set(value, copy)
   for (const [key, item] of Object.entries(value)) {
-    Object.defineProperty(copy, key, {
+    Object.defineProperty(copy, key.replace(/[\\:,]/g, '\\$&'), {
       value: escapeStrings(item, seen),
       enumerable: true,
     })

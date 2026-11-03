@@ -80,7 +80,10 @@ The same also works when the API route uses the route cache: In this case, the
 cache tags, the max age and the stale if error duration of the API route are
 merged with the route cache of the SSR request. A cached page then never
 outlives the data of the API route it shows. If the API route is marked as
-uncacheable, the page becomes uncacheable as well.
+uncacheable, the page becomes uncacheable as well. This also applies to API
+routes requested with another method than `GET` or `HEAD`, such as `POST`: Their
+route cache values are passed to the page, but their responses are never stored
+in the route cache.
 
 ## Relative URLs Only
 
@@ -90,3 +93,8 @@ marks them as internal requests with a random token that changes whenever the
 server starts. Requests to absolute URLs leave the app, even if they point to
 it, so they neither get the token nor bubble route cache values. Their CDN
 headers are still merged.
+
+The app removes the header with the token from the internal request once it has
+recognized it, so a handler that forwards the request headers, such as a
+[`proxy` route rule](https://nuxt.com/docs/4.x/guide/concepts/rendering#route-rules),
+can't send the token to another server.
