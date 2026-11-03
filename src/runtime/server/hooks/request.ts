@@ -5,6 +5,7 @@ import {
   isAmbiguousRoutePath,
   isErrorPagePath,
   isExcludedRoutePath,
+  isMismatchedRouteKeyPath,
   isRouteCacheMethod,
 } from '../../helpers/routeCache'
 import { setRouteCacheStatus } from '../../helpers/cacheStatus'
@@ -78,8 +79,8 @@ export async function onRequest(event: H3Event) {
   }
 
   // The cache key would belong to a different path than the one that is
-  // rendered, e.g. for "//contact".
-  if (isAmbiguousRoutePath(path)) {
+  // rendered, e.g. for "//contact" or "/a%3F/../b".
+  if (isAmbiguousRoutePath(path) || isMismatchedRouteKeyPath(event)) {
     return bypass(event, path)
   }
 

@@ -6,6 +6,7 @@ import {
   getRouteCacheKey,
   isAmbiguousRoutePath,
   isExcludedRoutePath,
+  isMismatchedRouteKeyPath,
   ROOT_ROUTE_CACHE_KEY,
 } from '~/src/runtime/helpers/routeCache'
 
@@ -149,6 +150,41 @@ describe('isExcludedRoutePath', () => {
     ['/shop/', customApp, false],
   ])('%s with base URL %o: %s', (path, app, expected) => {
     expect(isExcludedRoutePath(path, app)).toBe(expected)
+  })
+})
+
+describe('isMismatchedRouteKeyPath', () => {
+  test.each([
+    // [raw request URL, event.path decoded by h3, expected]
+    ['/', '/', false],
+    ['/contact', '/contact', false],
+    ['/contact?q=%3F', '/contact?q=%3F', false],
+    ['/%63heckout', '/checkout', false],
+    ['/%C3%BCber', '/über', false],
+    // h3 keeps "%2F" and "%25" encoded.
+    ['/a%2Fb', '/a%2Fb', false],
+    ['/a%25b', '/a%25b', false],
+    // An encoded "?" ends the path for the router, but not for the key.
+    ['/contact%3F/../', '/contact?/../', true],
+    [
+      '/api/files/x%3F/../../../contact',
+      '/api/files/x?/../../../contact',
+      true,
+    ],
+    ['/a%3Fb', '/a?b', true],
+  ])('%s: %s', (rawUrl, path, expected) => {
+    const event = {
+      path,
+      node: {
+        req: {
+          originalUrl: rawUrl,
+          url: rawUrl,
+          headers: { host: 'localhost' },
+        },
+      },
+      context: {},
+    } as any
+    expect(isMismatchedRouteKeyPath(event)).toBe(expected)
   })
 })
 

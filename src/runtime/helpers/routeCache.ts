@@ -5,7 +5,7 @@ import {
   type H3Event,
 } from 'h3'
 import { normalizeKey } from 'unstorage'
-import { joinURL, withTrailingSlash } from 'ufo'
+import { decodePath, joinURL, withTrailingSlash } from 'ufo'
 import type { CacheableItemInterface, RouteCacheItem } from '../types'
 import {
   ROUTE_CACHE_EXPIRES_HEADER,
@@ -104,6 +104,33 @@ export function isAmbiguousRoutePath(path: string): boolean {
   const queryIndex = path.indexOf('?')
   const pathname = queryIndex === -1 ? path : path.slice(0, queryIndex)
   return AMBIGUOUS_PATH_RE.test(pathname)
+}
+
+/**
+ * Decode a URL path the way h3 decodes event.path: "%2F" and "%25" stay
+ * encoded.
+ */
+function decodeRequestPath(path: string): string {
+  return path.includes('%25')
+    ? decodePath(path.replace(/%25/g, '%2525'))
+    : decodePath(path)
+}
+
+/**
+ * Whether the default cache key would be built from another path than the
+ * one that is rendered.
+ *
+ * The key is built from the request URL, which resolves dot segments in the
+ * raw path. The router and the Nuxt renderer use the decoded path up to the
+ * first "?". An encoded "?" makes them differ: For "/a%3F/../b", the app
+ * renders "/a", but the key is "/b". Requests whose decoded key path isn't
+ * the rendered path never use the route cache.
+ *
+ * @param event - The event, whose path is the decoded request path.
+ */
+export function isMismatchedRouteKeyPath(event: H3Event): boolean {
+  const renderedPath = event.path.split('?')[0]
+  return decodeRequestPath(encodeRouteCacheKey(event)) !== renderedPath
 }
 
 /**
