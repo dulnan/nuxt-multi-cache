@@ -271,8 +271,10 @@ outer instance, independent of the `bubble-cacheability` prop:
   inner instances are added. This also applies when an inner instance is
   returned from cache.
 
-An inner instance that is rendered without cache because no cache key could be
-generated doesn't affect the outer instance.
+An inner instance that is rendered without cache, for example because no cache
+key could be generated, doesn't affect the outer instance itself. Its markup is
+part of the outer instance, so the instances and `useComponentCache()` calls in
+its slot are merged into the outer instance instead.
 
 The merging happens when the outer instance is rendered. When the outer instance
 is returned from cache, the inner instances aren't rendered at all. The outer

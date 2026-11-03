@@ -9,6 +9,7 @@ import {
 } from '../../../src/runtime/helpers/cacheItem'
 import { createTestApp } from './__helpers__'
 import { useComponentCache } from '../../../src/runtime/composables/useComponentCache'
+import type { ComponentCacheHelper } from '../../../src/runtime/helpers/ComponentCacheHelper'
 
 vi.mock('#imports', () => {
   return {
@@ -426,7 +427,22 @@ describe('RenderCacheable', () => {
     const date = new Date(2022, 11, 1)
     const now = date.getTime() / 1000
 
-    function render(innerProps: string, storage: Record<string, any> = {}) {
+    function render(
+      innerProps: string,
+      storage: Record<string, any> = {},
+      options: {
+        // The slot of the nested instance.
+        slot?: string
+        // Called with the helper that useComponentCache() gets in Inner.
+        inner?: (helper: ComponentCacheHelper) => void
+      } = {},
+    ) {
+      const slot = options.slot ?? '<Inner />'
+      const inner =
+        options.inner ??
+        (innerProps.includes('uncacheable')
+          ? (helper: ComponentCacheHelper) => helper.setUncacheable()
+          : undefined)
       const { ssrContext } = createTestApp('', '', storage)
       mocks.useNuxtApp.mockImplementation(() => {
         return {
@@ -445,7 +461,7 @@ describe('RenderCacheable', () => {
             RenderCacheable,
             Outer: defineComponentWithModule(
               'Outer',
-              `<div><RenderCacheable ${innerProps}><Inner /></RenderCacheable></div>`,
+              `<div><RenderCacheable ${innerProps}>${slot}</RenderCacheable></div>`,
             ),
           },
           template: `<RenderCacheable cache-key="outer" max-age="1h" stale-if-error="1d" :cache-tags="['outer']"><Outer /></RenderCacheable>`,
@@ -456,11 +472,9 @@ describe('RenderCacheable', () => {
         defineComponent({
           name: 'Inner',
           setup() {
-            // Only has an effect if the instance provides a helper.
+            // Only has an effect if an instance provides a helper.
             useComponentCache((helper) => {
-              if (innerProps.includes('uncacheable')) {
-                helper.setUncacheable()
-              }
+              inner?.(helper)
             })
           },
           template: `<div>Inner</div>`,
@@ -523,13 +537,48 @@ describe('RenderCacheable', () => {
       expect(outer.cacheTags?.sort()).toEqual(['inner', 'outer'])
     })
 
+    // The first child of the nested instance is an element, which has no
+    // component name for the key, so the nested instance renders uncached.
     test('stays cacheable if the nested instance renders uncached because it has no key.', async () => {
       const storage: Record<string, any> = {}
-      await render('', storage)
+      await render('', storage, { slot: '<div><Inner /></div>' })
 
+      expect(Object.keys(storage)).toEqual(['Outer::outer'])
       const outer = decodeComponentCacheItem(storage['Outer::outer'])!
       expect(outer.expires).toEqual(now + 3600)
       expect(outer.data).toContain('<div>Inner</div>')
+    })
+
+    test('is not stored if a nested instance that renders uncached contains an instance with noCache.', async () => {
+      const storage: Record<string, any> = {}
+      const html = await render('', storage, {
+        slot: '<div><RenderCacheable no-cache><Inner /></RenderCacheable></div>',
+      })
+
+      expect(html).toContain('<div>Inner</div>')
+      expect(Object.keys(storage)).toEqual([])
+    })
+
+    test('is not stored if a component in a nested instance that renders uncached is uncacheable.', async () => {
+      const storage: Record<string, any> = {}
+      await render('', storage, {
+        slot: '<div><Inner /></div>',
+        inner: (helper) => helper.setUncacheable(),
+      })
+
+      expect(Object.keys(storage)).toEqual([])
+    })
+
+    test('gets the max age and cache tags of a component in a nested instance that renders uncached.', async () => {
+      const storage: Record<string, any> = {}
+      await render('', storage, {
+        slot: '<div><Inner /></div>',
+        inner: (helper) => helper.setMaxAge(60).addTags(['inner']),
+      })
+
+      const outer = decodeComponentCacheItem(storage['Outer::outer'])!
+      expect(outer.expires).toEqual(now + 60)
+      expect(outer.cacheTags?.sort()).toEqual(['inner', 'outer'])
     })
   })
 

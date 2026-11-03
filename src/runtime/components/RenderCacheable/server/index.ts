@@ -113,10 +113,18 @@ export default defineComponent<Props>({
 
     // We have to call provide() before the first await or else it will not
     // work. To prevent always creating a ComponentCacheHelper instance, even
-    // if not needed, we provide an empty object instead and create the helper
-    // later and assign it to the helper property.
-    const providedContext: { helper?: ComponentCacheHelper } = {
-      helper: undefined,
+    // if not needed, we provide an object whose helper is created later.
+    // Until then, and if this instance renders its slot uncached, its markup
+    // ends up in the enclosing instance, so the components and instances in
+    // the slot get the helper of the enclosing instance.
+    const providedContext: {
+      ownHelper?: ComponentCacheHelper
+      readonly helper?: ComponentCacheHelper
+    } = {
+      ownHelper: undefined,
+      get helper() {
+        return this.ownHelper ?? parentContext?.helper
+      },
     }
 
     // Injected by useComponentCache().
@@ -258,7 +266,7 @@ export default defineComponent<Props>({
     }
 
     const helper = new ComponentCacheHelper(now)
-    providedContext.helper = helper
+    providedContext.ownHelper = helper
 
     // For backwards-compatibility we assume that the component is
     // cacheable by default.
