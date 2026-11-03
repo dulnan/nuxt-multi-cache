@@ -4,6 +4,7 @@ import { describe, test, beforeEach, expect } from 'vitest'
 import purgeAll from './../../__helpers__/purgeAll'
 import purgeByKey from './../../__helpers__/purgeByKey'
 import getRouteCacheItems from './../../__helpers__/getRouteCacheItems'
+import getDataCacheItems from './../../__helpers__/getDataCacheItems'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 import { sleep } from '~/test/__helpers__'
 
@@ -98,6 +99,27 @@ describe('The "bubble cacheability" feature', () => {
       'tag-from-route',
       'tag-from-callback',
     ])
+  })
+
+  test('Merges cacheability from useDataCacheCallback if the data cache skips the item', async () => {
+    const response = await fetch('/use-data-cache-callback-skipped')
+    expect(response.headers.get('surrogate-control')).toEqual('max-age=100')
+    expect((response.headers.get('cache-tag') ?? '').split(' ').sort()).toEqual(
+      ['tag-from-route', 'tag-from-skipped'],
+    )
+
+    const items = await getRouteCacheItems()
+    expect(items).toHaveLength(1)
+    const { cacheTags, expires } = items[0]!.item
+    expect([...(cacheTags ?? [])].sort()).toEqual([
+      'tag-from-route',
+      'tag-from-skipped',
+    ])
+    const remaining = expires - toTimestamp(new Date())
+    expect(remaining).toBeGreaterThan(90)
+    expect(remaining).toBeLessThanOrEqual(100)
+
+    expect((await getDataCacheItems()).rows).toHaveLength(0)
   })
 
   test.each(['/component-uncacheable', '/use-data-cache-callback-uncacheable'])(

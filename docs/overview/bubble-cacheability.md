@@ -76,7 +76,10 @@ const { value, addToCache } = await useDataCache('weather', null, {
 ```
 
 `useDataCache` bubbles the cached item when a value is returned from cache, and
-the values passed to `addToCache` when it is called.
+the values passed to `addToCache` when it is called. They bubble even if the
+data cache doesn't store the item: if it is disabled at runtime, not enabled for
+the request, the key contains a `?` or reading the item failed. The page still
+shows the data, so it must not outlive it.
 
 ```typescript
 const weather = await useDataCacheCallback(

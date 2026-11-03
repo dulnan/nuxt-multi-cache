@@ -95,8 +95,12 @@ the project and report it with evidence.
    a `<RenderCacheable>` whose content calls `setUncacheable()` makes the page
    uncacheable: no route cache, and `max-age=0, no-store` in the CDN header. A
    `useDataCacheCallback` result is no longer stored after `setUncacheable()`.
+   The values passed to `addToCache()` (and set on the `useDataCacheCallback`
+   helper) also bubble when the data cache doesn't store the item: disabled at
+   runtime, `enabledForRequest` false, a key with `?`, a failed read.
    - Search: `bubbleCacheability`, `setUncacheable(`.
-   - Do: report the pages that are no longer cached.
+   - Do: report the pages that are no longer cached, and the pages that now get
+     a lower max age or more tags where the data cache is turned off.
      [What bubbles](https://nuxt-multi-cache.dulnan.net/overview/bubble-cacheability#what-bubbles)
 8. **The fetch interceptor bubbles more from API routes.** The max age,
    stale-if-error and "uncacheable" of route cached API routes now bubble into
