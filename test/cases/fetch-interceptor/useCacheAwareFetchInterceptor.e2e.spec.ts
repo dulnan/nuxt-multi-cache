@@ -161,6 +161,15 @@ describe('The useCacheAwareFetchInterceptor', () => {
     expect(rows.map((v) => v.key)).toEqual([])
   })
 
+  test('does not forward the token of the internal request through a proxy', async () => {
+    // The API route is a proxy route rule, which forwards the request headers.
+    const html = await fetch('/route-cache-proxied').then((r) => r.text())
+    const headers = html.match(/id="headers">([^<]*)</)?.[1]
+
+    expect(headers, 'The proxied request has headers').toContain('host')
+    expect(headers).not.toContain('x-nuxt-multi-cache-request')
+  })
+
   test('does not store or serve the internal headers of the API route', async () => {
     // The page fetches the API route as an internal request, which gets the
     // internal cache tags header.

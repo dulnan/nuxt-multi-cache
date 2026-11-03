@@ -3,6 +3,7 @@ import {
   enabledForRequest,
   getRequestTimestamp,
   isInternalServerRequest,
+  removeInternalRequestHeader,
 } from '../../helpers/server'
 import { NuxtMultiCacheRouteCacheHelper } from '../../helpers/RouteCacheHelper'
 import {
@@ -70,6 +71,12 @@ export async function onRequest(event: H3Event) {
 
   const app = getMultiCacheApp()
   event.context.multiCacheApp = app
+
+  // Decide once, with the token, whether this is an internal request from the
+  // Nuxt app during SSR. Then the header is removed, so that the token is never
+  // forwarded to another server, e.g. by a proxy route rule.
+  isInternalServerRequest(event)
+  removeInternalRequestHeader(event)
 
   // Route cache is disabled.
   if (!app.cache.route) {

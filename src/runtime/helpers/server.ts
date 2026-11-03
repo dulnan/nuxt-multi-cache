@@ -193,6 +193,21 @@ export function isInternalServerRequest(event: H3Event): boolean {
 }
 
 /**
+ * Remove the header of internal requests from the request.
+ *
+ * Call isInternalServerRequest() before, which keeps its result for the
+ * request. Without the header, no handler (e.g. a proxy route rule, which
+ * forwards the request headers) can send the token to another server.
+ */
+export function removeInternalRequestHeader(event: H3Event) {
+  Reflect.deleteProperty(event.node.req.headers, SERVER_REQUEST_HEADER)
+  // h3 keeps a copy of the headers once they have been read.
+  if (event.headers instanceof Headers) {
+    event.headers.delete(SERVER_REQUEST_HEADER)
+  }
+}
+
+/**
  * Filter out duplicate array items.
  */
 export function onlyUnique(value: string, index: number, self: Array<string>) {

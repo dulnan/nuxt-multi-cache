@@ -93,3 +93,8 @@ marks them as internal requests with a random token that changes whenever the
 server starts. Requests to absolute URLs leave the app, even if they point to
 it, so they neither get the token nor bubble route cache values. Their CDN
 headers are still merged.
+
+The app removes the header with the token from the internal request once it has
+recognized it, so a handler that forwards the request headers, such as a
+[`proxy` route rule](https://nuxt.com/docs/4.x/guide/concepts/rendering#route-rules),
+can't send the token to another server.

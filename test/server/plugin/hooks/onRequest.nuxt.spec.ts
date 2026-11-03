@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from 'vitest'
 import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onRequest } from '../../../../src/runtime/server/hooks/request'
+import { isInternalServerRequest } from '../../../../src/runtime/helpers/server'
 
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
@@ -168,6 +169,42 @@ describe('onRequest nitro hook handler', () => {
       mocks.useNitroApp.mockRestore()
       mocks.serverOptions.route.applies.mockRestore()
       mocks.serverOptions.enabledForRequest.mockRestore()
+    },
+  )
+
+  // A handler such as a proxy route rule could forward the request headers to
+  // another server, which must never get the token.
+  test.each([
+    ['the token', 'secret-token', true],
+    ['another value', 'true', false],
+  ])(
+    'Removes the internal request header with %s',
+    async (_label, value, isInternal) => {
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
+          cache: {},
+          internalRequestToken: 'secret-token',
+        },
+      })
+      const event: any = {
+        method: 'GET',
+        path: '/api/test',
+        node: {
+          res: {},
+          req: {
+            originalUrl: '/api/test',
+            headers: { 'x-nuxt-multi-cache-request': value, accept: '*/*' },
+          },
+        },
+        context: {},
+      }
+
+      await onRequest(event)
+
+      expect(event.node.req.headers).toEqual({ accept: '*/*' })
+      expect(isInternalServerRequest(event)).toBe(isInternal)
+
+      mocks.useNitroApp.mockRestore()
     },
   )
 
