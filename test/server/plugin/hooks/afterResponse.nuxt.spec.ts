@@ -252,67 +252,71 @@ describe('afterResponse nitro hook handler', () => {
     mocks.useNitroApp.mockRestore()
   })
 
-  test('Does not store a route whose key contains "?"', async () => {
-    const storedItems: any[] = []
-    mocks.useNitroApp.mockReturnValue({
-      multiCache: {
-        cache: {
-          route: {},
-        },
-        serverOptions: {},
-        config: {
-          cdn: {},
-        },
-      },
-    })
-    // unstorage would cut the key off at "?", which is the key of "/search".
-    mocks.serverOptions.route = {
-      buildCacheKey: () => '/search?q=casino',
-    }
-
-    const event = {
-      path: '/search?q=casino',
-      context: {
-        multiCacheApp: {
+  // unstorage would cut the key off at "?": "/search" is the key of another
+  // route, and the empty key of "/?q=casino" must not become the root key.
+  test.each(['/search?q=casino', '/?q=casino'])(
+    'Does not store a route whose key contains "?": %s',
+    async (key) => {
+      const storedItems: any[] = []
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: {
           cache: {
-            route: {
-              storage: {
-                setItemRaw(key: string) {
-                  storedItems.push(key)
-                  return Promise.resolve()
+            route: {},
+          },
+          serverOptions: {},
+          config: {
+            cdn: {},
+          },
+        },
+      })
+      mocks.serverOptions.route = {
+        buildCacheKey: () => key,
+      }
+
+      const event = {
+        path: key,
+        context: {
+          multiCacheApp: {
+            cache: {
+              route: {
+                storage: {
+                  setItemRaw(key: string) {
+                    storedItems.push(key)
+                    return Promise.resolve()
+                  },
                 },
               },
             },
           },
-        },
-        multiCache: {
-          route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
-            .setCacheable()
-            .setMaxAge(1200),
-        },
-      },
-      node: {
-        res: {
-          statusCode: 200,
-          getHeaders() {
-            return {}
+          multiCache: {
+            route: new NuxtMultiCacheRouteCacheHelper(mockDateTimestamp)
+              .setCacheable()
+              .setMaxAge(1200),
           },
         },
-        req: {
-          originalUrl: '/search?q=casino',
-          headers: {},
+        node: {
+          res: {
+            statusCode: 200,
+            getHeaders() {
+              return {}
+            },
+          },
+          req: {
+            originalUrl: key,
+            headers: {},
+          },
         },
-      },
-    } as any
+      } as any
 
-    try {
-      await onAfterResponse(event, { body: '<html></html>' } as any)
-      expect(storedItems).toEqual([])
-    } finally {
-      delete mocks.serverOptions.route
-      mocks.useNitroApp.mockRestore()
-    }
-  })
+      try {
+        await onAfterResponse(event, { body: '<html></html>' } as any)
+        expect(storedItems).toEqual([])
+      } finally {
+        delete mocks.serverOptions.route
+        mocks.useNitroApp.mockRestore()
+      }
+    },
+  )
 
   test.each([
     ['permanent', (h: NuxtMultiCacheRouteCacheHelper) => h, undefined],

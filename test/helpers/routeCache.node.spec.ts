@@ -110,6 +110,18 @@ describe('getRouteCacheKey', () => {
     )
   })
 
+  test('keeps a key with "?" that unstorage would cut off to an empty key', async () => {
+    mocks.serverOptions.route = {
+      buildCacheKey: (event) => event.path,
+    }
+    expect(await getRouteCacheKey(buildEvent('/?q=casino'))).toEqual(
+      '/?q=casino',
+    )
+    expect(await getRouteCacheKey(buildEvent('/'))).toEqual(
+      ROOT_ROUTE_CACHE_KEY,
+    )
+  })
+
   test('uses a root key that unstorage accepts', async () => {
     const storage = createStorage()
     await expect(storage.setItem('/', 'value')).rejects.toThrow('Invalid key')

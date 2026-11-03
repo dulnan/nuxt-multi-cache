@@ -114,8 +114,11 @@ export async function getRouteCacheKey(event: H3Event): Promise<string> {
     ? await serverOptions.route.buildCacheKey(event)
     : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)
 
-  // unstorage normalizes "/" to an empty key, which it rejects.
-  return normalizeKey(key) ? key : ROOT_ROUTE_CACHE_KEY
+  // unstorage normalizes "/" to an empty key, which it rejects. It also cuts
+  // off everything from "?", so a key such as "/?q=x" (e.g. from a
+  // buildCacheKey method that returns the path with the query) is empty too.
+  // It must not become the root key: isValidCacheKey() skips it instead.
+  return normalizeKey(key) || key.includes('?') ? key : ROOT_ROUTE_CACHE_KEY
 }
 
 /**

@@ -262,56 +262,61 @@ describe('serveCachedRoute event handler', () => {
     },
   )
 
-  test('Does not look up a route whose key contains "?"', async () => {
-    const getItemRaw = vi.fn()
-    mocks.useNitroApp.mockReturnValue({
-      multiCache: {
-        cache: {},
-        serverOptions: {},
-        config: {
-          cdn: {},
-        },
-      },
-    })
-    mocks.serverOptions.route = {
-      buildCacheKey: () => '/search?q=casino',
-    }
-
-    const event = {
-      method: 'GET',
-      path: '/search?q=casino',
-      headers: {},
-      node: {
-        res: {},
-        req: {
-          originalUrl: '/search?q=casino',
-          headers: {},
-        },
-      },
-      context: {
+  // A key that is cut off before "?" is empty for the root path, which must
+  // not become the root key.
+  test.each(['/search?q=casino', '/?q=casino'])(
+    'Does not look up a route whose key contains "?": %s',
+    async (key) => {
+      const getItemRaw = vi.fn()
+      mocks.useNitroApp.mockReturnValue({
         multiCache: {
-          route: new NuxtMultiCacheRouteCacheHelper(0),
+          cache: {},
+          serverOptions: {},
+          config: {
+            cdn: {},
+          },
         },
-        [MULTI_CACHE_CONTEXT_KEY]: {
-          cache: {
-            route: {
-              storage: {
-                getItemRaw,
+      })
+      mocks.serverOptions.route = {
+        buildCacheKey: () => key,
+      }
+
+      const event = {
+        method: 'GET',
+        path: key,
+        headers: {},
+        node: {
+          res: {},
+          req: {
+            originalUrl: key,
+            headers: {},
+          },
+        },
+        context: {
+          multiCache: {
+            route: new NuxtMultiCacheRouteCacheHelper(0),
+          },
+          [MULTI_CACHE_CONTEXT_KEY]: {
+            cache: {
+              route: {
+                storage: {
+                  getItemRaw,
+                },
               },
             },
           },
         },
-      },
-    }
+      }
 
-    try {
-      expect(await serveCachedHandler(event as any)).toBeUndefined()
-      expect(getItemRaw).not.toHaveBeenCalled()
-    } finally {
-      delete mocks.serverOptions.route
-      mocks.useNitroApp.mockRestore()
-    }
-  })
+      try {
+        expect(await serveCachedHandler(event as any)).toBeUndefined()
+        expect(getItemRaw).not.toHaveBeenCalled()
+      } finally {
+        delete mocks.serverOptions.route
+        mocks.useNitroApp.mockRestore()
+      }
+    },
+  )
 
   test('Respects max age of a cached route', async () => {
     const date = new Date(2022, 11, 29, 13, 0)
