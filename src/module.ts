@@ -185,21 +185,29 @@ export default defineNuxtModule<ModuleOptions>({
             )
           },
           transform(_source, id) {
+            // The code is replaced entirely, so there is nothing to map. An
+            // empty source map tells the bundler so; without it, Rolldown
+            // warns that the source map is likely to be incorrect.
+            const replace = (code: string) => ({
+              code,
+              map: { mappings: '' } as const,
+            })
+
             const stub = getClientStub(id)
             if (stub) {
-              return stub
+              return replace(stub)
             } else if (id.includes('multiCache.serverOptions')) {
               // The userland file exporting `defineMultiCacheOptions`.
-              return 'export default function() { return {}; }'
+              return replace('export default function() { return {}; }')
             } else if (id.includes('multi-cache-logger')) {
               // We do this so that the consola package is not bundled in the
               // client, which for some reason happens even if it's supposed
               // to only be used on server bundles.
-              return `export const logger = console;`
+              return replace(`export const logger = console;`)
             }
 
             // The server-options template provided by the module.
-            return `export const serverOptions = {}`
+            return replace(`export const serverOptions = {}`)
           },
         }
       }),
