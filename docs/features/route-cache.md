@@ -8,8 +8,8 @@ should be cached, for how long, etc.. Any `routeRules` or
 `defineCachedEventHandler` are ignored by this module (but they still work if
 you wish to use both at the same time).
 
-Only responses to `GET` and `HEAD` requests with a status code of `200` and a
-non-empty body are stored.
+Only responses to `GET` and `HEAD` requests with a non-empty body are stored, by
+default only with a status code of `200` (see [Status codes](#status-codes)).
 
 ## Configuration
 
@@ -41,6 +41,44 @@ export default defineMultiCacheOptions(() => {
 ```
 
 :::
+
+### Status codes
+
+By default only responses with the status code `200` are stored. To store
+others, list all status codes to store:
+
+```typescript [nuxt.config.ts]
+export default defineNuxtConfig({
+  multiCache: {
+    route: {
+      enabled: true,
+      statusCodes: [200, 301, 302, 307, 308],
+    },
+  },
+})
+```
+
+A stored response is served like any other hit, with its status code, headers
+and body. With redirect status codes, the redirects of `navigateTo()` during
+server side rendering are stored too.
+
+- **The target must only depend on the [cache key](#cache-key-for-routes).** By
+  default the key is the path without the query. A redirect whose target depends
+  on the query, the user or a cookie (e.g. to a login page for anonymous users)
+  is served to every visitor of the path. Use a custom `buildCacheKey`, or don't
+  mark such responses as cacheable.
+- **All headers of the response are stored**, including `Set-Cookie`, as for
+  `200` responses. Remove the ones that must not be sent to other visitors with
+  [`alterCachedHeaders`](#alter-which-headers-are-cached).
+- **The body must not be empty.** `204` and `304` responses can't be stored.
+  `navigateTo()` responds with a short HTML document, so its redirects can.
+- **Error status codes are stored too if you list them.** Errors that are thrown
+  are never stored, but an error page that Nuxt renders as a normal response
+  (`experimental.inlineErrorRendering`) is, if the route was marked cacheable. A
+  stored item is also served as the [stale-if-error](/overview/stale-if-error)
+  response, whatever its status code.
+- Responses that a server handler sends itself, e.g. with `sendRedirect`, are
+  never stored.
 
 ### Cache key for routes
 
