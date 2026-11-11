@@ -25,6 +25,19 @@ export interface RouteCacheOptions extends CacheConfigOptions {
    * @default false
    */
   cacheStatus?: boolean | string
+
+  /**
+   * The status codes of responses that the route cache stores.
+   *
+   * A stored response is served with its status code and headers, so adding
+   * redirect status codes (e.g. `[200, 301, 302, 307, 308]`) also caches
+   * redirects of `navigateTo()`. Make sure that the `Location` header only
+   * depends on what the cache key contains: by default the key is the path,
+   * without the query.
+   *
+   * @default [200]
+   */
+  statusCodes?: number[]
 }
 
 export type CDNOptions = {

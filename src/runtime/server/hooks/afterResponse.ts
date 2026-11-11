@@ -20,7 +20,7 @@ import { getRouteCacheKey, isRouteCacheMethod } from '../../helpers/routeCache'
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/multi-cache-logger'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
-import { debug } from '#nuxt-multi-cache/config'
+import { debug, routeCacheStatusCodes } from '#nuxt-multi-cache/config'
 import { INTERNAL_RESPONSE_HEADERS } from '../../helpers/constants'
 
 function isPureObject(value: any) {
@@ -72,7 +72,7 @@ export function getStorableRoute(
 
   const statusCode = getResponseStatus(event)
 
-  if (statusCode !== 200) {
+  if (!routeCacheStatusCodes.includes(statusCode)) {
     return
   }
 
@@ -235,7 +235,7 @@ export async function onAfterResponse(
   } finally {
     // If this request revalidated a stale route, it's no longer being
     // revalidated. This must also happen when the response was not stored
-    // (e.g. a status other than 200, or not cacheable), or else the stale
+    // (e.g. a status code that isn't stored, or not cacheable), or else the stale
     // route would be served until it's purged.
     const revalidationKey = event.context?.multiCache?.routeRevalidationkey
     if (revalidationKey) {

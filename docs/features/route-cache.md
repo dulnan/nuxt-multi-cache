@@ -8,8 +8,8 @@ should be cached, for how long, etc.. Any `routeRules` or
 `defineCachedEventHandler` are ignored by this module (but they still work if
 you wish to use both at the same time).
 
-Only responses to `GET` and `HEAD` requests with a status code of `200` and a
-non-empty body are stored.
+Only responses to `GET` and `HEAD` requests with a non-empty body are stored, by
+default only with a status code of `200` (see [Status codes](#status-codes)).
 
 ## Configuration
 
@@ -41,6 +41,34 @@ export default defineMultiCacheOptions(() => {
 ```
 
 :::
+
+### Status codes
+
+By default only responses with the status code `200` are stored. To store
+others, list all status codes to store:
+
+```typescript [nuxt.config.ts]
+export default defineNuxtConfig({
+  multiCache: {
+    route: {
+      enabled: true,
+      statusCodes: [200, 301, 302, 307, 308],
+    },
+  },
+})
+```
+
+A stored response is served with its status code and headers. With redirect
+status codes, the redirects of `navigateTo()` during server side rendering are
+stored too, including their `Location` header. The redirect must only depend on
+what the [cache key](#cache-key-for-routes) contains. By default the key is the
+path without the query, so a redirect that keeps the query of the request in its
+target would send every visitor to the target of the first one. Use
+[`alterCachedHeaders`](#alter-which-headers-are-cached) or a custom cache key in
+that case.
+
+Responses that a server handler sends itself, e.g. with `sendRedirect`, are
+never stored.
 
 ### Cache key for routes
 
