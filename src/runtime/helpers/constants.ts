@@ -13,6 +13,12 @@ export const TEST_MODE_DATE_OVERRIDE_HEADER = 'x-nuxt-multi-cache-date-override'
 export const DEFAULT_CACHE_STATUS_NAME = 'nuxt-multi-cache'
 
 /**
+ * How long concurrent requests wait for a route that another request renders,
+ * in milliseconds, with `route.coalesce: true`.
+ */
+export const DEFAULT_ROUTE_COALESCE_TIMEOUT = 10_000
+
+/**
  * Response headers that are only set for internal requests from the Nuxt app
  * during SSR. They describe a single request, so they are never stored in the
  * route cache.

@@ -25,6 +25,26 @@ export interface RouteCacheOptions extends CacheConfigOptions {
    * @default false
    */
   cacheStatus?: boolean | string
+
+  /**
+   * Let one request render a route that can't be served from cache, while
+   * concurrent requests for the same cache key wait for its result instead of
+   * rendering the route too.
+   *
+   * Applies when no item is stored, or the stored item is expired and can't
+   * be served stale while revalidating. If the route isn't stored after the
+   * render (e.g. because it's uncacheable), the waiting requests render it
+   * themselves.
+   *
+   * `true` waits at most 10 seconds, a number sets the maximum wait in
+   * milliseconds.
+   *
+   * Can be changed at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE`
+   * (milliseconds, 0 disables it).
+   *
+   * @default false
+   */
+  coalesce?: boolean | number
 }
 
 export type CDNOptions = {

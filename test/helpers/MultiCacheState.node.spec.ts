@@ -40,3 +40,80 @@ describe('MultiCacheState', () => {
     expect(state.isBeingRevalidated('foo')).toBe(true)
   })
 })
+
+describe('MultiCacheState renders', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  test('Lets only one caller render a key at a time.', () => {
+    const state = new MultiCacheState()
+
+    const release = state.startRender('foo', 1000)
+    expect(release).toBeTypeOf('function')
+    expect(state.startRender('foo', 1000)).toBeNull()
+    expect(state.startRender('bar', 1000)).toBeTypeOf('function')
+
+    release!()
+    expect(state.startRender('foo', 1000)).toBeTypeOf('function')
+  })
+
+  test('Resolves waiting callers when the render is released.', async () => {
+    const state = new MultiCacheState()
+    const release = state.startRender('foo', 1000)!
+
+    let waited = false
+    const waiting = state.waitForRender('foo', 1000).then(() => {
+      waited = true
+    })
+
+    await vi.advanceTimersByTimeAsync(500)
+    expect(waited).toBe(false)
+
+    release()
+    await waiting
+    expect(waited).toBe(true)
+  })
+
+  test('Resolves waiting callers after the timeout.', async () => {
+    const state = new MultiCacheState()
+    state.startRender('foo', 1000)
+
+    let waited = false
+    const waiting = state.waitForRender('foo', 1000).then(() => {
+      waited = true
+    })
+
+    await vi.advanceTimersByTimeAsync(999)
+    expect(waited).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await waiting
+    expect(waited).toBe(true)
+  })
+
+  test('Resolves at once if the key is not being rendered.', async () => {
+    const state = new MultiCacheState()
+    await expect(state.waitForRender('foo', 1000)).resolves.toBeUndefined()
+  })
+
+  test('Lets a new caller render a key after the timeout.', () => {
+    const state = new MultiCacheState()
+    const releaseOld = state.startRender('foo', 1000)!
+
+    vi.advanceTimersByTime(1000)
+    expect(state.startRender('foo', 1000)).toBeNull()
+
+    vi.advanceTimersByTime(1)
+    const releaseNew = state.startRender('foo', 1000)
+    expect(releaseNew).toBeTypeOf('function')
+
+    // Releasing the old render doesn't end the new one.
+    releaseOld()
+    expect(state.startRender('foo', 1000)).toBeNull()
+  })
+})

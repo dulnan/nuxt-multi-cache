@@ -257,6 +257,13 @@ export type MultiCacheRuntimeConfig = {
   routeCacheStatus: string | boolean
 
   /**
+   * How long concurrent requests wait for a route that another request
+   * renders, in milliseconds, or 0 if they render it themselves. An env
+   * variable can also set it to `true` (the default timeout) or `false`.
+   */
+  routeCoalesce: number | boolean
+
+  /**
    * API settings.
    */
   api: {
@@ -388,6 +395,12 @@ export type MultiCacheEventContext = {
    * The route cache key that is currently being revalidated.
    */
   routeRevalidationkey?: string
+
+  /**
+   * Ends the render of a route that concurrent requests wait for, if the
+   * `route.coalesce` option is enabled and this request renders the route.
+   */
+  routeEndRender?: () => void
 
   /**
    * Contains the already fetched cached route, if it exists.
