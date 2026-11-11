@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts" setup>
-import { navigateTo, useRouteCache } from '#imports'
+import { navigateTo, useRoute, useRouteCache } from '#imports'
 
 useRouteCache((helper) => {
   helper.setCacheable().setMaxAge(9000)
@@ -11,5 +11,7 @@ useRouteCache((helper) => {
 
 // A random target shows if the redirect was served from cache.
 const random = Math.floor(Math.random() * 1000000000)
-await navigateTo('/?random=' + random, { redirectCode: 301 })
+await navigateTo('/?random=' + random, {
+  redirectCode: Number(useRoute().params.code),
+})
 </script>

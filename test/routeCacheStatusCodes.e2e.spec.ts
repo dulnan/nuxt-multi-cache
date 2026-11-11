@@ -43,7 +43,7 @@ describe('The route.statusCodes option', () => {
   test('stores and serves a redirect with a listed status code', async () => {
     await purgeAll()
 
-    const [first, second] = await requestTwice('/cachedRedirect301')
+    const [first, second] = await requestTwice('/cachedRedirect/301')
 
     expect(first.status).toBe(301)
     expect(first.cacheStatus).toContain('fwd=uri-miss')
@@ -56,7 +56,7 @@ describe('The route.statusCodes option', () => {
   test('does not store a redirect with another status code', async () => {
     await purgeAll()
 
-    const [first, second] = await requestTwice('/cachedRedirect302')
+    const [first, second] = await requestTwice('/cachedRedirect/302')
 
     expect(first.status).toBe(302)
     expect(second.status).toBe(302)
