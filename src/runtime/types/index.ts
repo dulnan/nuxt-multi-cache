@@ -257,11 +257,9 @@ export type MultiCacheRuntimeConfig = {
   routeCacheStatus: string | boolean
 
   /**
-   * How long concurrent requests wait for a route that another request
-   * renders, in milliseconds, or 0 if they render it themselves. An env
-   * variable can also set it to `true` (the default timeout) or `false`.
+   * Whether concurrent requests wait for a route that another request renders.
    */
-  routeCoalesce: number | boolean
+  routeCoalesce: boolean
 
   /**
    * API settings.

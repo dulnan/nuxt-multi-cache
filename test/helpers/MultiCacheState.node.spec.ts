@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
   MultiCacheState,
+  RENDER_TIMEOUT,
   REVALIDATION_TIMEOUT,
 } from '../../src/runtime/helpers/MultiCacheState'
 
@@ -53,25 +54,25 @@ describe('MultiCacheState renders', () => {
   test('Lets only one caller render a key at a time.', () => {
     const state = new MultiCacheState()
 
-    const release = state.startRender('foo', 1000)
+    const release = state.startRender('foo')
     expect(release).toBeTypeOf('function')
-    expect(state.startRender('foo', 1000)).toBeNull()
-    expect(state.startRender('bar', 1000)).toBeTypeOf('function')
+    expect(state.startRender('foo')).toBeNull()
+    expect(state.startRender('bar')).toBeTypeOf('function')
 
     release!()
-    expect(state.startRender('foo', 1000)).toBeTypeOf('function')
+    expect(state.startRender('foo')).toBeTypeOf('function')
   })
 
   test('Resolves waiting callers when the render is released.', async () => {
     const state = new MultiCacheState()
-    const release = state.startRender('foo', 1000)!
+    const release = state.startRender('foo')!
 
     let waited = false
-    const waiting = state.waitForRender('foo', 1000).then(() => {
+    const waiting = state.waitForRender('foo').then(() => {
       waited = true
     })
 
-    await vi.advanceTimersByTimeAsync(500)
+    await vi.advanceTimersByTimeAsync(RENDER_TIMEOUT / 2)
     expect(waited).toBe(false)
 
     release()
@@ -81,14 +82,14 @@ describe('MultiCacheState renders', () => {
 
   test('Resolves waiting callers after the timeout.', async () => {
     const state = new MultiCacheState()
-    state.startRender('foo', 1000)
+    state.startRender('foo')
 
     let waited = false
-    const waiting = state.waitForRender('foo', 1000).then(() => {
+    const waiting = state.waitForRender('foo').then(() => {
       waited = true
     })
 
-    await vi.advanceTimersByTimeAsync(999)
+    await vi.advanceTimersByTimeAsync(RENDER_TIMEOUT - 1)
     expect(waited).toBe(false)
 
     await vi.advanceTimersByTimeAsync(1)
@@ -98,22 +99,22 @@ describe('MultiCacheState renders', () => {
 
   test('Resolves at once if the key is not being rendered.', async () => {
     const state = new MultiCacheState()
-    await expect(state.waitForRender('foo', 1000)).resolves.toBeUndefined()
+    await expect(state.waitForRender('foo')).resolves.toBeUndefined()
   })
 
   test('Lets a new caller render a key after the timeout.', () => {
     const state = new MultiCacheState()
-    const releaseOld = state.startRender('foo', 1000)!
+    const releaseOld = state.startRender('foo')!
 
-    vi.advanceTimersByTime(1000)
-    expect(state.startRender('foo', 1000)).toBeNull()
+    vi.advanceTimersByTime(RENDER_TIMEOUT)
+    expect(state.startRender('foo')).toBeNull()
 
     vi.advanceTimersByTime(1)
-    const releaseNew = state.startRender('foo', 1000)
+    const releaseNew = state.startRender('foo')
     expect(releaseNew).toBeTypeOf('function')
 
     // Releasing the old render doesn't end the new one.
     releaseOld()
-    expect(state.startRender('foo', 1000)).toBeNull()
+    expect(state.startRender('foo')).toBeNull()
   })
 })

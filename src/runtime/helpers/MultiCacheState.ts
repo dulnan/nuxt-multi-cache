@@ -6,6 +6,17 @@
  */
 export const REVALIDATION_TIMEOUT = 60_000
 
+/**
+ * How long concurrent requests wait for a route that another request renders,
+ * in milliseconds.
+ *
+ * A render normally ends when its response is sent. This only limits the wait
+ * for a render that never finishes, e.g. one that waits for a request without
+ * a timeout: after it, the waiting requests render the route themselves, and
+ * the next request can render it again.
+ */
+export const RENDER_TIMEOUT = 5_000
+
 type Render = {
   startedAt: number
   done: Promise<void>
@@ -22,16 +33,12 @@ export class MultiCacheState {
   /**
    * Start rendering a key.
    *
-   * @param key - The route cache key.
-   * @param timeout - After how many milliseconds a render no longer blocks the
-   *   key, so a render that is never released can't block it forever.
-   *
    * @returns A function that ends the render, or null if another request is
    *   already rendering the key.
    */
-  startRender(key: string, timeout: number): (() => void) | null {
+  startRender(key: string): (() => void) | null {
     const current = this.renders.get(key)
-    if (current && Date.now() - current.startedAt <= timeout) {
+    if (current && Date.now() - current.startedAt <= RENDER_TIMEOUT) {
       return null
     }
 
@@ -55,9 +62,9 @@ export class MultiCacheState {
   }
 
   /**
-   * Wait until the render of a key ends, or at most the timeout.
+   * Wait until the render of a key ends, or at most RENDER_TIMEOUT.
    */
-  async waitForRender(key: string, timeout: number): Promise<void> {
+  async waitForRender(key: string): Promise<void> {
     const render = this.renders.get(key)
     if (!render) {
       return
@@ -65,7 +72,7 @@ export class MultiCacheState {
 
     let timer: ReturnType<typeof setTimeout> | undefined
     const timedOut = new Promise<void>((resolve) => {
-      timer = setTimeout(resolve, timeout)
+      timer = setTimeout(resolve, RENDER_TIMEOUT)
     })
     await Promise.race([render.done, timedOut])
     clearTimeout(timer)

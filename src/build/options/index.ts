@@ -36,15 +36,14 @@ export interface RouteCacheOptions extends CacheConfigOptions {
    * render (e.g. because it's uncacheable), the waiting requests render it
    * themselves.
    *
-   * `true` waits at most 10 seconds, a number sets the maximum wait in
-   * milliseconds.
+   * The requests wait at most 5 seconds, which only matters for a render that
+   * never finishes. After that, they render the route themselves.
    *
-   * Can be changed at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE`
-   * (milliseconds, 0 disables it).
+   * Can be changed at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE`.
    *
    * @default false
    */
-  coalesce?: boolean | number
+  coalesce?: boolean
 }
 
 export type CDNOptions = {

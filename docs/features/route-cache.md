@@ -232,8 +232,6 @@ export default defineNuxtConfig({
   multiCache: {
     route: {
       enabled: true,
-      // `true` waits at most 10 seconds, a number sets the maximum wait in
-      // milliseconds.
       coalesce: true,
     },
   },
@@ -248,8 +246,10 @@ export default defineNuxtConfig({
   With stale while revalidate, the other requests get the stale route instead.
 - Once the route is stored, the waiting requests are served from the cache.
 - If nothing is stored, e.g. because the route is uncacheable or the render
-  failed, the waiting requests render the route themselves. This is also the
-  case for requests that waited longer than the maximum.
+  failed, the waiting requests render the route themselves.
+- A render normally ends when its response is sent. The requests wait at most 5
+  seconds, for a render that never finishes, e.g. because it waits for a request
+  without a timeout. After that they render the route themselves.
 - The requests wait in the same server process. Several processes or instances
   each render the route once.
 

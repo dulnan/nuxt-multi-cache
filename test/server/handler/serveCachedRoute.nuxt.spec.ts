@@ -526,7 +526,7 @@ describe('serveCachedRoute with coalescing', () => {
     mocks.useNitroApp.mockRestore()
   })
 
-  function setup(routeCoalesce: number) {
+  function setup(routeCoalesce: boolean) {
     const state = new MultiCacheState()
     const items = new Map<string, string>()
     mocks.useNitroApp.mockReturnValue({
@@ -576,7 +576,7 @@ describe('serveCachedRoute with coalescing', () => {
   }
 
   test('Lets concurrent requests wait for the first one to render a route.', async () => {
-    const { state, createEvent, store } = setup(1000)
+    const { state, createEvent, store } = setup(true)
     const waitForRender = vi.spyOn(state, 'waitForRender')
 
     const first = createEvent()
@@ -599,7 +599,7 @@ describe('serveCachedRoute with coalescing', () => {
   })
 
   test('Renders the route itself if the first request stored nothing.', async () => {
-    const { state, createEvent } = setup(1000)
+    const { state, createEvent } = setup(true)
     const waitForRender = vi.spyOn(state, 'waitForRender')
 
     const first = createEvent()
@@ -615,7 +615,7 @@ describe('serveCachedRoute with coalescing', () => {
   })
 
   test('Does not wait if coalescing is disabled.', async () => {
-    const { state, createEvent } = setup(0)
+    const { state, createEvent } = setup(false)
 
     const first = createEvent()
     expect(await serveCachedHandler(first as any)).toBeUndefined()

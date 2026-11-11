@@ -6,10 +6,7 @@ import type { ModuleOptions } from './build/options'
 import { defaultOptions } from './build/options/defaults'
 import { ModuleHelper } from './build/ModuleHelper'
 import { TEMPLATES } from './build/templates'
-import {
-  DEFAULT_CACHE_STATUS_NAME,
-  DEFAULT_ROUTE_COALESCE_TIMEOUT,
-} from './runtime/helpers/constants'
+import { DEFAULT_CACHE_STATUS_NAME } from './runtime/helpers/constants'
 import { pathToFileURL } from 'node:url'
 import { parseURL } from 'ufo'
 
@@ -79,10 +76,7 @@ export default defineNuxtModule<ModuleOptions>({
         options.route?.cacheStatus === true
           ? DEFAULT_CACHE_STATUS_NAME
           : options.route?.cacheStatus || '',
-      routeCoalesce:
-        options.route?.coalesce === true
-          ? DEFAULT_ROUTE_COALESCE_TIMEOUT
-          : Number(options.route?.coalesce) || 0,
+      routeCoalesce: !!options.route?.coalesce,
       api: {
         enabled: !!options.api?.enabled,
         authorizationToken:

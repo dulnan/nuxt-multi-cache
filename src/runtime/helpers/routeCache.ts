@@ -8,7 +8,6 @@ import { normalizeKey } from 'unstorage'
 import { decodePath, joinURL, withTrailingSlash } from 'ufo'
 import type { CacheableItemInterface, RouteCacheItem } from '../types'
 import {
-  DEFAULT_ROUTE_COALESCE_TIMEOUT,
   ROUTE_CACHE_EXPIRES_HEADER,
   ROUTE_CACHE_STALE_IF_ERROR_EXPIRES_HEADER,
   ROUTE_CACHE_TAGS_HEADER,
@@ -207,21 +206,4 @@ export function setCachedResponse(event: H3Event, decoded: RouteCacheItem) {
   // cached response again in the cache.
   event.context.multiCache ||= {}
   event.context.multiCache.routeServedFromCache = true
-}
-
-/**
- * How long concurrent requests wait for a route that another request renders,
- * in milliseconds, from the `routeCoalesce` runtime config.
- *
- * @param value - `true` for the default, a number of milliseconds, or the same
- *   as a string when it's set by an env variable.
- *
- * @returns The timeout, or 0 if coalescing is disabled.
- */
-export function getCoalesceTimeout(value: unknown): number {
-  if (value === true || value === 'true') {
-    return DEFAULT_ROUTE_COALESCE_TIMEOUT
-  }
-  const timeout = Number(value)
-  return Number.isFinite(timeout) && timeout > 0 ? timeout : 0
 }

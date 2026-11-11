@@ -65,12 +65,12 @@ This has no effect if the route cache is disabled.
 ## Coalescing
 
 ```dotenv
-NUXT_MULTI_CACHE_ROUTE_COALESCE=5000
+NUXT_MULTI_CACHE_ROUTE_COALESCE=true
 ```
 
-How long concurrent requests wait for a route that another request
-[renders](/features/route-cache#coalescing-concurrent-requests), in
-milliseconds. `true` waits 10 seconds, `0` or `false` disables it.
+Set to `true` to let concurrent requests wait for a route that another request
+[renders](/features/route-cache#coalescing-concurrent-requests), or `false` to
+let each of them render it.
 
 This has no effect if the route cache is disabled.
 
