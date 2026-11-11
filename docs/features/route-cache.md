@@ -58,17 +58,27 @@ export default defineNuxtConfig({
 })
 ```
 
-A stored response is served with its status code and headers. With redirect
-status codes, the redirects of `navigateTo()` during server side rendering are
-stored too, including their `Location` header. The redirect must only depend on
-what the [cache key](#cache-key-for-routes) contains. By default the key is the
-path without the query, so a redirect that keeps the query of the request in its
-target would send every visitor to the target of the first one. Use
-[`alterCachedHeaders`](#alter-which-headers-are-cached) or a custom cache key in
-that case.
+A stored response is served like any other hit, with its status code, headers
+and body. With redirect status codes, the redirects of `navigateTo()` during
+server side rendering are stored too.
 
-Responses that a server handler sends itself, e.g. with `sendRedirect`, are
-never stored.
+- **The target must only depend on the [cache key](#cache-key-for-routes).** By
+  default the key is the path without the query. A redirect whose target depends
+  on the query, the user or a cookie (e.g. to a login page for anonymous users)
+  is served to every visitor of the path. Use a custom `buildCacheKey`, or don't
+  mark such responses as cacheable.
+- **All headers of the response are stored**, including `Set-Cookie`, as for
+  `200` responses. Remove the ones that must not be sent to other visitors with
+  [`alterCachedHeaders`](#alter-which-headers-are-cached).
+- **The body must not be empty.** `204` and `304` responses can't be stored.
+  `navigateTo()` responds with a short HTML document, so its redirects can.
+- **Error status codes are stored too if you list them.** Errors that are thrown
+  are never stored, but an error page that Nuxt renders as a normal response
+  (`experimental.inlineErrorRendering`) is, if the route was marked cacheable. A
+  stored item is also served as the [stale-if-error](/overview/stale-if-error)
+  response, whatever its status code.
+- Responses that a server handler sends itself, e.g. with `sendRedirect`, are
+  never stored.
 
 ### Cache key for routes
 

@@ -46,6 +46,7 @@ describe('The route.statusCodes option', () => {
     const [first, second] = await requestTwice('/cachedRedirect/301')
 
     expect(first.status).toBe(301)
+    expect(first.location).toMatch(/^\/\?random=\d+$/)
     expect(first.cacheStatus).toContain('fwd=uri-miss')
     expect(first.cacheStatus).toContain('stored')
     expect(second.status).toBe(301)

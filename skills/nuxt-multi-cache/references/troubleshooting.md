@@ -21,8 +21,8 @@ Check in this order; the first match is usually the cause.
    `useRouteCache((route) => route.setCacheable())` during server rendering
    (in `setup`, a plugin or route middleware), not in `onMounted`. A server
    handler passes the `event`.
-3. **The response doesn't qualify.** Only `GET` and `HEAD` requests with status
-   200 and a non-empty body are stored.
+3. **The response doesn't qualify.** Only `GET` and `HEAD` requests with a
+   non-empty body and a status code in `route.statusCodes` (by default only 200) are stored.
 4. **Something made it uncacheable:** `setUncacheable()` anywhere in the
    request, a bubbled uncacheable data cache item or component, an API route
    fetched through the interceptor, or a max age of 0 without stale-if-error.
