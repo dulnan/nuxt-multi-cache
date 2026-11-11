@@ -538,7 +538,9 @@ describe('serveCachedRoute with coalescing', () => {
       },
     })
     const storage = {
-      getItemRaw: (key: string) => Promise.resolve(items.get(key) ?? null),
+      getItemRaw: vi.fn((key: string) =>
+        Promise.resolve(items.get(key) ?? null),
+      ),
     }
     const createEvent = () => ({
       method: 'GET',
@@ -572,7 +574,7 @@ describe('serveCachedRoute with coalescing', () => {
           [],
         ),
       )
-    return { state, createEvent, store }
+    return { state, items, storage, createEvent, store }
   }
 
   test('Lets concurrent requests wait for the first one to render a route.', async () => {
@@ -599,7 +601,7 @@ describe('serveCachedRoute with coalescing', () => {
   })
 
   test('Renders the route itself if the first request stored nothing.', async () => {
-    const { state, createEvent } = setup(true)
+    const { state, storage, createEvent } = setup(true)
     const waitForRender = vi.spyOn(state, 'waitForRender')
 
     const first = createEvent()
@@ -612,6 +614,45 @@ describe('serveCachedRoute with coalescing', () => {
     expect(await second).toBeUndefined()
     // Only the first request ends the render.
     expect(secondEvent.context.multiCache.routeEndRender).toBeUndefined()
+    // The second request looked the route up again after waiting.
+    expect(storage.getItemRaw).toHaveBeenCalledTimes(3)
+  })
+
+  test('Forgets the stale route of the first lookup if it is gone after waiting.', async () => {
+    const { state, items, createEvent } = setup(true)
+    const waitForRender = vi.spyOn(state, 'waitForRender')
+    // Expired, but may be served if rendering fails.
+    items.set(
+      '{root}',
+      encodeRouteCacheItem('<html>old</html>', {}, 200, 1, -1, undefined, []),
+    )
+
+    const first = createEvent()
+    await serveCachedHandler(first as any)
+    const secondEvent = createEvent()
+    const second = serveCachedHandler(secondEvent as any)
+    await vi.waitFor(() => expect(waitForRender).toHaveBeenCalled())
+    expect(secondEvent.context.multiCache.routeCachedDecoded).toBeDefined()
+
+    // Purged while the first request rendered it, which stored nothing.
+    items.delete('{root}')
+    first.context.multiCache.routeEndRender()
+
+    expect(await second).toBeUndefined()
+    expect(secondEvent.context.multiCache.routeCachedDecoded).toBeUndefined()
+  })
+
+  test('Does not let internal requests wait for a render.', async () => {
+    const { state, createEvent } = setup(true)
+    const waitForRender = vi.spyOn(state, 'waitForRender')
+
+    // E.g. the render of the route fetches the route itself.
+    await serveCachedHandler(createEvent() as any)
+    const internal = createEvent()
+    internal.context.multiCache.isInternalServerRequest = true
+
+    expect(await serveCachedHandler(internal as any)).toBeUndefined()
+    expect(waitForRender).not.toHaveBeenCalled()
   })
 
   test('Does not wait if coalescing is disabled.', async () => {

@@ -45,8 +45,7 @@ describe('Coalescing in the route cache', () => {
     const responses = await fetchConcurrently('/api/coalesceUncacheable')
     const renders = new Set(responses.map((response) => response.render))
 
-    // The first request renders it, the others wait for it and then render
-    // it themselves, because nothing was stored.
+    // Nothing was stored, so no request gets the response of another.
     expect(renders.size).toBe(5)
   })
 })

@@ -5,6 +5,7 @@ import {
   getMultiCacheContext,
   getMultiCacheRouteHelper,
   getRequestTimestamp,
+  isInternalServerRequest,
   isValidCacheKey,
 } from '../../helpers/server'
 import {
@@ -62,6 +63,12 @@ type Lookup =
       mayCoalesce: boolean
     }
 
+function forgetCachedRoute(event: H3Event) {
+  if (event.context.multiCache) {
+    event.context.multiCache.routeCachedDecoded = undefined
+  }
+}
+
 async function lookup(
   event: H3Event,
   storage: Storage,
@@ -71,8 +78,10 @@ async function lookup(
   // Check if there is a cache entry for this key.
   const cachedRaw = handleRawCacheData(await storage.getItemRaw(fullKey))
 
-  // No cache entry.
+  // No cache entry. A route from an earlier lookup of this request (before it
+  // waited for another render) is gone and must not be served stale.
   if (!cachedRaw) {
+    forgetCachedRoute(event)
     setRouteCacheStatus(event, { fwd: 'uri-miss' })
     return { served: false, mayCoalesce: true }
   }
@@ -81,6 +90,7 @@ async function lookup(
   // Decoding failed. May happen if the format is wrong, possibly after a
   // deployment with a newer version.
   if (!decoded) {
+    forgetCachedRoute(event)
     setRouteCacheStatus(event, { fwd: 'miss' })
     return { served: false, mayCoalesce: true }
   }
@@ -162,7 +172,9 @@ export async function serveCachedHandler(event: H3Event) {
     if (result.served) {
       return result.data
     }
-    if (!coalesce || !result.mayCoalesce) {
+    // An internal request may be made by the render it would wait for, e.g.
+    // a page that fetches its own path.
+    if (!coalesce || !result.mayCoalesce || isInternalServerRequest(event)) {
       return
     }
 

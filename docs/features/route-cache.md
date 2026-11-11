@@ -244,12 +244,18 @@ export default defineNuxtConfig({
   expired and can't be served
   [stale while revalidating](/composables/useRouteCache#allowstalewhilerevalidate).
   With stale while revalidate, the other requests get the stale route instead.
-- Once the route is stored, the waiting requests are served from the cache.
+- Once the route is stored, the waiting requests are served from the cache,
+  unless it can't be served (e.g. a max age of 0).
 - If nothing is stored, e.g. because the route is uncacheable or the render
   failed, the waiting requests render the route themselves.
 - A render normally ends when its response is sent. The requests wait at most 5
   seconds, for a render that never finishes, e.g. because it waits for a request
   without a timeout. After that they render the route themselves.
+- Internal requests (made with
+  [`useCacheAwareFetchInterceptor`](/composables/useCacheAwareFetchInterceptor))
+  never wait, because the render they would wait for may be the one that made
+  them. Another request to the route that is being rendered, made during its
+  render without the interceptor, waits until the 5 second limit.
 - The requests wait in the same server process. Several processes or instances
   each render the route once.
 
