@@ -1,5 +1,4 @@
 import { describe, expect, test, vi } from 'vitest'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import {
   getStorableRoute,
   onAfterResponse,
@@ -11,31 +10,10 @@ import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 const mockDate = new Date('2024-03-15T10:30:00.000Z')
 const mockDateTimestamp = toTimestamp(mockDate)
 
-mockNuxtImport('useRuntimeConfig', (original) => {
-  return () => {
-    return {
-      // Keep the real config, e.g. app.baseURL is needed by Nuxt's router plugin.
-      ...original(),
-      multiCache: {
-        cdn: {
-          cacheTagHeader: 'Cache-Tag',
-          cacheControlHeader: 'Surrogate-Control',
-        },
-      },
-    }
-  }
-})
-
 const mocks = vi.hoisted(() => {
   return {
     useNitroApp: vi.fn(),
     serverOptions: {} as Record<string, any>,
-  }
-})
-
-vi.mock('#nuxt-multi-cache/server-options', () => {
-  return {
-    serverOptions: mocks.serverOptions,
   }
 })
 
@@ -52,7 +30,7 @@ describe('afterResponse nitro hook handler', () => {
         cache: {
           route: {},
         },
-        serverOptions: {},
+        serverOptions: mocks.serverOptions,
         config: {
           cdn: {},
         },
@@ -63,6 +41,7 @@ describe('afterResponse nitro hook handler', () => {
         {
           context: {
             multiCacheApp: {
+              serverOptions: mocks.serverOptions,
               cache: {
                 route: {
                   storage: {},
@@ -123,6 +102,7 @@ describe('afterResponse nitro hook handler', () => {
         {
           context: {
             [MULTI_CACHE_CONTEXT_KEY]: {
+              serverOptions: mocks.serverOptions,
               route: {},
             },
             multiCache: {
@@ -152,6 +132,7 @@ describe('afterResponse nitro hook handler', () => {
         {
           context: {
             [MULTI_CACHE_CONTEXT_KEY]: {
+              serverOptions: mocks.serverOptions,
               route: {},
             },
             multiCache: {
@@ -189,7 +170,7 @@ describe('afterResponse nitro hook handler', () => {
         cache: {
           route: {},
         },
-        serverOptions: {},
+        serverOptions: mocks.serverOptions,
         config: {
           cdn: {},
         },
@@ -205,6 +186,7 @@ describe('afterResponse nitro hook handler', () => {
       path: '/foobar',
       context: {
         multiCacheApp: {
+          serverOptions: mocks.serverOptions,
           cache: {
             route: {
               storage: {
@@ -267,7 +249,7 @@ describe('afterResponse nitro hook handler', () => {
           cache: {
             route: {},
           },
-          serverOptions: {},
+          serverOptions: mocks.serverOptions,
           config: {
             cdn: {},
           },
@@ -279,6 +261,7 @@ describe('afterResponse nitro hook handler', () => {
         path: '/api/foobar',
         context: {
           multiCacheApp: {
+            serverOptions: mocks.serverOptions,
             cache: {
               route: {
                 storage: {
@@ -331,7 +314,7 @@ describe('afterResponse nitro hook handler', () => {
           cache: {
             route: {},
           },
-          serverOptions: {},
+          serverOptions: mocks.serverOptions,
           config: {
             cdn: {},
           },
@@ -346,6 +329,7 @@ describe('afterResponse nitro hook handler', () => {
         path: key,
         context: {
           multiCacheApp: {
+            serverOptions: mocks.serverOptions,
             cache: {
               route: {
                 storage: {
@@ -427,7 +411,7 @@ describe('afterResponse nitro hook handler', () => {
           cache: {
             route: {},
           },
-          serverOptions: {},
+          serverOptions: mocks.serverOptions,
           state: {
             removeKeyBeingRevalidated,
           },
@@ -442,6 +426,7 @@ describe('afterResponse nitro hook handler', () => {
         path: '/foobar',
         context: {
           multiCacheApp: {
+            serverOptions: mocks.serverOptions,
             cache: {
               route: {
                 storage: {
@@ -510,7 +495,7 @@ describe('afterResponse nitro hook handler', () => {
           cache: {
             route: {},
           },
-          serverOptions: {},
+          serverOptions: mocks.serverOptions,
           state: {
             removeKeyBeingRevalidated,
           },
@@ -534,6 +519,7 @@ describe('afterResponse nitro hook handler', () => {
         path: '/foobar',
         context: {
           multiCacheApp: {
+            serverOptions: mocks.serverOptions,
             cache: {
               route: {
                 bubbleError: true,

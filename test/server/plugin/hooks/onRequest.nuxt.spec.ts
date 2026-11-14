@@ -34,12 +34,6 @@ vi.mock('nitropack/runtime', () => {
   }
 })
 
-vi.mock('#nuxt-multi-cache/server-options', () => {
-  return {
-    serverOptions: mocks.serverOptions,
-  }
-})
-
 describe('onRequest nitro hook handler', () => {
   test.each([
     ['/test.jpg', false],
@@ -56,6 +50,7 @@ describe('onRequest nitro hook handler', () => {
       mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
+          serverOptions: mocks.serverOptions,
           cache: {
             route: {},
           },
@@ -90,6 +85,7 @@ describe('onRequest nitro hook handler', () => {
     mocks.serverOptions.route.applies.mockReturnValue(false)
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
+        serverOptions: mocks.serverOptions,
         cache: {
           route: {},
         },
@@ -130,6 +126,7 @@ describe('onRequest nitro hook handler', () => {
       mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
+          serverOptions: mocks.serverOptions,
           cache: {
             route: {},
           },
@@ -169,6 +166,7 @@ describe('onRequest nitro hook handler', () => {
     async (_label, value, isInternal) => {
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
+          serverOptions: mocks.serverOptions,
           cache: {},
           internalRequestToken: 'secret-token',
         },
@@ -209,6 +207,7 @@ describe('onRequest nitro hook handler', () => {
       mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
+          serverOptions: mocks.serverOptions,
           cache: {
             route: {},
           },
@@ -255,6 +254,7 @@ describe('onRequest nitro hook handler', () => {
       mocks.serverOptions.enabledForRequest.mockResolvedValue(true)
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
+          serverOptions: mocks.serverOptions,
           cache: {
             route: {},
           },
@@ -288,6 +288,7 @@ describe('onRequest nitro hook handler', () => {
     mocks.serverOptions.enabledForRequest.mockResolvedValue(false)
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
+        serverOptions: mocks.serverOptions,
         cache: {
           route: {},
         },

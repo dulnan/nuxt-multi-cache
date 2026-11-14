@@ -1,5 +1,9 @@
 import { type H3Event, getRequestHeader, getRequestURL } from 'h3'
-import type { CacheType, MultiCacheInstances } from './../types'
+import type {
+  CacheType,
+  MultiCacheInstances,
+  MultiCacheServerOptions,
+} from './../types'
 import type { CacheTagRegistry } from './../types/CacheTagRegistry'
 import type { NuxtMultiCacheRouteCacheHelper } from './RouteCacheHelper'
 import { debug, isServer, isTestMode } from '#nuxt-multi-cache/config'
@@ -11,6 +15,20 @@ import { toTimestamp } from './maxAge'
 import { logger } from './multi-cache-logger'
 
 export const MULTI_CACHE_CONTEXT_KEY = 'multiCacheApp'
+
+/**
+ * Get the server options of the app that the request hook attached to the
+ * event.
+ *
+ * Only the server plugin imports the server options. This code also runs in
+ * the Nuxt app during SSR (data cache composables, RenderCacheable), whose
+ * build would otherwise contain a second copy of the server options file:
+ * Evaluated a second time, with Nuxt's auto-imports instead of Nitro's, and in
+ * dev mode without Nitro's virtual modules, which "nitropack/runtime" imports.
+ */
+export function getServerOptions(event: H3Event): MultiCacheServerOptions {
+  return event.context.multiCacheApp?.serverOptions ?? {}
+}
 
 /**
  * Granular check whether caching is enabled for a given request.
@@ -27,9 +45,7 @@ export async function enabledForRequest(event: H3Event): Promise<boolean> {
   event.context.multiCache ||= {}
 
   if (event.context.multiCache.enabledForRequest === undefined) {
-    const serverOptions = await import('#nuxt-multi-cache/server-options').then(
-      (v) => v.serverOptions,
-    )
+    const serverOptions = getServerOptions(event)
     if (serverOptions.enabledForRequest) {
       const isEnabled = await serverOptions.enabledForRequest(event)
       event.context.multiCache.enabledForRequest = !!isEnabled
@@ -74,9 +90,7 @@ async function determinePrefix(event: H3Event): Promise<string> {
   if (!isServer) {
     return Promise.resolve('')
   }
-  const serverOptions = await import('#nuxt-multi-cache/server-options').then(
-    (v) => v.serverOptions,
-  )
+  const serverOptions = getServerOptions(event)
   // Set the global cache key prefix that applies for all caches.
   // This can either be a static string or a method that determines the prefix,
   // for example based on cookie or request headers.

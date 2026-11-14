@@ -41,12 +41,6 @@ vi.mock('./../../../src/runtime/server/api/helpers', async (importOriginal) => {
   }
 })
 
-vi.mock('#nuxt-multi-cache/server-options', () => {
-  return {
-    serverOptions: {},
-  }
-})
-
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
     get cacheTagInvalidationDelay() {

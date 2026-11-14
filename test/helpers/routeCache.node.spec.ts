@@ -16,12 +16,6 @@ const mocks = vi.hoisted(() => {
   }
 })
 
-vi.mock('#nuxt-multi-cache/server-options', () => {
-  return {
-    serverOptions: mocks.serverOptions,
-  }
-})
-
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
     isServer: true,
@@ -41,7 +35,11 @@ function buildEvent(path: string): H3Event {
         },
       },
     },
-    context: {},
+    context: {
+      multiCacheApp: {
+        serverOptions: mocks.serverOptions,
+      },
+    },
   } as any
 }
 

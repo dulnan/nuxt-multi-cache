@@ -23,4 +23,12 @@ describe('A server options file that imports from nitropack/runtime', () => {
     const routeKeys = (await getRouteCacheItems()).map((row) => row.key)
     expect(routeKeys).toContain('from-runtime-config--:about')
   })
+
+  test('is only bundled into the Nitro build', async () => {
+    await $fetch('/about')
+
+    // A copy in the build of the Nuxt app would create the server options a
+    // second time, with Nuxt's runtime instead of Nitro's.
+    expect(await $fetch('/api/server-options-calls')).toEqual(1)
+  })
 })

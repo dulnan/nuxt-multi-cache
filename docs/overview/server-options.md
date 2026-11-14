@@ -30,6 +30,39 @@ export default defineMultiCacheOptions(() => {
 
 :::
 
+## Runtime Config
+
+The file only runs in Nitro, also for the composables and components that run in
+the Nuxt app: they use the server options of the current request. Import Nitro's
+utils, such as `useRuntimeConfig`, from `nitropack/runtime`. Nitro only
+auto-imports them if `experimental.nitroAutoImports` is enabled, which is not
+the default with `future.compatibilityVersion: 5`.
+
+::: code-group
+
+```typescript [server/multiCache.serverOptions.ts]
+import { useRuntimeConfig } from 'nitropack/runtime'
+import { defineMultiCacheOptions } from 'nuxt-multi-cache/server-options'
+import redisDriver from 'unstorage/drivers/redis'
+
+export default defineMultiCacheOptions(() => {
+  const config = useRuntimeConfig()
+
+  return {
+    data: {
+      storage: {
+        driver: redisDriver({
+          url: config.redisUrl,
+          base: 'data:',
+        }),
+      },
+    },
+  }
+})
+```
+
+:::
+
 ## Nuxt Layers
 
 The file is also found in the server folder of
