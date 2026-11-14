@@ -1,5 +1,4 @@
 import { describe, expect, test, vi } from 'vitest'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { onRequest } from '../../../../src/runtime/server/hooks/request'
 import { isInternalServerRequest } from '../../../../src/runtime/helpers/server'
 
@@ -11,21 +10,6 @@ vi.mock('#nuxt-multi-cache/config', () => {
     debug: false,
     isTestMode: true,
     apiPrefix: '/__nuxt_multi_cache',
-  }
-})
-
-mockNuxtImport('useRuntimeConfig', (original) => {
-  return () => {
-    return {
-      // Keep the real config, e.g. app.baseURL is needed by Nuxt's router plugin.
-      ...original(),
-      multiCache: {
-        cdn: {
-          cacheTagHeader: 'Cache-Tag',
-          cacheControlHeader: 'Surrogate-Control',
-        },
-      },
-    }
   }
 })
 
@@ -44,6 +28,9 @@ const mocks = vi.hoisted(() => {
 vi.mock('nitropack/runtime', () => {
   return {
     useNitroApp: mocks.useNitroApp,
+    useRuntimeConfig: () => ({
+      app: { baseURL: '/', buildAssetsDir: '/_nuxt/' },
+    }),
   }
 })
 

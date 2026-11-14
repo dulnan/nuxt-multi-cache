@@ -16,7 +16,7 @@ import {
 import { setRouteCacheStatus } from '../../helpers/cacheStatus'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import { serverOptions } from '#nuxt-multi-cache/server-options'
-import { useRuntimeConfig } from '#imports'
+import { useRuntimeConfig } from 'nitropack/runtime'
 
 /**
  * Method to check whether route caching is generally applicable to the given

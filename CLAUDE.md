@@ -41,7 +41,8 @@ Vitest has two projects (`vitest.config.mts`):
   `nuxtConfig` overrides for the module options.
 - `nuxt` (nuxt environment): `*.nuxt.spec.ts`, e.g. hooks and `RenderCacheable`,
   which mock `#nuxt-multi-cache/config`, `#nuxt-multi-cache/server-options`,
-  `nitropack/runtime` and h3 functions as needed.
+  `nitropack/runtime` (`useNitroApp`, `useRuntimeConfig`) and h3 functions as
+  needed.
 
 `test/__helpers__/` reads and purges cache items through the module's API in e2e
 tests. Test mode (`enableTestMode`) allows overriding the current time with the
@@ -75,6 +76,10 @@ sent, which is why the cache tag invalidation delay is always 0 for
   into `nuxt.config`: storage drivers, `bubbleError`,
   `route.buildCacheKey/alterCachedHeaders/applies`, `enabledForRequest`,
   `cacheKeyPrefix`, API authorization callback, cache tag registry.
+- Nitro runtime code imports Nitro utils from `nitropack/runtime`, never from
+  `#imports`: with `experimental.nitroAutoImports: false` (the default with
+  `future.compatibilityVersion: 5`), Nitro's `#imports` only contains what
+  modules add. `test/cases/server-options-nitro` builds with that setting.
 - A build plugin replaces server-only modules with stubs in client bundles
   (`CLIENT_STUBS`), and calls of `useRouteCache`, `useCDNHeaders` and
   `useComponentCache` are tree-shaken from the client.
