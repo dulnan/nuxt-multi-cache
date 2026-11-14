@@ -38,7 +38,9 @@ Vitest has two projects (`vitest.config.mts`):
 - `unit` (node environment): `*.node.spec.ts` and `*.e2e.spec.ts`. The e2e specs
   use `@nuxt/test-utils/e2e` `setup()` to build and serve a Nuxt app, either
   `playground/` or a fixture in `test/cases/<name>/nuxt/`, often with
-  `nuxtConfig` overrides for the module options.
+  `nuxtConfig` overrides for the module options. They test production builds,
+  except `serverOptionsNitroDev.e2e.spec.ts`, which runs its fixture with
+  `setup({ dev: true })`, because some failures only happen in the dev server.
 - `nuxt` (nuxt environment): `*.nuxt.spec.ts`, e.g. hooks and `RenderCacheable`,
   which mock `#nuxt-multi-cache/config`, `nitropack/runtime` (`useNitroApp`,
   `useRuntimeConfig`) and h3 functions as needed. Server options are passed as
