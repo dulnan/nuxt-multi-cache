@@ -29,6 +29,7 @@ export const cdnCacheTagHeader = import.meta.server ? ${JSON.stringify(helper.op
 export const cdnEnabled = ${JSON.stringify(cdnEnabled)}
 export const cdnPrivateCacheControl = ${JSON.stringify(helper.options.cdn?.privateCacheControl !== false)}
 export const routeCacheEnabled = ${JSON.stringify(routeCacheEnabled)}
+export const routeCacheStatusCodes = ${JSON.stringify(helper.options.route?.statusCodes ?? [200])}
 export const componentCacheEnabled = ${JSON.stringify(componentCacheEnabled)}
 export const dataCacheEnabled = ${JSON.stringify(dataCacheEnabled)}
 export const shouldLogCacheOverview = ${JSON.stringify(!helper.options.disableCacheOverviewLogMessage)}
@@ -75,6 +76,11 @@ export declare const cdnPrivateCacheControl: boolean
  * The cache may still be disabled at runtime via runtime config.
  */
 export declare const routeCacheEnabled: boolean
+
+/**
+ * The status codes of responses that the route cache stores.
+ */
+export declare const routeCacheStatusCodes: number[]
 
 /**
  * Whether the component cache is enabled at build time.
