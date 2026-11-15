@@ -90,7 +90,8 @@ sent, which is why the cache tag invalidation delay is always 0 for
   - `serveCachedHandler`, unshifted to the front of the h3 stack: serves route
     cache hits;
   - the `afterResponse` hook: stores cacheable responses (status in
-    `route.statusCodes`, 200 by default, non-empty body);
+    `route.statusCodes`, 200 by default, non-empty body, no redirect to the same
+    path, whose target would get the redirect from the cache);
   - the `render:response` hook: replaces Nuxt's inline error page
     (`experimental.inlineErrorRendering`, which reports the render error with
     the `ssr` tag instead of throwing) with a stale route (stale-if-error).

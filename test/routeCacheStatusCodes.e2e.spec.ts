@@ -64,4 +64,25 @@ describe('The route.statusCodes option', () => {
     expect(second.cacheStatus).toContain('fwd=uri-miss')
     expect(second.location).not.toBe(first.location)
   })
+
+  // The redirect has the cache key of its target, which would then be
+  // redirected to itself.
+  test.each([
+    ['only removes the query', '/cachedRedirect/canonical?utm=newsletter'],
+    ['only removes the trailing slash', '/cachedRedirect/canonical/'],
+  ])('does not store a redirect that %s', async (_label, url) => {
+    await purgeAll()
+
+    const redirect = await request(url)
+    const target = await request('/cachedRedirect/canonical')
+
+    expect(redirect.status).toBe(301)
+    expect(redirect.location).toBe('/cachedRedirect/canonical')
+    expect(target).toEqual({
+      status: 200,
+      location: null,
+      cacheStatus: expect.stringContaining('fwd=uri-miss'),
+    })
+    expect(redirect.cacheStatus).not.toContain('stored')
+  })
 })

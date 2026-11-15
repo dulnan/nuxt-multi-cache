@@ -4,6 +4,7 @@ import {
   type H3Event,
   getRequestURL,
 } from 'h3'
+import { normalizeKey } from 'unstorage'
 import {
   getCacheTagRegistry,
   getMultiCacheContext,
@@ -54,6 +55,38 @@ function stringify(value: any): string | undefined {
 }
 
 /**
+ * Whether the response redirects to a URL with the same route cache key.
+ *
+ * The default key is the path without the query, and the storage removes a
+ * trailing slash. A redirect that only removes the query or the trailing slash
+ * would be stored under the key of its target, which would then be redirected
+ * to itself.
+ */
+function redirectsToSameKey(event: H3Event, statusCode: number): boolean {
+  if (statusCode < 300 || statusCode >= 400) {
+    return false
+  }
+
+  const location = getResponseHeaders(event).location
+  if (!location) {
+    return false
+  }
+
+  const url = getRequestURL(event)
+
+  try {
+    const target = new URL(String(location), url)
+    return (
+      target.host === url.host &&
+      normalizeKey(target.pathname) === normalizeKey(url.pathname)
+    )
+  } catch {
+    // Not a valid URL, so the client can't follow the redirect either.
+    return false
+  }
+}
+
+/**
  * The values of the route cache item for the response, or undefined if the
  * response is not stored.
  */
@@ -73,6 +106,10 @@ export function getStorableRoute(
   const statusCode = getResponseStatus(event)
 
   if (!routeCacheStatusCodes.includes(statusCode)) {
+    return
+  }
+
+  if (redirectsToSameKey(event, statusCode)) {
     return
   }
 

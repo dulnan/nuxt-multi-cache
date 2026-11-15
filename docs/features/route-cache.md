@@ -47,6 +47,8 @@ export default defineMultiCacheOptions(() => {
 By default only responses with the status code `200` are stored. To store
 others, list all status codes to store:
 
+::: code-group
+
 ```typescript [nuxt.config.ts]
 export default defineNuxtConfig({
   multiCache: {
@@ -58,6 +60,8 @@ export default defineNuxtConfig({
 })
 ```
 
+:::
+
 A stored response is served like any other hit, with its status code, headers
 and body. With redirect status codes, the redirects of `navigateTo()` during
 server side rendering are stored too.
@@ -67,6 +71,10 @@ server side rendering are stored too.
   on the query, the user or a cookie (e.g. to a login page for anonymous users)
   is served to every visitor of the path. Use a custom `buildCacheKey`, or don't
   mark such responses as cacheable.
+- **Redirects to the same path are never stored**, e.g. a redirect that removes
+  the query or the trailing slash: Its target has the same key, and would be
+  redirected to itself. Only the paths are compared, so a custom `buildCacheKey`
+  must not give a redirect the key of its target.
 - **All headers of the response are stored**, including `Set-Cookie`, as for
   `200` responses. Remove the ones that must not be sent to other visitors with
   [`alterCachedHeaders`](#alter-which-headers-are-cached).

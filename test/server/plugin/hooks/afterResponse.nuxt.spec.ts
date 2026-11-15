@@ -591,10 +591,14 @@ describe('afterResponse nitro hook handler', () => {
 })
 
 describe('getStorableRoute with route.statusCodes', () => {
-  function buildEvent(statusCode: number) {
+  function buildEvent(
+    statusCode: number,
+    url = '/old-path',
+    location = '/new-path',
+  ) {
     return {
       method: 'GET',
-      path: '/old-path',
+      path: url,
       context: {
         multiCacheApp: { cache: { route: { storage: {} } } },
         multiCache: {
@@ -604,8 +608,8 @@ describe('getStorableRoute with route.statusCodes', () => {
         },
       },
       node: {
-        res: { statusCode, getHeaders: () => ({ location: '/new-path' }) },
-        req: { originalUrl: '/old-path', headers: {} },
+        res: { statusCode, getHeaders: () => ({ location }) },
+        req: { originalUrl: url, headers: { host: 'example.com' } },
       },
     } as any
   }
@@ -628,6 +632,37 @@ describe('getStorableRoute with route.statusCodes', () => {
         const storable = getStorableRoute(buildEvent(statusCode), {
           body: '<meta http-equiv="refresh" content="0; url=/new-path">',
         })
+        expect(storable?.statusCode).toBe(expected ? statusCode : undefined)
+      } finally {
+        mocks.routeCacheStatusCodes = [200]
+        mocks.useNitroApp.mockRestore()
+      }
+    },
+  )
+
+  // With the same key, the target would be redirected to itself.
+  test.each([
+    [301, '/old-path?utm=newsletter', '/old-path', false],
+    [301, '/old-path/', '/old-path', false],
+    [308, '/old-path', '/old-path/', false],
+    [301, '/old-path', 'http://example.com/old-path?page=1', false],
+    [301, '/old-path', '/new-path', true],
+    [301, '/old-path', 'http://other.example.com/old-path', true],
+    [301, '/old-path', 'http://[invalid', true],
+    [200, '/old-path', '/old-path', true],
+  ])(
+    'A response with status %i to %s with the location %s is stored: %s',
+    (statusCode, url, location, expected) => {
+      mocks.routeCacheStatusCodes = [200, 301, 308]
+      mocks.useNitroApp.mockReturnValue({
+        multiCache: { cache: {}, serverOptions: {}, config: { cdn: {} } },
+      })
+
+      try {
+        const storable = getStorableRoute(
+          buildEvent(statusCode, url, location),
+          { body: '<meta http-equiv="refresh" content="0; url=/new-path">' },
+        )
         expect(storable?.statusCode).toBe(expected ? statusCode : undefined)
       } finally {
         mocks.routeCacheStatusCodes = [200]

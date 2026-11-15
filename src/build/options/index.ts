@@ -33,7 +33,9 @@ export interface RouteCacheOptions extends CacheConfigOptions {
    * redirect status codes (e.g. `[200, 301, 302, 307, 308]`) also caches
    * redirects of `navigateTo()`. Make sure that the `Location` header only
    * depends on what the cache key contains: by default the key is the path,
-   * without the query.
+   * without the query. Redirects to the same path (e.g. without the query or
+   * the trailing slash) are never stored, since their target would get the
+   * redirect from the cache.
    *
    * @default [200]
    */
