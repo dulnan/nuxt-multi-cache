@@ -37,15 +37,17 @@ export interface RouteCacheOptions extends CacheConfigOptions {
    * themselves, and requests for the key don't wait for the next 60 seconds,
    * or until a render stores the route.
    *
-   * The requests wait at most 5 seconds, which only matters for a render that
-   * never finishes. After that, they render the route themselves, and requests
-   * for the key don't wait for 60 seconds either.
+   * `true` waits at most 5 seconds, a number sets the maximum wait in
+   * milliseconds. Set it higher than the longest render of a route: after it,
+   * the requests render the route themselves, and requests for the key don't
+   * wait for 60 seconds either.
    *
-   * Can be changed at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE`.
+   * Can be changed at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE` (`true`,
+   * `false` or milliseconds).
    *
    * @default false
    */
-  coalesce?: boolean
+  coalesce?: boolean | number
 }
 
 export type CDNOptions = {

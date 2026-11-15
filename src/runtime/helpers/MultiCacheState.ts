@@ -7,17 +7,6 @@
 export const REVALIDATION_TIMEOUT = 60_000
 
 /**
- * How long concurrent requests wait for a route that another request renders,
- * in milliseconds.
- *
- * A render normally ends when its response is sent. This only limits the wait
- * for a render that never finishes, e.g. one that waits for a request without
- * a timeout: after it, the waiting requests render the route themselves, and
- * the next request can render it again.
- */
-export const RENDER_TIMEOUT = 5_000
-
-/**
  * How long requests don't wait for the render of a key after one stored
  * nothing or timed out, in milliseconds.
  *
@@ -59,13 +48,19 @@ export class MultiCacheState {
   /**
    * Start rendering a key.
    *
+   * @param timeout - How long a render may take, in milliseconds. After it,
+   *   the next request renders the key again.
+   *
    * @returns A function that ends the render, with whether the route was
    *   stored, or null if another request is already rendering the key.
    */
-  startRender(key: string): ((stored: boolean) => void) | null {
+  startRender(
+    key: string,
+    timeout: number,
+  ): ((stored: boolean) => void) | null {
     const current = this.renders.get(key)
     if (current) {
-      if (Date.now() - current.startedAt <= RENDER_TIMEOUT) {
+      if (Date.now() - current.startedAt <= timeout) {
         return null
       }
 
@@ -131,9 +126,10 @@ export class MultiCacheState {
   }
 
   /**
-   * Wait until the render of a key ends, or at most RENDER_TIMEOUT.
+   * Wait until the render of a key ends, or at most the timeout (in
+   * milliseconds).
    */
-  async waitForRender(key: string): Promise<void> {
+  async waitForRender(key: string, timeout: number): Promise<void> {
     const render = this.renders.get(key)
     if (!render) {
       return
@@ -141,7 +137,7 @@ export class MultiCacheState {
 
     let timer: ReturnType<typeof setTimeout> | undefined
     const timedOut = new Promise<void>((resolve) => {
-      timer = setTimeout(resolve, RENDER_TIMEOUT)
+      timer = setTimeout(resolve, timeout)
     })
     await Promise.race([render.done, timedOut])
     clearTimeout(timer)

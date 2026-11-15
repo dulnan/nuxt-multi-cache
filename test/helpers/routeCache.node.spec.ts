@@ -2,7 +2,9 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { createStorage, normalizeKey } from 'unstorage'
 import { getRequestURL, type H3Event } from 'h3'
 import type { MultiCacheServerOptions } from '~/src/runtime/types'
+import { DEFAULT_ROUTE_COALESCE_TIMEOUT } from '~/src/runtime/helpers/constants'
 import {
+  getCoalesceTimeout,
   getRouteCacheKey,
   isAmbiguousRoutePath,
   isExcludedRoutePath,
@@ -219,5 +221,26 @@ describe('isAmbiguousRoutePath', () => {
     ['/a?path=../b', false],
   ])('%s: %s', (path, expected) => {
     expect(isAmbiguousRoutePath(path)).toBe(expected)
+  })
+})
+
+describe('getCoalesceTimeout', () => {
+  test.each([
+    [true, DEFAULT_ROUTE_COALESCE_TIMEOUT],
+    ['true', DEFAULT_ROUTE_COALESCE_TIMEOUT],
+    [15_000, 15_000],
+    // Env variables that aren't parsed as a number.
+    ['15000', 15_000],
+    [false, 0],
+    ['false', 0],
+    [0, 0],
+    [-1, 0],
+    [Number.NaN, 0],
+    ['foo', 0],
+    ['', 0],
+    [undefined, 0],
+    [null, 0],
+  ])('%j is %d', (value, expected) => {
+    expect(getCoalesceTimeout(value)).toBe(expected)
   })
 })

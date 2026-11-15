@@ -16,6 +16,7 @@ import type { RouteCacheItem } from '../../types'
 import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/multi-cache-logger'
 import {
+  getCoalesceTimeout,
   getRouteCacheKey,
   isRouteCacheMethod,
   setCachedResponse,
@@ -157,7 +158,7 @@ export async function serveCachedHandler(event: H3Event) {
   }
 
   const { state, config } = getMultiCacheApp()
-  const coalesce = !!config.routeCoalesce
+  const coalesceTimeout = getCoalesceTimeout(config.routeCoalesce)
 
   try {
     // Build the cache key.
@@ -174,13 +175,17 @@ export async function serveCachedHandler(event: H3Event) {
     }
     // An internal request may be made by the render it would wait for, e.g.
     // a page that fetches its own path.
-    if (!coalesce || !result.mayCoalesce || isInternalServerRequest(event)) {
+    if (
+      !coalesceTimeout ||
+      !result.mayCoalesce ||
+      isInternalServerRequest(event)
+    ) {
       return
     }
 
     // The first request renders the route, the afterResponse hook or the
     // error handler ends the render.
-    const endRender = state.startRender(fullKey)
+    const endRender = state.startRender(fullKey, coalesceTimeout)
     if (endRender) {
       event.context.multiCache ||= {}
       event.context.multiCache.routeEndRender = endRender
@@ -197,7 +202,7 @@ export async function serveCachedHandler(event: H3Event) {
 
     // Other requests wait for its result. If it wasn't stored (e.g. because
     // the route is uncacheable) they render the route themselves.
-    await state.waitForRender(fullKey)
+    await state.waitForRender(fullKey, coalesceTimeout)
     const afterWait = await lookup(event, storage, state, fullKey)
     if (afterWait.served) {
       return afterWait.data

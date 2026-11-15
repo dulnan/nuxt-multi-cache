@@ -8,6 +8,7 @@ import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
 import { logger } from '../../../src/runtime/helpers/multi-cache-logger'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
 import { MultiCacheState } from '../../../src/runtime/helpers/MultiCacheState'
+import { DEFAULT_ROUTE_COALESCE_TIMEOUT } from '../../../src/runtime/helpers/constants'
 
 mockNuxtImport('useRuntimeConfig', (original) => {
   return () => {
@@ -526,7 +527,7 @@ describe('serveCachedRoute with coalescing', () => {
     mocks.useNitroApp.mockRestore()
   })
 
-  function setup(routeCoalesce: boolean) {
+  function setup(routeCoalesce: boolean | number) {
     const state = new MultiCacheState()
     const items = new Map<string, string>()
     mocks.useNitroApp.mockReturnValue({
@@ -695,6 +696,36 @@ describe('serveCachedRoute with coalescing', () => {
 
     third.context.multiCache.routeEndRender(false)
     expect(await fourth).toBeUndefined()
+  })
+
+  test('Waits at most the timeout that is set.', async () => {
+    const { state, createEvent } = setup(50)
+    const waitForRender = vi.spyOn(state, 'waitForRender')
+
+    // A render that never ends.
+    await serveCachedHandler(createEvent() as any)
+
+    const second = serveCachedHandler(createEvent() as any)
+    await vi.waitFor(() =>
+      expect(waitForRender).toHaveBeenCalledWith('{root}', 50),
+    )
+    expect(await second).toBeUndefined()
+  })
+
+  test('Waits at most 5 seconds with true.', async () => {
+    const { state, createEvent } = setup(true)
+    const waitForRender = vi
+      .spyOn(state, 'waitForRender')
+      .mockResolvedValue(undefined)
+
+    await serveCachedHandler(createEvent() as any)
+    await serveCachedHandler(createEvent() as any)
+
+    expect(DEFAULT_ROUTE_COALESCE_TIMEOUT).toBe(5_000)
+    expect(waitForRender).toHaveBeenCalledWith(
+      '{root}',
+      DEFAULT_ROUTE_COALESCE_TIMEOUT,
+    )
   })
 
   test('Does not wait if coalescing is disabled.', async () => {

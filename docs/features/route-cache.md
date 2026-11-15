@@ -251,15 +251,16 @@ export default defineNuxtConfig({
   seconds, requests for the key don't wait, so that a route that is never stored
   isn't slowed down. Each render that stores nothing starts the 60 seconds
   again, and one that stores the route ends them.
-- A render normally ends when its response is sent. The requests wait at most 5
-  seconds, for a render that never finishes, e.g. because it waits for a request
-  without a timeout. After that they render the route themselves, and requests
-  for the key don't wait for 60 seconds.
+- With `true`, the requests wait at most 5 seconds. A number sets the timeout in
+  milliseconds, e.g. `coalesce: 15_000`. Set it higher than the longest render
+  of a route: after it, the requests render the route themselves, and requests
+  for the key don't wait for 60 seconds. It also ends the wait for a render that
+  never finishes, e.g. because it waits for a request without a timeout.
 - Internal requests (made with
   [`useCacheAwareFetchInterceptor`](/composables/useCacheAwareFetchInterceptor))
   never wait, because the render they would wait for may be the one that made
   them. Another request to the route that is being rendered, made during its
-  render without the interceptor, waits until the 5 second limit.
+  render without the interceptor, waits until the timeout.
 - The requests wait in the same server process. Several processes or instances
   each render the route once.
 
