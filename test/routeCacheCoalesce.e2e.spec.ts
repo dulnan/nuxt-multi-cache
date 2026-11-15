@@ -48,4 +48,19 @@ describe('Coalescing in the route cache', () => {
     // Nothing was stored, so no request gets the response of another.
     expect(renders.size).toBe(5)
   })
+
+  test('does not wait for a route whose last render stored nothing', async () => {
+    type Render = { startedAt: number; endedAt: number }
+
+    // Stores nothing.
+    await $fetch('/api/coalesceUncacheable')
+
+    const first = $fetch<Render>('/api/coalesceUncacheable')
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    const second = await $fetch<Render>('/api/coalesceUncacheable')
+
+    // The second request renders the route while the first one does. It would
+    // only find nothing stored after waiting for it.
+    expect(second.startedAt).toBeLessThan((await first).endedAt)
+  })
 })

@@ -88,7 +88,11 @@ sent, which is why the cache tag invalidation delay is always 0 for
     no ambiguous path like `//x`, not excluded paths, `applies` with the decoded
     path, `enabledForRequest`), a route cache helper to `event.context`;
   - `serveCachedHandler`, unshifted to the front of the h3 stack: serves route
-    cache hits;
+    cache hits. With `route.coalesce`, concurrent requests for a key with
+    nothing to serve wait for the one request that renders it
+    (`MultiCacheState.startRender`, ended in `afterResponse` or the error
+    handler), then look it up again. Internal requests never wait, and nobody
+    waits for 60 s after a render of the key stored nothing or timed out;
   - the `afterResponse` hook: stores cacheable responses (status 200, non-empty
     body);
   - the `render:response` hook: replaces Nuxt's inline error page

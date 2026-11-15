@@ -187,6 +187,14 @@ export async function serveCachedHandler(event: H3Event) {
       return
     }
 
+    // After a render that stored nothing (e.g. of an uncacheable route), the
+    // other requests don't wait: they would only find nothing stored. The
+    // first request still starts its render, so that its result decides
+    // whether they wait again.
+    if (state.wasNotStored(fullKey)) {
+      return
+    }
+
     // Other requests wait for its result. If it wasn't stored (e.g. because
     // the route is uncacheable) they render the route themselves.
     await state.waitForRender(fullKey)

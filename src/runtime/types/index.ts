@@ -395,10 +395,11 @@ export type MultiCacheEventContext = {
   routeRevalidationkey?: string
 
   /**
-   * Ends the render of a route that concurrent requests wait for, if the
-   * `route.coalesce` option is enabled and this request renders the route.
+   * Ends the render of a route that concurrent requests wait for, with whether
+   * the route was stored, if the `route.coalesce` option is enabled and this
+   * request renders the route.
    */
-  routeEndRender?: () => void
+  routeEndRender?: (stored: boolean) => void
 
   /**
    * Contains the already fetched cached route, if it exists.

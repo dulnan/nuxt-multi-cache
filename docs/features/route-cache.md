@@ -247,10 +247,14 @@ export default defineNuxtConfig({
 - Once the route is stored, the waiting requests are served from the cache,
   unless it can't be served (e.g. a max age of 0).
 - If nothing is stored, e.g. because the route is uncacheable or the render
-  failed, the waiting requests render the route themselves.
+  failed, the waiting requests render the route themselves. For the next 60
+  seconds, requests for the key don't wait, so that a route that is never stored
+  isn't slowed down. Each render that stores nothing starts the 60 seconds
+  again, and one that stores the route ends them.
 - A render normally ends when its response is sent. The requests wait at most 5
   seconds, for a render that never finishes, e.g. because it waits for a request
-  without a timeout. After that they render the route themselves.
+  without a timeout. After that they render the route themselves, and requests
+  for the key don't wait for 60 seconds.
 - Internal requests (made with
   [`useCacheAwareFetchInterceptor`](/composables/useCacheAwareFetchInterceptor))
   never wait, because the render they would wait for may be the one that made

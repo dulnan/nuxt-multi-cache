@@ -34,10 +34,12 @@ export interface RouteCacheOptions extends CacheConfigOptions {
    * Applies when no item is stored, or the stored item is expired and can't
    * be served stale while revalidating. If the route isn't stored after the
    * render (e.g. because it's uncacheable), the waiting requests render it
-   * themselves.
+   * themselves, and requests for the key don't wait for the next 60 seconds,
+   * or until a render stores the route.
    *
    * The requests wait at most 5 seconds, which only matters for a render that
-   * never finishes. After that, they render the route themselves.
+   * never finishes. After that, they render the route themselves, and requests
+   * for the key don't wait for 60 seconds either.
    *
    * Can be changed at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE`.
    *

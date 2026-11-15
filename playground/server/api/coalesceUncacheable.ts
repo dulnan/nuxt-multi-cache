@@ -6,6 +6,7 @@ let renders = 0
 export default defineEventHandler(async (event) => {
   renders++
   const render = renders
+  const startedAt = Date.now()
 
   useRouteCache((helper) => {
     helper.setUncacheable()
@@ -13,5 +14,5 @@ export default defineEventHandler(async (event) => {
 
   await new Promise((resolve) => setTimeout(resolve, 500))
 
-  return { render }
+  return { render, startedAt, endedAt: Date.now() }
 })

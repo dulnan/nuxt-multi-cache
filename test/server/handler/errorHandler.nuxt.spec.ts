@@ -214,7 +214,7 @@ describe('Nitro error handler', () => {
 
     await handle(createError({ statusCode: 500 }), event)
 
-    expect(routeEndRender).toHaveBeenCalledTimes(1)
+    expect(routeEndRender).toHaveBeenCalledExactlyOnceWith(false)
   })
 
   test('Resets the status text of the error response', async () => {

@@ -495,7 +495,9 @@ describe('afterResponse nitro hook handler', () => {
       expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
 
       // The render ends after the item is stored, so waiting requests find it.
-      expect(routeEndRender).toHaveBeenCalledTimes(1)
+      expect(routeEndRender).toHaveBeenCalledExactlyOnceWith(
+        expectedTtl !== null,
+      )
       expect(storedWhenRenderEnded).toBe(storedItems.length)
 
       mocks.useNitroApp.mockRestore()
@@ -508,11 +510,12 @@ describe('afterResponse nitro hook handler', () => {
     ['not cacheable', 200, false, '<html></html>', false],
     ['store failed with bubbleError', 200, true, '<html></html>', true],
   ])(
-    'Releases the revalidation key if the response is not stored (%s)',
+    'Releases the revalidation key and ends the render if the response is not stored (%s)',
     async (_label, statusCode, cacheable, body, failToStore) => {
       vi.setSystemTime(mockDate)
 
       const removeKeyBeingRevalidated = vi.fn()
+      const routeEndRender = vi.fn()
 
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
@@ -559,6 +562,7 @@ describe('afterResponse nitro hook handler', () => {
           multiCache: {
             route: helper,
             routeRevalidationkey: '/foobar',
+            routeEndRender,
           },
         },
         node: {
@@ -583,6 +587,8 @@ describe('afterResponse nitro hook handler', () => {
       }
 
       expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
+      // Requests for the key don't wait for its render for a while.
+      expect(routeEndRender).toHaveBeenCalledExactlyOnceWith(false)
 
       mocks.useNitroApp.mockRestore()
     },

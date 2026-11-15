@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import {
+  MAX_KEYS_NOT_STORED,
   MultiCacheState,
+  NOT_STORED_TIMEOUT,
   RENDER_TIMEOUT,
   REVALIDATION_TIMEOUT,
 } from '../../src/runtime/helpers/MultiCacheState'
@@ -59,7 +61,7 @@ describe('MultiCacheState renders', () => {
     expect(state.startRender('foo')).toBeNull()
     expect(state.startRender('bar')).toBeTypeOf('function')
 
-    release!()
+    release!(true)
     expect(state.startRender('foo')).toBeTypeOf('function')
   })
 
@@ -75,7 +77,7 @@ describe('MultiCacheState renders', () => {
     await vi.advanceTimersByTimeAsync(RENDER_TIMEOUT / 2)
     expect(waited).toBe(false)
 
-    release()
+    release(true)
     await waiting
     expect(waited).toBe(true)
   })
@@ -114,7 +116,70 @@ describe('MultiCacheState renders', () => {
     expect(releaseNew).toBeTypeOf('function')
 
     // Releasing the old render doesn't end the new one.
-    releaseOld()
+    releaseOld(false)
     expect(state.startRender('foo')).toBeNull()
+  })
+
+  test('Remembers a key whose render stored nothing, until the timeout.', () => {
+    const state = new MultiCacheState()
+
+    state.startRender('foo')!(false)
+    expect(state.wasNotStored('foo')).toBe(true)
+    expect(state.wasNotStored('bar')).toBe(false)
+
+    vi.advanceTimersByTime(NOT_STORED_TIMEOUT)
+    expect(state.wasNotStored('foo')).toBe(true)
+
+    vi.advanceTimersByTime(1)
+    expect(state.wasNotStored('foo')).toBe(false)
+  })
+
+  test('Starts the time again for each render that stores nothing.', () => {
+    const state = new MultiCacheState()
+
+    state.startRender('foo')!(false)
+    vi.advanceTimersByTime(NOT_STORED_TIMEOUT)
+    state.startRender('foo')!(false)
+
+    vi.advanceTimersByTime(1)
+    expect(state.wasNotStored('foo')).toBe(true)
+  })
+
+  test('Forgets a key once a render of it is stored.', () => {
+    const state = new MultiCacheState()
+
+    state.startRender('foo')!(false)
+    state.startRender('foo')!(true)
+
+    expect(state.wasNotStored('foo')).toBe(false)
+  })
+
+  test('Remembers a key whose render timed out.', () => {
+    const state = new MultiCacheState()
+
+    state.startRender('foo')
+    vi.advanceTimersByTime(RENDER_TIMEOUT + 1)
+    expect(state.wasNotStored('foo')).toBe(false)
+
+    // The next request replaces the render that timed out.
+    expect(state.startRender('foo')).toBeTypeOf('function')
+    expect(state.wasNotStored('foo')).toBe(true)
+  })
+
+  test('Keeps the keys that were added last.', () => {
+    const state = new MultiCacheState()
+
+    for (let i = 0; i < MAX_KEYS_NOT_STORED; i++) {
+      state.addKeyNotStored(`key-${i}`)
+    }
+    // Added again, so it's the newest key.
+    state.addKeyNotStored('key-0')
+    state.addKeyNotStored('new')
+
+    expect(state.keysNotStored.size).toBe(MAX_KEYS_NOT_STORED)
+    expect(state.wasNotStored('key-0')).toBe(true)
+    expect(state.wasNotStored('key-1')).toBe(false)
+    expect(state.wasNotStored('key-2')).toBe(true)
+    expect(state.wasNotStored('new')).toBe(true)
   })
 })
