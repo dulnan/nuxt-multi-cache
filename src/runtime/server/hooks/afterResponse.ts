@@ -241,5 +241,8 @@ export async function onAfterResponse(
     if (revalidationKey) {
       getMultiCacheApp().state.removeKeyBeingRevalidated(revalidationKey)
     }
+
+    // Requests waiting for this render now find the stored route.
+    event.context?.multiCache?.routeEndRender?.()
   }
 }

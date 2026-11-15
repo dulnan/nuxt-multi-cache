@@ -30,11 +30,12 @@ export default defineNitroErrorHandler(
 
     try {
       // h3 doesn't call the afterResponse hook for error responses, which
-      // removes the key otherwise.
+      // removes the key and ends the render otherwise.
       const revalidationKey = event.context.multiCache?.routeRevalidationkey
       if (revalidationKey) {
         app.state.removeKeyBeingRevalidated(revalidationKey)
       }
+      event.context.multiCache?.routeEndRender?.()
 
       if (event.handled) {
         return

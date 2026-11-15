@@ -208,6 +208,15 @@ describe('Nitro error handler', () => {
     },
   )
 
+  test('Ends the render of the route', async () => {
+    const routeEndRender = vi.fn()
+    const event = buildEvent(undefined, { routeEndRender })
+
+    await handle(createError({ statusCode: 500 }), event)
+
+    expect(routeEndRender).toHaveBeenCalledTimes(1)
+  })
+
   test('Resets the status text of the error response', async () => {
     const event = buildEvent(now + 60)
 

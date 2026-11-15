@@ -405,6 +405,10 @@ describe('afterResponse nitro hook handler', () => {
 
       const storedItems: any[] = []
       const removeKeyBeingRevalidated = vi.fn()
+      let storedWhenRenderEnded: number | undefined
+      const routeEndRender = vi.fn(() => {
+        storedWhenRenderEnded = storedItems.length
+      })
 
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
@@ -445,6 +449,7 @@ describe('afterResponse nitro hook handler', () => {
               ).setCacheable(),
             ),
             routeRevalidationkey: '/foobar',
+            routeEndRender,
           },
         },
         node: {
@@ -473,6 +478,10 @@ describe('afterResponse nitro hook handler', () => {
 
       // The revalidation key is removed, even if the item is not stored.
       expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
+
+      // The render ends after the item is stored, so waiting requests find it.
+      expect(routeEndRender).toHaveBeenCalledTimes(1)
+      expect(storedWhenRenderEnded).toBe(storedItems.length)
 
       mocks.useNitroApp.mockRestore()
     },
