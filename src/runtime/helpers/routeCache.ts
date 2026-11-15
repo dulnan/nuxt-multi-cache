@@ -16,9 +16,9 @@ import {
 import {
   encodeRouteCacheKey,
   getCacheKeyWithPrefix,
+  getServerOptions,
   isInternalServerRequest,
 } from './server'
-import { serverOptions } from '#nuxt-multi-cache/server-options'
 import { apiPrefix } from '#nuxt-multi-cache/config'
 
 /**
@@ -137,6 +137,7 @@ export function isMismatchedRouteKeyPath(event: H3Event): boolean {
  * Build the cache key for the route of the given event.
  */
 export async function getRouteCacheKey(event: H3Event): Promise<string> {
+  const serverOptions = getServerOptions(event)
   const key = serverOptions.route?.buildCacheKey
     ? await serverOptions.route.buildCacheKey(event)
     : await getCacheKeyWithPrefix(encodeRouteCacheKey(event), event)

@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import { encodeRouteCacheItem } from '../../../src/runtime/helpers/cacheItem'
 import { serveCachedHandler } from '../../../src/runtime/server/handler/serveCachedRoute'
 import { onRequest } from '../../../src/runtime/server/hooks/request'
@@ -7,21 +6,6 @@ import { NuxtMultiCacheRouteCacheHelper } from '../../../src/runtime/helpers/Rou
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
 import { logger } from '../../../src/runtime/helpers/multi-cache-logger'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
-
-mockNuxtImport('useRuntimeConfig', (original) => {
-  return () => {
-    return {
-      // Keep the real config, e.g. app.baseURL is needed by Nuxt's router plugin.
-      ...original(),
-      multiCache: {
-        cdn: {
-          cacheTagHeader: 'Cache-Tag',
-          cacheControlHeader: 'Surrogate-Control',
-        },
-      },
-    }
-  }
-})
 
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
@@ -42,15 +26,12 @@ const mocks = vi.hoisted(() => {
   }
 })
 
-vi.mock('#nuxt-multi-cache/server-options', () => {
-  return {
-    serverOptions: mocks.serverOptions,
-  }
-})
-
 vi.mock('nitropack/runtime', () => {
   return {
     useNitroApp: mocks.useNitroApp,
+    useRuntimeConfig: () => ({
+      app: { baseURL: '/', buildAssetsDir: '/_nuxt/' },
+    }),
   }
 })
 
@@ -67,7 +48,7 @@ describe('serveCachedRoute event handler', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {},
-        serverOptions: {},
+        serverOptions: mocks.serverOptions,
         config: {
           cdn: {},
         },
@@ -97,6 +78,7 @@ describe('serveCachedRoute event handler', () => {
           route: new NuxtMultiCacheRouteCacheHelper(0),
         },
         [MULTI_CACHE_CONTEXT_KEY]: {
+          serverOptions: mocks.serverOptions,
           cache: {
             route: {
               storage: {
@@ -177,7 +159,7 @@ describe('serveCachedRoute event handler', () => {
               },
             },
           },
-          serverOptions: {},
+          serverOptions: mocks.serverOptions,
           config: {
             cdn: {},
           },
@@ -236,7 +218,7 @@ describe('serveCachedRoute event handler', () => {
               },
             },
           },
-          serverOptions: {},
+          serverOptions: mocks.serverOptions,
           config: {
             cdn: {},
           },
@@ -290,7 +272,7 @@ describe('serveCachedRoute event handler', () => {
               },
             },
           },
-          serverOptions: {},
+          serverOptions: mocks.serverOptions,
           config: {
             cdn: {},
           },
@@ -334,7 +316,7 @@ describe('serveCachedRoute event handler', () => {
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
           cache: {},
-          serverOptions: {},
+          serverOptions: mocks.serverOptions,
           config: {
             cdn: {},
           },
@@ -360,6 +342,7 @@ describe('serveCachedRoute event handler', () => {
             route: new NuxtMultiCacheRouteCacheHelper(0),
           },
           [MULTI_CACHE_CONTEXT_KEY]: {
+            serverOptions: mocks.serverOptions,
             cache: {
               route: {
                 storage: {
@@ -388,7 +371,7 @@ describe('serveCachedRoute event handler', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {},
-        serverOptions: {},
+        serverOptions: mocks.serverOptions,
         config: {
           cdn: {},
         },
@@ -419,6 +402,7 @@ describe('serveCachedRoute event handler', () => {
       },
       context: {
         [MULTI_CACHE_CONTEXT_KEY]: {
+          serverOptions: mocks.serverOptions,
           cache: {
             route: {
               storage: {
@@ -474,7 +458,7 @@ describe('serveCachedRoute event handler', () => {
     mocks.useNitroApp.mockReturnValue({
       multiCache: {
         cache: {},
-        serverOptions: {},
+        serverOptions: mocks.serverOptions,
         config: {
           cdn: {},
         },
@@ -495,6 +479,7 @@ describe('serveCachedRoute event handler', () => {
           route: new NuxtMultiCacheRouteCacheHelper(0),
         },
         [MULTI_CACHE_CONTEXT_KEY]: {
+          serverOptions: mocks.serverOptions,
           cache: {
             route: {
               storage: {

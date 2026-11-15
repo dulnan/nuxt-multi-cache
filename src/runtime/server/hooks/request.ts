@@ -15,16 +15,20 @@ import {
 } from '../../helpers/routeCache'
 import { setRouteCacheStatus } from '../../helpers/cacheStatus'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
-import { serverOptions } from '#nuxt-multi-cache/server-options'
-import { useRuntimeConfig } from '#imports'
+import { useRuntimeConfig } from 'nitropack/runtime'
+import type { MultiCacheServerOptions } from '../../types'
 
 /**
  * Method to check whether route caching is generally applicable to the given
  * path.
  *
  * @param path - The decoded request path, including the query string.
+ * @param serverOptions - The server options.
  */
-function applies(path: string): boolean {
+function applies(
+  path: string,
+  serverOptions: MultiCacheServerOptions,
+): boolean {
   if (isExcludedRoutePath(path, useRuntimeConfig().app)) {
     return false
   }
@@ -101,7 +105,7 @@ export async function onRequest(event: H3Event) {
   }
 
   // Path is generally not cacheable, so we can skip it.
-  if (!applies(path)) {
+  if (!applies(path, app.serverOptions)) {
     return bypass(event, path)
   }
 

@@ -1,4 +1,4 @@
-import { defineNitroPlugin } from 'nitropack/runtime'
+import { defineNitroPlugin, useRuntimeConfig } from 'nitropack/runtime'
 import { createStorage } from 'unstorage'
 import { onRequest } from '../hooks/request'
 import { onAfterResponse } from '../hooks/afterResponse'
@@ -25,7 +25,6 @@ import {
   routeCacheEnabled,
   apiEnabled,
 } from '#nuxt-multi-cache/config'
-import { useRuntimeConfig } from '#imports'
 import { InMemoryCacheTagRegistry } from '../../helpers/InMemoryCacheTagRegistry'
 import { CacheTagInvalidator } from '../../helpers/CacheTagInvalidator'
 import { logger } from '../../helpers/multi-cache-logger'

@@ -38,10 +38,14 @@ Vitest has two projects (`vitest.config.mts`):
 - `unit` (node environment): `*.node.spec.ts` and `*.e2e.spec.ts`. The e2e specs
   use `@nuxt/test-utils/e2e` `setup()` to build and serve a Nuxt app, either
   `playground/` or a fixture in `test/cases/<name>/nuxt/`, often with
-  `nuxtConfig` overrides for the module options.
+  `nuxtConfig` overrides for the module options. They test production builds,
+  except `serverOptionsNitroDev.e2e.spec.ts`, which runs its fixture with
+  `setup({ dev: true })`, because some failures only happen in the dev server.
 - `nuxt` (nuxt environment): `*.nuxt.spec.ts`, e.g. hooks and `RenderCacheable`,
-  which mock `#nuxt-multi-cache/config`, `#nuxt-multi-cache/server-options`,
-  `nitropack/runtime` and h3 functions as needed.
+  which mock `#nuxt-multi-cache/config`, `nitropack/runtime` (`useNitroApp`,
+  `useRuntimeConfig`) and h3 functions as needed. Server options are passed as
+  `serverOptions` of the mocked app, on `event.context.multiCacheApp` and/or
+  returned by `useNitroApp().multiCache`.
 
 `test/__helpers__/` reads and purges cache items through the module's API in e2e
 tests. Test mode (`enableTestMode`) allows overriding the current time with the
@@ -74,7 +78,18 @@ sent, which is why the cache tag invalidation delay is always 0 for
   layers (not merged). Server options hold everything that can't be serialized
   into `nuxt.config`: storage drivers, `bubbleError`,
   `route.buildCacheKey/alterCachedHeaders/applies`, `enabledForRequest`,
-  `cacheKeyPrefix`, API authorization callback, cache tag registry.
+  `cacheKeyPrefix`, API authorization callback, cache tag registry. Only the
+  Nitro plugin imports `#nuxt-multi-cache/server-options`; all other code reads
+  `event.context.multiCacheApp.serverOptions` (`getServerOptions()`). Code that
+  also runs in the Nuxt app (data cache, `RenderCacheable`, the fetch
+  interceptor) would otherwise bundle a second copy of the user's file into the
+  Nuxt server build, where it runs with Nuxt's auto-imports, and in dev mode
+  fails on any `nitropack/runtime` import (Nitro's virtual modules don't resolve
+  there).
+- Nitro runtime code imports Nitro utils from `nitropack/runtime`, never from
+  `#imports`: with `experimental.nitroAutoImports: false` (the default with
+  `future.compatibilityVersion: 5`), Nitro's `#imports` only contains what
+  modules add. `test/cases/server-options-nitro` builds with that setting.
 - A build plugin replaces server-only modules with stubs in client bundles
   (`CLIENT_STUBS`), and calls of `useRouteCache`, `useCDNHeaders` and
   `useComponentCache` are tree-shaken from the client.
