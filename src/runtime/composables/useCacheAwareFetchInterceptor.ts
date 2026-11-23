@@ -1,9 +1,4 @@
-import type {
-  FetchContext,
-  FetchRequest,
-  ResponseType,
-  FetchResponse,
-} from 'ofetch'
+import type { FetchContext, FetchRequest } from 'ofetch'
 import { withBase } from 'ufo'
 import { useRequestEvent, useRuntimeConfig } from '#imports'
 import { useRouteCache } from './../server/utils/useRouteCache'
@@ -22,13 +17,12 @@ import {
 import type { BubbleCacheability } from '../types'
 import { useCDNHeadersImplementation } from '../shared/useCDNHeaders'
 
-type OnResponseInterceptor = (
-  ctx: FetchContext<unknown, ResponseType> & {
-    response: FetchResponse<ResponseType>
-  },
-) => void
+// The interceptors don't read the response data, so they accept a context with
+// any data type. The response is optional, like in FetchContext, so that hooks
+// typed with a plain FetchContext can call the interceptor.
+type OnResponseInterceptor = (ctx: FetchContext<unknown>) => void
 
-type OnRequestInterceptor = (ctx: FetchContext<unknown, ResponseType>) => void
+type OnRequestInterceptor = (ctx: FetchContext<unknown>) => void
 
 /**
  * Get a numeric header value, if present.
@@ -99,6 +93,11 @@ export function useCacheAwareFetchInterceptor(
 
     return {
       onResponse: function (ctx) {
+        const response = ctx.response
+        if (!response) {
+          return
+        }
+
         if (
           cdnEnabled &&
           config.multiCache.cdn &&
@@ -106,7 +105,7 @@ export function useCacheAwareFetchInterceptor(
         ) {
           useCDNHeadersImplementation(
             (cdn) => {
-              cdn.mergeFromResponse(ctx.response)
+              cdn.mergeFromResponse(response)
             },
             event,
             false,
@@ -124,7 +123,7 @@ export function useCacheAwareFetchInterceptor(
         ) {
           // The headers are missing if the API route doesn't use the route
           // cache.
-          const headers = ctx.response.headers
+          const headers = response.headers
           const cacheTags = (headers.get(ROUTE_CACHE_TAGS_HEADER) || '')
             .split(' ')
             .filter(Boolean)

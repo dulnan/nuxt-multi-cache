@@ -1,5 +1,7 @@
-import { describe, expect, test, vi } from 'vitest'
+import type { FetchContext, FetchOptions } from 'ofetch'
+import { describe, expect, expectTypeOf, test, vi } from 'vitest'
 import { isAppRequest } from '../../src/runtime/composables/useCacheAwareFetchInterceptor'
+import type { useCacheAwareFetchInterceptor } from '../../src/runtime/composables/useCacheAwareFetchInterceptor'
 
 vi.mock('#imports', () => {
   return {
@@ -41,5 +43,26 @@ describe('isAppRequest', () => {
     expect(isAppRequest(new Request('https://example.com/api/users'))).toBe(
       false,
     )
+  })
+})
+
+describe('useCacheAwareFetchInterceptor types', () => {
+  type Interceptor = ReturnType<typeof useCacheAwareFetchInterceptor>
+  type OnResponseContext = Parameters<NonNullable<Interceptor['onResponse']>>[0]
+  type Data = { items: string[] }
+
+  test('can be used as hooks of a fetch with typed response data', () => {
+    expectTypeOf<Interceptor['onRequest']>().toExtend<
+      FetchOptions<'json', Data>['onRequest']
+    >()
+    expectTypeOf<Interceptor['onResponse']>().toExtend<
+      FetchOptions<'json', Data>['onResponse']
+    >()
+  })
+
+  test('can be called with a context without a response', () => {
+    // E.g. from a hook typed with a plain FetchContext, like the onResponse of
+    // the nuxt-graphql-middleware fetch options.
+    expectTypeOf<FetchContext<Data>>().toExtend<OnResponseContext>()
   })
 })
