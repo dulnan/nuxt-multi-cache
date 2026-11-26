@@ -165,16 +165,14 @@ export function getStorableRoute(
 
 /**
  * Store the response in the route cache, if it's cacheable.
- *
- * @returns Whether the response was stored.
  */
 async function storeResponse(
   event: H3Event,
   response: { body?: unknown } | undefined,
-): Promise<boolean> {
+) {
   const storable = getStorableRoute(event, response)
   if (!storable) {
-    return false
+    return
   }
 
   const { serverOptions } = getMultiCacheApp()
@@ -208,7 +206,7 @@ async function storeResponse(
 
   const cacheKey = await getRouteCacheKey(event)
   if (!isValidCacheKey(cacheKey, 'route')) {
-    return false
+    return
   }
 
   const {
@@ -245,10 +243,8 @@ async function storeResponse(
     })
   }
 
-  let stored = false
   try {
     await cache.storage.setItemRaw(cacheKey, cacheItem, { ttl })
-    stored = true
     if (cacheTags.length) {
       const registry = getCacheTagRegistry(event)
       if (registry) {
@@ -262,8 +258,6 @@ async function storeResponse(
       throw e
     }
   }
-
-  return stored
 }
 
 /**
@@ -273,9 +267,8 @@ export async function onAfterResponse(
   event: H3Event,
   response: { body?: unknown } | undefined,
 ) {
-  let stored = false
   try {
-    stored = await storeResponse(event, response)
+    await storeResponse(event, response)
   } finally {
     // If this request revalidated a stale route, it's no longer being
     // revalidated. This must also happen when the response was not stored
@@ -286,8 +279,7 @@ export async function onAfterResponse(
       getMultiCacheApp().state.removeKeyBeingRevalidated(revalidationKey)
     }
 
-    // Requests waiting for this render now find the stored route. If nothing
-    // was stored, requests for the key don't wait for a while.
-    event.context?.multiCache?.routeEndRender?.(stored)
+    // Requests waiting for this render now find the stored route.
+    event.context?.multiCache?.routeEndRender?.()
   }
 }

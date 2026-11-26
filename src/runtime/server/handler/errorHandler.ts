@@ -35,8 +35,7 @@ export default defineNitroErrorHandler(
       if (revalidationKey) {
         app.state.removeKeyBeingRevalidated(revalidationKey)
       }
-      // Error responses are never stored.
-      event.context.multiCache?.routeEndRender?.(false)
+      event.context.multiCache?.routeEndRender?.()
 
       if (event.handled) {
         return

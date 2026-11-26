@@ -490,9 +490,7 @@ describe('afterResponse nitro hook handler', () => {
       expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
 
       // The render ends after the item is stored, so waiting requests find it.
-      expect(routeEndRender).toHaveBeenCalledExactlyOnceWith(
-        expectedTtl !== null,
-      )
+      expect(routeEndRender).toHaveBeenCalledOnce()
       expect(storedWhenRenderEnded).toBe(storedItems.length)
 
       mocks.useNitroApp.mockRestore()
@@ -583,8 +581,7 @@ describe('afterResponse nitro hook handler', () => {
       }
 
       expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
-      // Requests for the key don't wait for its render for a while.
-      expect(routeEndRender).toHaveBeenCalledExactlyOnceWith(false)
+      expect(routeEndRender).toHaveBeenCalledOnce()
 
       mocks.useNitroApp.mockRestore()
     },

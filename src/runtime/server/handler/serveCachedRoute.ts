@@ -1,5 +1,4 @@
 import { type H3Event, getRequestURL, getResponseHeaders } from 'h3'
-import type { Storage } from 'unstorage'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
 import {
   getMultiCacheContext,
@@ -16,7 +15,6 @@ import type { RouteCacheItem } from '../../types'
 import type { MultiCacheState } from '../../helpers/MultiCacheState'
 import { logger } from '../../helpers/multi-cache-logger'
 import {
-  getCoalesceTimeout,
   getRouteCacheKey,
   isRouteCacheMethod,
   setCachedResponse,
@@ -51,93 +49,12 @@ function canBeServedFromCache(
 }
 
 /**
- * The result of looking up a route in the cache.
+ * Let concurrent requests for the key wait until this request has rendered
+ * the route. The afterResponse hook or the error handler ends the render.
  */
-type Lookup =
-  | { served: true; data: unknown }
-  | {
-      served: false
-      /**
-       * Whether the app renders the route without any response to serve
-       * meanwhile, so concurrent requests may wait for its result.
-       */
-      mayCoalesce: boolean
-    }
-
-function forgetCachedRoute(event: H3Event) {
-  if (event.context.multiCache) {
-    event.context.multiCache.routeCachedDecoded = undefined
-  }
-}
-
-async function lookup(
-  event: H3Event,
-  storage: Storage,
-  state: MultiCacheState,
-  fullKey: string,
-): Promise<Lookup> {
-  // Check if there is a cache entry for this key.
-  const cachedRaw = handleRawCacheData(await storage.getItemRaw(fullKey))
-
-  // No cache entry. A route from an earlier lookup of this request (before it
-  // waited for another render) is gone and must not be served stale.
-  if (!cachedRaw) {
-    forgetCachedRoute(event)
-    setRouteCacheStatus(event, { fwd: 'uri-miss' })
-    return { served: false, mayCoalesce: true }
-  }
-  const decoded = decodeRouteCacheItem(cachedRaw)
-
-  // Decoding failed. May happen if the format is wrong, possibly after a
-  // deployment with a newer version.
-  if (!decoded) {
-    forgetCachedRoute(event)
-    setRouteCacheStatus(event, { fwd: 'miss' })
-    return { served: false, mayCoalesce: true }
-  }
-
-  // Store the decoded cache item in the event context.
+function startRender(event: H3Event, state: MultiCacheState, key: string) {
   event.context.multiCache ||= {}
-  event.context.multiCache.routeCachedDecoded = decoded
-
-  // Check if item can be served from cache.
-  if (!canBeServedFromCache(event, fullKey, decoded, state)) {
-    // Mark the key as being revalidated.
-    if (decoded.staleWhileRevalidate) {
-      state.addKeyBeingRevalidated(fullKey)
-      event.context.multiCache ||= {}
-      event.context.multiCache.routeRevalidationkey = fullKey
-    }
-
-    setRouteCacheStatus(event, { fwd: 'stale' })
-
-    // If revalidating fails, the stale route may be served. This handler
-    // runs first, so these are the headers a cache hit would have.
-    event.context.multiCache.routeInitialHeaders = copyHeaders(
-      getResponseHeaders(event),
-    )
-
-    // Returning, so the route is revalidated. Concurrent requests get the
-    // stale route while it's revalidated.
-    return { served: false, mayCoalesce: !decoded.staleWhileRevalidate }
-  }
-
-  if (debug) {
-    const url = getRequestURL(event)
-    logger.info('Serving cached route for path: ' + url.toString(), {
-      fullKey,
-    })
-  }
-
-  setCachedResponse(event, decoded)
-
-  // The ttl is negative if a stale route is served while revalidating.
-  setRouteCacheStatus(event, {
-    hit: true,
-    ttl: getCacheStatusTtl(decoded.expires, getRequestTimestamp(event)),
-  })
-
-  return { served: true, data: decoded.data }
+  event.context.multiCache.routeEndRender = state.startRender(key)
 }
 
 export async function serveCachedHandler(event: H3Event) {
@@ -158,7 +75,6 @@ export async function serveCachedHandler(event: H3Event) {
   }
 
   const { state, config } = getMultiCacheApp()
-  const coalesceTimeout = getCoalesceTimeout(config.routeCoalesce)
 
   try {
     // Build the cache key.
@@ -168,45 +84,83 @@ export async function serveCachedHandler(event: H3Event) {
       return
     }
 
-    const storage = context.route.storage
-    const result = await lookup(event, storage, state, fullKey)
-    if (result.served) {
-      return result.data
+    // Internal requests don't wait: the render may be the one that made them,
+    // e.g. a page that fetches its own path. A request that waited doesn't
+    // let others wait for its render: for a route that stores nothing, they
+    // would render it one after another.
+    const letOthersWait =
+      !!config.routeCoalesce &&
+      !isInternalServerRequest(event) &&
+      !(await state.waitForRender(fullKey))
+
+    // Check if there is a cache entry for this key.
+    const cachedRaw = handleRawCacheData(
+      await context.route.storage.getItemRaw(fullKey),
+    )
+
+    // No cache entry.
+    if (!cachedRaw) {
+      setRouteCacheStatus(event, { fwd: 'uri-miss' })
+      if (letOthersWait) {
+        startRender(event, state, fullKey)
+      }
+      return
     }
-    // An internal request may be made by the render it would wait for, e.g.
-    // a page that fetches its own path.
-    if (
-      !coalesceTimeout ||
-      !result.mayCoalesce ||
-      isInternalServerRequest(event)
-    ) {
+    const decoded = decodeRouteCacheItem(cachedRaw)
+
+    // Decoding failed. May happen if the format is wrong, possibly after a
+    // deployment with a newer version.
+    if (!decoded) {
+      setRouteCacheStatus(event, { fwd: 'miss' })
+      if (letOthersWait) {
+        startRender(event, state, fullKey)
+      }
       return
     }
 
-    // The first request renders the route, the afterResponse hook or the
-    // error handler ends the render.
-    const endRender = state.startRender(fullKey, coalesceTimeout)
-    if (endRender) {
-      event.context.multiCache ||= {}
-      event.context.multiCache.routeEndRender = endRender
+    // Store the decoded cache item in the event context.
+    event.context.multiCache ||= {}
+    event.context.multiCache.routeCachedDecoded = decoded
+
+    // Check if item can be served from cache.
+    if (!canBeServedFromCache(event, fullKey, decoded, state)) {
+      // Mark the key as being revalidated.
+      if (decoded.staleWhileRevalidate) {
+        state.addKeyBeingRevalidated(fullKey)
+        event.context.multiCache ||= {}
+        event.context.multiCache.routeRevalidationkey = fullKey
+      } else if (letOthersWait) {
+        startRender(event, state, fullKey)
+      }
+
+      setRouteCacheStatus(event, { fwd: 'stale' })
+
+      // If revalidating fails, the stale route may be served. This handler
+      // runs first, so these are the headers a cache hit would have.
+      event.context.multiCache.routeInitialHeaders = copyHeaders(
+        getResponseHeaders(event),
+      )
+
+      // Returning, so the route is revalidated.
       return
     }
 
-    // After a render that stored nothing (e.g. of an uncacheable route), the
-    // other requests don't wait: they would only find nothing stored. The
-    // first request still starts its render, so that its result decides
-    // whether they wait again.
-    if (state.wasNotStored(fullKey)) {
-      return
+    if (debug) {
+      const url = getRequestURL(event)
+      logger.info('Serving cached route for path: ' + url.toString(), {
+        fullKey,
+      })
     }
 
-    // Other requests wait for its result. If it wasn't stored (e.g. because
-    // the route is uncacheable) they render the route themselves.
-    await state.waitForRender(fullKey, coalesceTimeout)
-    const afterWait = await lookup(event, storage, state, fullKey)
-    if (afterWait.served) {
-      return afterWait.data
-    }
+    setCachedResponse(event, decoded)
+
+    // The ttl is negative if a stale route is served while revalidating.
+    setRouteCacheStatus(event, {
+      hit: true,
+      ttl: getCacheStatusTtl(decoded.expires, getRequestTimestamp(event)),
+    })
+
+    return decoded.data
   } catch (e) {
     logger.error(
       `Error while attempting to serve cached route for path "${event.path}".`,

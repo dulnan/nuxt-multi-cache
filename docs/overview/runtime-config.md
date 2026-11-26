@@ -62,19 +62,6 @@ route cache: `true` with the name `nuxt-multi-cache`, or a name, e.g.
 
 This has no effect if the route cache is disabled.
 
-## Coalescing
-
-```dotenv
-NUXT_MULTI_CACHE_ROUTE_COALESCE=true
-```
-
-Set to `true` to let concurrent requests wait for a route that another request
-[renders](/features/route-cache#coalescing-concurrent-requests) for at most 5
-seconds, to a number to set how long they wait in milliseconds, or to `false` to
-let each of them render it.
-
-This has no effect if the route cache is disabled.
-
 ## Toggle API
 
 ```dotenv

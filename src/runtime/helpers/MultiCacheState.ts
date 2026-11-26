@@ -7,140 +7,57 @@
 export const REVALIDATION_TIMEOUT = 60_000
 
 /**
- * How long requests don't wait for the render of a key after one stored
- * nothing or timed out, in milliseconds.
+ * How long requests wait for the render of a route, in milliseconds.
  *
- * Waiting requests would only find nothing stored and render the route
- * themselves, e.g. for an uncacheable route. Each render of the key that
- * stores nothing starts this time again, and one that stores the route ends
- * it.
+ * After it, they render the route themselves, e.g. if the render never ends.
  */
-export const NOT_STORED_TIMEOUT = 60_000
-
-/**
- * How many keys whose render stored nothing are kept.
- *
- * Any path can be requested, e.g. paths that respond with a 404, so the oldest
- * key is removed when another one is added. A removed key's requests wait
- * again.
- */
-export const MAX_KEYS_NOT_STORED = 10_000
-
-type Render = {
-  startedAt: number
-  done: Promise<void>
-  finish: () => void
-}
+export const RENDER_TIMEOUT = 5_000
 
 export class MultiCacheState {
   /**
-   * Keys of routes that a request is currently rendering, for requests that
-   * wait for the result instead of rendering the route too.
+   * Keys of routes that a request is rendering, with a promise that resolves
+   * when the render ends.
    */
-  renders = new Map<string, Render>()
+  renders = new Map<string, Promise<void>>()
 
   /**
-   * Keys whose last render stored nothing or timed out, with the time (in
-   * milliseconds) when it ended.
-   */
-  keysNotStored = new Map<string, number>()
-
-  /**
-   * Start rendering a key.
+   * Start rendering a key, unless another request is rendering it.
    *
-   * @param timeout - How long a render may take, in milliseconds. After it,
-   *   the next request renders the key again.
-   *
-   * @returns A function that ends the render, with whether the route was
-   *   stored, or null if another request is already rendering the key.
+   * @returns A function that ends the render, or undefined.
    */
-  startRender(
-    key: string,
-    timeout: number,
-  ): ((stored: boolean) => void) | null {
-    const current = this.renders.get(key)
-    if (current) {
-      if (Date.now() - current.startedAt <= timeout) {
-        return null
-      }
-
-      // Requests still waiting for a render that timed out stop waiting, and
-      // the next ones don't wait for this key.
-      this.addKeyNotStored(key)
-      current.finish()
-    }
-
-    let finish = () => {}
-    const done = new Promise<void>((resolve) => {
-      finish = resolve
-    })
-    const render: Render = { startedAt: Date.now(), done, finish }
-    this.renders.set(key, render)
-
-    return (stored: boolean) => {
-      if (stored) {
-        this.keysNotStored.delete(key)
-      } else {
-        this.addKeyNotStored(key)
-      }
-
-      render.finish()
-      // A render that timed out may have been replaced by a newer one.
-      if (this.renders.get(key) === render) {
-        this.renders.delete(key)
-      }
-    }
-  }
-
-  /**
-   * Remember that a render of a key stored nothing or timed out.
-   */
-  addKeyNotStored(key: string) {
-    // Added again at the end, so that the oldest key comes first.
-    this.keysNotStored.delete(key)
-    this.keysNotStored.set(key, Date.now())
-
-    if (this.keysNotStored.size > MAX_KEYS_NOT_STORED) {
-      const oldest = this.keysNotStored.keys().next().value
-      if (oldest !== undefined) {
-        this.keysNotStored.delete(oldest)
-      }
-    }
-  }
-
-  /**
-   * Whether a recent render of a key stored nothing or timed out.
-   */
-  wasNotStored(key: string): boolean {
-    const endedAt = this.keysNotStored.get(key)
-    if (endedAt === undefined) {
-      return false
-    }
-
-    if (Date.now() - endedAt > NOT_STORED_TIMEOUT) {
-      this.keysNotStored.delete(key)
-      return false
-    }
-
-    return true
-  }
-
-  /**
-   * Wait until the render of a key ends, or at most the timeout (in
-   * milliseconds).
-   */
-  async waitForRender(key: string, timeout: number): Promise<void> {
-    const render = this.renders.get(key)
-    if (!render) {
+  startRender(key: string): (() => void) | undefined {
+    if (this.renders.has(key)) {
       return
     }
 
-    let timer: ReturnType<typeof setTimeout> | undefined
-    const timedOut = new Promise<void>((resolve) => {
-      timer = setTimeout(resolve, timeout)
+    let resolve = () => {}
+    const done = new Promise<void>((r) => {
+      resolve = r
     })
-    await Promise.race([render.done, timedOut])
-    clearTimeout(timer)
+    const end = () => {
+      clearTimeout(timer)
+      resolve()
+      if (this.renders.get(key) === done) {
+        this.renders.delete(key)
+      }
+    }
+    const timer = setTimeout(end, RENDER_TIMEOUT)
+    this.renders.set(key, done)
+    return end
+  }
+
+  /**
+   * Wait until the render of a key ends, if another request is rendering it.
+   *
+   * @returns Whether it waited.
+   */
+  async waitForRender(key: string): Promise<boolean> {
+    const render = this.renders.get(key)
+    if (!render) {
+      return false
+    }
+    await render
+    return true
   }
 
   /**

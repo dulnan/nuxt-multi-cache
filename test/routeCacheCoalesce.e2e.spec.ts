@@ -23,44 +23,40 @@ await setup({
   nuxtConfig: { multiCache } as any,
 })
 
-function fetchConcurrently(url: string): Promise<{ render: number }[]> {
-  return Promise.all(
-    Array.from({ length: 5 }, () => $fetch<{ render: number }>(url)),
-  )
+function fetchConcurrently<T>(url: string, count: number): Promise<T[]> {
+  return Promise.all(Array.from({ length: count }, () => $fetch<T>(url)))
 }
 
 describe('Coalescing in the route cache', () => {
   test('renders a route once for concurrent requests', async () => {
     await purgeAll()
 
-    const responses = await fetchConcurrently('/api/coalesce')
-    const renders = new Set(responses.map((response) => response.render))
+    const responses = await fetchConcurrently<{ render: number }>(
+      '/api/coalesce',
+      5,
+    )
 
-    expect(renders.size).toBe(1)
+    expect(new Set(responses.map((response) => response.render)).size).toBe(1)
   })
 
-  test('renders an uncacheable route for each request', async () => {
-    await purgeAll()
-
-    const responses = await fetchConcurrently('/api/coalesceUncacheable')
-    const renders = new Set(responses.map((response) => response.render))
-
-    // Nothing was stored, so no request gets the response of another.
-    expect(renders.size).toBe(5)
-  })
-
-  test('does not wait for a route whose last render stored nothing', async () => {
+  test('renders an uncacheable route in parallel after one render', async () => {
     type Render = { startedAt: number; endedAt: number }
 
-    // Stores nothing.
-    await $fetch('/api/coalesceUncacheable')
+    // Each render takes 500 ms.
+    const responses = await fetchConcurrently<Render>(
+      '/api/coalesceUncacheable',
+      10,
+    )
+    const [first, ...others] = responses.sort(
+      (a, b) => a.startedAt - b.startedAt,
+    )
 
-    const first = $fetch<Render>('/api/coalesceUncacheable')
-    await new Promise((resolve) => setTimeout(resolve, 100))
-    const second = await $fetch<Render>('/api/coalesceUncacheable')
-
-    // The second request renders the route while the first one does. It would
-    // only find nothing stored after waiting for it.
-    expect(second.startedAt).toBeLessThan((await first).endedAt)
+    // The other requests waited for the first render, then rendered the route
+    // at the same time, instead of one after another.
+    const othersStarted = Math.max(...others.map((r) => r.startedAt))
+    const othersEnded = Math.min(...others.map((r) => r.endedAt))
+    expect(othersStarted).toBeLessThan(othersEnded)
+    const allEnded = Math.max(...responses.map((r) => r.endedAt))
+    expect(allEnded - first!.startedAt).toBeLessThan(1_500)
   })
 })

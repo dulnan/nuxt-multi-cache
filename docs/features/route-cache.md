@@ -266,10 +266,10 @@ the debug log (`debug: true`), then
 
 ### Coalescing concurrent requests
 
-Without coalescing, every request for a route that isn't stored yet renders it.
-A popular page that expires or is purged is then rendered by all its concurrent
-requests at once, which is what the cache should prevent. With `coalesce`, one
-request renders the route and the others wait for its result:
+Every request for a route that can't be served from cache renders it. When a
+popular page expires or is purged, all its concurrent requests render it at
+once. With `coalesce`, one request renders the route and the others wait for it,
+then look it up again:
 
 ::: code-group
 
@@ -286,32 +286,22 @@ export default defineNuxtConfig({
 
 :::
 
-- It applies when no route is stored for the cache key, or the stored route is
-  expired and can't be served
+- It applies when no route is stored, or the stored route is expired and can't
+  be served
   [stale while revalidating](/composables/useRouteCache#allowstalewhilerevalidate).
-  With stale while revalidate, the other requests get the stale route instead.
-- Once the route is stored, the waiting requests are served from the cache,
-  unless it can't be served (e.g. a max age of 0).
-- If nothing is stored, e.g. because the route is uncacheable or the render
-  failed, the waiting requests render the route themselves. For the next 60
-  seconds, requests for the key don't wait, so that a route that is never stored
-  isn't slowed down. Each render that stores nothing starts the 60 seconds
-  again, and one that stores the route ends them.
-- With `true`, the requests wait at most 5 seconds. A number sets the timeout in
-  milliseconds, e.g. `coalesce: 15_000`. Set it higher than the longest render
-  of a route: after it, the requests render the route themselves, and requests
-  for the key don't wait for 60 seconds. It also ends the wait for a render that
-  never finishes, e.g. because it waits for a request without a timeout.
+- A request waits at most once, for at most 5 seconds. If nothing was stored
+  (e.g. an uncacheable route), the waiting requests render the route themselves,
+  at the same time. So for an uncacheable route, a request can take up to one
+  render longer than without the option.
 - Internal requests (made with
   [`useCacheAwareFetchInterceptor`](/composables/useCacheAwareFetchInterceptor))
   never wait, because the render they would wait for may be the one that made
-  them. Another request to the route that is being rendered, made during its
-  render without the interceptor, waits until the timeout.
-- The requests wait in the same server process. Several processes or instances
-  each render the route once.
+  them.
+- Requests wait only in the same server process.
+- Requests that look up the route at the same moment as the first one, before it
+  starts rendering, render it too.
 
-It can also be changed at runtime, see
-[Runtime Config](/overview/runtime-config#coalescing).
+Change it at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE=true|false`.
 
 ## Usage in Components
 
