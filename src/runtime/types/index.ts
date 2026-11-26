@@ -257,11 +257,6 @@ export type MultiCacheRuntimeConfig = {
   routeCacheStatus: string | boolean
 
   /**
-   * Whether concurrent requests wait for a route that another request renders.
-   */
-  routeCoalesce: boolean
-
-  /**
    * API settings.
    */
   api: {
@@ -395,8 +390,7 @@ export type MultiCacheEventContext = {
   routeRevalidationkey?: string
 
   /**
-   * Ends the render of a route that concurrent requests wait for, if this
-   * request renders it with `route.coalesce`.
+   * Ends the render of a route that concurrent requests wait for.
    */
   routeEndRender?: () => void
 

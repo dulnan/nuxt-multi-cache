@@ -51,39 +51,29 @@ describe('MultiCacheState renders', () => {
     vi.useRealTimers()
   })
 
-  test('Lets waiting requests continue when the render ends.', async () => {
+  test('Lets requests wait once for the render, until it ends.', async () => {
     const state = new MultiCacheState()
-    const end = state.startRender('foo')!
-    expect(state.startRender('foo')).toBeUndefined()
-
-    let waited: boolean | undefined
-    const waiting = state.waitForRender('foo').then((result) => {
-      waited = result
-    })
-    await vi.advanceTimersByTimeAsync(RENDER_TIMEOUT / 2)
-    expect(waited).toBeUndefined()
-
-    end()
-    await waiting
-    expect(waited).toBe(true)
-    expect(await state.waitForRender('foo')).toBe(false)
-    expect(state.startRender('foo')).toBeTypeOf('function')
-  })
-
-  test('Ends a render that never ends after the timeout.', async () => {
-    const state = new MultiCacheState()
-    state.startRender('foo')
-
+    const end = await state.waitOrStartRender('foo')
     let waited = false
-    const waiting = state.waitForRender('foo').then(() => {
+    const waiting = state.waitOrStartRender('foo').then((result) => {
       waited = true
+      return result
     })
+
     await vi.advanceTimersByTimeAsync(RENDER_TIMEOUT - 1)
     expect(waited).toBe(false)
+    end!()
+    expect(await waiting).toBeUndefined()
+    expect(await state.waitOrStartRender('foo')).toBeTypeOf('function')
+  })
 
-    await vi.advanceTimersByTimeAsync(1)
-    await waiting
-    expect(waited).toBe(true)
-    expect(state.startRender('foo')).toBeTypeOf('function')
+  test('Ends a render after the timeout.', async () => {
+    const state = new MultiCacheState()
+    await state.waitOrStartRender('foo')
+    const waiting = state.waitOrStartRender('foo')
+
+    await vi.advanceTimersByTimeAsync(RENDER_TIMEOUT)
+    expect(await waiting).toBeUndefined()
+    expect(await state.waitOrStartRender('foo')).toBeTypeOf('function')
   })
 })

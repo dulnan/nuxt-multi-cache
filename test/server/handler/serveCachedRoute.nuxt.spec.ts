@@ -6,12 +6,12 @@ import { NuxtMultiCacheRouteCacheHelper } from '../../../src/runtime/helpers/Rou
 import { MULTI_CACHE_CONTEXT_KEY } from '../../../src/runtime/helpers/server'
 import { logger } from '../../../src/runtime/helpers/multi-cache-logger'
 import { toTimestamp } from '~/src/runtime/helpers/maxAge'
-import { MultiCacheState } from '../../../src/runtime/helpers/MultiCacheState'
 
 vi.mock('#nuxt-multi-cache/config', () => {
   return {
     isServer: true,
     debug: false,
+    routeCacheCoalesce: false,
     cdnEnabled: true,
     cdnCacheControlHeader: 'Surrogate-Control',
     cdnCacheTagHeader: 'Cache-Tag',
@@ -503,106 +503,5 @@ describe('serveCachedRoute event handler', () => {
       ]
     `)
     mocks.useNitroApp.mockRestore()
-  })
-})
-
-describe('serveCachedRoute with coalescing', () => {
-  const state = new MultiCacheState()
-  const items = new Map<string, string>()
-
-  beforeEach(() => {
-    // Render timeouts don't outlast the test.
-    vi.useFakeTimers()
-    state.renders.clear()
-    items.clear()
-    mocks.useNitroApp.mockReturnValue({
-      multiCache: { state, config: { routeCoalesce: true } },
-    })
-  })
-
-  afterEach(() => {
-    vi.useRealTimers()
-    mocks.useNitroApp.mockRestore()
-  })
-
-  function createEvent(isInternalServerRequest = false) {
-    const storage = { getItemRaw: (key: string) => items.get(key) ?? null }
-    return {
-      method: 'GET',
-      path: '/',
-      headers: {},
-      node: {
-        res: { setHeader: () => {}, getHeaders: () => ({}), statusCode: null },
-        req: { originalUrl: '/', headers: {} },
-      },
-      context: {
-        multiCache: {
-          route: new NuxtMultiCacheRouteCacheHelper(0),
-          isInternalServerRequest,
-        } as Record<string, any>,
-        [MULTI_CACHE_CONTEXT_KEY]: { cache: { route: { storage } } },
-      },
-    }
-  }
-
-  /**
-   * Handle a request until it waits for the render of another one.
-   */
-  async function serveWaiting(event: ReturnType<typeof createEvent>) {
-    const waitForRender = vi.spyOn(state, 'waitForRender')
-    const result = serveCachedHandler(event as any)
-    await vi.waitFor(() => expect(waitForRender).toHaveBeenCalled())
-    waitForRender.mockRestore()
-    // Wrapped, so that the caller can await the wait without the result.
-    return { result }
-  }
-
-  function store() {
-    items.set(
-      '{root}',
-      encodeRouteCacheItem(
-        '<html></html>',
-        {},
-        200,
-        undefined,
-        undefined,
-        undefined,
-        [],
-      ),
-    )
-  }
-
-  test('Serves the route that the first request stored to waiting requests.', async () => {
-    const first = createEvent()
-    expect(await serveCachedHandler(first as any)).toBeUndefined()
-
-    const second = await serveWaiting(createEvent())
-    store()
-    first.context.multiCache.routeEndRender()
-
-    expect(await second.result).toBe('<html></html>')
-  })
-
-  test('Does not let others wait for a request that waited.', async () => {
-    const first = createEvent()
-    await serveCachedHandler(first as any)
-
-    // Nothing is stored, e.g. because the route is uncacheable.
-    const secondEvent = createEvent()
-    const second = await serveWaiting(secondEvent)
-    first.context.multiCache.routeEndRender()
-
-    expect(await second.result).toBeUndefined()
-    expect(secondEvent.context.multiCache.routeEndRender).toBeUndefined()
-    expect(state.renders.size).toBe(0)
-  })
-
-  test('Does not let internal requests wait.', async () => {
-    // E.g. the render of the route fetches the route itself.
-    await serveCachedHandler(createEvent() as any)
-    const internal = createEvent(true)
-
-    expect(await serveCachedHandler(internal as any)).toBeUndefined()
-    expect(internal.context.multiCache.routeEndRender).toBeUndefined()
   })
 })

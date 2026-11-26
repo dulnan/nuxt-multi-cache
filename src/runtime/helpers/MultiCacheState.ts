@@ -8,8 +8,6 @@ export const REVALIDATION_TIMEOUT = 60_000
 
 /**
  * How long requests wait for the render of a route, in milliseconds.
- *
- * After it, they render the route themselves, e.g. if the render never ends.
  */
 export const RENDER_TIMEOUT = 5_000
 
@@ -21,43 +19,30 @@ export class MultiCacheState {
   renders = new Map<string, Promise<void>>()
 
   /**
-   * Start rendering a key, unless another request is rendering it.
-   *
-   * @returns A function that ends the render, or undefined.
+   * Wait for the render of a key if another request renders it. Else, start
+   * rendering it: requests for the key wait until the returned function is
+   * called, or until the timeout.
    */
-  startRender(key: string): (() => void) | undefined {
-    if (this.renders.has(key)) {
+  async waitOrStartRender(key: string): Promise<(() => void) | undefined> {
+    const render = this.renders.get(key)
+    if (render) {
+      await render
       return
     }
 
-    let resolve = () => {}
-    const done = new Promise<void>((r) => {
-      resolve = r
-    })
-    const end = () => {
-      clearTimeout(timer)
-      resolve()
-      if (this.renders.get(key) === done) {
-        this.renders.delete(key)
+    let end = () => {}
+    const done = new Promise<void>((resolve) => {
+      const timer = setTimeout(() => end(), RENDER_TIMEOUT)
+      end = () => {
+        clearTimeout(timer)
+        resolve()
+        if (this.renders.get(key) === done) {
+          this.renders.delete(key)
+        }
       }
-    }
-    const timer = setTimeout(end, RENDER_TIMEOUT)
+    })
     this.renders.set(key, done)
     return end
-  }
-
-  /**
-   * Wait until the render of a key ends, if another request is rendering it.
-   *
-   * @returns Whether it waited.
-   */
-  async waitForRender(key: string): Promise<boolean> {
-    const render = this.renders.get(key)
-    if (!render) {
-      return false
-    }
-    await render
-    return true
   }
 
   /**

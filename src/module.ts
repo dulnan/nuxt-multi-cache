@@ -76,7 +76,6 @@ export default defineNuxtModule<ModuleOptions>({
         options.route?.cacheStatus === true
           ? DEFAULT_CACHE_STATUS_NAME
           : options.route?.cacheStatus || '',
-      routeCoalesce: !!options.route?.coalesce,
       api: {
         enabled: !!options.api?.enabled,
         authorizationToken:

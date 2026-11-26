@@ -19,7 +19,7 @@ import {
   isRouteCacheMethod,
   setCachedResponse,
 } from '../../helpers/routeCache'
-import { debug } from '#nuxt-multi-cache/config'
+import { debug, routeCacheCoalesce } from '#nuxt-multi-cache/config'
 import { isExpired } from '../../helpers/maxAge'
 import {
   getCacheStatusTtl,
@@ -48,15 +48,6 @@ function canBeServedFromCache(
   return false
 }
 
-/**
- * Let concurrent requests for the key wait until this request has rendered
- * the route. The afterResponse hook or the error handler ends the render.
- */
-function startRender(event: H3Event, state: MultiCacheState, key: string) {
-  event.context.multiCache ||= {}
-  event.context.multiCache.routeEndRender = state.startRender(key)
-}
-
 export async function serveCachedHandler(event: H3Event) {
   // The request hook only adds the route helper if the route cache applies to
   // the request: Not for the module's own API, Nuxt's assets, paths excluded
@@ -74,7 +65,7 @@ export async function serveCachedHandler(event: H3Event) {
     return
   }
 
-  const { state, config } = getMultiCacheApp()
+  const { state } = getMultiCacheApp()
 
   try {
     // Build the cache key.
@@ -85,13 +76,13 @@ export async function serveCachedHandler(event: H3Event) {
     }
 
     // Internal requests don't wait: the render may be the one that made them,
-    // e.g. a page that fetches its own path. A request that waited doesn't
-    // let others wait for its render: for a route that stores nothing, they
-    // would render it one after another.
-    const letOthersWait =
-      !!config.routeCoalesce &&
-      !isInternalServerRequest(event) &&
-      !(await state.waitForRender(fullKey))
+    // e.g. a page that fetches its own path. The afterResponse hook or the
+    // error handler ends the render.
+    if (routeCacheCoalesce && !isInternalServerRequest(event)) {
+      event.context.multiCache ||= {}
+      event.context.multiCache.routeEndRender =
+        await state.waitOrStartRender(fullKey)
+    }
 
     // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(
@@ -101,9 +92,6 @@ export async function serveCachedHandler(event: H3Event) {
     // No cache entry.
     if (!cachedRaw) {
       setRouteCacheStatus(event, { fwd: 'uri-miss' })
-      if (letOthersWait) {
-        startRender(event, state, fullKey)
-      }
       return
     }
     const decoded = decodeRouteCacheItem(cachedRaw)
@@ -112,9 +100,6 @@ export async function serveCachedHandler(event: H3Event) {
     // deployment with a newer version.
     if (!decoded) {
       setRouteCacheStatus(event, { fwd: 'miss' })
-      if (letOthersWait) {
-        startRender(event, state, fullKey)
-      }
       return
     }
 
@@ -129,8 +114,8 @@ export async function serveCachedHandler(event: H3Event) {
         state.addKeyBeingRevalidated(fullKey)
         event.context.multiCache ||= {}
         event.context.multiCache.routeRevalidationkey = fullKey
-      } else if (letOthersWait) {
-        startRender(event, state, fullKey)
+        // Concurrent requests get the stale route.
+        event.context.multiCache.routeEndRender?.()
       }
 
       setRouteCacheStatus(event, { fwd: 'stale' })
@@ -152,6 +137,7 @@ export async function serveCachedHandler(event: H3Event) {
       })
     }
 
+    event.context.multiCache.routeEndRender?.()
     setCachedResponse(event, decoded)
 
     // The ttl is negative if a stale route is served while revalidating.

@@ -42,11 +42,8 @@ export interface RouteCacheOptions extends CacheConfigOptions {
   statusCodes?: number[]
 
   /**
-   * Let one request render a route that can't be served from cache, while
-   * concurrent requests for the same cache key wait (at most 5 seconds) for
-   * it to be stored instead of rendering the route too.
-   *
-   * Can be changed at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE`.
+   * Let concurrent requests for a route that can't be served from cache wait
+   * (at most 5 seconds) for one request to render it.
    *
    * @default false
    */

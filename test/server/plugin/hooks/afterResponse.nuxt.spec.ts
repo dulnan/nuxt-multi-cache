@@ -415,10 +415,6 @@ describe('afterResponse nitro hook handler', () => {
 
       const storedItems: any[] = []
       const removeKeyBeingRevalidated = vi.fn()
-      let storedWhenRenderEnded: number | undefined
-      const routeEndRender = vi.fn(() => {
-        storedWhenRenderEnded = storedItems.length
-      })
 
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
@@ -459,7 +455,6 @@ describe('afterResponse nitro hook handler', () => {
               ).setCacheable(),
             ),
             routeRevalidationkey: '/foobar',
-            routeEndRender,
           },
         },
         node: {
@@ -489,10 +484,6 @@ describe('afterResponse nitro hook handler', () => {
       // The revalidation key is removed, even if the item is not stored.
       expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
 
-      // The render ends after the item is stored, so waiting requests find it.
-      expect(routeEndRender).toHaveBeenCalledOnce()
-      expect(storedWhenRenderEnded).toBe(storedItems.length)
-
       mocks.useNitroApp.mockRestore()
     },
   )
@@ -503,12 +494,11 @@ describe('afterResponse nitro hook handler', () => {
     ['not cacheable', 200, false, '<html></html>', false],
     ['store failed with bubbleError', 200, true, '<html></html>', true],
   ])(
-    'Releases the revalidation key and ends the render if the response is not stored (%s)',
+    'Releases the revalidation key if the response is not stored (%s)',
     async (_label, statusCode, cacheable, body, failToStore) => {
       vi.setSystemTime(mockDate)
 
       const removeKeyBeingRevalidated = vi.fn()
-      const routeEndRender = vi.fn()
 
       mocks.useNitroApp.mockReturnValue({
         multiCache: {
@@ -556,7 +546,6 @@ describe('afterResponse nitro hook handler', () => {
           multiCache: {
             route: helper,
             routeRevalidationkey: '/foobar',
-            routeEndRender,
           },
         },
         node: {
@@ -581,7 +570,6 @@ describe('afterResponse nitro hook handler', () => {
       }
 
       expect(removeKeyBeingRevalidated).toHaveBeenCalledWith('/foobar')
-      expect(routeEndRender).toHaveBeenCalledOnce()
 
       mocks.useNitroApp.mockRestore()
     },

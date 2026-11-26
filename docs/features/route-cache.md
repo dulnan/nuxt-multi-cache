@@ -266,12 +266,11 @@ the debug log (`debug: true`), then
 
 ### Coalescing concurrent requests
 
-Every request for a route that can't be served from cache renders it. When a
-popular page expires or is purged, all its concurrent requests render it at
-once. With `coalesce`, one request renders the route and the others wait for it,
-then look it up again:
-
-::: code-group
+When a popular route expires or is purged, all its concurrent requests render
+it. With `coalesce`, the first request renders it and the others in the same
+server process wait for it (once, for at most 5 seconds), then look it up again.
+Internal requests never wait. For an uncacheable route, the waiting requests
+then render it too, so a request can take up to one render longer.
 
 ```typescript [nuxt.config.ts]
 export default defineNuxtConfig({
@@ -283,25 +282,6 @@ export default defineNuxtConfig({
   },
 })
 ```
-
-:::
-
-- It applies when no route is stored, or the stored route is expired and can't
-  be served
-  [stale while revalidating](/composables/useRouteCache#allowstalewhilerevalidate).
-- A request waits at most once, for at most 5 seconds. If nothing was stored
-  (e.g. an uncacheable route), the waiting requests render the route themselves,
-  at the same time. So for an uncacheable route, a request can take up to one
-  render longer than without the option.
-- Internal requests (made with
-  [`useCacheAwareFetchInterceptor`](/composables/useCacheAwareFetchInterceptor))
-  never wait, because the render they would wait for may be the one that made
-  them.
-- Requests wait only in the same server process.
-- Requests that look up the route at the same moment as the first one, before it
-  starts rendering, render it too.
-
-Change it at runtime with `NUXT_MULTI_CACHE_ROUTE_COALESCE=true|false`.
 
 ## Usage in Components
 
