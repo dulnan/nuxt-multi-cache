@@ -264,6 +264,28 @@ doesn't include the cache key or the cache tags. To find the key of a route, use
 the debug log (`debug: true`), then
 [inspect it with the API](/features/api#inspect).
 
+### Coalescing concurrent requests
+
+When a popular route expires or is purged, all its concurrent requests render
+it. With `coalesce`, the first request renders it and the others in the same
+server process wait for it (once, for at most 5 seconds), then look it up again.
+Internal requests never wait. A number sets the maximum wait in milliseconds,
+e.g. `coalesce: 15_000`. For an uncacheable route, the requests that wait for
+its first render then render it too. After a render that stored nothing (or hit
+the timeout), requests for the route don't wait for 60 seconds, until a render
+stores it.
+
+```typescript [nuxt.config.ts]
+export default defineNuxtConfig({
+  multiCache: {
+    route: {
+      enabled: true,
+      coalesce: true,
+    },
+  },
+})
+```
+
 ## Usage in Components
 
 Use the `useRouteCache` composable in a page, layout or any component:

@@ -4,6 +4,7 @@ import {
   getMultiCacheContext,
   getMultiCacheRouteHelper,
   getRequestTimestamp,
+  isInternalServerRequest,
   isValidCacheKey,
 } from '../../helpers/server'
 import {
@@ -18,7 +19,7 @@ import {
   isRouteCacheMethod,
   setCachedResponse,
 } from '../../helpers/routeCache'
-import { debug } from '#nuxt-multi-cache/config'
+import { debug, routeCacheCoalesce } from '#nuxt-multi-cache/config'
 import { isExpired } from '../../helpers/maxAge'
 import {
   getCacheStatusTtl,
@@ -74,6 +75,17 @@ export async function serveCachedHandler(event: H3Event) {
       return
     }
 
+    // Internal requests don't wait: the render may be the one that made them,
+    // e.g. a page that fetches its own path. The afterResponse hook or the
+    // error handler ends the render.
+    if (routeCacheCoalesce && !isInternalServerRequest(event)) {
+      event.context.multiCache ||= {}
+      event.context.multiCache.routeEndRender = await state.waitOrStartRender(
+        fullKey,
+        routeCacheCoalesce,
+      )
+    }
+
     // Check if there is a cache entry for this key.
     const cachedRaw = handleRawCacheData(
       await context.route.storage.getItemRaw(fullKey),
@@ -104,6 +116,8 @@ export async function serveCachedHandler(event: H3Event) {
         state.addKeyBeingRevalidated(fullKey)
         event.context.multiCache ||= {}
         event.context.multiCache.routeRevalidationkey = fullKey
+        // Concurrent requests get the stale route.
+        event.context.multiCache.routeEndRender?.(true)
       }
 
       setRouteCacheStatus(event, { fwd: 'stale' })
@@ -125,6 +139,7 @@ export async function serveCachedHandler(event: H3Event) {
       })
     }
 
+    event.context.multiCache.routeEndRender?.(true)
     setCachedResponse(event, decoded)
 
     // The ttl is negative if a stale route is served while revalidating.

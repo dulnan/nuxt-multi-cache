@@ -390,6 +390,11 @@ export type MultiCacheEventContext = {
   routeRevalidationkey?: string
 
   /**
+   * Ends the render of a route that concurrent requests wait for.
+   */
+  routeEndRender?: (stored: boolean) => void
+
+  /**
    * Contains the already fetched cached route, if it exists.
    */
   routeCachedDecoded?: RouteCacheItem

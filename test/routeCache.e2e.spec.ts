@@ -198,4 +198,13 @@ describe('The route cache feature', () => {
       `"country=us; Path=/"`,
     )
   })
+
+  test('renders a route for each concurrent request', async () => {
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, () =>
+        $fetch<{ data: number }>('/api/slowApiRequest?slow=true'),
+      ),
+    )
+    expect(new Set(responses.map((v) => v.data)).size).toBe(5)
+  })
 })

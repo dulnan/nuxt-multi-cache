@@ -11,6 +11,7 @@ vi.mock('#nuxt-multi-cache/config', () => {
   return {
     isServer: true,
     debug: false,
+    routeCacheCoalesce: 0,
     cdnEnabled: true,
     cdnCacheControlHeader: 'Surrogate-Control',
     cdnCacheTagHeader: 'Cache-Tag',
