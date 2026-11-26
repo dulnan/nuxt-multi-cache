@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
-import { mockNuxtImport } from '@nuxt/test-utils/runtime'
 import plugin from '../../../src/runtime/server/plugins/multiCache'
 import { logger } from '../../../src/runtime/helpers/multi-cache-logger'
 
@@ -45,23 +44,19 @@ vi.mock('#nuxt-multi-cache/server-options', () => {
 vi.mock('nitropack/runtime', () => {
   return {
     defineNitroPlugin: (fn: unknown) => fn,
-  }
-})
-
-mockNuxtImport('useRuntimeConfig', (original) => {
-  return () => {
-    return {
-      ...original(),
-      multiCache: {
-        cdn: mocks.cdn,
-        component: false,
-        data: false,
-        route: false,
-        api: {
-          enabled: false,
+    useRuntimeConfig: () => {
+      return {
+        multiCache: {
+          cdn: mocks.cdn,
+          component: false,
+          data: false,
+          route: false,
+          api: {
+            enabled: false,
+          },
         },
-      },
-    }
+      }
+    },
   }
 })
 

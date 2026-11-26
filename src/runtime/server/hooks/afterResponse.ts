@@ -4,6 +4,7 @@ import {
   type H3Event,
   getRequestURL,
 } from 'h3'
+import { normalizeKey } from 'unstorage'
 import {
   getCacheTagRegistry,
   getMultiCacheContext,
@@ -20,7 +21,7 @@ import { getRouteCacheKey, isRouteCacheMethod } from '../../helpers/routeCache'
 import { encodeRouteCacheItem } from '../../helpers/cacheItem'
 import { logger } from '../../helpers/multi-cache-logger'
 import { getMultiCacheApp } from '../utils/useMultiCacheApp'
-import { debug } from '#nuxt-multi-cache/config'
+import { debug, routeCacheStatusCodes } from '#nuxt-multi-cache/config'
 import { INTERNAL_RESPONSE_HEADERS } from '../../helpers/constants'
 
 function isPureObject(value: any) {
@@ -54,6 +55,38 @@ function stringify(value: any): string | undefined {
 }
 
 /**
+ * Whether the response redirects to a URL with the same route cache key.
+ *
+ * The default key is the path without the query, and the storage removes a
+ * trailing slash. A redirect that only removes the query or the trailing slash
+ * would be stored under the key of its target, which would then be redirected
+ * to itself.
+ */
+function redirectsToSameKey(event: H3Event, statusCode: number): boolean {
+  if (statusCode < 300 || statusCode >= 400) {
+    return false
+  }
+
+  const location = getResponseHeaders(event).location
+  if (!location) {
+    return false
+  }
+
+  const url = getRequestURL(event)
+
+  try {
+    const target = new URL(String(location), url)
+    return (
+      target.host === url.host &&
+      normalizeKey(target.pathname) === normalizeKey(url.pathname)
+    )
+  } catch {
+    // Not a valid URL, so the client can't follow the redirect either.
+    return false
+  }
+}
+
+/**
  * The values of the route cache item for the response, or undefined if the
  * response is not stored.
  */
@@ -72,7 +105,11 @@ export function getStorableRoute(
 
   const statusCode = getResponseStatus(event)
 
-  if (statusCode !== 200) {
+  if (!routeCacheStatusCodes.includes(statusCode)) {
+    return
+  }
+
+  if (redirectsToSameKey(event, statusCode)) {
     return
   }
 
@@ -242,7 +279,7 @@ export async function onAfterResponse(
   } finally {
     // If this request revalidated a stale route, it's no longer being
     // revalidated. This must also happen when the response was not stored
-    // (e.g. a status other than 200, or not cacheable), or else the stale
+    // (e.g. a status code that isn't stored, or not cacheable), or else the stale
     // route would be served until it's purged.
     const revalidationKey = event.context?.multiCache?.routeRevalidationkey
     if (revalidationKey) {
