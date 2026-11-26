@@ -80,8 +80,10 @@ export async function serveCachedHandler(event: H3Event) {
     // error handler ends the render.
     if (routeCacheCoalesce && !isInternalServerRequest(event)) {
       event.context.multiCache ||= {}
-      event.context.multiCache.routeEndRender =
-        await state.waitOrStartRender(fullKey)
+      event.context.multiCache.routeEndRender = await state.waitOrStartRender(
+        fullKey,
+        routeCacheCoalesce,
+      )
     }
 
     // Check if there is a cache entry for this key.
@@ -115,7 +117,7 @@ export async function serveCachedHandler(event: H3Event) {
         event.context.multiCache ||= {}
         event.context.multiCache.routeRevalidationkey = fullKey
         // Concurrent requests get the stale route.
-        event.context.multiCache.routeEndRender?.()
+        event.context.multiCache.routeEndRender?.(true)
       }
 
       setRouteCacheStatus(event, { fwd: 'stale' })
@@ -137,7 +139,7 @@ export async function serveCachedHandler(event: H3Event) {
       })
     }
 
-    event.context.multiCache.routeEndRender?.()
+    event.context.multiCache.routeEndRender?.(true)
     setCachedResponse(event, decoded)
 
     // The ttl is negative if a stale route is served while revalidating.

@@ -43,11 +43,12 @@ export interface RouteCacheOptions extends CacheConfigOptions {
 
   /**
    * Let concurrent requests for a route that can't be served from cache wait
-   * (at most 5 seconds) for one request to render it.
+   * for one request to render it: at most 5 seconds with `true`, or the given
+   * number of milliseconds.
    *
    * @default false
    */
-  coalesce?: boolean
+  coalesce?: boolean | number
 }
 
 export type CDNOptions = {

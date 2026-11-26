@@ -21,6 +21,7 @@ export default defineTemplate(
     const routeCacheEnabled = !!helper.options.route
     const componentCacheEnabled = !!helper.options.component
     const dataCacheEnabled = !!helper.options.data
+    const coalesce = helper.options.route?.coalesce
 
     return `
 export const debug = ${JSON.stringify(!!helper.options.debug)}
@@ -30,7 +31,7 @@ export const cdnEnabled = ${JSON.stringify(cdnEnabled)}
 export const cdnPrivateCacheControl = ${JSON.stringify(helper.options.cdn?.privateCacheControl !== false)}
 export const routeCacheEnabled = ${JSON.stringify(routeCacheEnabled)}
 export const routeCacheStatusCodes = ${JSON.stringify(helper.options.route?.statusCodes ?? [200])}
-export const routeCacheCoalesce = ${JSON.stringify(!!helper.options.route?.coalesce)}
+export const routeCacheCoalesce = ${JSON.stringify(coalesce === true ? 5000 : coalesce || 0)}
 export const componentCacheEnabled = ${JSON.stringify(componentCacheEnabled)}
 export const dataCacheEnabled = ${JSON.stringify(dataCacheEnabled)}
 export const shouldLogCacheOverview = ${JSON.stringify(!helper.options.disableCacheOverviewLogMessage)}
@@ -84,9 +85,10 @@ export declare const routeCacheEnabled: boolean
 export declare const routeCacheStatusCodes: number[]
 
 /**
- * Whether concurrent requests wait for the render of a route.
+ * How long concurrent requests wait for the render of a route, in
+ * milliseconds. 0 if they don't wait.
  */
-export declare const routeCacheCoalesce: boolean
+export declare const routeCacheCoalesce: number
 
 /**
  * Whether the component cache is enabled at build time.

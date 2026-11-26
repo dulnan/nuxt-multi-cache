@@ -35,7 +35,7 @@ export default defineNitroErrorHandler(
       if (revalidationKey) {
         app.state.removeKeyBeingRevalidated(revalidationKey)
       }
-      event.context.multiCache?.routeEndRender?.()
+      event.context.multiCache?.routeEndRender?.(false)
 
       if (event.handled) {
         return

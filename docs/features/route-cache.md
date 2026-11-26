@@ -269,8 +269,11 @@ the debug log (`debug: true`), then
 When a popular route expires or is purged, all its concurrent requests render
 it. With `coalesce`, the first request renders it and the others in the same
 server process wait for it (once, for at most 5 seconds), then look it up again.
-Internal requests never wait. For an uncacheable route, the waiting requests
-then render it too, so a request can take up to one render longer.
+Internal requests never wait. A number sets the maximum wait in milliseconds,
+e.g. `coalesce: 15_000`. For an uncacheable route, the requests that wait for
+its first render then render it too. After a render that stored nothing (or hit
+the timeout), requests for the route don't wait for 60 seconds, until a render
+stores it.
 
 ```typescript [nuxt.config.ts]
 export default defineNuxtConfig({

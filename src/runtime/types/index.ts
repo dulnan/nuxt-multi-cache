@@ -392,7 +392,7 @@ export type MultiCacheEventContext = {
   /**
    * Ends the render of a route that concurrent requests wait for.
    */
-  routeEndRender?: () => void
+  routeEndRender?: (stored: boolean) => void
 
   /**
    * Contains the already fetched cached route, if it exists.

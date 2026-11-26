@@ -36,4 +36,15 @@ describe('The config template', () => {
       ).toContain(`export const cacheTagInvalidationDelay = 0\n`)
     }
   })
+
+  test.each([
+    [undefined, 0],
+    [false, 0],
+    [true, 5000],
+    [15_000, 15000],
+  ])('sets the coalescing timeout of %j to %j', (coalesce, expected) => {
+    expect(renderConfig({ route: { enabled: true, coalesce } })).toContain(
+      `export const routeCacheCoalesce = ${expected}\n`,
+    )
+  })
 })
